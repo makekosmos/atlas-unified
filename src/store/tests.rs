@@ -97,6 +97,23 @@ fn persistence_across_client_processes() {
                     std::fs::write(&path, serde_json::to_vec(&objects).unwrap()).unwrap();
                     json!({"ok":true,"data":true})
                 }
+                // Links live in the same store under a `link:` key prefix.
+                "list_object_links" => json!({"ok":true,"data":objects.iter().filter(|(k, _)| k.starts_with("link:")).map(|(_, v)| v).collect::<Vec<_>>()}),
+                // Engine semantics: drop other links of the same source and type, then upsert.
+                "replace_object_link" => {
+                    let link = request["object_link"].clone();
+                    assert!(objects.contains_key(link["sourceObjectId"].as_str().unwrap()));
+                    assert!(objects.contains_key(link["targetObjectId"].as_str().unwrap()));
+                    objects.retain(|k, v| !(k.starts_with("link:") && v["sourceObjectId"] == link["sourceObjectId"] && v["linkType"] == link["linkType"]));
+                    objects.insert(format!("link:{}", link["id"].as_str().unwrap()), link.clone());
+                    std::fs::write(&path, serde_json::to_vec(&objects).unwrap()).unwrap();
+                    json!({"ok":true,"data":link})
+                }
+                "delete_object_link" => {
+                    objects.remove(&format!("link:{}", request["id"].as_str().unwrap()));
+                    std::fs::write(&path, serde_json::to_vec(&objects).unwrap()).unwrap();
+                    json!({"ok":true,"data":true})
+                }
                 _ => panic!("unexpected operation"),
             }.to_string();
             write!(socket, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}", response.len(), response).unwrap();
@@ -113,6 +130,7 @@ fn persistence_across_client_processes() {
         "conflict",
         "recurrence",
         "project",
+        "unproject",
     ] {
         let output = Process::new(std::env::current_exe().unwrap())
             .args([

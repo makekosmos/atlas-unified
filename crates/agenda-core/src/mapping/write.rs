@@ -6,8 +6,9 @@ use serde_json::{json, Value};
 
 /// Fields `write_at` never copies into `extensions`: canonical props or the
 /// object row itself own them.
-const NOT_EXTENSION: [&str; 14] = [
+const NOT_EXTENSION: [&str; 15] = [
     "id",
+    "project_id",
     "title",
     "notes",
     "checklist",
@@ -26,7 +27,7 @@ const NOT_EXTENSION: [&str; 14] = [
 /// Patch a fresh Engine object, retaining fields this UI does not understand.
 /// The caller owns the clock (`now` stamps `updatedAt`, `deletedAt` and new
 /// completion or cancellation instants; fixtures pin it) and `day` supplies
-/// the local offset `date_only` needs. Project ids are Atlas extensions.
+/// the local offset `date_only` needs. The project is a `project` link, not a prop.
 pub fn write_at(
     mut object: Value,
     before: Option<&Todo>,

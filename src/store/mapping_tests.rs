@@ -87,15 +87,15 @@ fn write_then_read_round_trips_every_status() {
 }
 
 #[test]
-fn project_id_round_trips_in_task_extensions() {
+fn project_is_not_written_into_task_props() {
     let mut todo = new_todo("t1", "Задача");
     todo.project_id = Some("p1".into());
     let object = mapping::write_at(Value::Null, None, &todo, NOW).unwrap();
-    assert_eq!(object["propsJson"]["extensions"]["project_id"], "p1");
-    assert_eq!(
-        mapping::read(&object).unwrap().project_id.as_deref(),
-        Some("p1")
+    assert!(
+        !object["propsJson"].to_string().contains("p1"),
+        "project belongs in a `project` link: {object}"
     );
+    assert_eq!(mapping::read(&object).unwrap().project_id, None);
 }
 
 #[test]

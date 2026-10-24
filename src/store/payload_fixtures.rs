@@ -6,7 +6,8 @@ use std::path::PathBuf;
 // Engine contract fixtures (KOS-297).
 //
 // These are the exact objects `mapping::write` sends to `upsert_object`.
-// Atlas project ids are included in the task's extension only when assigned.
+// The task's project is never a prop: it is a `project` link
+// (`fixtures/engine/task-project-link.json`, pinned in `store::projects`).
 // They are committed under `fixtures/engine/` and consumed by the ark-core
 // contract test in cortex (`phase3_agenda_contract`), which validates them
 // against the real `canonical_ingress`. The two repos cannot share code, so

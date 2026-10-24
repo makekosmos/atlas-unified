@@ -114,19 +114,43 @@ fn restart_client() {
             let mut todo = new_todo("restart-linked", "Linked");
             todo.project_id = Some(project.id.clone());
             engine.save(None, &todo).unwrap();
-            let stored = engine.rpc("get_object", json!({"id":todo.id})).unwrap();
+            let stored = engine.rpc("get_object", json!({"id":project.id})).unwrap();
+            assert_eq!(stored["typeId"], "core.project", "saved project: {stored}");
+            let links = engine.rpc("list_object_links", json!({})).unwrap();
             assert_eq!(
-                stored["propsJson"]["extensions"]["project_id"], project.id,
-                "saved task object: {stored}"
+                links,
+                json!([{"id":"restart-linked:project","sourceObjectId":"restart-linked",
+                    "targetObjectId":"restart-project","linkType":"project",
+                    "createdAt":links[0]["createdAt"]}]),
             );
+        }
+        "unproject" => {
             let snapshot = engine.load().unwrap();
-            assert_eq!(snapshot.projects, vec![project]);
-            let linked = snapshot
+            assert_eq!(
+                snapshot.projects,
+                vec![Project {
+                    id: "restart-project".into(),
+                    title: "Ремонт".into(),
+                    status: 0,
+                    sort_order: 0,
+                }]
+            );
+            let before = snapshot
                 .todos
                 .iter()
-                .find(|stored| stored.id == todo.id)
+                .find(|stored| stored.id == "restart-linked")
                 .expect("linked task reloads");
-            assert_eq!(linked.project_id.as_deref(), Some("restart-project"),);
+            assert_eq!(before.project_id.as_deref(), Some("restart-project"));
+            let mut todo = before.clone();
+            todo.project_id = None;
+            engine.save(Some(before), &todo).unwrap();
+            assert_eq!(
+                engine.rpc("list_object_links", json!({})).unwrap(),
+                json!([])
+            );
+            let reloaded = engine.load().unwrap().todos;
+            let unlinked = reloaded.iter().find(|t| t.id == todo.id).unwrap();
+            assert_eq!(unlinked.project_id, None);
         }
         _ => panic!("unknown test mode"),
     }

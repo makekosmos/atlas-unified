@@ -7,6 +7,6 @@ pub use read::read;
 pub use write::write_at;
 
 /// core.task 0.1.0: the Engine's task contract. Atlas-specific metadata stays
-/// in `extensions`.
+/// in `extensions`; the project is a `project` link (`projects`).
 pub const TASK_TYPE: &str = "core.task";
 pub const TASK_VERSION: &str = "0.1.0";

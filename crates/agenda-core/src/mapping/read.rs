@@ -2,7 +2,8 @@ use super::TASK_TYPE;
 use crate::types::{Status, Todo};
 use serde_json::{json, Value};
 
-/// Read a `core.task` object. Atlas project ids are carried in extensions.
+/// Read a `core.task` object. `project_id` stays empty: the project is the
+/// task's `project` link (`projects::project_links`).
 pub fn read(object: &Value) -> Result<Todo, String> {
     if object["typeId"] != TASK_TYPE || !object["id"].is_string() {
         return Err("Engine вернул некорректную задачу".into());
@@ -65,10 +66,7 @@ pub fn read(object: &Value) -> Result<Todo, String> {
     };
     fields.insert("scheduled_date".into(), scheduled);
     fields.insert("reminder_date".into(), props["reminders"][0]["at"].clone());
-    fields.insert(
-        "project_id".into(),
-        fields.get("project_id").cloned().unwrap_or(Value::Null),
-    );
+    fields.insert("project_id".into(), Value::Null);
     let checklist: Vec<Value> = props["checklist"]
         .as_array()
         .into_iter()

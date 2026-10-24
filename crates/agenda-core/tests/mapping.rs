@@ -1,6 +1,7 @@
 // core.task 0.1.0 mapping (KOS-397): read/write round trips, the planning and
-// status rules, instants kept on bare-day edits, checklist ids, project ids
-// in Atlas extensions, and the recurrence fields the Engine owns.
+// status rules, instants kept on bare-day edits, checklist ids, projects as
+// `core.project` plus a task `project` link, and the recurrence fields the
+// Engine owns.
 use agenda_core::mapping::{self, TASK_TYPE, TASK_VERSION};
 use agenda_core::*;
 use chrono::{FixedOffset, NaiveDate};
@@ -26,7 +27,7 @@ fn write(object: Value, before: Option<&Todo>, todo: &Todo) -> Value {
 }
 
 #[test]
-fn read_maps_core_task_state_planning_and_project_extension() {
+fn read_maps_core_task_state_and_planning() {
     let object = stored(json!({
         "state":{"kind":"done","at":"2026-09-20T12:00:00Z"},
         "planning":{"kind":"today","period":"evening","date":null},
@@ -34,13 +35,12 @@ fn read_maps_core_task_state_planning_and_project_extension() {
         "reminders":[{"kind":"floating","at":"2026-09-21T09:00:00Z","timeZone":null}],
         "priority":"urgent",
         "checklist":[{"id":"c1","text":"Шаг","done":true,"rank":"000000"}],
-        "extensions":{"description":"заметка","tag_ids":["g1"],"sort_order":4,"project_id":"p1"}}));
+        "extensions":{"description":"заметка","tag_ids":["g1"],"sort_order":4}}));
     let todo = mapping::read(&object).unwrap();
     assert_eq!(todo.status, Status::Done);
     assert!(todo.is_completed && todo.is_today && todo.is_evening && !todo.is_someday);
     assert_eq!(todo.completed_at.as_deref(), Some("2026-09-20T12:00:00Z"));
     assert_eq!(todo.reminder_date.as_deref(), Some("2026-09-21T09:00:00Z"));
-    assert_eq!(todo.project_id.as_deref(), Some("p1"));
     assert_eq!(todo.tag_ids, vec!["g1".to_string()]);
     assert_eq!(todo.notes.as_deref(), Some("заметка"));
     assert_eq!(todo.checklist, vec![ChecklistItem { is_completed: true }]);
@@ -190,16 +190,36 @@ fn checklist_keeps_engine_ids_and_only_toggles_done() {
 }
 
 #[test]
-fn project_id_round_trips_in_task_extensions() {
+fn project_is_not_written_into_task_props() {
     let mut todo = new_todo("t1", "Задача");
     todo.project_id = Some("p1".into());
     let object = write(Value::Null, None, &todo);
     assert_eq!(object["typeId"], "core.task");
-    assert_eq!(object["propsJson"]["extensions"]["project_id"], "p1");
-    assert_eq!(
-        mapping::read(&object).unwrap().project_id.as_deref(),
-        Some("p1")
+    assert!(
+        !object["propsJson"].to_string().contains("p1"),
+        "project belongs in a `project` link: {object}"
     );
+    assert_eq!(mapping::read(&object).unwrap().project_id, None);
+}
+
+#[test]
+fn project_is_a_core_project_with_a_task_link() {
+    let project = Project {
+        id: "p1".into(),
+        title: "Ремонт".into(),
+        status: 2,
+        sort_order: 3,
+        area_id: Some("a1".into()),
+    };
+    let object = projects::project_object(&Value::Null, &project, NOW);
+    assert_eq!(object["typeId"], "core.project");
+    assert_eq!(object["typeVersion"], "0.1.0");
+    assert_eq!(object["propsJson"]["status"], "completed");
+    assert_eq!(projects::read_project(&object), project);
+    let link = projects::project_link("t1", "p1", NOW);
+    assert_eq!(link["linkType"], "project");
+    assert_eq!(link["sourceObjectId"], "t1");
+    assert_eq!(link["targetObjectId"], "p1");
 }
 
 #[test]

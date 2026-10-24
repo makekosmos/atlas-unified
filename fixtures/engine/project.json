@@ -7,15 +7,16 @@
   "deletedAt": null,
   "id": "project:sample",
   "propsJson": {
-    "description": null,
+    "color": null,
+    "dueAt": null,
     "extensions": {
-      "entry_kind": "project",
-      "sortOrder": 0,
-      "status": "active"
-    }
+      "sortOrder": 0
+    },
+    "scheduledAt": null,
+    "status": "active"
   },
   "title": "Проект",
-  "typeId": "core.note",
+  "typeId": "core.project",
   "typeVersion": "0.1.0",
   "updatedAt": "2026-10-24T09:00:00.000Z"
 }
