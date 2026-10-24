@@ -29,7 +29,7 @@ pub fn read(object: &Value, links: &[Link]) -> Result<Todo, String> {
     let state = props["state"]["kind"].as_str().unwrap_or("open");
     let planning = props["planning"]["kind"].as_str().unwrap_or("inbox");
     let legacy_deferred = fields.get("status") == Some(&json!("deferred"));
-    // Agenda has two states. Legacy states other clients wrote still open:
+    // Atlas has two states. Legacy states other clients wrote still open:
     // `canceled` reads as done (closed, but no completion stamp, so it stays
     // out of statistics), `inProgress` as not done. `write_at` keeps them
     // stored until the user toggles the task.

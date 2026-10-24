@@ -1,10 +1,10 @@
 use gpui::Context;
 use serde_json::{json, Value};
 
-use super::Agenda;
+use super::Atlas;
 use crate::appearance::{Mode, Response, Writer};
 
-impl Agenda {
+impl Atlas {
     pub(crate) fn start_appearance(&mut self, cx: &mut Context<Self>) {
         if self.demo {
             return;

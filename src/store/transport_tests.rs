@@ -12,7 +12,7 @@ fn fake_env(pairs: Vec<(&'static str, PathBuf)>) -> impl Fn(&str) -> Option<Path
 }
 
 fn tmpdir(tag: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("agenda-gpui-kos266-{tag}-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("atlas-gpui-kos266-{tag}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     dir

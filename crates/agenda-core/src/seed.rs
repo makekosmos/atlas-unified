@@ -1,5 +1,5 @@
 //! Dev seed data (src/dev/seed.ts + src/dev/pseudoCalendar.ts) — the
-//! `AGENDA_DEMO`/`AGENDA_DEVTASKS` fixtures. Shared by the desktop app and
+//! `ATLAS_DEMO`/`ATLAS_DEVTASKS` fixtures. Shared by the desktop app and
 //! the Android parity gate, so every clock read takes a [`LocalDay`].
 use crate::{new_todo, ChecklistItem, LocalDay, Project, Status, Tag, Todo};
 
@@ -147,7 +147,7 @@ pub fn seed_projects_at(_day: &LocalDay) -> Vec<Project> {
     vec![
         Project {
             id: "dev-proj-release".into(),
-            title: "Релиз Agenda 1.0".into(),
+            title: "Релиз Atlas 1.0".into(),
             status: 0,
             sort_order: 0,
             area_id: Some("dev-area-work".into()),

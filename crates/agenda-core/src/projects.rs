@@ -1,5 +1,5 @@
 //! `com.kosmos.project` canonical-object mapping (was src/store/projects.rs
-//! in agenda-gpui; moved here so Android builds the same object shape).
+//! in atlas-gpui; moved here so Android builds the same object shape).
 use crate::types::Project;
 use serde_json::{json, Value};
 
@@ -64,7 +64,7 @@ pub fn references_object(projects: &[Project], tags: &[crate::Tag], now: &str) -
     json!({
         "id": "agenda:references",
         "typeId": "com.kosmos.agenda.references",
-        "title": "Agenda references",
+        "title": "Atlas references",
         "createdAt": now,
         "updatedAt": now,
         "propsJson": {

@@ -1,4 +1,4 @@
-//! Pure Agenda domain logic: task types, date helpers, smart-list
+//! Pure Atlas domain logic: task types, date helpers, smart-list
 //! filters and quick-entry parsing shared by the desktop GPUI app and the
 //! Android port (KOS-370). No GPUI, no HTTP, no Engine transport — and no
 //! hidden clock reads: every function that depends on "now" takes a

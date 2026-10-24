@@ -9,7 +9,7 @@ pub use write::write_at;
 /// core.task 0.1.0: the Engine's task contract. The project is an object link
 /// (`project`, at most one), not a prop: `read` takes the links the caller
 /// loaded, and `write_at` leaves link changes to the caller. Tags and other
-/// Agenda-only fields stay in `extensions`.
+/// Atlas-only fields stay in `extensions`.
 pub const TASK_TYPE: &str = "core.task";
 pub const TASK_VERSION: &str = "0.1.0";
 pub const PROJECT_LINK: &str = "project";

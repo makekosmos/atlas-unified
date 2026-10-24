@@ -12,7 +12,7 @@ type Project = { id: string; title: string; status: number };
 type Snapshot = { route: Route; title: string; todos: Todo[]; projects: Project[]; project?: Project; archivedCount: number; trashCount: number; todoCount: number; version: string; activity: { label: string; done: number }[]; appearance?: Appearance; appearanceEditable: boolean; themes: ThemeChoice[]; colors: ThemeColors; sidebarVisible: boolean };
 
 const fallback: Snapshot = { route: "inbox", title: "Входящие", todos: [], projects: [], archivedCount: 0, trashCount: 0, todoCount: 0, version: "", activity: [], appearance: { settings: { mode: "dark", light_theme: "default", dark_theme: "default", accent_source: "theme", material: "default", font_size: 13, font_family: "Inter" }, policy: { following: false, editable: true }, capabilities: { materials: ["default", "frosted", "mica"], wallpaper_accent: false } }, appearanceEditable: true, themes: [{ key: "default", name: "Default" }, { key: "claude", name: "Claude" }, { key: "graphite", name: "Graphite" }], colors: defaultColors, sidebarVisible: true };
-const initial = (globalThis as any).__MUNDUS_AGENDA_INITIAL__ as Snapshot | undefined ?? fallback;
+const initial = (globalThis as any).__MUNDUS_ATLAS_INITIAL__ as Snapshot | undefined ?? fallback;
 const snapshot = signal(initial);
 const route = signal<Route>("inbox");
 const selectedProjectId = signal("dev-proj-release");
@@ -40,7 +40,7 @@ void Storage.getItem("mundus.agenda.shortcuts.v1").then((value) => {
     shortcuts.set(Object.fromEntries(shortcutNames.map((name) => [name, shortcutOptions[name].includes(saved[name] ?? "") ? saved[name] : defaultShortcuts[name]])) as Shortcuts);
   } catch { /* A damaged preference falls back to the defaults. */ }
 });
-const Bridge = nativeComponent<{ route: Route; projectId: string }, { state: Snapshot }>("agenda.bridge", {
+const Bridge = nativeComponent<{ route: Route; projectId: string }, { state: Snapshot }>("atlas.bridge", {
   props: ["route", "projectId"],
   events: ["state"],
 });
@@ -157,7 +157,7 @@ function InfoPage() {
     <View class="mx-auto w-full max-w-[760px]">
       <View class="mb-16 items-center">
         <SharedIcon name="about" size={88} color={snapshot().colors.accent} />
-        <Text class="mb-2 text-[23px] font-bold" style={{ color: snapshot().colors.foreground }}>Agenda</Text>
+        <Text class="mb-2 text-[23px] font-bold" style={{ color: snapshot().colors.foreground }}>Atlas</Text>
         <Text class="mb-2 text-[13px]" style={{ color: snapshot().colors.muted }}>Версия {snapshot().version}</Text>
         <Text class="text-[12px]" style={{ color: snapshot().colors.muted }}>© Yoso Industries 2025–2026</Text>
       </View>

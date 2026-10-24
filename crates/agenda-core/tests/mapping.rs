@@ -242,7 +242,7 @@ fn project_link_with_id(id: &str, target: &str) -> Link {
 
 #[test]
 fn legacy_deadline_recurrence_and_priority_still_load_and_survive_writes() {
-    // Agenda no longer has deadlines, repeats or importance (KOS-397 / #34),
+    // Atlas no longer has deadlines, repeats or importance (KOS-397 / #34),
     // but tasks stored before that keep those props. They must still load,
     // and an edit must leave them untouched in the Engine object.
     let original = stored(json!({

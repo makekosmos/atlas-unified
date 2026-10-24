@@ -122,7 +122,7 @@ fn write_keeps_stored_instant_when_the_edit_is_a_bare_day() {
     assert_eq!(written["propsJson"]["state"]["at"], "2026-09-20T12:00:00Z");
 }
 
-/// Agenda does not show these fields, so an edit must leave them as stored.
+/// Atlas does not show these fields, so an edit must leave them as stored.
 #[test]
 fn write_keeps_fields_agenda_does_not_show() {
     let kept = json!({

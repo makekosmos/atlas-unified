@@ -1,10 +1,10 @@
 use gpui::Context;
 
-use super::Agenda;
+use super::Atlas;
 use crate::model::Todo;
 use crate::store::{Command, EngineError, ErrorKind, Reply, Snapshot, Worker};
 
-impl Agenda {
+impl Atlas {
     pub(crate) fn start_storage(&mut self, cx: &mut Context<Self>) {
         if self.demo {
             return;

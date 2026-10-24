@@ -134,7 +134,7 @@ pub fn seed_projects() -> Vec<Project> {
     vec![
         Project {
             id: "dev-proj-release".into(),
-            title: "Релиз Agenda 1.0".into(),
+            title: "Релиз Atlas 1.0".into(),
             status: 0,
             sort_order: 0,
         },

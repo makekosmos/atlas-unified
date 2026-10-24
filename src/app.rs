@@ -11,7 +11,7 @@ use crate::model::{Project, Todo};
 use crate::store::Worker;
 use gpui::Context;
 
-pub(crate) struct Agenda {
+pub(crate) struct Atlas {
     pub(crate) demo: bool,
     pub(crate) storage: Option<Worker>,
     pub(crate) storage_ready: bool,
@@ -28,10 +28,10 @@ pub(crate) struct Agenda {
     pub(crate) theme_idx: usize,
 }
 
-impl Agenda {
+impl Atlas {
     pub(crate) fn new(cx: &mut Context<Self>) -> Self {
-        let demo = std::env::var("AGENDA_DEMO").as_deref() == Ok("1")
-            || std::env::var("AGENDA_DEVTASKS")
+        let demo = std::env::var("ATLAS_DEMO").as_deref() == Ok("1")
+            || std::env::var("ATLAS_DEVTASKS")
                 .ok()
                 .and_then(|value| value.parse::<usize>().ok())
                 .is_some()
@@ -68,7 +68,7 @@ impl Agenda {
 }
 
 fn initial_route() -> Route {
-    match std::env::var("AGENDA_ROUTE").ok().as_deref() {
+    match std::env::var("ATLAS_ROUTE").ok().as_deref() {
         Some("week") => Route::Week,
         Some("next-week") => Route::NextWeek,
         Some("someday") => Route::Someday,

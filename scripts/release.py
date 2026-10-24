@@ -95,22 +95,22 @@ def package(target):
     version_tuple(version)
     dist = Path("dist")
     dist.mkdir(exist_ok=True)
-    name = f"agenda-gpui-{version}-{target}"
-    binary = Path("target") / target / "release" / ("agenda-gpui.exe" if "windows" in target else "agenda-gpui")
+    name = f"atlas-gpui-{version}-{target}"
+    binary = Path("target") / target / "release" / ("atlas-gpui.exe" if "windows" in target else "atlas-gpui")
     if "windows" in target:
         with zipfile.ZipFile(dist / f"{name}.zip", "w", zipfile.ZIP_DEFLATED) as archive:
             archive.write(binary, binary.name)
     elif "apple" in target:
-        app = dist / "Agenda.app"
+        app = dist / "Atlas.app"
         contents = app / "Contents"
         (contents / "MacOS").mkdir(parents=True, exist_ok=True)
-        executable = contents / "MacOS" / "agenda-gpui"
+        executable = contents / "MacOS" / "atlas-gpui"
         shutil.copy2(binary, executable)
         executable.chmod(0o755)
-        # CFBundleIconFile + Contents/Resources/agenda.icns — without them the
+        # CFBundleIconFile + Contents/Resources/atlas.icns — without them the
         # app shows the generic blank icon. windows/app-icon.png is already
         # squircle-masked full-canvas art, so sips + iconutil suffice.
-        iconset = dist / "agenda.iconset"
+        iconset = dist / "atlas.iconset"
         iconset.mkdir(exist_ok=True)
         for size in (16, 32, 128, 256, 512):
             for scale, pixels in ((1, size), (2, size * 2)):
@@ -123,16 +123,16 @@ def package(target):
         resources = contents / "Resources"
         resources.mkdir(exist_ok=True)
         subprocess.run(
-            ["iconutil", "-c", "icns", str(iconset), "-o", str(resources / "agenda.icns")],
+            ["iconutil", "-c", "icns", str(iconset), "-o", str(resources / "atlas.icns")],
             check=True,
         )
         shutil.rmtree(iconset)
         with (contents / "Info.plist").open("wb") as plist:
             plistlib.dump({
-                "CFBundleName": "Agenda", "CFBundleDisplayName": "Agenda",
-                "CFBundleIdentifier": "com.makekosmos.agenda-gpui",
-                "CFBundleExecutable": "agenda-gpui", "CFBundlePackageType": "APPL",
-                "CFBundleIconFile": "agenda",
+                "CFBundleName": "Atlas", "CFBundleDisplayName": "Atlas",
+                "CFBundleIdentifier": "com.mundus.atlas",
+                "CFBundleExecutable": "atlas-gpui", "CFBundlePackageType": "APPL",
+                "CFBundleIconFile": "atlas",
                 "CFBundleShortVersionString": version, "CFBundleVersion": version,
                 "NSHighResolutionCapable": True,
             }, plist)

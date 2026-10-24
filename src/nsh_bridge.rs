@@ -4,19 +4,19 @@ use gpui::{App, Entity, Subscription, Window};
 use imago_nsh::{ComponentContext, NativeComponent};
 use serde_json::{json, Value};
 
-use crate::app::{Agenda, Route};
+use crate::app::{Atlas, Route};
 use crate::model::{filter_idx, SmartList};
 
-pub(crate) struct AgendaBridge {
+pub(crate) struct AtlasBridge {
     context: ComponentContext,
-    agenda: Entity<Agenda>,
+    agenda: Entity<Atlas>,
     route: Rc<RefCell<String>>,
     project_id: Rc<RefCell<String>>,
     subscription: Option<Subscription>,
 }
 
-impl AgendaBridge {
-    pub(crate) fn new(context: ComponentContext, agenda: Entity<Agenda>) -> Self {
+impl AtlasBridge {
+    pub(crate) fn new(context: ComponentContext, agenda: Entity<Atlas>) -> Self {
         Self {
             context,
             agenda,
@@ -63,11 +63,11 @@ fn route_key(route: &Route) -> String {
     }
 }
 
-pub(crate) fn initial_snapshot(agenda: &Agenda) -> Value {
+pub(crate) fn initial_snapshot(agenda: &Atlas) -> Value {
     snapshot(agenda, "inbox")
 }
 
-fn snapshot(agenda: &Agenda, route: &str) -> Value {
+fn snapshot(agenda: &Atlas, route: &str) -> Value {
     let list = match route {
         "week" => Some(SmartList::Week),
         "next-week" => Some(SmartList::NextWeek),
@@ -152,7 +152,7 @@ fn snapshot(agenda: &Agenda, route: &str) -> Value {
     })
 }
 
-impl NativeComponent for AgendaBridge {
+impl NativeComponent for AtlasBridge {
     fn render(&mut self, _window: &mut Window, cx: &mut App) -> Option<gpui::AnyElement> {
         if self.subscription.is_none() {
             let context = self.context.clone();

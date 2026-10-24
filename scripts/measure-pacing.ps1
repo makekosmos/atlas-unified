@@ -14,24 +14,24 @@ param(
     [string]$VsyncSource = 'auto',
     [switch]$NoFrameLog,
     [switch]$Onscreen,
-    [string]$Executable = (Join-Path $PSScriptRoot '..\target\debug\agenda-gpui.exe'),
+    [string]$Executable = (Join-Path $PSScriptRoot '..\target\debug\atlas-gpui.exe'),
     [double]$MinAverage = 164.5,
     [double]$MaxAverage = 166,
     [double]$MinP99 = 160
 )
 $ErrorActionPreference = 'Stop'
-$env:AGENDA_OFFSCREEN = '1'
-if ($Onscreen) { Remove-Item Env:AGENDA_OFFSCREEN }
-$env:AGENDA_FPS = '1'
-$env:AGENDA_FRAME_LOG = '1'
-if ($NoFrameLog) { Remove-Item Env:AGENDA_FRAME_LOG }
-$env:AGENDA_UNTHROTTLED = '1'
-if ($Background) { Remove-Item Env:AGENDA_UNTHROTTLED }
-$env:AGENDA_VSYNC = if ($NoVsync) { '0' } else { '1' }
-$env:AGENDA_DEVTASKS = "$Tasks"
-$env:AGENDA_ROUTE = $Route
-$env:AGENDA_VSYNC_SOURCE = $VsyncSource
-$env:AGENDA_PRESENT_TRACE = if ($CheckWake) { '1' } else { $null }
+$env:ATLAS_OFFSCREEN = '1'
+if ($Onscreen) { Remove-Item Env:ATLAS_OFFSCREEN }
+$env:ATLAS_FPS = '1'
+$env:ATLAS_FRAME_LOG = '1'
+if ($NoFrameLog) { Remove-Item Env:ATLAS_FRAME_LOG }
+$env:ATLAS_UNTHROTTLED = '1'
+if ($Background) { Remove-Item Env:ATLAS_UNTHROTTLED }
+$env:ATLAS_VSYNC = if ($NoVsync) { '0' } else { '1' }
+$env:ATLAS_DEVTASKS = "$Tasks"
+$env:ATLAS_ROUTE = $Route
+$env:ATLAS_VSYNC_SOURCE = $VsyncSource
+$env:ATLAS_PRESENT_TRACE = if ($CheckWake) { '1' } else { $null }
 $wakeSamples = @()
 $log = Join-Path $env:TEMP ('agenda-pacing-' + [guid]::NewGuid() + '.log')
 if ($Scroll -or $CheckControls -or $ToggleVsync -or $CheckWake) {
@@ -106,7 +106,7 @@ public static class PacingInput {
             uint pid; GetWindowThreadProcessId(hwnd, out pid);
             var title = new System.Text.StringBuilder(256);
             GetWindowText(hwnd, title, title.Capacity);
-            if (pid == processId && title.ToString() == "Agenda") { found = hwnd; return false; }
+            if (pid == processId && title.ToString() == "Atlas") { found = hwnd; return false; }
             return true;
         }, IntPtr.Zero);
         return found;

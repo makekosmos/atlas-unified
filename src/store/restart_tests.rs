@@ -5,7 +5,7 @@ use crate::model::{is_due_this_week, is_inbox, new_todo, today_key, week_bounds,
 #[test]
 #[ignore]
 fn restart_client() {
-    let Ok(mode) = std::env::var("AGENDA_TEST_CLIENT") else {
+    let Ok(mode) = std::env::var("ATLAS_TEST_CLIENT") else {
         return;
     };
     let engine = Engine::default();

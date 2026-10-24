@@ -5,7 +5,7 @@ use serde_json::{json, Value};
 use std::collections::HashSet;
 
 impl Engine {
-    /// Projects are canonical `com.kosmos.project` objects; Agenda-only
+    /// Projects are canonical `com.kosmos.project` objects; Atlas-only
     /// fields live in `extensions`. Creating and saving are the same upsert.
     #[cfg(test)]
     pub(super) fn save_project(&self, project: &Project) -> Result<(), EngineError> {

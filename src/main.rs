@@ -1,4 +1,4 @@
-// Agenda GPUI — task data is owned by Mundus Engine.
+// Atlas GPUI — task data is owned by Mundus Engine.
 #![windows_subsystem = "windows"]
 #[cfg(target_os = "macos")]
 #[macro_use]
@@ -24,7 +24,7 @@ use gpui::{px, size, App, AppContext, Bounds, Styled, WindowBounds, WindowOption
 use gpui_fast_backend as _;
 use imago_nsh::{Bundle, NshApp};
 
-/// `AGENDA_OFFSCREEN=1` parks the window far outside the desktop so automated
+/// `ATLAS_OFFSCREEN=1` parks the window far outside the desktop so automated
 /// soak runs (FPS/scroll benchmarks) don't pop a window on the user's screen.
 /// DWM still composes it, so frame pacing stays representative.
 fn window_bounds(cx: &mut App) -> Bounds<gpui::Pixels> {
@@ -43,21 +43,21 @@ fn offscreen() -> bool {
     if e2e::requested() {
         return true;
     }
-    std::env::var("AGENDA_OFFSCREEN").is_ok()
+    std::env::var("ATLAS_OFFSCREEN").is_ok()
 }
 
-use app::Agenda;
+use app::Atlas;
 use assets::font_bytes;
 
-const WINDOW_TITLE: &str = "Agenda";
+const WINDOW_TITLE: &str = "Atlas";
 
-fn agenda_window_options(cx: &mut App) -> WindowOptions {
+fn atlas_window_options(cx: &mut App) -> WindowOptions {
     WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(window_bounds(cx))),
         // Windows adaptive pacing owns the background cap and input wakeup.
         // A second focus-only cap would throttle unfocused interaction.
         inactive_frame_interval: if cfg!(target_os = "windows")
-            || std::env::var("AGENDA_FPS").is_ok()
+            || std::env::var("ATLAS_FPS").is_ok()
         {
             None
         } else {
@@ -76,40 +76,40 @@ fn agenda_window_options(cx: &mut App) -> WindowOptions {
     }
 }
 
-fn open_agenda_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Agenda>) {
+fn open_atlas_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Atlas>) {
     let created = std::rc::Rc::new(std::cell::RefCell::new(None));
     let slot = created.clone();
-    let options = agenda_window_options(cx);
+    let options = atlas_window_options(cx);
     let window = cx
         .open_window(options, |window, cx| {
             // The platform window is already ordered in when this closure runs,
             // so set_title only renames the entry AppKit added itself.
             window.set_window_title(WINDOW_TITLE);
-            let agenda = cx.new(Agenda::new);
+            let agenda = cx.new(Atlas::new);
             *slot.borrow_mut() = Some(agenda.clone());
-            // Shell keeps the FPS meter outside Agenda's subtree; the
+            // Shell keeps the FPS meter outside Atlas's subtree; the
             // sidebar and content own their independent caches.
             let nsh = cx.new(|cx| {
                 let initial = serde_json::to_string(&nsh_bridge::initial_snapshot(agenda.read(cx)))
-                    .expect("serialize initial Agenda state");
+                    .expect("serialize initial Atlas state");
                 let source = format!(
-                    "globalThis.__MUNDUS_AGENDA_INITIAL__={initial};\n{}",
+                    "globalThis.__MUNDUS_ATLAS_INITIAL__={initial};\n{}",
                     include_str!("../ui/bundle.js")
                 );
                 imago_nsh::mount_app_view(window, cx, NshApp::Js(Bundle::source(source)), |view| {
                     view.register_component(
-                        "agenda.bridge",
+                        "atlas.bridge",
                         std::rc::Rc::new({
                             let agenda = agenda.clone();
                             move |context| {
-                                Box::new(nsh_bridge::AgendaBridge::new(context, agenda.clone()))
+                                Box::new(nsh_bridge::AtlasBridge::new(context, agenda.clone()))
                             }
                         }),
                     );
-                    view.on_error(|message| eprintln!("Agenda nsh: {message}"));
+                    view.on_error(|message| eprintln!("Atlas nsh: {message}"));
                 })
             });
-            let view = cx.new(|_| nsh_host::AgendaShell {
+            let view = cx.new(|_| nsh_host::AtlasShell {
                 agenda,
                 nsh,
                 close_handler_installed: false,
@@ -117,7 +117,7 @@ fn open_agenda_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Agen
             // gpui-component widgets (Input, menus) require a ui::Root window layer.
             let root = cx.new(|cx| gpui_component::Root::new(view, window, cx));
             // Root paints an opaque theme background over the whole window;
-            // Agenda's own root owns the window background so the sidebar
+            // Atlas's own root owns the window background so the sidebar
             // acrylic/mica material can show through.
             root.update(cx, |root, _| {
                 root.style().background = Some(gpui::transparent_black().into());
@@ -138,7 +138,7 @@ fn main() {
             .add_fonts(font_bytes())
             .expect("failed to load embedded fonts");
 
-        let (window, agenda) = open_agenda_window(cx);
+        let (window, agenda) = open_atlas_window(cx);
         #[cfg(target_os = "macos")]
         native_menu::install(cx);
         #[cfg(feature = "e2e")]

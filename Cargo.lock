@@ -163,24 +163,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "agenda-gpui"
-version = "0.3.8"
-dependencies = [
- "chrono",
- "embed-resource",
- "gpui-component",
- "gpui-fast",
- "gpui-kit",
- "imago-nsh",
- "objc",
- "objc_exception",
- "serde",
- "serde_json",
- "ureq 2.12.1",
- "uuid",
-]
-
-[[package]]
 name = "ahash"
 version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -516,6 +498,24 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.9",
+]
+
+[[package]]
+name = "atlas-gpui"
+version = "0.3.8"
+dependencies = [
+ "chrono",
+ "embed-resource",
+ "gpui-component",
+ "gpui-fast",
+ "gpui-kit",
+ "imago-nsh",
+ "objc",
+ "objc_exception",
+ "serde",
+ "serde_json",
+ "ureq 2.12.1",
+ "uuid",
 ]
 
 [[package]]

@@ -111,7 +111,7 @@ fn write_state_and_planning(object: &mut Value, todo: &Todo, now: &str) {
         Status::Inbox | Status::Todo => json!({"kind":"open","at":null}),
     };
     let props = &mut object["propsJson"];
-    // Agenda does not edit the period; keep whatever the object carries.
+    // Atlas does not edit the period; keep whatever the object carries.
     let period = props["planning"]["period"]
         .as_str()
         .unwrap_or("any")

@@ -1,6 +1,6 @@
 //! Consumer of Engine's per-app appearance settings. All state lives in the
 //! Engine data dir — the app holds no local appearance file; `get`/`set` are
-//! scoped to `agenda-gpui` via `app_id`.
+//! scoped to `atlas-gpui` via `app_id`.
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -10,7 +10,7 @@ use std::time::Duration;
 
 use crate::store::Engine;
 
-pub const APP_ID: &str = "agenda-gpui";
+pub const APP_ID: &str = "com.mundus.atlas";
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]

@@ -209,7 +209,7 @@ fn write_reminder(props: &mut Value, reminder: Option<&str>) {
     props["reminders"] = json!(reminders);
 }
 
-/// Items keep the id, text and rank the Engine gave them; Agenda only toggles `done`.
+/// Items keep the id, text and rank the Engine gave them; Atlas only toggles `done`.
 fn write_checklist(props: &mut Value, items: &[ChecklistItem], task: &str) {
     let stored = props["checklist"].as_array().cloned().unwrap_or_default();
     let next: Vec<Value> = items

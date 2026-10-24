@@ -147,7 +147,7 @@ fn persistence_across_client_processes() {
                 "--nocapture",
             ])
             .env("MUNDUS_DATA_DIR", &directory)
-            .env("AGENDA_TEST_CLIENT", mode)
+            .env("ATLAS_TEST_CLIENT", mode)
             .output()
             .unwrap();
         assert!(

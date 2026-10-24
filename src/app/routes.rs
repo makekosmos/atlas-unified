@@ -1,4 +1,4 @@
-use super::Agenda;
+use super::Atlas;
 use crate::model::Project;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -15,7 +15,7 @@ pub(crate) enum Route {
     Project(String),
 }
 
-impl Agenda {
+impl Atlas {
     pub(crate) fn navigate(&mut self, route: Route) {
         self.route = route;
     }

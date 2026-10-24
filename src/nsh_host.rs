@@ -1,15 +1,15 @@
 use gpui::{div, Context, IntoElement, ParentElement, Render, Styled, Window};
 use imago_nsh::AppView;
 
-use crate::app::Agenda;
+use crate::app::Atlas;
 
-pub(crate) struct AgendaShell {
-    pub(crate) agenda: gpui::Entity<Agenda>,
+pub(crate) struct AtlasShell {
+    pub(crate) agenda: gpui::Entity<Atlas>,
     pub(crate) nsh: gpui::Entity<AppView>,
     pub(crate) close_handler_installed: bool,
 }
 
-impl Render for AgendaShell {
+impl Render for AtlasShell {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         if !self.close_handler_installed {
             self.close_handler_installed = true;

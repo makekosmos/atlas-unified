@@ -5,7 +5,7 @@ Window ""
   Button "Потом" selected=false
   Button "Проекты"
     Button "Новый проект"
-  Button "Релиз Agenda 1.0" selected=false
+  Button "Релиз Atlas 1.0" selected=false
   Button "Дом и быт" selected=false
   Button "Другое"
   Button "Параметры отображения"

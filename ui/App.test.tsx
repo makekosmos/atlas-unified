@@ -1,6 +1,6 @@
 import { expect, open, test } from "nsh/test";
 
-test("shows the main Agenda routes", async () => {
+test("shows the main Atlas routes", async () => {
   const app = await open("./App.tsx");
   expect(app.texts()).toContain("Входящие");
   expect(app.texts()).toContain("Эта неделя");

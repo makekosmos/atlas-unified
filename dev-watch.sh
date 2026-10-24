@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Rebuild/relaunch Agenda on save (not HMR). Ctrl+C stops watch and the app.
+# Rebuild/relaunch Atlas on save (not HMR). Ctrl+C stops watch and the app.
 # ./dev-watch.sh                — use the committed Git dependencies
 # ./dev-watch.sh --local-imago  — also watch the sibling Imago checkout
 set -euo pipefail
 cd "$(dirname "$0")"
 
 watch=(--watch src --watch assets --watch Cargo.toml --watch Cargo.lock --watch build.rs)
-run="cargo run --bin agenda-gpui"
+run="cargo run --bin atlas-gpui"
 if [[ "${1:-}" == "--local-imago" ]]; then
     imago="$(cd ../imago && pwd)"
     mkdir -p .cargo
@@ -15,7 +15,7 @@ if [[ "${1:-}" == "--local-imago" ]]; then
     watch+=(--watch "$imago/crates/imago-gpui/src" --watch "$imago/crates/imago-gpui/assets"
         --watch "$imago/crates/imago-gpui/Cargo.toml" --watch "$imago/crates/mundus-gpui-kit/src"
         --watch "$imago/crates/mundus-gpui-kit/Cargo.toml")
-    run="cargo --config .cargo/imago-local.toml run --bin agenda-gpui"
+    run="cargo --config .cargo/imago-local.toml run --bin atlas-gpui"
 elif [[ $# -ne 0 ]]; then
     echo "Usage: $0 [--local-imago]" >&2
     exit 2
