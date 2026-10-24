@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# End-to-end run of Agenda against a throwaway Mundus Engine, with screenshots.
+# End-to-end run of Atlas against a throwaway Mundus Engine, with screenshots.
 #
 # Usage: scripts/e2e-macos.sh [out-dir]
 #   MUNDUS_ENGINE_BIN  Engine binary (default: ../cortex/target/debug/mundus-engine)
 #
-# Scenarios (src/e2e/): create → persist (fresh Agenda process, same data)
+# Scenarios (src/e2e/): create → persist (fresh Atlas process, same data)
 # → offline (Engine stopped and restarted mid-run). Each writes PNGs and
 # report.txt into its own subdirectory; exit status is non-zero on any FAIL.
 set -euo pipefail
@@ -45,14 +45,14 @@ cleanup() {
 trap cleanup EXIT
 
 # Own target dir: a `cargo watch` on the same checkout rebuilds
-# target/debug/agenda-gpui without the feature and would swap the binary.
+# target/debug/atlas-gpui without the feature and would swap the binary.
 (cd "$root" && cargo build --features e2e --quiet --target-dir "$root/target/e2e-build")
-agenda="$root/target/e2e-build/debug/agenda-gpui"
+agenda="$root/target/e2e-build/debug/atlas-gpui"
 
 run_scenario() {
 	local name="$1"
 	mkdir -p "$out/$name"
-	AGENDA_E2E="$name" AGENDA_E2E_OUT="$out/$name" MUNDUS_DATA_DIR="$data" \
+	ATLAS_E2E="$name" ATLAS_E2E_OUT="$out/$name" MUNDUS_DATA_DIR="$data" \
 		"$agenda" >"$out/$name/agenda.log" 2>&1 &
 	local pid=$!
 	local deadline=$((SECONDS + 300))

@@ -1,5 +1,5 @@
 //! Golden dump for the Android read-parity gate (KOS-370): prints the seed
-//! dataset as Engine objects plus the expected contents of every smart
+//! dataset as Engine objects and task `project` links plus the expected contents of every smart
 //! list, project view and tag filter for a fixed `today`, all computed by
 //! the same agenda-core rules desktop runs. Usage:
 //!   cargo run -p agenda-core --bin seed-parity -- <YYYY-MM-DD> <utc-offset-secs>
@@ -66,7 +66,13 @@ fn main() -> Result<(), String> {
     for p in &projs {
         objects.push(projects::project_object(&Value::Null, p, &now));
     }
-    objects.push(projects::references_object(&[], &tags, &now));
+    let links: Vec<Value> = todos
+        .iter()
+        .filter_map(|t| {
+            let project = t.project_id.as_deref()?;
+            Some(projects::project_link(&t.id, project, &now))
+        })
+        .collect();
 
     let mut lists = serde_json::Map::new();
     for (name, list) in [
@@ -99,6 +105,7 @@ fn main() -> Result<(), String> {
         "today": day.today_key(),
         "utcOffsetSeconds": offset,
         "objects": objects,
+        "links": links,
         "todos": todos,
         "projects": projs,
         "tags": tags,

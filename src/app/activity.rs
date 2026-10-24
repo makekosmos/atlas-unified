@@ -1,10 +1,10 @@
 use chrono::{Datelike, Duration, Local, NaiveDate};
 use serde_json::{json, Value};
 
-use super::Agenda;
+use super::Atlas;
 use crate::model::{completed_day, Todo};
 
-impl Agenda {
+impl Atlas {
     pub(crate) fn nsh_activity(&self) -> Vec<Value> {
         let today = Local::now().date_naive();
         let end = today - Duration::days(today.weekday().num_days_from_monday() as i64);

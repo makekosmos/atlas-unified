@@ -106,7 +106,7 @@ jobs:
         run: |
           macos_sdk_version=$(xcrun --sdk macosx --show-sdk-version)
           if [ "${macos_sdk_version%%.*}" -lt 26 ]; then
-            echo "Agenda requires macOS SDK 26+ for native Tahoe window controls (found $macos_sdk_version)" >&2
+            echo "Atlas requires macOS SDK 26+ for native Tahoe window controls (found $macos_sdk_version)" >&2
             exit 1
           fi
           if ! xcrun --find metal; then
@@ -124,12 +124,12 @@ jobs:
         if: runner.os == 'Windows'
         run: cargo run --locked --release --bin check-source-size --target "$BUILD_TARGET"
       - name: Release build
-        run: cargo build --locked --release --bin agenda-gpui --target "$BUILD_TARGET"
+        run: cargo build --locked --release --bin atlas-gpui --target "$BUILD_TARGET"
       - name: Package
         run: python scripts/release.py package "$BUILD_TARGET"
       - uses: actions/upload-artifact@v7
         with:
-          name: agenda-${{ matrix.target }}
+          name: atlas-${{ matrix.target }}
           path: |
             dist/*.zip
             dist/*.tar.gz
@@ -138,7 +138,7 @@ jobs:
 
   publish:
     needs: [prepare, build]
-    if: needs.prepare.outputs.release == 'true'
+    if: false # Atlas publishing stays disabled until the release flow is approved.
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -159,7 +159,7 @@ jobs:
           python-version: '3.12'
       - uses: actions/download-artifact@v8
         with:
-          pattern: agenda-*
+          pattern: atlas-*
           merge-multiple: true
           path: dist
       - name: Generate task and contributor notes
@@ -178,6 +178,6 @@ jobs:
             python -c 'import json; assert json.load(open("release-state.json"))["isDraft"], "Release already published"'
             gh release upload "$tag" dist/* --clobber
           else
-            gh release create "$tag" dist/* --verify-tag --draft --title "Agenda $tag" --notes-file release-notes.md
+            gh release create "$tag" dist/* --verify-tag --draft --title "Atlas $tag" --notes-file release-notes.md
           fi
           gh release edit "$tag" --notes-file release-notes.md --draft=false --latest

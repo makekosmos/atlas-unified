@@ -1,10 +1,10 @@
 [package]
-name = "agenda-gpui"
+name = "atlas-gpui"
 version = "0.3.8"
 edition = "2021"
-description = "GPUI clone of the Agenda task UI (experimental, KOS-124)"
+description = "GPUI clone of the Atlas task UI (experimental, KOS-124)"
 publish = false
-default-run = "agenda-gpui"
+default-run = "atlas-gpui"
 [workspace]
 members = ["crates/agenda-core"]
 
@@ -83,7 +83,7 @@ gpui-fast-backend = { package = "gpui-fast", version = "=0.1.10", features = ["w
 
 [patch.crates-io]
 # gpui-fast and its gpui-pre compatibility dependency are patched from the
-# same Imago revision as the shared Agenda components. Agenda uses gpui-kit's
+# same Imago revision as the shared Atlas components. Atlas uses gpui-kit's
 # gpui-fast feature and doesn't import gpui-pre itself.
 gpui-fast = { git = "https://github.com/makekosmos/imago.git", rev = "9b73a3f1e471291faf8e50ea484f99c6f55e9789" }
 gpui-pre = { git = "https://github.com/makekosmos/imago.git", rev = "9b73a3f1e471291faf8e50ea484f99c6f55e9789" }

@@ -6,12 +6,13 @@ use std::path::PathBuf;
 // Engine contract fixtures (KOS-297).
 //
 // These are the exact objects `mapping::write` sends to `upsert_object`.
-// The project link is not in them: `store.rs` writes it as an object link.
+// The task's project is never a prop: it is a `project` link
+// (`fixtures/engine/task-project-link.json`, pinned in `store::projects`).
 // They are committed under `fixtures/engine/` and consumed by the ark-core
 // contract test in cortex (`phase3_agenda_contract`), which validates them
 // against the real `canonical_ingress`. The two repos cannot share code, so
 // the fixture files are the contract: change the write path here → regenerate
-// (`AGENDA_EMIT_FIXTURES=1 cargo test engine_payload_fixtures`), then copy the files
+// (`ATLAS_EMIT_FIXTURES=1 cargo test engine_payload_fixtures`), then copy the files
 // into `cortex/core/crates/ark-core/tests/fixtures/agenda/`.
 // ---------------------------------------------------------------------------
 
@@ -72,21 +73,21 @@ fn emit(name: &str, object: &Value) {
         serde_json::to_string_pretty(&sorted(object)).unwrap()
     );
     let path = fixture_dir().join(format!("{name}.json"));
-    if std::env::var_os("AGENDA_EMIT_FIXTURES").is_some() {
+    if std::env::var_os("ATLAS_EMIT_FIXTURES").is_some() {
         std::fs::create_dir_all(fixture_dir()).unwrap();
         std::fs::write(&path, &produced).unwrap();
         return;
     }
     let committed = std::fs::read_to_string(&path).unwrap_or_else(|_| {
         panic!(
-            "missing fixture {}; run with AGENDA_EMIT_FIXTURES=1",
+            "missing fixture {}; run with ATLAS_EMIT_FIXTURES=1",
             path.display()
         )
     });
     assert_eq!(
         produced, committed,
         "{name}: write output drifted from the committed fixture — regenerate with \
-         `AGENDA_EMIT_FIXTURES=1 cargo test engine_payload_fixtures`, then copy \
+         `ATLAS_EMIT_FIXTURES=1 cargo test engine_payload_fixtures`, then copy \
          fixtures/engine/*.json into cortex \
          core/crates/ark-core/tests/fixtures/agenda/ in the same change"
     );
@@ -118,7 +119,7 @@ fn engine_payload_fixtures_match_write_output() {
         // Edits to an existing object produce the same contract shape; the
         // KOS-295 regression (Engine-owned `dayOfMonth` leaking into
         // `recurrence`) was an edit-path write.
-        let before = mapping::read(&object, &[]).unwrap();
+        let before = mapping::read(&object).unwrap();
         let mut edited = before.clone();
         edited.title = format!("{name} edited");
         let rewritten = mapping::write_at(object, Some(&before), &edited, NOW).unwrap();

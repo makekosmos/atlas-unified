@@ -4,15 +4,15 @@ use crate::filters::task_status;
 use crate::types::{ChecklistItem, Status, Todo};
 use serde_json::{json, Value};
 
-/// Fields `write_at` never copies into `extensions`: canonical props, the
-/// project link, or the object row itself own them.
+/// Fields `write_at` never copies into `extensions`: canonical props or the
+/// object row itself own them.
 const NOT_EXTENSION: [&str; 15] = [
     "id",
+    "project_id",
     "title",
     "notes",
     "checklist",
     "reminder_date",
-    "project_id",
     "created_at",
     "status",
     "is_today",
@@ -27,8 +27,7 @@ const NOT_EXTENSION: [&str; 15] = [
 /// Patch a fresh Engine object, retaining fields this UI does not understand.
 /// The caller owns the clock (`now` stamps `updatedAt`, `deletedAt` and new
 /// completion or cancellation instants; fixtures pin it) and `day` supplies
-/// the local offset `date_only` needs. Project links are not written here:
-/// the caller diffs `project_id` against the stored link.
+/// the local offset `date_only` needs. The project is a `project` link, not a prop.
 pub fn write_at(
     mut object: Value,
     before: Option<&Todo>,
@@ -209,7 +208,7 @@ fn write_reminder(props: &mut Value, reminder: Option<&str>) {
     props["reminders"] = json!(reminders);
 }
 
-/// Items keep the id, text and rank the Engine gave them; Agenda only toggles `done`.
+/// Items keep the id, text and rank the Engine gave them; Atlas only toggles `done`.
 fn write_checklist(props: &mut Value, items: &[ChecklistItem], task: &str) {
     let stored = props["checklist"].as_array().cloned().unwrap_or_default();
     let next: Vec<Value> = items

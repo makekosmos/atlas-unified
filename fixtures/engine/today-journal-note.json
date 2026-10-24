@@ -1,0 +1,24 @@
+{
+  "contentJson": {
+    "content": [
+      {
+        "content": [{ "text": "Запись за сегодня", "type": "text" }],
+        "type": "paragraph"
+      }
+    ],
+    "type": "doc"
+  },
+  "createdAt": "2026-10-24T09:00:00.000Z",
+  "deletedAt": null,
+  "id": "journal:2026-10-24",
+  "propsJson": {
+    "description": "Запись за сегодня",
+    "extensions": {
+      "entry_kind": "journal"
+    }
+  },
+  "title": "Сегодня · 2026-10-24",
+  "typeId": "core.note",
+  "typeVersion": "0.1.0",
+  "updatedAt": "2026-10-24T09:00:00.000Z"
+}

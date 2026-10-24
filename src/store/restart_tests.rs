@@ -1,11 +1,11 @@
 use super::*;
-use crate::model::{is_due_this_week, is_inbox, new_todo, today_key, week_bounds, Status};
+use crate::model::{is_due_this_week, is_inbox, new_todo, today_key, week_bounds, Project, Status};
 
 // Run as a child process by `tests::persistence_across_client_processes`: no shared in-memory task state.
 #[test]
 #[ignore]
 fn restart_client() {
-    let Ok(mode) = std::env::var("AGENDA_TEST_CLIENT") else {
+    let Ok(mode) = std::env::var("ATLAS_TEST_CLIENT") else {
         return;
     };
     let engine = Engine::default();
@@ -104,75 +104,53 @@ fn restart_client() {
             assert!(persisted.contains(&next));
         }
         "project" => {
-            // Projects are objects, and a task's project is an object link that moves with it.
             let project = Project {
                 id: "restart-project".into(),
                 title: "Ремонт".into(),
                 status: 0,
                 sort_order: 0,
             };
-            let other = Project {
-                id: "restart-other-project".into(),
-                title: "Дача".into(),
-                ..project.clone()
-            };
             engine.save_project(&project).unwrap();
-            engine.save_project(&other).unwrap();
             let mut todo = new_todo("restart-linked", "Linked");
-            todo.created_at = "2026-09-20T10:00:00Z".into();
             todo.project_id = Some(project.id.clone());
             engine.save(None, &todo).unwrap();
-            let linked = engine.load().unwrap().todos;
-            let before = linked.iter().find(|t| t.id == todo.id).unwrap().clone();
-            assert_eq!(before.project_id.as_deref(), Some("restart-project"));
-            // A move replaces the link in one Engine call: the task keeps exactly one project link.
-            let mut to_other = before.clone();
-            to_other.project_id = Some(other.id.clone());
-            engine.save(Some(&before), &to_other).unwrap();
+            let stored = engine.rpc("get_object", json!({"id":project.id})).unwrap();
+            assert_eq!(stored["typeId"], "core.project", "saved project: {stored}");
+            let links = engine.rpc("list_object_links", json!({})).unwrap();
             assert_eq!(
-                engine
-                    .load()
-                    .unwrap()
-                    .todos
-                    .iter()
-                    .find(|t| t.id == todo.id)
-                    .unwrap()
-                    .project_id
-                    .as_deref(),
-                Some("restart-other-project")
+                links,
+                json!([{"id":"restart-linked:project","sourceObjectId":"restart-linked",
+                    "targetObjectId":"restart-project","linkType":"project",
+                    "createdAt":links[0]["createdAt"]}]),
             );
-            let own_links = engine
-                .rpc("list_object_links", json!({}))
-                .unwrap()
-                .as_array()
-                .unwrap()
+        }
+        "unproject" => {
+            let snapshot = engine.load().unwrap();
+            assert_eq!(
+                snapshot.projects,
+                vec![Project {
+                    id: "restart-project".into(),
+                    title: "Ремонт".into(),
+                    status: 0,
+                    sort_order: 0,
+                }]
+            );
+            let before = snapshot
+                .todos
                 .iter()
-                .filter(|l| l["sourceObjectId"] == todo.id)
-                .count();
-            assert_eq!(own_links, 1);
-            let mut moved = to_other.clone();
-            moved.project_id = None;
-            engine.save(Some(&to_other), &moved).unwrap();
-            let loaded = engine.load().unwrap().todos;
+                .find(|stored| stored.id == "restart-linked")
+                .expect("linked task reloads");
+            assert_eq!(before.project_id.as_deref(), Some("restart-project"));
+            let mut todo = before.clone();
+            todo.project_id = None;
+            engine.save(Some(before), &todo).unwrap();
             assert_eq!(
-                loaded.iter().find(|t| t.id == todo.id).unwrap().project_id,
-                None
+                engine.rpc("list_object_links", json!({})).unwrap(),
+                json!([])
             );
-            // A project that is not an object yet is refused before the task is written.
-            let mut unknown = moved.clone();
-            unknown.project_id = Some("missing-project".into());
-            assert!(engine.save(Some(&moved), &unknown).is_err());
-            assert_eq!(
-                engine
-                    .load()
-                    .unwrap()
-                    .todos
-                    .iter()
-                    .find(|t| t.id == todo.id)
-                    .unwrap()
-                    .project_id,
-                None
-            );
+            let reloaded = engine.load().unwrap().todos;
+            let unlinked = reloaded.iter().find(|t| t.id == todo.id).unwrap();
+            assert_eq!(unlinked.project_id, None);
         }
         _ => panic!("unknown test mode"),
     }

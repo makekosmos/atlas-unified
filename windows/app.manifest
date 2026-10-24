@@ -3,7 +3,7 @@
   <assemblyIdentity
       version="1.0.0.0"
       processorArchitecture="amd64"
-      name="AgendaGpui"
+      name="AtlasGpui"
       type="win32"
   />
   <dependency>

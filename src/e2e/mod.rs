@@ -6,7 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::app::Agenda;
+use crate::app::Atlas;
 use gpui::{AnyWindowHandle, App, AsyncApp, Entity};
 
 mod capture;
@@ -14,12 +14,12 @@ mod nsh_host;
 mod nsh_stage3;
 
 pub fn requested() -> bool {
-    std::env::var("AGENDA_E2E").is_ok()
+    std::env::var("ATLAS_E2E").is_ok()
 }
 
-pub fn run(window: AnyWindowHandle, agenda: Entity<Agenda>, cx: &mut App) {
-    let out = PathBuf::from(std::env::var("AGENDA_E2E_OUT").unwrap_or_else(|_| "e2e-out".into()));
-    std::fs::create_dir_all(&out).expect("create AGENDA_E2E_OUT");
+pub fn run(window: AnyWindowHandle, agenda: Entity<Atlas>, cx: &mut App) {
+    let out = PathBuf::from(std::env::var("ATLAS_E2E_OUT").unwrap_or_else(|_| "e2e-out".into()));
+    std::fs::create_dir_all(&out).expect("create ATLAS_E2E_OUT");
     let run = Run {
         window,
         agenda,
@@ -28,7 +28,7 @@ pub fn run(window: AnyWindowHandle, agenda: Entity<Agenda>, cx: &mut App) {
         failed: Rc::new(RefCell::new(false)),
     };
     cx.spawn(async move |cx| {
-        if std::env::var("AGENDA_E2E").as_deref() == Ok("nsh-stage3") {
+        if std::env::var("ATLAS_E2E").as_deref() == Ok("nsh-stage3") {
             run.nsh_stage3(cx).await;
         } else {
             run.shot(cx, "inbox").await;
@@ -44,7 +44,7 @@ pub fn run(window: AnyWindowHandle, agenda: Entity<Agenda>, cx: &mut App) {
 
 pub(super) struct Run {
     window: AnyWindowHandle,
-    agenda: Entity<Agenda>,
+    agenda: Entity<Atlas>,
     out: PathBuf,
     report: Rc<RefCell<String>>,
     failed: Rc<RefCell<bool>>,
@@ -62,7 +62,7 @@ impl Run {
         }
     }
 
-    pub(super) fn read<R>(&self, cx: &mut AsyncApp, f: impl FnOnce(&Agenda) -> R) -> R {
+    pub(super) fn read<R>(&self, cx: &mut AsyncApp, f: impl FnOnce(&Atlas) -> R) -> R {
         cx.update(|cx| f(self.agenda.read(cx)))
     }
 
@@ -76,7 +76,7 @@ impl Run {
         &self,
         cx: &mut AsyncApp,
         timeout: Duration,
-        done: impl Fn(&Agenda) -> bool,
+        done: impl Fn(&Atlas) -> bool,
     ) -> bool {
         let start = Instant::now();
         while start.elapsed() < timeout {

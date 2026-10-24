@@ -1,5 +1,5 @@
 //! `n` todos with random-character titles and randomized fields for
-//! `AGENDA_DEVTASKS` (xorshift64*, no external deps).
+//! `ATLAS_DEVTASKS` (xorshift64*, no external deps).
 use super::*;
 
 /// Dev tool: `n` todos with random-character titles and randomized fields

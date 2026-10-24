@@ -1,30 +1,20 @@
 use crate::model::{Status, Todo};
 use serde_json::{json, Value};
 
-/// core.task 0.1.0 (KOS-397). The project is an object link, not a prop; the
-/// Engine returns links separately, and `store.rs` diffs the link on save.
-/// Fields Agenda does not show (deadline, reminders, priority, checklist,
+/// core.task 0.1.0 (KOS-397). Atlas-only fields live in extensions; the
+/// project is an Engine `project` link (see `projects`), never a prop.
+/// Core props and content owned by other clients stay intact.
+/// Fields Atlas does not show (deadline, reminders, priority, checklist,
 /// recurrence, tags, evening period) stay on the object untouched.
 pub const TASK_TYPE: &str = "core.task";
 pub const TASK_VERSION: &str = "0.1.0";
-pub const PROJECT_LINK: &str = "project";
-
-/// An outbound task link as the Engine lists it: `kind` is the link type and
-/// `target` the linked object id.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Link {
-    pub id: String,
-    pub kind: String,
-    pub target: String,
-}
-
 /// Fields the write path never copies into `extensions`: they live in
 /// canonical props, links, or the object row itself.
 const NOT_EXTENSION: [&str; 12] = [
     "id",
+    "project_id",
     "title",
     "notes",
-    "project_id",
     "created_at",
     "status",
     "is_today",
@@ -41,7 +31,7 @@ pub use write::write;
 #[cfg(test)]
 pub use write::write_at;
 
-pub fn read(object: &Value, links: &[Link]) -> Result<Todo, String> {
+pub fn read(object: &Value) -> Result<Todo, String> {
     if object["typeId"] != TASK_TYPE || !object["id"].is_string() {
         return Err("Engine вернул некорректную задачу".into());
     }
@@ -64,7 +54,7 @@ pub fn read(object: &Value, links: &[Link]) -> Result<Todo, String> {
     let state = props["state"]["kind"].as_str().unwrap_or("open");
     let planning = props["planning"]["kind"].as_str().unwrap_or("inbox");
     let legacy_deferred = fields.get("status") == Some(&json!("deferred"));
-    // Agenda has two states. Legacy states other clients wrote still open:
+    // Atlas has two states. Legacy states other clients wrote still open:
     // `canceled` reads as done (closed, but no completion stamp, so it stays
     // out of statistics), `inProgress` as not done. `write` keeps them stored
     // until the user toggles the task.
@@ -95,13 +85,8 @@ pub fn read(object: &Value, links: &[Link]) -> Result<Todo, String> {
         fields.get("scheduled_date").cloned().unwrap_or(Value::Null)
     };
     fields.insert("scheduled_date".into(), scheduled);
-    fields.insert(
-        "project_id".into(),
-        json!(links
-            .iter()
-            .find(|l| l.kind == PROJECT_LINK)
-            .map(|l| l.target.clone())),
-    );
+    // The project comes from the task's `project` link, not from props.
+    fields.insert("project_id".into(), Value::Null);
     serde_json::from_value(Value::Object(fields)).map_err(|e| e.to_string())
 }
 

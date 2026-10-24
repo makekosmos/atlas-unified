@@ -1,8 +1,8 @@
-use super::{Agenda, Route};
+use super::{Atlas, Route};
 use crate::model::{new_todo, next_monday_key, today_key, Status, Todo};
 use crate::store::{Command, Mutation};
 
-impl Agenda {
+impl Atlas {
     pub(crate) fn toggle_sidebar(&mut self) {
         self.sidebar_visible = !self.sidebar_visible;
     }

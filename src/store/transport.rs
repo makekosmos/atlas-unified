@@ -82,7 +82,7 @@ impl Engine {
             .post(&format!("http://127.0.0.1:{}/v1/rpc", lock.http_port))
             .set("Authorization", &format!("Bearer {}", lock.auth_token))
             .set("X-Kosmos-Api-Version", "1.0.0")
-            .set("X-Kosmos-Client-Class", "agenda-gpui")
+            .set("X-Kosmos-Client-Class", "atlas-gpui")
             .set("X-Kosmos-Client-Version", env!("CARGO_PKG_VERSION"))
             .set("X-Kosmos-Client-Pid", &std::process::id().to_string())
             .send_json(params)

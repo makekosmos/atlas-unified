@@ -9,14 +9,6 @@ fn stored(props: Value) -> Value {
         "contentJson":{"type":"doc","content":[{"type":"paragraph"}]},"propsJson":props})
 }
 
-fn project_link(project: &str) -> mapping::Link {
-    mapping::Link {
-        id: format!("lnk:t1:project:{project}"),
-        kind: mapping::PROJECT_LINK.into(),
-        target: project.into(),
-    }
-}
-
 #[test]
 fn read_maps_core_task_state_planning_and_links() {
     let object = stored(json!({
@@ -27,26 +19,26 @@ fn read_maps_core_task_state_planning_and_links() {
         "priority":"urgent",
         "checklist":[{"id":"c1","text":"Шаг","done":true,"rank":"000000"}],
         "extensions":{"description":"заметка","tag_ids":["g1"],"sort_order":4}}));
-    let todo = mapping::read(&object, &[project_link("p1")]).unwrap();
+    let todo = mapping::read(&object).unwrap();
     assert_eq!(todo.status, Status::Done);
     assert!(todo.is_completed && todo.is_today && !todo.is_someday);
     assert_eq!(todo.completed_at.as_deref(), Some("2026-09-20T12:00:00Z"));
-    assert_eq!(todo.project_id.as_deref(), Some("p1"));
+    assert_eq!(todo.project_id, None);
     assert_eq!(todo.notes.as_deref(), Some("заметка"));
     assert_eq!(todo.sort_order, 4);
 }
 
 #[test]
 fn read_planning_kinds_map_to_status_and_schedule() {
-    let inbox = mapping::read(&stored(json!({"planning":{"kind":"inbox"}})), &[]).unwrap();
+    let inbox = mapping::read(&stored(json!({"planning":{"kind":"inbox"}}))).unwrap();
     assert_eq!(inbox.status, Status::Inbox);
     let dated = stored(json!({"planning":{"kind":"date","period":"any","date":"2026-09-25"}}));
-    let dated = mapping::read(&dated, &[]).unwrap();
+    let dated = mapping::read(&dated).unwrap();
     assert_eq!(dated.scheduled_date.as_deref(), Some("2026-09-25"));
     assert_eq!(dated.status, Status::Todo);
     let deferred =
         stored(json!({"planning":{"kind":"someday"},"extensions":{"status":"deferred"}}));
-    let deferred = mapping::read(&deferred, &[]).unwrap();
+    let deferred = mapping::read(&deferred).unwrap();
     assert_eq!(deferred.status, Status::Todo);
     assert!(deferred.is_someday);
 }
@@ -56,7 +48,7 @@ fn legacy_states_read_as_two_states_and_survive_edits() {
     let read = |state: &str, ext: Value| {
         let object = stored(json!({"state":{"kind":state,"at":null},
             "planning":{"kind":"anytime"},"extensions":ext}));
-        (object.clone(), mapping::read(&object, &[]).unwrap())
+        (object.clone(), mapping::read(&object).unwrap())
     };
     // Canceled is closed: done, but no completion stamp for statistics.
     let (canceled, todo) = read("canceled", json!({}));
@@ -90,8 +82,20 @@ fn write_then_read_round_trips_every_status() {
         todo.notes = Some("заметка".into());
         let object = mapping::write_at(Value::Null, None, &todo, NOW).unwrap();
         assert_eq!(object["typeVersion"], json!(mapping::TASK_VERSION));
-        assert_eq!(mapping::read(&object, &[]).unwrap(), todo, "{status:?}");
+        assert_eq!(mapping::read(&object).unwrap(), todo, "{status:?}");
     }
+}
+
+#[test]
+fn project_is_not_written_into_task_props() {
+    let mut todo = new_todo("t1", "Задача");
+    todo.project_id = Some("p1".into());
+    let object = mapping::write_at(Value::Null, None, &todo, NOW).unwrap();
+    assert!(
+        !object["propsJson"].to_string().contains("p1"),
+        "project belongs in a `project` link: {object}"
+    );
+    assert_eq!(mapping::read(&object).unwrap().project_id, None);
 }
 
 #[test]
@@ -107,7 +111,7 @@ fn scheduled_day_survives_a_today_plan() {
         object["propsJson"]["extensions"]["scheduled_date"],
         "2026-10-14"
     );
-    assert_eq!(mapping::read(&object, &[]).unwrap(), todo);
+    assert_eq!(mapping::read(&object).unwrap(), todo);
 }
 
 #[test]
@@ -115,14 +119,14 @@ fn write_keeps_stored_instant_when_the_edit_is_a_bare_day() {
     let original = stored(json!({
         "state":{"kind":"done","at":"2026-09-20T12:00:00Z"},
         "planning":{"kind":"anytime","period":"any","date":null}}));
-    let before = mapping::read(&original, &[]).unwrap();
+    let before = mapping::read(&original).unwrap();
     let mut edited = before.clone();
     edited.completed_at = Some("2026-09-21".into()); // malformed day-only value
     let written = mapping::write(original, Some(&before), &edited).unwrap();
     assert_eq!(written["propsJson"]["state"]["at"], "2026-09-20T12:00:00Z");
 }
 
-/// Agenda does not show these fields, so an edit must leave them as stored.
+/// Atlas does not show these fields, so an edit must leave them as stored.
 #[test]
 fn write_keeps_fields_agenda_does_not_show() {
     let kept = json!({
@@ -134,7 +138,7 @@ fn write_keeps_fields_agenda_does_not_show() {
     let mut props = kept.clone();
     props["planning"] = json!({"kind":"anytime","period":"evening","date":null});
     let original = stored(props);
-    let before = mapping::read(&original, &[]).unwrap();
+    let before = mapping::read(&original).unwrap();
     let mut edited = before.clone();
     edited.title = "Другая".into();
     edited.is_today = true;

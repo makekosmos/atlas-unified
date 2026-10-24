@@ -1,9 +1,10 @@
-use super::{Link, PROJECT_LINK, TASK_TYPE};
+use super::TASK_TYPE;
 use crate::types::{Status, Todo};
 use serde_json::{json, Value};
 
-/// Read a `core.task` object and the links the Engine lists for it.
-pub fn read(object: &Value, links: &[Link]) -> Result<Todo, String> {
+/// Read a `core.task` object. `project_id` stays empty: the project is the
+/// task's `project` link (`projects::project_links`).
+pub fn read(object: &Value) -> Result<Todo, String> {
     if object["typeId"] != TASK_TYPE || !object["id"].is_string() {
         return Err("Engine вернул некорректную задачу".into());
     }
@@ -29,7 +30,7 @@ pub fn read(object: &Value, links: &[Link]) -> Result<Todo, String> {
     let state = props["state"]["kind"].as_str().unwrap_or("open");
     let planning = props["planning"]["kind"].as_str().unwrap_or("inbox");
     let legacy_deferred = fields.get("status") == Some(&json!("deferred"));
-    // Agenda has two states. Legacy states other clients wrote still open:
+    // Atlas has two states. Legacy states other clients wrote still open:
     // `canceled` reads as done (closed, but no completion stamp, so it stays
     // out of statistics), `inProgress` as not done. `write_at` keeps them
     // stored until the user toggles the task.
@@ -65,13 +66,7 @@ pub fn read(object: &Value, links: &[Link]) -> Result<Todo, String> {
     };
     fields.insert("scheduled_date".into(), scheduled);
     fields.insert("reminder_date".into(), props["reminders"][0]["at"].clone());
-    fields.insert(
-        "project_id".into(),
-        json!(links
-            .iter()
-            .find(|l| l.kind == PROJECT_LINK)
-            .map(|l| l.target.clone())),
-    );
+    fields.insert("project_id".into(), Value::Null);
     let checklist: Vec<Value> = props["checklist"]
         .as_array()
         .into_iter()

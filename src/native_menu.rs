@@ -5,7 +5,7 @@ use gpui::{actions, App, KeyBinding, Menu, MenuItem, SystemMenuType};
 use objc::{class, msg_send, sel};
 
 actions!(
-    agenda_menu,
+    atlas_menu,
     [Quit, Hide, HideOthers, ShowAll, CloseWindow, Minimize]
 );
 
@@ -27,14 +27,14 @@ pub fn install(cx: &mut App) {
         KeyBinding::new("cmd-alt-h", HideOthers, None),
     ]);
     cx.set_menus([
-        Menu::new("Agenda").items([
+        Menu::new("Atlas").items([
             MenuItem::os_submenu("Службы", SystemMenuType::Services),
             MenuItem::separator(),
-            MenuItem::action("Скрыть Agenda", Hide),
+            MenuItem::action("Скрыть Atlas", Hide),
             MenuItem::action("Скрыть остальные", HideOthers),
             MenuItem::action("Показать все", ShowAll),
             MenuItem::separator(),
-            MenuItem::action("Завершить Agenda", Quit),
+            MenuItem::action("Завершить Atlas", Quit),
         ]),
         Menu::new("Окно").items([
             MenuItem::action("Свернуть", Minimize),

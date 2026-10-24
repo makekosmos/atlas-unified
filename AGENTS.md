@@ -1,7 +1,7 @@
-# AGENTS.md — agenda-unified
+# AGENTS.md — Atlas
 
-Нативное GPUI-приложение Agenda (задачи и календарь) для Mundus. Репозиторий `agenda-unified` (бывший `agenda-gpui`), один бинарный
-крейт `agenda-gpui` (имя крейта, бинаря и релизных артефактов не менять: по ним Store находит релизы). Главная платформа — Windows; Linux и macOS собираются и
+Нативное GPUI-приложение Atlas (задачи и календарь) для Mundus. История репозитория — `agenda-unified`, один бинарный
+крейт `atlas-gpui` (публикация релизов отключена до отдельного решения). Главная платформа — Windows; Linux и macOS собираются и
 проверяются в CI. Приложение ставится Engine из GitHub Releases этого репо.
 
 ## Карта
@@ -27,10 +27,10 @@
   `KOSMOS_DATA_DIR`, `<config>/Mundus`, `<config>/Kosmos` — побеждает первая
   папка с lock-файлом (`src/store/transport.rs`, `src/brand.rs`). Старые
   `KOSMOS_*`/`Kosmos` — переходный запас под `MIGRATION(KOS-267)`.
-- Переменные окружения для разработки: `AGENDA_DEMO=1` (демо без Engine,
-  ничего не сохраняется), `AGENDA_DEVTASKS=N`, `AGENDA_ROUTE`,
-  `AGENDA_OVERLAY`, `AGENDA_FPS`, `AGENDA_VSYNC`, `AGENDA_OFFSCREEN`,
-  `AGENDA_EMIT_FIXTURES`. Без Engine и без `AGENDA_DEMO` приложение показывает
+- Переменные окружения для разработки: `ATLAS_DEMO=1` (демо без Engine,
+  ничего не сохраняется), `ATLAS_DEVTASKS=N`, `ATLAS_ROUTE`,
+  `ATLAS_OVERLAY`, `ATLAS_FPS`, `ATLAS_VSYNC`, `ATLAS_OFFSCREEN`,
+  `ATLAS_EMIT_FIXTURES`. Без Engine и без `ATLAS_DEMO` приложение показывает
   ошибку подключения, а не тестовые карточки.
 
 ## Запуск
@@ -38,7 +38,7 @@
 ```text
 cargo run                                   # против живого Engine
 MUNDUS_DATA_DIR=<dir> cargo run             # другая папка данных
-AGENDA_DEMO=1 cargo run                     # без Engine
+ATLAS_DEMO=1 cargo run                     # без Engine
 ```
 
 Engine берётся из `makekosmos/cortex`: `pnpm run dev -- --engine-only` в корне
@@ -97,7 +97,5 @@ hk run pre-push                             # или hk check --all
 
 ## Релиз
 
-Выпускает workflow по расписанию, тестируя ровно тот коммит, который
-публикует: патч-версия растёт сама, версию в `Cargo.toml` вручную не меняй, тег
-не ставь и релиз не публикуй без просьбы (`scripts/release.py`,
-`scripts/publish-version.sh`).
+Release workflow оставляет сборку и CI включёнными. Публикация отключена до
+отдельного решения; версию и тег вручную не меняй.

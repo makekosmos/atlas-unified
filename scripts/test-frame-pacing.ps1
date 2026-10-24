@@ -14,14 +14,14 @@ try {
             if ($LASTEXITCODE -ne 0) { throw "Could not fetch upstream test font: $font" }
         }
     }
-    rtk cargo test -p agenda-gpui -p gpui-pre --features gpui/test-support --lib $CoreTest
+    rtk cargo test -p atlas-gpui -p gpui-pre --features gpui/test-support --lib $CoreTest
     $result = $LASTEXITCODE
     if ($result -eq 0 -and $CoreTest -ne 'test_cached_window_controls_survive_repaint') {
-        rtk cargo test -p agenda-gpui -p gpui-pre --features gpui/test-support --lib test_cached_window_controls_survive_repaint
+        rtk cargo test -p atlas-gpui -p gpui-pre --features gpui/test-support --lib test_cached_window_controls_survive_repaint
         $result = $LASTEXITCODE
     }
     if ($result -eq 0) {
-        rtk cargo test -p agenda-gpui -p gpui-pre-windows --features gpui/test-support --lib test_frame_pacing_
+        rtk cargo test -p atlas-gpui -p gpui-pre-windows --features gpui/test-support --lib test_frame_pacing_
         $result = $LASTEXITCODE
     }
 } finally {

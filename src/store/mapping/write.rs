@@ -5,7 +5,6 @@ use crate::model::{date_only, Status, Todo};
 use serde_json::{json, Value};
 
 /// Patch a fresh Engine object, retaining fields this UI does not understand.
-/// The project link is not written here: `store.rs` diffs it.
 pub fn write(object: Value, before: Option<&Todo>, todo: &Todo) -> Result<Value, String> {
     write_at(object, before, todo, &chrono::Utc::now().to_rfc3339())
 }
@@ -111,7 +110,7 @@ fn write_state_and_planning(object: &mut Value, todo: &Todo, now: &str) {
         Status::Inbox | Status::Todo => json!({"kind":"open","at":null}),
     };
     let props = &mut object["propsJson"];
-    // Agenda does not edit the period; keep whatever the object carries.
+    // Atlas does not edit the period; keep whatever the object carries.
     let period = props["planning"]["period"]
         .as_str()
         .unwrap_or("any")
