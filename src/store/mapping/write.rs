@@ -5,7 +5,6 @@ use crate::model::{date_only, Status, Todo};
 use serde_json::{json, Value};
 
 /// Patch a fresh Engine object, retaining fields this UI does not understand.
-/// The project link is not written here: `store.rs` diffs it.
 pub fn write(object: Value, before: Option<&Todo>, todo: &Todo) -> Result<Value, String> {
     write_at(object, before, todo, &chrono::Utc::now().to_rfc3339())
 }

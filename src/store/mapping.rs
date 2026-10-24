@@ -1,30 +1,18 @@
 use crate::model::{Status, Todo};
 use serde_json::{json, Value};
 
-/// core.task 0.1.0 (KOS-397). The project is an object link, not a prop; the
-/// Engine returns links separately, and `store.rs` diffs the link on save.
+/// core.task 0.1.0 (KOS-397). Atlas-only fields, including project ids, live
+/// in extensions. Core props and content owned by other clients stay intact.
 /// Fields Atlas does not show (deadline, reminders, priority, checklist,
 /// recurrence, tags, evening period) stay on the object untouched.
 pub const TASK_TYPE: &str = "core.task";
 pub const TASK_VERSION: &str = "0.1.0";
-pub const PROJECT_LINK: &str = "project";
-
-/// An outbound task link as the Engine lists it: `kind` is the link type and
-/// `target` the linked object id.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Link {
-    pub id: String,
-    pub kind: String,
-    pub target: String,
-}
-
 /// Fields the write path never copies into `extensions`: they live in
 /// canonical props, links, or the object row itself.
-const NOT_EXTENSION: [&str; 12] = [
+const NOT_EXTENSION: [&str; 11] = [
     "id",
     "title",
     "notes",
-    "project_id",
     "created_at",
     "status",
     "is_today",
@@ -41,7 +29,7 @@ pub use write::write;
 #[cfg(test)]
 pub use write::write_at;
 
-pub fn read(object: &Value, links: &[Link]) -> Result<Todo, String> {
+pub fn read(object: &Value) -> Result<Todo, String> {
     if object["typeId"] != TASK_TYPE || !object["id"].is_string() {
         return Err("Engine вернул некорректную задачу".into());
     }
@@ -97,10 +85,7 @@ pub fn read(object: &Value, links: &[Link]) -> Result<Todo, String> {
     fields.insert("scheduled_date".into(), scheduled);
     fields.insert(
         "project_id".into(),
-        json!(links
-            .iter()
-            .find(|l| l.kind == PROJECT_LINK)
-            .map(|l| l.target.clone())),
+        fields.get("project_id").cloned().unwrap_or(Value::Null),
     );
     serde_json::from_value(Value::Object(fields)).map_err(|e| e.to_string())
 }

@@ -1,12 +1,15 @@
-//! Projects as canonical `com.kosmos.project` objects.
+//! Atlas projects stored as core.note objects with an explicit extension kind.
 use super::{Engine, EngineError};
 use crate::model::Project;
 use serde_json::{json, Value};
 use std::collections::HashSet;
 
+pub(super) const NOTE_TYPE: &str = "core.note";
+const PROJECT_KIND: &str = "project";
+const PROJECT_STATUS: [&str; 3] = ["active", "someday", "completed"];
+
 impl Engine {
-    /// Projects are canonical `com.kosmos.project` objects; Atlas-only
-    /// fields live in `extensions`. Creating and saving are the same upsert.
+    /// Projects are notes distinguished by `propsJson.extensions.entry_kind`.
     #[cfg(test)]
     pub(super) fn save_project(&self, project: &Project) -> Result<(), EngineError> {
         let current = self.rpc("get_object", json!({"id":project.id}))?;
@@ -14,16 +17,18 @@ impl Engine {
         self.upsert(project_object(current, project, &now))
     }
 
-    /// Soft delete: the object stays in ARK with `deletedAt`, like trash.
-    /// Live projects plus the ids of every canonical project, deleted or not.
+    /// Live project notes and all known ids, including soft-deleted notes.
     pub(super) fn projects(&self) -> Result<(Vec<Project>, HashSet<String>), EngineError> {
-        let list = self.rpc("list_objects_by_type", json!({"type_id":PROJECT_TYPE}))?;
+        let list = self.rpc("list_objects_by_type", json!({"type_id":NOTE_TYPE}))?;
         let list = list
             .as_array()
-            .ok_or_else(|| Self::mapping_err("project list not an array".into()))?;
+            .ok_or_else(|| Self::mapping_err("note list not an array".into()))?;
         let all: Vec<&Value> = list
             .iter()
-            .filter(|v| v["typeId"] == PROJECT_TYPE)
+            .filter(|v| {
+                v["typeId"] == NOTE_TYPE
+                    && v["propsJson"]["extensions"]["entry_kind"] == PROJECT_KIND
+            })
             .collect();
         let known = all
             .iter()
@@ -38,14 +43,11 @@ impl Engine {
     }
 }
 
-pub(super) const PROJECT_TYPE: &str = "com.kosmos.project";
-const PROJECT_STATUS: [&str; 3] = ["active", "someday", "completed"];
-
 #[cfg(test)]
-pub(super) fn project_object(current: Value, project: &Project, now: &str) -> Value {
+fn project_object(current: Value, project: &Project, now: &str) -> Value {
     let mut object = if current.is_null() {
-        json!({"id":project.id,"typeId":PROJECT_TYPE,"typeVersion":"1.1.0","createdAt":now,
-            "propsJson":{"scheduledAt":null,"dueAt":null,"color":null,"extensions":{}},
+        json!({"id":project.id,"typeId":NOTE_TYPE,"typeVersion":"0.1.0","createdAt":now,
+            "propsJson":{"description":null,"extensions":{}},
             "contentJson":{"type":"doc","content":[{"type":"paragraph"}]},"deletedAt":null})
     } else {
         current
@@ -53,25 +55,25 @@ pub(super) fn project_object(current: Value, project: &Project, now: &str) -> Va
     object["title"] = json!(project.title);
     object["updatedAt"] = json!(now);
     let props = &mut object["propsJson"];
-    props["status"] = json!(PROJECT_STATUS
-        .get(usize::from(project.status))
-        .unwrap_or(&"active"));
     if !props["extensions"].is_object() {
         props["extensions"] = json!({});
     }
+    props["extensions"]["entry_kind"] = json!(PROJECT_KIND);
+    props["extensions"]["status"] = json!(PROJECT_STATUS
+        .get(usize::from(project.status))
+        .unwrap_or(&"active"));
     props["extensions"]["sortOrder"] = json!(project.sort_order);
     object
 }
 
-pub(super) fn read_project(object: &Value) -> Project {
-    let props = &object["propsJson"];
-    let ext = &props["extensions"];
+fn read_project(object: &Value) -> Project {
+    let ext = &object["propsJson"]["extensions"];
     Project {
         id: object["id"].as_str().unwrap_or_default().to_string(),
         title: object["title"].as_str().unwrap_or_default().to_string(),
         status: PROJECT_STATUS
             .iter()
-            .position(|s| props["status"] == *s)
+            .position(|s| ext["status"] == *s)
             .unwrap_or(0) as u8,
         sort_order: ext["sortOrder"].as_i64().unwrap_or(0) as i32,
     }
@@ -82,7 +84,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn project_round_trips_as_canonical_object() {
+    fn project_round_trips_as_core_note() {
         let project = Project {
             id: "p1".into(),
             title: "Ремонт".into(),
@@ -90,8 +92,31 @@ mod tests {
             sort_order: 3,
         };
         let object = project_object(Value::Null, &project, "2026-10-05T00:00:00Z");
-        assert_eq!(object["typeId"], "com.kosmos.project");
-        assert_eq!(object["propsJson"]["status"], "someday");
+        assert_eq!(object["typeId"], "core.note");
+        assert_eq!(object["typeVersion"], "0.1.0");
+        assert_eq!(object["propsJson"]["extensions"]["entry_kind"], "project");
         assert_eq!(read_project(&object), project);
+    }
+
+    #[test]
+    fn note_fixtures_pin_project_and_today_journal_kinds() {
+        for (name, kind) in [
+            ("project-note.json", "project"),
+            ("today-journal-note.json", "journal"),
+        ] {
+            let path = format!("{}/fixtures/engine/{name}", env!("CARGO_MANIFEST_DIR"));
+            let object: Value = serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
+            assert_eq!(object["typeId"], NOTE_TYPE, "{name}");
+            assert_eq!(object["typeVersion"], "0.1.0", "{name}");
+            assert_eq!(
+                object["propsJson"]["extensions"]["entry_kind"], kind,
+                "{name}"
+            );
+            assert!(
+                object["propsJson"]["description"].is_string()
+                    || object["propsJson"]["description"].is_null(),
+                "{name}"
+            );
+        }
     }
 }

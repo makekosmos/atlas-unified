@@ -21,6 +21,7 @@
     "deadline": null,
     "extensions": {
       "description": "заметка",
+      "project_id": null,
       "scheduled_date": null,
       "sort_order": 0,
       "status": "inbox"

@@ -4,15 +4,14 @@ use crate::filters::task_status;
 use crate::types::{ChecklistItem, Status, Todo};
 use serde_json::{json, Value};
 
-/// Fields `write_at` never copies into `extensions`: canonical props, the
-/// project link, or the object row itself own them.
-const NOT_EXTENSION: [&str; 15] = [
+/// Fields `write_at` never copies into `extensions`: canonical props or the
+/// object row itself own them.
+const NOT_EXTENSION: [&str; 14] = [
     "id",
     "title",
     "notes",
     "checklist",
     "reminder_date",
-    "project_id",
     "created_at",
     "status",
     "is_today",
@@ -27,8 +26,7 @@ const NOT_EXTENSION: [&str; 15] = [
 /// Patch a fresh Engine object, retaining fields this UI does not understand.
 /// The caller owns the clock (`now` stamps `updatedAt`, `deletedAt` and new
 /// completion or cancellation instants; fixtures pin it) and `day` supplies
-/// the local offset `date_only` needs. Project links are not written here:
-/// the caller diffs `project_id` against the stored link.
+/// the local offset `date_only` needs. Project ids are Atlas extensions.
 pub fn write_at(
     mut object: Value,
     before: Option<&Todo>,

@@ -66,7 +66,6 @@ fn main() -> Result<(), String> {
     for p in &projs {
         objects.push(projects::project_object(&Value::Null, p, &now));
     }
-    objects.push(projects::references_object(&[], &tags, &now));
 
     let mut lists = serde_json::Map::new();
     for (name, list) in [

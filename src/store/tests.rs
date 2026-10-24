@@ -17,15 +17,10 @@ fn mapping_preserves_unrepresented_fields() {
             "checklist":[{"id":"item-1","text":"Keep this","done":true,"rank":"a0"}],
             "extensions":{"linked_todo_ids":["other-task"],"foreign":{"secret":"preserved"},
                 "significance":7,"price":150.75}},"deletedAt":null});
-    let links = [mapping::Link {
-        id: "lnk:real-id:project:real-project".into(),
-        kind: mapping::PROJECT_LINK.into(),
-        target: "real-project".into(),
-    }];
-    let before = mapping::read(&original, &links).unwrap();
+    let before = mapping::read(&original).unwrap();
     assert_eq!(before.status, Status::Todo);
     assert_eq!(before.notes.as_deref(), Some("Rich notes"));
-    assert_eq!(before.project_id.as_deref(), Some("real-project"));
+    assert_eq!(before.project_id, None);
     assert!(is_due_this_week(
         &before,
         &week_bounds(&today_key()).unwrap()
@@ -35,14 +30,14 @@ fn mapping_preserves_unrepresented_fields() {
     let written = mapping::write(original.clone(), Some(&before), &edited).unwrap();
     assert_eq!(written["contentJson"], original["contentJson"]);
     assert_eq!(written["propsJson"], original["propsJson"]);
-    assert_eq!(mapping::read(&written, &links).unwrap(), edited);
+    assert_eq!(mapping::read(&written).unwrap(), edited);
     edited.is_someday = true;
     let deferred = mapping::write(written, Some(&before), &edited).unwrap();
-    assert!(mapping::read(&deferred, &links).unwrap().is_someday);
+    assert!(mapping::read(&deferred).unwrap().is_someday);
     assert_eq!(deferred["propsJson"]["extensions"]["price"], json!(150.75));
     edited.is_someday = false;
     let resumed = mapping::write(deferred, None, &edited).unwrap();
-    assert!(!mapping::read(&resumed, &links).unwrap().is_someday);
+    assert!(!mapping::read(&resumed).unwrap().is_someday);
 }
 
 #[test]
@@ -95,26 +90,6 @@ fn persistence_across_client_processes() {
             let response = match request["operation"].as_str().unwrap() {
                 "list_objects_by_type" => json!({"ok":true,"data":objects.values().filter(|v| v["typeId"] == request["type_id"]).collect::<Vec<_>>()}),
                 "get_object" => json!({"ok":true,"data":objects.get(request["id"].as_str().unwrap())}),
-                // Links are kept beside objects; only links carry `linkType`.
-                "list_object_links" => json!({"ok":true,"data":objects.values().filter(|v| v.get("linkType").is_some()).collect::<Vec<_>>()}),
-                // Like the Engine: the other links of this source and type go, then the new one is written.
-                "replace_object_link" => {
-                    let link = &request["object_link"];
-                    let id = link["id"].as_str().unwrap();
-                    objects.retain(|key, value| {
-                        key == id
-                            || value.get("linkType") != Some(&link["linkType"])
-                            || value["sourceObjectId"] != link["sourceObjectId"]
-                    });
-                    objects.insert(id.into(), link.clone());
-                    std::fs::write(&path, serde_json::to_vec(&objects).unwrap()).unwrap();
-                    json!({"ok":true,"data":link})
-                }
-                "delete_object_link" => {
-                    objects.remove(request["id"].as_str().unwrap());
-                    std::fs::write(&path, serde_json::to_vec(&objects).unwrap()).unwrap();
-                    json!({"ok":true,"data":true})
-                }
                 "upsert_object" if request["object"]["title"] == "REJECT" => json!({"ok":false,"error":"rejected"}),
                 "upsert_object" => {
                     let object = &request["object"];

@@ -6,7 +6,7 @@ use std::path::PathBuf;
 // Engine contract fixtures (KOS-297).
 //
 // These are the exact objects `mapping::write` sends to `upsert_object`.
-// The project link is not in them: `store.rs` writes it as an object link.
+// Atlas project ids are included in the task's extension only when assigned.
 // They are committed under `fixtures/engine/` and consumed by the ark-core
 // contract test in cortex (`phase3_agenda_contract`), which validates them
 // against the real `canonical_ingress`. The two repos cannot share code, so
@@ -118,7 +118,7 @@ fn engine_payload_fixtures_match_write_output() {
         // Edits to an existing object produce the same contract shape; the
         // KOS-295 regression (Engine-owned `dayOfMonth` leaking into
         // `recurrence`) was an edit-path write.
-        let before = mapping::read(&object, &[]).unwrap();
+        let before = mapping::read(&object).unwrap();
         let mut edited = before.clone();
         edited.title = format!("{name} edited");
         let rewritten = mapping::write_at(object, Some(&before), &edited, NOW).unwrap();

@@ -21,6 +21,7 @@
     "deadline": null,
     "extensions": {
       "description": null,
+      "project_id": null,
       "sort_order": 0,
       "status": "todo"
     },
