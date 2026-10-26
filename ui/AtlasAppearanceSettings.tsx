@@ -1,4 +1,5 @@
 import { Scroll, Text, View, signal, keymap } from "nsh";
+import { Popover } from "nsh/base";
 import { accentChoices } from "@makekosmos/imago-nsh";
 import type { Appearance, ThemeColors } from "@makekosmos/imago-nsh";
 import type { AtlasTheme } from "./state";
@@ -39,21 +40,24 @@ export function AtlasAppearanceSettings(props: {
   );
   const select = (id: Exclude<Selector, null>, value: string, options: { value: string; label: string; preview?: ThemeColors }[], onSelect: (value: string) => void, width: number, preview?: boolean, menuWidth = width) => {
     const expanded = openSelector() === id;
-    return <View class="relative" style={{ width }}>
-      <View onPress={() => canEdit() && openSelector.set(expanded ? null : id)} role="button" accessibilityState={{ expanded, disabled: !canEdit() }} class="h-8 flex-row items-center justify-between rounded-lg border px-2.5" style={{ backgroundColor: colors().card, borderColor: expanded ? colors().accent : colors().border, opacity: canEdit() ? 1 : 0.65 }}>
-        <View class="min-w-0 flex-1 flex-row items-center gap-2">
-          {preview && <PaletteChip palette={options.find((option) => option.value === value)?.preview ?? colors()} border={colors().border} />}
-          <Text class="text-[12px]" style={{ color: colors().foreground }}>{options.find((option) => option.value === value)?.label ?? value}</Text>
-        </View>
-        <Text class="text-[11px]" style={{ color: colors().muted }}>{expanded ? "⌃" : "⌄"}</Text>
+    const label = id === "light" ? "Выбрать светлую тему" : id === "dark" ? "Выбрать тёмную тему" : "Выбрать размер текста";
+    const trigger = <View role="button" accessibilityLabel={label} accessibilityState={{ expanded, disabled: !canEdit() }} class="h-8 flex-row items-center justify-between rounded-lg border px-2.5" style={{ backgroundColor: colors().card, borderColor: expanded ? colors().accent : colors().border, opacity: canEdit() ? 1 : 0.65 }}>
+      <View class="min-w-0 flex-1 flex-row items-center gap-2">
+        {preview && <PaletteChip palette={options.find((option) => option.value === value)?.preview ?? colors()} border={colors().border} />}
+        <Text class="text-[12px]" style={{ color: colors().foreground }}>{options.find((option) => option.value === value)?.label ?? value}</Text>
       </View>
-      {expanded && <View class="absolute left-0 top-9 z-20 rounded-xl border p-1" style={{ width: menuWidth, backgroundColor: colors().card, borderColor: colors().border }}>
-        {options.map((option) => <View onPress={() => { onSelect(option.value); openSelector.set(null); }} role="button" accessibilityState={{ selected: option.value === value }} class="h-8 flex-row items-center gap-2 rounded-md px-2">
-          {preview && <PaletteChip palette={option.preview ?? colors()} border={colors().border} />}
-          <Text class="flex-1 text-[12px]" style={{ color: colors().foreground }}>{option.label}</Text>
-          {option.value === value && <Text class="text-[12px]" style={{ color: colors().accent }}>✓</Text>}
-        </View>)}
-      </View>}
+      <Text class="text-[11px]" style={{ color: colors().muted }}>{expanded ? "⌃" : "⌄"}</Text>
+    </View>;
+    return <View style={{ width }}>
+      {canEdit() ? <Popover open={expanded} onOpenChange={(next) => openSelector.set(next ? id : null)} placement="bottom" align="end" offset={4} margin={8} trigger={trigger} popupClass="rounded-xl border p-1" popupStyle={{ width: menuWidth, backgroundColor: colors().card, borderColor: colors().border }}>
+        <Scroll accessibilityLabel="Варианты выбора" style={{ height: Math.min(options.length * 32, 256) }}>
+          {options.map((option) => <View onPress={() => { onSelect(option.value); openSelector.set(null); }} role="button" accessibilityState={{ selected: option.value === value }} class="h-8 flex-row items-center gap-2 rounded-md px-2">
+            {preview && <PaletteChip palette={option.preview ?? colors()} border={colors().border} />}
+            <Text class="flex-1 text-[12px]" style={{ color: colors().foreground }}>{option.label}</Text>
+            {option.value === value && <Text class="text-[12px]" style={{ color: colors().accent }}>✓</Text>}
+          </View>)}
+        </Scroll>
+      </Popover> : trigger}
     </View>;
   };
   const shortcutRow = (name: ShortcutName, label: string) => (

@@ -1,8 +1,9 @@
 import { append, bindProp, component, each, element, insert, prop, setup, spread, text } from "nsh:rt";
 import { LayoutAnimation, PanResponder, Storage, effect, keymap, mount, nativeComponent, signal } from "nsh";
 import { Window, titleBar } from "nsh/desktop";
+import { Popover } from "nsh/base";
 
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/types.ts
+//#region ../../../../Users/user/kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/types.ts
 const spacing = {
 	sidebarWidth: 240,
 	titlebarHeight: 40,
@@ -36,7 +37,7 @@ const accentChoices = [
 ];
 
 //#endregion
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
+//#region ../../../../Users/user/kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
 const icons = {
 	about: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
 	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
@@ -59,7 +60,7 @@ const icons = {
 };
 
 //#endregion
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
+//#region ../../../../Users/user/kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
 function Icon(props) {
 	return (() => {
 		const __nsh_hv0 = element("image");
@@ -845,88 +846,105 @@ function AtlasAppearanceSettings(props) {
 	})();
 	const select = (id, value, options, onSelect, width, preview, menuWidth = width) => {
 		const expanded = openSelector() === id;
-		return (() => {
+		const label = id === "light" ? "Выбрать светлую тему" : id === "dark" ? "Выбрать тёмную тему" : "Выбрать размер текста";
+		const trigger = (() => {
 			const __nsh_hv3 = element("view");
-			prop(__nsh_hv3, "class", "relative");
-			prop(__nsh_hv3, "style", { width });
-			const __nsh_hv4 = element("view");
-			prop(__nsh_hv4, "onPress", () => canEdit() && openSelector.set(expanded ? null : id));
-			prop(__nsh_hv4, "role", "button");
-			bindProp(__nsh_hv4, "accessibilityState", () => ({
+			prop(__nsh_hv3, "role", "button");
+			prop(__nsh_hv3, "accessibilityLabel", label);
+			bindProp(__nsh_hv3, "accessibilityState", () => ({
 				expanded,
 				disabled: !canEdit()
 			}));
-			prop(__nsh_hv4, "class", "h-8 flex-row items-center justify-between rounded-lg border px-2.5");
-			bindProp(__nsh_hv4, "style", () => ({
+			prop(__nsh_hv3, "class", "h-8 flex-row items-center justify-between rounded-lg border px-2.5");
+			bindProp(__nsh_hv3, "style", () => ({
 				backgroundColor: colors().card,
 				borderColor: expanded ? colors().accent : colors().border,
 				opacity: canEdit() ? 1 : .65
 			}));
-			const __nsh_hv5 = element("view");
-			prop(__nsh_hv5, "class", "min-w-0 flex-1 flex-row items-center gap-2");
-			const __nsh_hv6 = element("text");
-			prop(__nsh_hv6, "class", "text-[12px]");
-			bindProp(__nsh_hv6, "style", () => ({ color: colors().foreground }));
-			insert(__nsh_hv6, () => options.find((option) => option.value === value)?.label ?? value);
-			append(__nsh_hv5, __nsh_hv6);
-			insert(__nsh_hv5, () => preview && component(PaletteChip, {
+			const __nsh_hv4 = element("view");
+			prop(__nsh_hv4, "class", "min-w-0 flex-1 flex-row items-center gap-2");
+			const __nsh_hv5 = element("text");
+			prop(__nsh_hv5, "class", "text-[12px]");
+			bindProp(__nsh_hv5, "style", () => ({ color: colors().foreground }));
+			insert(__nsh_hv5, () => options.find((option) => option.value === value)?.label ?? value);
+			append(__nsh_hv4, __nsh_hv5);
+			insert(__nsh_hv4, () => preview && component(PaletteChip, {
 				get palette() {
 					return options.find((option) => option.value === value)?.preview ?? colors();
 				},
 				get border() {
 					return colors().border;
 				}
-			}), __nsh_hv6);
-			const __nsh_hv7 = element("text");
-			prop(__nsh_hv7, "class", "text-[11px]");
-			bindProp(__nsh_hv7, "style", () => ({ color: colors().muted }));
-			insert(__nsh_hv7, expanded ? "⌃" : "⌄");
-			append(__nsh_hv4, __nsh_hv5);
-			append(__nsh_hv4, __nsh_hv7);
+			}), __nsh_hv5);
+			const __nsh_hv6 = element("text");
+			prop(__nsh_hv6, "class", "text-[11px]");
+			bindProp(__nsh_hv6, "style", () => ({ color: colors().muted }));
+			insert(__nsh_hv6, expanded ? "⌃" : "⌄");
 			append(__nsh_hv3, __nsh_hv4);
-			insert(__nsh_hv3, () => expanded && (() => {
-				const __nsh_hv8 = element("view");
-				prop(__nsh_hv8, "class", "absolute left-0 top-9 z-20 rounded-xl border p-1");
-				bindProp(__nsh_hv8, "style", () => ({
-					width: menuWidth,
-					backgroundColor: colors().card,
-					borderColor: colors().border
-				}));
-				insert(__nsh_hv8, () => options.map((option) => (() => {
-					const __nsh_hv9 = element("view");
-					prop(__nsh_hv9, "onPress", () => {
-						onSelect(option.value);
-						openSelector.set(null);
-					});
-					prop(__nsh_hv9, "role", "button");
-					bindProp(__nsh_hv9, "accessibilityState", () => ({ selected: option.value === value }));
-					prop(__nsh_hv9, "class", "h-8 flex-row items-center gap-2 rounded-md px-2");
-					const __nsh_hv10 = element("text");
-					prop(__nsh_hv10, "class", "flex-1 text-[12px]");
-					bindProp(__nsh_hv10, "style", () => ({ color: colors().foreground }));
-					insert(__nsh_hv10, () => option.label);
-					append(__nsh_hv9, __nsh_hv10);
-					insert(__nsh_hv9, () => preview && component(PaletteChip, {
-						get palette() {
-							return option.preview ?? colors();
-						},
-						get border() {
-							return colors().border;
-						}
-					}), __nsh_hv10);
-					insert(__nsh_hv9, () => option.value === value && (() => {
-						const __nsh_hv11 = element("text");
-						prop(__nsh_hv11, "class", "text-[12px]");
-						bindProp(__nsh_hv11, "style", () => ({ color: colors().accent }));
-						const __nsh_hv12 = text("✓");
-						append(__nsh_hv11, __nsh_hv12);
-						return __nsh_hv11;
-					})());
-					return __nsh_hv9;
-				})()));
-				return __nsh_hv8;
-			})());
+			append(__nsh_hv3, __nsh_hv6);
 			return __nsh_hv3;
+		})();
+		return (() => {
+			const __nsh_hv7 = element("view");
+			prop(__nsh_hv7, "style", { width });
+			insert(__nsh_hv7, () => canEdit() ? component(Popover, {
+				open: expanded,
+				onOpenChange: (next) => openSelector.set(next ? id : null),
+				placement: "bottom",
+				align: "end",
+				offset: 4,
+				margin: 8,
+				trigger,
+				popupClass: "rounded-xl border p-1",
+				get popupStyle() {
+					return {
+						width: menuWidth,
+						backgroundColor: colors().card,
+						borderColor: colors().border
+					};
+				},
+				get children() {
+					return (() => {
+						const __nsh_hv8 = element("scroll");
+						prop(__nsh_hv8, "accessibilityLabel", "Варианты выбора");
+						bindProp(__nsh_hv8, "style", () => ({ height: Math.min(options.length * 32, 256) }));
+						insert(__nsh_hv8, () => options.map((option) => (() => {
+							const __nsh_hv9 = element("view");
+							prop(__nsh_hv9, "onPress", () => {
+								onSelect(option.value);
+								openSelector.set(null);
+							});
+							prop(__nsh_hv9, "role", "button");
+							bindProp(__nsh_hv9, "accessibilityState", () => ({ selected: option.value === value }));
+							prop(__nsh_hv9, "class", "h-8 flex-row items-center gap-2 rounded-md px-2");
+							const __nsh_hv10 = element("text");
+							prop(__nsh_hv10, "class", "flex-1 text-[12px]");
+							bindProp(__nsh_hv10, "style", () => ({ color: colors().foreground }));
+							insert(__nsh_hv10, () => option.label);
+							append(__nsh_hv9, __nsh_hv10);
+							insert(__nsh_hv9, () => preview && component(PaletteChip, {
+								get palette() {
+									return option.preview ?? colors();
+								},
+								get border() {
+									return colors().border;
+								}
+							}), __nsh_hv10);
+							insert(__nsh_hv9, () => option.value === value && (() => {
+								const __nsh_hv11 = element("text");
+								prop(__nsh_hv11, "class", "text-[12px]");
+								bindProp(__nsh_hv11, "style", () => ({ color: colors().accent }));
+								const __nsh_hv12 = text("✓");
+								append(__nsh_hv11, __nsh_hv12);
+								return __nsh_hv11;
+							})());
+							return __nsh_hv9;
+						})()));
+						return __nsh_hv8;
+					})();
+				}
+			}) : trigger);
+			return __nsh_hv7;
 		})();
 	};
 	const shortcutRow = (name, label) => (() => {

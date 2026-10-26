@@ -74,14 +74,20 @@ test("closes the journal calendar and its toggle outside the journal", async () 
 });
 
 test("keeps appearance settings and configurable keyboard shortcuts", async () => {
-  const app = await open("./App.tsx");
+  const app = await open("./App.tsx", { platform: "macos", width: 1200, height: 800 });
   await app.press("Настройки");
   expect(app.texts()).toContain("Размер текста");
   expect(app.texts()).toContain("Светлая тема");
   expect(app.texts()).toContain("Акцент");
   expect(app.texts()).toContain("Engine не подключён. Можно временно менять оформление; выбор действует только до закрытия Atlas.");
-  await app.press("Default >> nth=0");
+  await app.press("Выбрать светлую тему");
   expect(app.texts()).toContain("Claude");
+  await app.keyboard.press("escape");
+  expect(app.texts()).not.toContain("Claude");
+  await app.press("Выбрать тёмную тему");
+  await app.press("Graphite");
+  await app.waitUntil(() => app.texts().includes("Graphite"));
+  await app.press("Выбрать светлую тему");
   await app.press("Claude");
   await app.waitUntil(() => app.texts().includes("Claude"));
   await app.press("Изменить сочетание: Боковая панель — открыть/скрыть");
