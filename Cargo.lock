@@ -2787,7 +2787,7 @@ dependencies = [
  "objc2-foundation 0.3.2",
  "raw-window-handle",
  "regex",
- "ropey",
+ "ropey 2.0.0-beta.1",
  "schemars",
  "serde",
  "serde_json",
@@ -2832,7 +2832,7 @@ dependencies = [
  "raw-window-handle",
  "regex",
  "resvg 0.45.1",
- "ropey",
+ "ropey 2.0.0-beta.1",
  "rust-i18n",
  "schemars",
  "serde",
@@ -2863,7 +2863,7 @@ dependencies = [
 [[package]]
 name = "gpui-fast"
 version = "0.1.10"
-source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#c045c881f54f6abd086facbeffb27cd4500158e3"
+source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#79570d556deefca52dd45795e055cd3122181524"
 dependencies = [
  "accesskit",
  "anyhow",
@@ -3209,7 +3209,7 @@ dependencies = [
 [[package]]
 name = "gpui-pre"
 version = "0.3.9"
-source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#c045c881f54f6abd086facbeffb27cd4500158e3"
+source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#79570d556deefca52dd45795e055cd3122181524"
 dependencies = [
  "accesskit",
  "anyhow",
@@ -3967,6 +3967,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87"
 
 [[package]]
+name = "httpdate"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
+
+[[package]]
 name = "hybrid-array"
 version = "0.4.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4233,7 +4239,7 @@ checksum = "65b27460c2c92b037f3f94c538ed9a3342f3fdf923606781629ccb35f82d042a"
 [[package]]
 name = "imago-gpui"
 version = "0.1.0"
-source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#c045c881f54f6abd086facbeffb27cd4500158e3"
+source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#79570d556deefca52dd45795e055cd3122181524"
 dependencies = [
  "gpui-base",
  "gpui-component",
@@ -4247,7 +4253,7 @@ dependencies = [
 [[package]]
 name = "imago-native-sidebar"
 version = "0.1.0"
-source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#c045c881f54f6abd086facbeffb27cd4500158e3"
+source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#79570d556deefca52dd45795e055cd3122181524"
 dependencies = [
  "nsh-core",
  "nsh-platform-macos",
@@ -4258,7 +4264,7 @@ dependencies = [
 [[package]]
 name = "imago-nsh"
 version = "0.1.0"
-source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#c045c881f54f6abd086facbeffb27cd4500158e3"
+source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#79570d556deefca52dd45795e055cd3122181524"
 dependencies = [
  "gpui-kit",
  "imago-gpui",
@@ -4270,7 +4276,7 @@ dependencies = [
 [[package]]
 name = "imago-window-macos"
 version = "0.1.0"
-source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#c045c881f54f6abd086facbeffb27cd4500158e3"
+source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#79570d556deefca52dd45795e055cd3122181524"
 dependencies = [
  "imago-native-sidebar",
  "nsh-core",
@@ -4278,6 +4284,16 @@ dependencies = [
  "objc2 0.6.5",
  "objc2-app-kit 0.3.2",
  "objc2-foundation 0.3.2",
+]
+
+[[package]]
+name = "imara-diff"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f01d462f766df78ab820dd06f5eb700233c51f0f4c2e846520eaf4ba6aa5c5c"
+dependencies = [
+ "hashbrown 0.15.5",
+ "memchr",
 ]
 
 [[package]]
@@ -4984,7 +5000,7 @@ checksum = "743fb55ba31b18fb1ecef6bdc9aa2743314978ac084044301a7eee33fb99a20d"
 [[package]]
 name = "mundus-gpui-kit"
 version = "0.2.0"
-source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#c045c881f54f6abd086facbeffb27cd4500158e3"
+source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#79570d556deefca52dd45795e055cd3122181524"
 dependencies = [
  "gpui-component",
  "gpui-kit",
@@ -5167,32 +5183,38 @@ dependencies = [
 
 [[package]]
 name = "nsh-base"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81d4b03b672e0096c573cb9c9bd09a7688ef9292d831df5f030b7aeab40c7463"
+checksum = "78d139f86c6d867029ab4cf605bb9e83d6fb08e159b0a747795905d8052c7705"
 dependencies = [
  "html5ever",
+ "imara-diff",
  "log",
  "markdown",
  "markup5ever_rcdom",
  "nsh-core",
  "regex",
+ "ropey 1.6.1",
  "rustc-hash 2.1.3",
  "serde",
  "serde_json",
  "syntect",
  "two-face",
+ "unicode-segmentation",
 ]
 
 [[package]]
 name = "nsh-core"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e35fbe379279f7dae1b9abc36dfc16b2857916daa3a1d1ad62b02fa4e74fae97"
+checksum = "4153bd66c3fd9ac6cc29b2d2c52b4f267a63b0cc607de568f058dffb1c40574b"
 dependencies = [
  "cap-std",
+ "crc32fast",
  "flate2",
  "futures-util",
+ "httpdate",
+ "imagesize 0.15.0",
  "libc",
  "log",
  "nsh-macros",
@@ -5200,19 +5222,21 @@ dependencies = [
  "rustc-hash 2.1.3",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
  "slab",
  "taffy 0.15.0",
  "tokio",
  "tokio-tungstenite",
+ "unicode-linebreak",
  "url",
  "windows-sys 0.61.2",
 ]
 
 [[package]]
 name = "nsh-engine"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bea66a12d37b00e0877d9fb78a7ca5767e40311a8236e8e867f8e7d3763ed22d"
+checksum = "98db98fb40acf6ed8e32d2dc5b232022731614df4bc6d0576996a4ef9590ea12"
 dependencies = [
  "crossbeam-channel",
  "libc",
@@ -5225,13 +5249,14 @@ dependencies = [
  "serde_json",
  "tokio",
  "ureq 3.5.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
 name = "nsh-js"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c4105abc917b9823365183a87d0defe6f47efb028a14d94ff26bfdfd37b8ca7"
+checksum = "5e4e431dbc6456b1c2d077cab4a2a6a466928cbfbb5799d23f6c8a74aa219d13"
 dependencies = [
  "futures-util",
  "getrandom 0.4.3",
@@ -5251,9 +5276,9 @@ dependencies = [
 
 [[package]]
 name = "nsh-macros"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6ced9baa9a6182cddb37faaf2dc1d93383532eedac7d8edb70e28d1fc45aa29"
+checksum = "a7890ededc9e886f1bf9de82231285ccbb924239f39bf5fb2ffc0b53438dcfc0"
 dependencies = [
  "imagesize 0.15.0",
  "proc-macro2",
@@ -5264,9 +5289,9 @@ dependencies = [
 
 [[package]]
 name = "nsh-package"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee6e5fd065970d6aa7d4112fe0a2f2bc739be03760e918f7363b9b8510d69c50"
+checksum = "1869e1de69fc5e16e0b84db52d92e9daa428d2b2d0fa9367cc9ba56f07f68fae"
 dependencies = [
  "base64 0.22.1",
  "ed25519-dalek 2.2.0",
@@ -5280,12 +5305,11 @@ dependencies = [
 
 [[package]]
 name = "nsh-platform-gpui"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ad15b51ef3ed5ca2eefc817b95fa56c0979fcfe1a077c2c41b1bfd0a9b2b34b"
+checksum = "0dad76aeb9e4684b10750e65bd556413f458851825fe5e7bb17aca33b5a57ebe"
 dependencies = [
  "anyhow",
- "base64 0.22.1",
  "crossbeam-channel",
  "fontdb",
  "futures-channel",
@@ -5313,9 +5337,9 @@ dependencies = [
 
 [[package]]
 name = "nsh-platform-macos"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39d36bad807900a4a13c5635f6ba80f808c50639ed1f186ff297b196dc90bc56"
+checksum = "c5d8c32b2c6ca9c4661571287bbc19afa027155b2cc8a99cafdbe3f6b9e387bd"
 dependencies = [
  "block2 0.6.2",
  "crossbeam-channel",
@@ -7156,6 +7180,16 @@ dependencies = [
  "libc",
  "untrusted",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "ropey"
+version = "1.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93411e420bcd1a75ddd1dc3caf18c23155eda2c090631a85af21ba19e97093b5"
+dependencies = [
+ "smallvec",
+ "str_indices",
 ]
 
 [[package]]

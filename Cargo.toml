@@ -37,8 +37,8 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("cargo-cli
 [target.'cfg(target_os = "macos")'.dependencies]
 imago-native-sidebar = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
 imago-window-macos = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
-nsh-core = "=0.2.0"
-nsh-platform-macos = { version = "=0.2.0", default-features = false, features = ["js"] }
+nsh-core = "=0.3.0"
+nsh-platform-macos = { version = "=0.3.0", default-features = false, features = ["js"] }
 objc2-foundation = "=0.3.2"
 objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSApplication", "NSButton", "NSImage", "NSLayoutConstraint", "NSTitlebarAccessoryViewController", "NSView", "NSViewController", "NSWindow"] }
 

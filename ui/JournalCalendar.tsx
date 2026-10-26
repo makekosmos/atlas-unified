@@ -20,7 +20,7 @@ export function JournalCalendar(props: {
         {day.period && <Text class="pt-3 pb-1 pl-1 text-[10px] capitalize" style={{ color: props.colors.muted }}>{day.period}</Text>}
         <View onPress={() => props.onSelect(day.key)} role="button" accessibilityLabel={`${day.date.getDate()} ${months[day.date.getMonth()]}, ${day.count} записей`} class="h-[25px] flex-row items-center justify-end gap-1.5 rounded-md px-1">
           <View class="max-w-[86px] flex-row flex-wrap justify-end gap-[3px]">
-            {Array.from({ length: Math.min(day.count, 24) }, (_, index) => <View key={`${day.key}-${index}`} class="h-[3px] w-[3px] rounded-full" style={{ backgroundColor: day.date.toDateString() === today.toDateString() ? props.colors.accent : props.colors.muted }} />)}
+            {Array.from({ length: Math.min(day.count, 24) }, () => <View class="h-[3px] w-[3px] rounded-full" style={{ backgroundColor: day.date.toDateString() === today.toDateString() ? props.colors.accent : props.colors.muted }} />)}
           </View>
           <View class="h-px w-5" style={{ backgroundColor: day.date.toDateString() === today.toDateString() ? props.colors.accent : props.colors.border }} />
           <Text class="w-5 text-right text-[10px]" style={{ color: day.date.toDateString() === today.toDateString() ? props.colors.accent : props.colors.muted }}>{weekdays[day.date.getDay()]}</Text>

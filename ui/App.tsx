@@ -1,7 +1,5 @@
-import { effect, Input, mount, Scroll, signal, Text, View } from "nsh";
-import { nativeComponent } from "nsh/native";
-import { keymap } from "nsh/keymap";
-import { Storage } from "nsh/storage";
+import { effect, mount, Scroll, signal, Text, View, nativeComponent, keymap, Storage } from "nsh";
+import { Input } from "nsh/base";
 import { Icon as SharedIcon, NavigationItem, Titlebar as SharedTitlebar, AppearanceSettings, Button as SharedButton, Dialog as SharedDialog } from "@makekosmos/imago-nsh";
 import type { Appearance, IconName, TitlebarAction } from "@makekosmos/imago-nsh";
 import navigation from "./navigation.json";

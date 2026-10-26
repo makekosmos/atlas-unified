@@ -4,7 +4,7 @@
 use std::{process::ExitCode, rc::Rc};
 
 use imago_native_sidebar::Row;
-use nsh_core::ui::prelude::*;
+use nsh_core::prelude::*;
 use nsh_platform_macos::{App, AppOptions, AppView, Bundle, NativeComponent};
 
 #[component]

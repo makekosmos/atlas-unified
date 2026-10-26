@@ -1,5 +1,5 @@
-import { effect, Input, Scroll, signal, Text, View } from "nsh";
-import { LayoutAnimation } from "nsh/animated";
+import { effect, LayoutAnimation, Scroll, signal, Text, View } from "nsh";
+import { Input } from "nsh/base";
 import { Button as SharedButton, Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
 import { JournalCalendar } from "./JournalCalendar";
