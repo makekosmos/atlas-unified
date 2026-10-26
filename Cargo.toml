@@ -40,6 +40,7 @@ imago-window-macos = { git = "https://github.com/makekosmos/imago.git", branch =
 nsh-core = "=0.2.0"
 nsh-platform-macos = { version = "=0.2.0", default-features = false, features = ["js"] }
 objc2-foundation = "=0.3.2"
+objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSApplication", "NSButton", "NSImage", "NSLayoutConstraint", "NSTitlebarAccessoryViewController", "NSView", "NSViewController", "NSWindow"] }
 
 # Dev builds: own code compiles fast (opt-level 1, line-table debuginfo);
 # dependencies stay fully optimized without debuginfo — unoptimized

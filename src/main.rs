@@ -17,6 +17,8 @@ mod nsh_bridge;
 mod nsh_host;
 mod palettes;
 mod store;
+#[cfg(target_os = "macos")]
+mod titlebar_calendar;
 
 #[cfg(not(target_os = "macos"))]
 use gpui::{px, size, App, AppContext, Bounds, Styled, WindowBounds, WindowOptions};

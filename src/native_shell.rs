@@ -29,6 +29,7 @@ impl BundleHost {
                 ..Default::default()
             },
         );
+        crate::titlebar_calendar::register(&view);
         crate::nsh_bridge::macos::register(&view);
         let initial = crate::nsh_bridge::macos::initial_snapshot();
         let source = format!(

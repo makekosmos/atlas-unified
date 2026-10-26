@@ -1,5 +1,6 @@
 import { effect, Input, mount, Scroll, signal, Text, View } from "nsh";
 import { nativeComponent } from "nsh/native";
+import { titleBar } from "nsh/desktop";
 import { keymap } from "nsh/keymap";
 import { Storage } from "nsh/storage";
 import { Icon as SharedIcon, NavigationItem, Titlebar as SharedTitlebar, AppearanceSettings, Button as SharedButton, Dialog as SharedDialog } from "@makekosmos/imago-nsh";
@@ -7,7 +8,8 @@ import type { Appearance, IconName } from "@makekosmos/imago-nsh";
 import navigation from "./navigation.json";
 import { fallback, isRoute, isSnapshot } from "./state";
 import type { Route, Snapshot } from "./state";
-import { JournalPage } from "./JournalPage";
+import { JournalPage, journalCalendarOpen, toggleJournalCalendar } from "./JournalPage";
+import { JournalCalendarIcon } from "./JournalCalendar";
 
 const initialValue: unknown = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__");
 const initial = isSnapshot(initialValue) ? initialValue : fallback;
@@ -37,6 +39,10 @@ void Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
 const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[] }>("atlas.bridge", {
   props: ["route"],
   events: ["state", "navigate", "journal"],
+});
+const TitlebarCalendar = nativeComponent<{ visible: boolean }, { press: Record<string, never> }>("atlas.titlebar-calendar", {
+  props: ["visible"],
+  events: ["press"],
 });
 
 function iconForNavigation(id: string): IconName {
@@ -137,10 +143,11 @@ function InfoPage() {
 function App() {
   const primaryNavigation = navigation.filter((item) => !item.footer);
   const footerNavigation = navigation.filter((item) => item.footer);
+  const titlebar = titleBar();
   const openNewTask = () => { newTaskTitle.set(""); addTaskOpen.set(true); };
   const changeRoute = (target: string) => { if (isRoute(target)) route.set(target); };
   return (
-    <View class="h-full w-full flex-col" style={{ backgroundColor: snapshot().colors.background }}>
+    <View class="relative h-full w-full flex-col" style={{ backgroundColor: snapshot().colors.background }}>
       <Bridge
         class="absolute left-0 top-0 h-px w-px"
         ref={(node) => {
@@ -164,6 +171,10 @@ function App() {
           sidebarVisible={sidebarVisible()}
           showPageIdentity={route() !== "settings"}
       />}
+      {route() === "journal" && snapshot().chrome === "tsx" && <View onPress={toggleJournalCalendar} role="button" accessibilityLabel={journalCalendarOpen() ? "Закрыть календарь" : "Открыть календарь"} accessibilityState={{ expanded: journalCalendarOpen() }} class="absolute top-1 z-20 h-8 w-8 items-center justify-center rounded-lg" style={{ right: (titlebar.right || 138) + 44, backgroundColor: journalCalendarOpen() ? snapshot().colors.card : "transparent" }}>
+        <JournalCalendarIcon color={snapshot().colors.foreground} />
+      </View>}
+      {snapshot().chrome === "native" && <TitlebarCalendar class="h-0 w-0" visible={route() === "journal"} onPress={() => { if (route() === "journal") toggleJournalCalendar(); }} />}
       <View class="min-h-0 flex-1 flex-row">
       {snapshot().chrome === "tsx" && <View class="w-[240px] shrink-0 border-r px-2 pt-1" style={{ borderColor: snapshot().colors.border, display: sidebarVisible() ? "flex" : "none" }}>
         <View class="gap-0.5">
