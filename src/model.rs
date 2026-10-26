@@ -238,11 +238,7 @@ pub fn is_archived(t: &Todo, today: &str) -> bool {
     }
 }
 
-/// Ordering key for RFC 3339 instants. Raw strings do not sort correctly when
-/// offsets differ ("+03:00" compares above "Z" although it marks an earlier
-/// instant), so Logbook/Trash order by the parsed instant; unparseable values
-/// sink to the bottom.
-#[cfg(any(not(target_os = "macos"), test))]
+#[cfg(test)]
 fn instant_key(value: Option<&str>) -> i64 {
     value
         .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
