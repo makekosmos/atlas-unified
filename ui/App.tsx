@@ -1,26 +1,26 @@
-import { Canvas } from "nsh/canvas";
-import { effect, mount, Scroll, signal, Text, View } from "nsh";
+import { effect, Input, mount, Scroll, signal, Text, View } from "nsh";
 import { nativeComponent } from "nsh/native";
 import { keymap } from "nsh/keymap";
 import { Storage } from "nsh/storage";
-import { Sidebar as SharedSidebar, Icon as SharedIcon, Titlebar as SharedTitlebar, AppearanceSettings, Button as SharedButton, Dialog as SharedDialog, ListRow as SharedListRow, TextField as SharedTextField, defaultColors } from "@makekosmos/imago-nsh";
-import type { Appearance, ThemeChoice, ThemeColors } from "@makekosmos/imago-nsh";
+import { Icon as SharedIcon, NavigationItem, Titlebar as SharedTitlebar, AppearanceSettings, Button as SharedButton, Dialog as SharedDialog, defaultColors } from "@makekosmos/imago-nsh";
+import type { Appearance, IconName, ThemeChoice, ThemeColors } from "@makekosmos/imago-nsh";
+import navigation from "./navigation.json";
 
-type Route = "inbox" | "week" | "next-week" | "someday" | "logbook" | "project" | "statistics" | "settings" | "about" | "trash";
+type Route = "journal" | "tasks" | "settings" | "about";
 type Todo = { id: string; title: string; is_completed: boolean; scheduled_date?: string; notes?: string };
-type Project = { id: string; title: string; status: number };
-type Snapshot = { route: Route; title: string; todos: Todo[]; projects: Project[]; project?: Project; archivedCount: number; trashCount: number; todoCount: number; version: string; activity: { label: string; done: number }[]; appearance?: Appearance; appearanceEditable: boolean; themes: ThemeChoice[]; colors: ThemeColors; sidebarVisible: boolean };
+type JournalEntry = { id: string; text: string; createdAt: string };
+type Snapshot = { route: Route; title: string; todos: Todo[]; journalEntries: JournalEntry[]; version: string; appearance?: Appearance; appearanceEditable: boolean; themes: ThemeChoice[]; colors: ThemeColors; sidebarVisible: boolean; chrome: "native" | "tsx" };
 
-const fallback: Snapshot = { route: "inbox", title: "Входящие", todos: [], projects: [], archivedCount: 0, trashCount: 0, todoCount: 0, version: "", activity: [], appearance: { settings: { mode: "dark", light_theme: "default", dark_theme: "default", accent_source: "theme", material: "default", font_size: 13, font_family: "Inter" }, policy: { following: false, editable: true }, capabilities: { materials: ["default", "frosted", "mica"], wallpaper_accent: false } }, appearanceEditable: true, themes: [{ key: "default", name: "Default" }, { key: "claude", name: "Claude" }, { key: "graphite", name: "Graphite" }], colors: defaultColors, sidebarVisible: true };
-const initial = (globalThis as any).__MUNDUS_ATLAS_INITIAL__ as Snapshot | undefined ?? fallback;
+const fallback: Snapshot = { route: "journal", title: "Дневник", todos: [], journalEntries: [], version: "", appearance: { settings: { mode: "dark", light_theme: "default", dark_theme: "default", accent_source: "theme", material: "default", font_size: 13, font_family: "Inter" }, policy: { following: false }, capabilities: { materials: ["default", "frosted", "mica"], wallpaper_accent: false } }, appearanceEditable: true, themes: [{ key: "default", name: "Default" }, { key: "claude", name: "Claude" }, { key: "graphite", name: "Graphite" }], colors: defaultColors, sidebarVisible: true, chrome: "tsx" };
+const initialValue: unknown = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__");
+const initial = isSnapshot(initialValue) ? initialValue : fallback;
 const snapshot = signal(initial);
-const route = signal<Route>("inbox");
-const selectedProjectId = signal("dev-proj-release");
-const otherOpen = signal(false);
-const addOpen = signal(false);
-const newTitle = signal("");
-const quickSearchOpen = signal(false);
-const quickSearchQuery = signal("");
+const route = signal<Route>(initial.route);
+const journalDraft = signal("");
+const editingJournalId = signal<string | null>(null);
+const editingJournalText = signal("");
+const addTaskOpen = signal(false);
+const newTaskTitle = signal("");
 const sidebarVisible = signal(true);
 const shortcutNames = ["sidebar", "create", "search", "reload"] as const;
 type ShortcutName = typeof shortcutNames[number];
@@ -33,31 +33,66 @@ const shortcutOptions: Record<ShortcutName, string[]> = {
   reload: ["mod+r", "mod+shift+r"],
 };
 const shortcuts = signal<Shortcuts>(defaultShortcuts);
-void Storage.getItem("mundus.agenda.shortcuts.v1").then((value) => {
+void Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
   if (!value) return;
   try {
     const saved = JSON.parse(value) as Partial<Shortcuts>;
     shortcuts.set(Object.fromEntries(shortcutNames.map((name) => [name, shortcutOptions[name].includes(saved[name] ?? "") ? saved[name] : defaultShortcuts[name]])) as Shortcuts);
   } catch { /* A damaged preference falls back to the defaults. */ }
 });
-const Bridge = nativeComponent<{ route: Route; projectId: string }, { state: Snapshot }>("atlas.bridge", {
-  props: ["route", "projectId"],
-  events: ["state"],
+const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route } }>("atlas.bridge", {
+  props: ["route"],
+  events: ["state", "navigate"],
 });
 
-const navigation: [Route, string, string][] = [
-  ["inbox", "inbox", "Входящие"],
-  ["week", "week", "Эта неделя"],
-  ["next-week", "nextWeek", "Следующая неделя"],
-  ["someday", "someday", "Потом"],
-];
-const otherPages: [Route, string, string][] = [
-  ["logbook", "logbook", "Архив"],
-  ["statistics", "statistics", "Активность"],
-  ["settings", "settings", "Настройки"],
-  ["about", "about", "О приложении"],
-  ["trash", "trash", "Корзина"],
-];
+function isSnapshot(value: unknown): value is Snapshot {
+  if (typeof value !== "object" || value === null || !("route" in value) || !isRoute(value.route)) return false;
+  if (!("title" in value) || typeof value.title !== "string" || !("todos" in value) || !Array.isArray(value.todos)) return false;
+  if (!value.todos.every(isTodo) || !("journalEntries" in value) || !Array.isArray(value.journalEntries) || !value.journalEntries.every(isJournalEntry)) return false;
+  return "version" in value && typeof value.version === "string"
+    && "appearanceEditable" in value && typeof value.appearanceEditable === "boolean"
+    && "themes" in value && Array.isArray(value.themes)
+    && "colors" in value && isColors(value.colors)
+    && "sidebarVisible" in value && typeof value.sidebarVisible === "boolean"
+    && "chrome" in value && (value.chrome === "native" || value.chrome === "tsx");
+}
+
+function isRoute(value: unknown): value is Route {
+  return value === "journal" || value === "tasks" || value === "settings" || value === "about";
+}
+
+function isTodo(value: unknown): value is Todo {
+  return typeof value === "object" && value !== null
+    && "id" in value && typeof value.id === "string"
+    && "title" in value && typeof value.title === "string"
+    && "is_completed" in value && typeof value.is_completed === "boolean";
+}
+
+function isJournalEntry(value: unknown): value is JournalEntry {
+  return typeof value === "object" && value !== null
+    && "id" in value && typeof value.id === "string"
+    && "text" in value && typeof value.text === "string"
+    && "createdAt" in value && typeof value.createdAt === "string";
+}
+
+function isColors(value: unknown): value is ThemeColors {
+  if (typeof value !== "object" || value === null) return false;
+  return "background" in value && typeof value.background === "string"
+    && "foreground" in value && typeof value.foreground === "string"
+    && "muted" in value && typeof value.muted === "string"
+    && "border" in value && typeof value.border === "string"
+    && "accent" in value && typeof value.accent === "string"
+    && "card" in value && typeof value.card === "string";
+}
+
+function iconForNavigation(id: string): IconName {
+  switch (id) {
+    case "journal": return "logbook";
+    case "tasks": return "week";
+    case "settings": return "settings";
+    default: return "about";
+  }
+}
 
 function TaskRows() {
   return <Each of={snapshot().todos}>{(todo) => (
@@ -65,7 +100,7 @@ function TaskRows() {
       <View onPress={() => commandRef?.("complete", { id: todo().id })} role="checkbox" accessibilityLabel={todo().title} accessibilityState={{ checked: todo().is_completed }} class="mr-3 h-[14px] w-[14px] items-center justify-center rounded-full border" style={{ borderColor: todo().is_completed ? snapshot().colors.accent : snapshot().colors.muted, backgroundColor: todo().is_completed ? snapshot().colors.accent : "transparent" }}>
         {todo().is_completed && <SharedIcon name="check" size={10} color={snapshot().colors.background} />}
       </View>
-      <Text class={todo().is_completed && snapshot().route !== "logbook" ? "line-through" : ""} style={{ fontSize: snapshot().appearance?.settings.font_size ?? 13, color: todo().is_completed && snapshot().route !== "logbook" ? snapshot().colors.muted : snapshot().colors.foreground }}>{todo().title}</Text>
+      <Text class={todo().is_completed ? "line-through" : ""} style={{ fontSize: snapshot().appearance?.settings.font_size ?? 13, color: todo().is_completed ? snapshot().colors.muted : snapshot().colors.foreground }}>{todo().title}</Text>
     </View>
   )}</Each>;
 }
@@ -92,15 +127,85 @@ function cycleShortcut(name: ShortcutName) {
   const next = choices[(choices.indexOf(current[name]) + 1) % choices.length];
   const updated = { ...current, [name]: next };
   shortcuts.set(updated);
-  void Storage.setItem("mundus.agenda.shortcuts.v1", JSON.stringify(updated));
+  void Storage.setItem("mundus.atlas.shortcuts.v1", JSON.stringify(updated));
+}
+
+function sendJournal(text: string) {
+  const value = text.trim();
+  if (!value) return;
+  commandRef?.("journal.create", { text: value });
+  journalDraft.set("");
+}
+
+function dayLabel(createdAt: string) {
+  const date = new Date(createdAt);
+  return Number.isNaN(date.valueOf()) ? createdAt : date.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function timeLabel(createdAt: string) {
+  const date = new Date(createdAt);
+  return Number.isNaN(date.valueOf()) ? "" : date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+}
+
+function JournalPage() {
+  let feedRef: { scrollToEnd: (options?: { animated?: boolean }) => void } | undefined;
+  effect(() => {
+    const entries = snapshot().journalEntries;
+    if (entries.length) queueMicrotask(() => feedRef?.scrollToEnd({ animated: true }));
+  });
+  let previousDay = "";
+  return <View class="min-h-0 flex-1 items-center px-5">
+    <Scroll ref={(node) => { feedRef = node; }} class="min-h-0 w-full max-w-[620px] flex-1 py-6">
+      <Each of={snapshot().journalEntries}>{(entry) => {
+        const label = dayLabel(entry().createdAt);
+        const showDay = label !== previousDay;
+        previousDay = label;
+        return <View class="mb-4">
+          {showDay && <View class="mb-3 flex-row items-center justify-center"><View class="h-px flex-1" style={{ backgroundColor: snapshot().colors.border }} /><Text class="mx-3 text-[11px] capitalize" style={{ color: snapshot().colors.muted }}>{label}</Text><View class="h-px flex-1" style={{ backgroundColor: snapshot().colors.border }} /></View>}
+          <View class="self-end w-full max-w-[560px] rounded-2xl px-4 py-3" style={{ backgroundColor: snapshot().colors.card }}>
+            {editingJournalId() === entry().id
+              ? <View>
+                  <Input value={editingJournalText()} onChange={(value) => editingJournalText.set(value)} multiline={true} submitBehavior="newline" class="min-h-[56px] w-full rounded-lg px-2 py-1 text-[13px]" style={{ color: snapshot().colors.foreground, backgroundColor: snapshot().colors.background }} />
+                  <View class="mt-2 flex-row justify-end gap-2">
+                    <SharedButton label="Отмена" colors={snapshot().colors} onPress={() => editingJournalId.set(null)} />
+                    <SharedButton label="Сохранить" colors={snapshot().colors} selected onPress={() => { commandRef?.("journal.update", { id: entry().id, text: editingJournalText() }); editingJournalId.set(null); }} />
+                  </View>
+                </View>
+              : <View class="gap-0.5">{entry().text.split("\n").map((line) => <Text class="text-[14px] leading-6" style={{ color: snapshot().colors.foreground }}>{line || " "}</Text>)}</View>}
+            <View class="mt-2 flex-row items-center justify-end gap-3">
+              <Text class="text-[10px]" style={{ color: snapshot().colors.muted }}>{timeLabel(entry().createdAt)}</Text>
+              {editingJournalId() !== entry().id && <View class="flex-row gap-3">
+                <View onPress={() => { editingJournalId.set(entry().id); editingJournalText.set(entry().text); }} role="button" accessibilityLabel="Изменить запись"><Text class="text-[11px]" style={{ color: snapshot().colors.muted }}>Изменить</Text></View>
+                <View onPress={() => commandRef?.("journal.delete", { id: entry().id })} role="button" accessibilityLabel="Удалить запись"><Text class="text-[11px]" style={{ color: snapshot().colors.muted }}>Удалить</Text></View>
+              </View>}
+            </View>
+          </View>
+        </View>;
+      }}</Each>
+      {snapshot().journalEntries.length === 0 && <View class="flex-1 items-center justify-center py-12"><Text class="text-[13px]" style={{ color: snapshot().colors.muted }}>Записей пока нет</Text></View>}
+    </Scroll>
+    <View class="w-full max-w-[620px] flex-row items-end gap-2 border-t py-4" style={{ borderColor: snapshot().colors.border }}>
+      <Input value={journalDraft()} onChange={(value) => journalDraft.set(value)} onSubmit={(event) => sendJournal(event.text)} multiline={true} submitBehavior="submit" placeholder="Запись в дневник…" accessibilityLabel="Новая запись в дневник" class="max-h-[150px] min-h-[42px] flex-1 rounded-xl px-3 py-2 text-[13px]" style={{ backgroundColor: snapshot().colors.card, color: snapshot().colors.foreground }} />
+      <SharedButton label="Отправить" colors={snapshot().colors} selected onPress={() => sendJournal(journalDraft())} />
+    </View>
+  </View>;
+}
+
+function TaskPage() {
+  return <Scroll class="min-h-0 flex-1 px-7 py-5">
+    <View class="mx-auto w-full max-w-[640px]">
+      {snapshot().todos.length === 0
+        ? <View class="items-center py-12"><Text class="text-[13px]" style={{ color: snapshot().colors.muted }}>Задач пока нет</Text></View>
+        : <TaskRows />}
+    </View>
+  </Scroll>;
 }
 
 effect(() => {
   const active = shortcuts();
   const unbind = [
     keymap.bind(active.sidebar, () => commandRef?.("toggle-sidebar"), { when: "notEditing" }),
-    keymap.bind(active.create, () => { newTitle.set(""); addOpen.set(true); }, { when: "notEditing" }),
-    keymap.bind(active.search, () => { quickSearchQuery.set(""); quickSearchOpen.set(true); }, { when: "notEditing" }),
+    keymap.bind(active.create, () => { newTaskTitle.set(""); addTaskOpen.set(true); }, { when: "notEditing" }),
     keymap.bind(active.reload, () => commandRef?.("reload"), { when: "notEditing" }),
   ];
   return () => unbind.forEach((remove) => remove());
@@ -116,40 +221,6 @@ function SettingsPage() {
     onPatch={setAppearance}
     onChangeShortcut={cycleShortcut}
   />;
-}
-
-function StatisticsPage() {
-  return <View class="flex-1 px-7 pt-0">
-    <View class="mx-auto w-full max-w-[665px]">
-      <View class="h-[90px] flex-row items-end justify-between border-b border-dashed border-[#28282c] pb-2">
-        <Each of={snapshot().activity}>{(point) => <View class="h-[55px] flex-1 flex-col justify-between px-px">
-          {Array.from({ length: 5 }, (_, j) => {
-            const active = j >= 5 - Math.min(5, Math.max(0, Math.floor(point().done)));
-            return <View class={`h-[7px] w-[7px] rounded-full ${active ? (j === 4 ? "bg-[#8ec07c]" : "bg-[#d79921]") : "bg-[#29292e]"}`} />;
-          })}
-        </View>}</Each>
-      </View>
-      <View class="mt-3 h-[200px] border-b" style={{ borderColor: snapshot().colors.border }}>
-        {["20%", "40%", "60%", "80%"].map((_) => <View class="h-1/4 border-b border-dashed" style={{ borderColor: snapshot().colors.border }} />)}
-        <Canvas class="absolute inset-0" draw={(ctx, size) => {
-          const values = snapshot().activity;
-          if (values.length < 2) return;
-          const maximum = Math.max(1, ...values.map((point) => point.done));
-          ctx.beginPath();
-          values.forEach((point, index) => {
-            const x = (index / (values.length - 1)) * size.width;
-            const y = size.height - (point.done / maximum) * size.height;
-            if (index === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-          });
-          ctx.strokeStyle = snapshot().colors.accent;
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-        }} />
-      </View>
-      <View class="mt-2 flex-row justify-between px-4"><Text class="text-[10px]" style={{ color: snapshot().colors.muted }}>1 дек.</Text><Text class="text-[10px]" style={{ color: snapshot().colors.muted }}>12 янв.</Text><Text class="text-[10px]" style={{ color: snapshot().colors.muted }}>23 февр.</Text><Text class="text-[10px]" style={{ color: snapshot().colors.muted }}>6 апр.</Text><Text class="text-[10px]" style={{ color: snapshot().colors.muted }}>18 мая</Text><Text class="text-[10px]" style={{ color: snapshot().colors.muted }}>29 июня</Text><Text class="text-[10px]" style={{ color: snapshot().colors.muted }}>10 авг.</Text><Text class="text-[10px]" style={{ color: snapshot().colors.muted }}>21 сент.</Text></View>
-    </View>
-  </View>;
 }
 
 function InfoPage() {
@@ -170,16 +241,11 @@ function InfoPage() {
   </Scroll>;
 }
 
-function SummaryPage() {
-  const route = snapshot().route;
-  const count = route === "logbook" ? snapshot().archivedCount : snapshot().trashCount;
-  return <View class="flex-1 items-center justify-center">
-    <Text class="mb-2 text-[14px]" style={{ color: snapshot().colors.muted }}>{route === "logbook" ? "Архив пуст" : "Корзина пуста"}</Text>
-    <Text class="text-[12px]" style={{ color: snapshot().colors.muted }}>{count ? `${count} задач` : route === "logbook" ? "Завершённые задачи хранятся здесь" : "Удалённые задачи попадают сюда"}</Text>
-  </View>;
-}
-
 function App() {
+  const primaryNavigation = navigation.filter((item) => !item.footer);
+  const footerNavigation = navigation.filter((item) => item.footer);
+  const openNewTask = () => { newTaskTitle.set(""); addTaskOpen.set(true); };
+  const changeRoute = (target: string) => { if (isRoute(target)) route.set(target); };
   return (
     <View class="h-full w-full flex-col" style={{ backgroundColor: snapshot().colors.background }}>
       <Bridge
@@ -188,59 +254,45 @@ function App() {
           commandRef = (name, args) => node.command(name, args);
         }}
         route={route()}
-        projectId={selectedProjectId()}
         onState={(next) => {
           route.set(next.route);
           snapshot.set(next);
           sidebarVisible.set(next.sidebarVisible);
         }}
+        onNavigate={(event) => changeRoute(event.route)}
       />
-      <SharedTitlebar
+      {snapshot().chrome === "tsx" && <SharedTitlebar
           title={snapshot().title}
-          icon={route() === "next-week" ? "nextWeek" : route() === "project" ? "project" : route()}
+          icon={iconForNavigation(route())}
           colors={snapshot().colors}
           onToggleSidebar={() => commandRef?.("toggle-sidebar")}
           onAppearance={() => route.set("settings")}
           sidebarVisible={sidebarVisible()}
           showPageIdentity={route() !== "settings"}
-      />
+      />}
       <View class="min-h-0 flex-1 flex-row">
-      <SharedSidebar
-        visible={sidebarVisible()}
-        current={route()}
-        navigation={navigation.map(([target, icon, label]) => ({ route: target, label, icon }))}
-        otherPages={otherPages.map(([target, icon, label]) => ({ route: target, label, icon }))}
-        projects={snapshot().projects}
-        moreOpen={otherOpen()}
-        colors={snapshot().colors}
-        onNavigate={(target) => route.set(target as Route)}
-        onProject={(id) => { selectedProjectId.set(id); route.set("project"); }}
-        onToggleMore={() => otherOpen.update((open) => !open)}
-      />
+      {snapshot().chrome === "tsx" && <View class="w-[240px] shrink-0 border-r px-2 pt-1" style={{ borderColor: snapshot().colors.border, display: sidebarVisible() ? "flex" : "none" }}>
+        <View class="gap-0.5">
+          {primaryNavigation.map((item) => <NavigationItem label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
+        </View>
+        <View class="mt-auto mb-2 gap-0.5">
+          {footerNavigation.map((item) => <NavigationItem label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
+        </View>
+      </View>}
       <View class="relative min-w-0 flex-1">
-        {(route() === "inbox" || route() === "week" || route() === "next-week" || route() === "someday" || route() === "project") && <View class="flex-1">
-          {route() === "project" && <View class="px-6 pt-6 pb-4"><Text class="text-[24px] font-bold" style={{ color: snapshot().colors.foreground }}>{snapshot().project?.title ?? "Проект"}</Text></View>}
-          <TaskRows />
+        {route() === "journal" && <JournalPage />}
+        {route() === "tasks" && <View class="min-h-0 flex-1">
+          <TaskPage />
+          {snapshot().chrome === "tsx" && <View onPress={openNewTask} role="button" accessibilityLabel="Новая задача" class="absolute right-6 bottom-6 h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: snapshot().colors.foreground }}><SharedIcon name="plus" size={20} color={snapshot().colors.background} /></View>}
         </View>}
-        {route() === "logbook" && <View class="flex-1"><View class="h-8 flex-row items-center px-7 pt-1"><Text class="text-[13px]" style={{ color: snapshot().colors.muted }}>Задачи · {snapshot().todos.length}</Text></View><TaskRows /></View>}
-        {route() === "trash" && <TaskRows />}
-        {route() === "statistics" && <StatisticsPage />}
         {route() === "settings" && <SettingsPage />}
         {route() === "about" && <InfoPage />}
-        {(route() === "inbox" || route() === "week" || route() === "next-week" || route() === "someday" || route() === "project") && <View onPress={() => { addOpen.set(true); newTitle.set(""); }} role="button" accessibilityLabel="Новая задача" class="absolute right-6 bottom-6 h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: snapshot().colors.foreground }}>
-          <SharedIcon name="plus" size={20} color={snapshot().colors.background} />
-        </View>}
-        {addOpen() && <SharedDialog title="Новая задача" colors={snapshot().colors}>
-            <SharedTextField value={newTitle()} onChange={(value) => newTitle.set(value)} onSubmit={(title) => { commandRef?.("create", { title }); addOpen.set(false); }} placeholder="Название задачи" colors={snapshot().colors} />
-            <View class="mt-3 flex-row justify-end gap-2">
-              <SharedButton label="Отмена" colors={snapshot().colors} onPress={() => addOpen.set(false)} className="border-0 px-0 py-0" style={{ backgroundColor: "transparent", borderColor: "transparent" }} />
-              <SharedButton label="Добавить" colors={snapshot().colors} onPress={() => { commandRef?.("create", { title: newTitle() }); addOpen.set(false); }} selected className="h-9 w-[90px] items-center justify-center px-0 py-0" style={{ backgroundColor: snapshot().colors.accent, borderColor: "transparent" }} textColor={snapshot().colors.background} />
-            </View>
-        </SharedDialog>}
-        {quickSearchOpen() && <SharedDialog title="Быстрый поиск" colors={snapshot().colors}>
-            <SharedTextField value={quickSearchQuery()} onChange={(value) => quickSearchQuery.set(value)} placeholder="Найти задачу на этом экране" colors={snapshot().colors} />
-            <Each of={snapshot().todos.filter((todo) => todo.title.toLowerCase().includes(quickSearchQuery().toLowerCase()))}>{(todo) => <SharedListRow colors={snapshot().colors} onPress={() => quickSearchOpen.set(false)}><Text class="text-[13px]" style={{ color: snapshot().colors.foreground }}>{todo().title}</Text></SharedListRow>}</Each>
-            <SharedButton label="Закрыть" colors={snapshot().colors} onPress={() => quickSearchOpen.set(false)} className="mt-3 self-end border-0 px-0 py-0" style={{ backgroundColor: "transparent", borderColor: "transparent" }} />
+        {addTaskOpen() && <SharedDialog title="Новая задача" colors={snapshot().colors}>
+          <Input value={newTaskTitle()} onChange={(value) => newTaskTitle.set(value)} onSubmit={(event) => { commandRef?.("create", { title: event.text }); addTaskOpen.set(false); }} placeholder="Название задачи" class="h-10 rounded-lg px-3 text-[13px]" style={{ backgroundColor: snapshot().colors.background, color: snapshot().colors.foreground }} />
+          <View class="mt-3 flex-row justify-end gap-2">
+            <SharedButton label="Отмена" colors={snapshot().colors} onPress={() => addTaskOpen.set(false)} className="border-0 px-0 py-0" style={{ backgroundColor: "transparent", borderColor: "transparent" }} />
+            <SharedButton label="Добавить" colors={snapshot().colors} onPress={() => { commandRef?.("create", { title: newTaskTitle() }); addTaskOpen.set(false); }} selected className="h-9 w-[90px] items-center justify-center px-0 py-0" style={{ backgroundColor: snapshot().colors.accent, borderColor: "transparent" }} textColor={snapshot().colors.background} />
+          </View>
         </SharedDialog>}
       </View>
       </View>

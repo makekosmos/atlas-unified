@@ -1,41 +1,1220 @@
-import{append as e,bindProp as t,component as n,each as r,element as i,insert as a,prop as o,setup as s,text as c}from"nsh:rt";import{Canvas as l}from"nsh/canvas";import{effect as u,mount as d,signal as f}from"nsh";import{nativeComponent as p}from"nsh/native";import{keymap as m}from"nsh/keymap";import{Storage as h}from"nsh/storage";import{Window as g,titleBar as _}from"nsh/desktop";const v={sidebarWidth:240,titlebarHeight:40,rowHeight:32,compactRowHeight:28,pageGutter:28},y={body:13,label:12,title:24,titlebar:13},b={background:`#0d0c10`,foreground:`#e7e5ea`,muted:`#8d8a94`,border:`#27262a`,accent:`#af94f9`,card:`#131216`},x=[`#8ec07c`,`#d79921`,`#b18aff`,`#83a598`,`#fb4934`,`#d3869b`,`#458588`,`#fabd2f`],S=[[12,`Компактная`],[13,`Обычная`],[15,`Свободная`]];function C(n){let r=()=>n.appearance,s=()=>r()?.settings,l=()=>n.colors,u=e=>{n.editable&&n.onPatch(e)},d=(n,r,s)=>(()=>{let c=i(`view`);o(c,`onPress`,s),o(c,`role`,`button`),o(c,`accessibilityState`,{selected:r}),o(c,`class`,`rounded-md border px-3 py-2`),t(c,`style`,()=>({backgroundColor:r?l().card:l().background,borderColor:r?l().accent:l().border}));let u=i(`text`);return t(u,`style`,()=>({color:r?l().foreground:l().muted})),a(u,n),e(c,u),c})(),f=(r,s)=>(()=>{let c=i(`view`);o(c,`class`,`h-10 flex-row items-center border-b`),t(c,`style`,()=>({borderColor:l().border}));let u=i(`text`);o(u,`class`,`flex-1 text-[13px]`),t(u,`style`,()=>({color:l().foreground})),a(u,s);let d=i(`view`);o(d,`onPress`,()=>n.onChangeShortcut(r)),o(d,`role`,`button`),o(d,`accessibilityLabel`,`Изменить сочетание: ${s}`),o(d,`class`,`rounded-md px-3 py-1`),t(d,`style`,()=>({backgroundColor:l().background}));let f=i(`text`);return o(f,`class`,`text-[12px]`),t(f,`style`,()=>({color:l().accent})),a(f,()=>m.label(n.shortcuts[r])),e(d,f),e(c,u),e(c,d),c})();if(!s()||!r())return(()=>{let n=i(`scroll`);o(n,`class`,`min-h-0 flex-1 px-7 pt-4 pb-8`);let r=i(`text`);o(r,`class`,`text-[13px]`),t(r,`style`,()=>({color:l().muted}));let a=c(`Загружаем настройки внешнего вида…`);return e(r,a),e(n,r),n})();let p=[[`system`,`Системная`],[`light`,`Светлая`],[`dark`,`Тёмная`]];return(()=>{let m=i(`scroll`);o(m,`class`,`min-h-0 flex-1 px-7 pt-4 pb-8`),t(m,`style`,()=>({backgroundColor:l().background}));let h=i(`view`);o(h,`class`,`mx-auto w-full max-w-[720px]`);let g=i(`text`);o(g,`class`,`mb-6 text-[24px] font-bold`),t(g,`style`,()=>({color:l().foreground}));let _=c(`Отображение`);e(g,_);let v=i(`text`);o(v,`class`,`mb-3 text-[13px]`),t(v,`style`,()=>({color:l().muted}));let y=c(`Режим`);e(v,y);let b=i(`view`);o(b,`class`,`mb-6 flex-row gap-2`),a(b,()=>p.map(([e,t])=>d(t,s().mode===e,()=>u({mode:e}))));let C=i(`text`);o(C,`class`,`mb-3 text-[13px]`),t(C,`style`,()=>({color:l().muted}));let w=c(`Светлая тема`);e(C,w);let T=i(`view`);o(T,`class`,`mb-5 flex-row flex-wrap gap-2`),a(T,()=>n.themes.map(e=>d(e.name,s().light_theme===e.key,()=>u({light_theme:e.key}))));let E=i(`text`);o(E,`class`,`mb-3 text-[13px]`),t(E,`style`,()=>({color:l().muted}));let D=c(`Тёмная тема`);e(E,D);let O=i(`view`);o(O,`class`,`mb-5 flex-row flex-wrap gap-2`),a(O,()=>n.themes.map(e=>d(e.name,s().dark_theme===e.key,()=>u({dark_theme:e.key}))));let k=i(`text`);o(k,`class`,`mb-3 text-[13px]`),t(k,`style`,()=>({color:l().muted}));let A=c(`Акцентный цвет`);e(k,A);let j=i(`view`);o(j,`class`,`mb-3 flex-row gap-2`),a(j,[()=>d(`Цвет темы`,s().accent_source===`theme`,()=>u({accent_source:`theme`,accent_color:null})),()=>d(`Свой цвет`,s().accent_source===`custom`,()=>u({accent_source:`custom`,accent_color:s().accent_color??x[0]})),()=>r().capabilities.wallpaper_accent&&d(`Обои`,s().accent_source===`wallpaper`,()=>u({accent_source:`wallpaper`}))]);let M=i(`view`);o(M,`class`,`mb-6 flex-row gap-2`),a(M,()=>x.map(e=>(()=>{let n=i(`view`);return o(n,`onPress`,()=>u({accent_source:`custom`,accent_color:e})),o(n,`role`,`button`),o(n,`accessibilityLabel`,`Акцент ${e}`),t(n,`accessibilityState`,()=>({selected:s().accent_source===`custom`&&s().accent_color?.toLowerCase()===e})),o(n,`class`,`h-7 w-7 rounded-full border-2`),t(n,`style`,()=>({backgroundColor:e,borderColor:s().accent_color?.toLowerCase()===e?l().foreground:l().border})),n})()));let N=i(`text`);o(N,`class`,`mb-3 text-[13px]`),t(N,`style`,()=>({color:l().muted}));let P=c(`Материал окна`);e(N,P);let F=i(`view`);o(F,`class`,`mb-6 flex-row gap-2`),a(F,()=>[`default`,`frosted`,`mica`].filter(e=>r().capabilities.materials.includes(e)).map(e=>d(e==="default"?`Сплошной`:e===`frosted`?`Стекло`:`Системный`,s().material===e,()=>u({material:e}))));let I=i(`text`);o(I,`class`,`mb-3 text-[13px]`),t(I,`style`,()=>({color:l().muted}));let L=c(`Плотность интерфейса`);e(I,L);let R=i(`view`);o(R,`class`,`mb-6 flex-row gap-2`),a(R,()=>S.map(([e,t])=>d(t,s().font_size===e,()=>u({font_size:e}))));let z=i(`text`);o(z,`class`,`mb-3 text-[13px]`),t(z,`style`,()=>({color:l().muted}));let B=c(`Горячие клавиши`);e(z,B);let V=i(`view`);o(V,`class`,`rounded-xl px-4`),t(V,`style`,()=>({backgroundColor:l().card}));let H=i(`view`);o(H,`class`,`h-10 flex-row items-center`);let U=i(`text`);o(U,`class`,`flex-1 text-[13px]`),t(U,`style`,()=>({color:l().foreground}));let W=c(`Закрыть панель / поиск`);e(U,W);let G=i(`text`);o(G,`class`,`text-[12px]`),t(G,`style`,()=>({color:l().muted}));let K=c(`Esc`);return e(G,K),e(H,U),e(H,G),e(V,H),a(V,[()=>f(`sidebar`,`Боковая панель — открыть/скрыть`),()=>f(`create`,`Новая задача — панель справа`),()=>f(`search`,`Быстрый поиск`),()=>f(`reload`,`Обновить данные из Engine`)],H),e(h,g),e(h,v),e(h,b),e(h,C),e(h,T),e(h,E),e(h,O),e(h,k),e(h,j),e(h,M),e(h,N),e(h,F),e(h,I),e(h,R),e(h,z),e(h,V),a(h,[()=>r()?.policy.following&&(()=>{let n=i(`text`);o(n,`class`,`mb-4 text-[12px]`),t(n,`style`,()=>({color:l().accent}));let r=c(`Общий стиль задаётся в Mundus Manager. Настройки доступны только для просмотра.`);return e(n,r),n})(),()=>!n.editable&&!r()?.policy.following&&(()=>{let n=i(`text`);o(n,`class`,`mb-4 text-[12px]`),t(n,`style`,()=>({color:l().accent}));let r=c(`Настройки внешнего вида сейчас недоступны.`);return e(n,r),n})()],v),e(m,h),m})()}const w={about:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,check:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,inbox:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M2.5%2012C2.5%207.52166%202.5%205.28249%203.89124%203.89124C5.28249%202.5%207.52166%202.5%2012%202.5C16.4783%202.5%2018.7175%202.5%2020.1088%203.89124C21.5%205.28249%2021.5%207.52166%2021.5%2012C21.5%2016.4783%2021.5%2018.7175%2020.1088%2020.1088C18.7175%2021.5%2016.4783%2021.5%2012%2021.5C7.52166%2021.5%205.28249%2021.5%203.89124%2020.1088C2.5%2018.7175%202.5%2016.4783%202.5%2012Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M21.5%2013.5H16.5743C15.7322%2013.5%2015.0706%2014.2036%2014.6995%2014.9472C14.2963%2015.7551%2013.4889%2016.5%2012%2016.5C10.5111%2016.5%209.70373%2015.7551%209.30054%2014.9472C8.92942%2014.2036%208.26777%2013.5%207.42566%2013.5H2.5%22%20stroke%3D%22currentColor%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,logbook:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7.99978%203.5H6.60021C4.43183%203.5%203.34764%203.5%202.67399%204.17362C2.00034%204.84724%202.00029%205.93144%202.00021%208.09982L2%2013.3998C1.99992%2015.5684%201.99987%2016.6526%202.67353%2017.3263C3.34719%2018%204.43146%2018%206.6%2018H8.95042C10.4329%2018%2011.7092%2019.0464%2011.9999%2020.5V5.5C11.0556%204.24097%209.99989%203.5%207.99978%203.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M16.0001%203.5H17.3997C19.5681%203.5%2020.6523%203.5%2021.3259%204.17362C21.9996%204.84724%2021.9996%205.93144%2021.9997%208.09982L21.9999%2013.3998C22%2015.5684%2022%2016.6526%2021.3264%2017.3263C20.6527%2018%2019.5684%2018%2017.3999%2018H15.0495C13.567%2018%2012.2907%2019.0464%2012%2020.5V5.5C12.9443%204.24097%2014%203.5%2016.0001%203.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,more:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M21%2012C21%2011.1716%2020.3284%2010.5%2019.5%2010.5C18.6716%2010.5%2018%2011.1716%2018%2012C18%2012.8284%2018.6716%2013.5%2019.5%2013.5C20.3284%2013.5%2021%2012.8284%2021%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13.5%2012C13.5%2011.1716%2012.8284%2010.5%2012%2010.5C11.1716%2010.5%2010.5%2011.1716%2010.5%2012C10.5%2012.8284%2011.1716%2013.5%2012%2013.5C12.8284%2013.5%2013.5%2012.8284%2013.5%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M6%2012C6%2011.1716%205.32843%2010.5%204.5%2010.5C3.67157%2010.5%203%2011.1716%203%2012C3%2012.8284%203.67157%2013.5%204.5%2013.5C5.32843%2013.5%206%2012.8284%206%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,nextWeek:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11%2014H16M8%2014H8.00898M13%2018H8M16%2018H15.991%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,plus:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M12%204V20M20%2012H4%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,project:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M8%207H16.75C18.8567%207%2019.91%207%2020.6667%207.50559C20.9943%207.72447%2021.2755%208.00572%2021.4944%208.33329C22%209.08996%2022%2010.1433%2022%2012.25C22%2015.7612%2022%2017.5167%2021.1573%2018.7779C20.7926%2019.3238%2020.3238%2019.7926%2019.7779%2020.1573C18.5167%2021%2016.7612%2021%2013.25%2021H12C7.28595%2021%204.92893%2021%203.46447%2019.5355C2%2018.0711%202%2015.714%202%2011V7.94427C2%206.1278%202%205.21956%202.38032%204.53806C2.65142%204.05227%203.05227%203.65142%203.53806%203.38032C4.21956%203%205.1278%203%206.94427%203C8.10802%203%208.6899%203%209.19926%203.19101C10.3622%203.62712%2010.8418%204.68358%2011.3666%205.73313L12%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,settings:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M3.99963%205.00055L9.99963%205.00031%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12.9996%205.00031L19.9996%205.00031%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M15.9996%209.00031L15.9996%2015.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.99963%202.00031L9.99963%208.00031%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.9996%2016.0003L11.9996%2022.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M15.9996%2012.0001L19.9996%2012.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3.99963%2012.0005L12.9996%2012.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.9996%2019.0003L19.9996%2019.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3.99963%2019.0005L8.99963%2019.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,sidebar:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M2%2012C2%208.31087%202%206.4663%202.81382%205.15877C3.1149%204.67502%203.48891%204.25427%203.91891%203.91554C5.08116%203%206.72077%203%2010%203H14C17.2792%203%2018.9188%203%2020.0811%203.91554C20.5111%204.25427%2020.8851%204.67502%2021.1862%205.15877C22%206.4663%2022%208.31087%2022%2012C22%2015.6891%2022%2017.5337%2021.1862%2018.8412C20.8851%2019.325%2020.5111%2019.7457%2020.0811%2020.0845C18.9188%2021%2017.2792%2021%2014%2021H10C6.72077%2021%205.08116%2021%203.91891%2020.0845C3.48891%2019.7457%203.1149%2019.325%202.81382%2018.8412C2%2017.5337%202%2015.6891%202%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.5%203L9.5%2021%22%20stroke%3D%22currentColor%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M5%207H6M5%2010H6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,someday:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%2210%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12%208V12L14%2014%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,statistics:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%2017L7%2013%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12%2017L12%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M17%2017L17%2011%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M2.5%2012C2.5%207.52166%202.5%205.28249%203.89124%203.89124C5.28249%202.5%207.52166%202.5%2012%202.5C16.4783%202.5%2018.7175%202.5%2020.1088%203.89124C21.5%205.28249%2021.5%207.52166%2021.5%2012C21.5%2016.4783%2021.5%2018.7175%2020.1088%2020.1088C18.7175%2021.5%2016.4783%2021.5%2012%2021.5C7.52166%2021.5%205.28249%2021.5%203.89124%2020.1088C2.5%2018.7175%202.5%2016.4783%202.5%2012Z%22%20stroke%3D%22currentColor%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,trash:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M19.5%205.5L18.8803%2015.5251C18.7219%2018.0864%2018.6428%2019.3671%2018.0008%2020.2879C17.6833%2020.7431%2017.2747%2021.1273%2016.8007%2021.416C15.8421%2022%2014.559%2022%2011.9927%2022C9.42312%2022%208.1383%2022%207.17905%2021.4149C6.7048%2021.1257%206.296%2020.7408%205.97868%2020.2848C5.33688%2019.3626%205.25945%2018.0801%205.10461%2015.5152L4.5%205.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%205.5H21M16.0557%205.5L15.3731%204.09173C14.9196%203.15626%2014.6928%202.68852%2014.3017%202.39681C14.215%202.3321%2014.1231%202.27454%2014.027%202.2247C13.5939%202%2013.0741%202%2012.0345%202C10.9688%202%2010.436%202%209.99568%202.23412C9.8981%202.28601%209.80498%202.3459%209.71729%202.41317C9.32164%202.7167%209.10063%203.20155%208.65861%204.17126L8.05292%205.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.5%2016.5L9.5%2010.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M14.5%2016.5L14.5%2010.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,week:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,display:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M4%2011L4%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%2013L19%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%203L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.5%203L11.5%2013%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M4%203L4%205%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.5%2019L11.5%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M2%209.5C2%209.03406%202%208.80109%202.07612%208.61732C2.17761%208.37229%202.37229%208.17761%202.61732%208.07612C2.80109%208%203.03406%208%203.5%208H4.5C4.96594%208%205.19891%208%205.38268%208.07612C5.62771%208.17761%205.82239%208.37229%205.92388%208.61732C6%208.80109%206%209.03406%206%209.5C6%209.96594%206%2010.1989%205.92388%2010.3827C5.82239%2010.6277%205.62771%2010.8224%205.38268%2010.9239C5.19891%2011%204.96594%2011%204.5%2011H3.5C3.03406%2011%202.80109%2011%202.61732%2010.9239C2.37229%2010.8224%202.17761%2010.6277%202.07612%2010.3827C2%2010.1989%202%209.96594%202%209.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M17%2011.5C17%2011.0341%2017%2010.8011%2017.0761%2010.6173C17.1776%2010.3723%2017.3723%2010.1776%2017.6173%2010.0761C17.8011%2010%2018.0341%2010%2018.5%2010H19.5C19.9659%2010%2020.1989%2010%2020.3827%2010.0761C20.6277%2010.1776%2020.8224%2010.3723%2020.9239%2010.6173C21%2010.8011%2021%2011.0341%2021%2011.5C21%2011.9659%2021%2012.1989%2020.9239%2012.3827C20.8224%2012.6277%2020.6277%2012.8224%2020.3827%2012.9239C20.1989%2013%2019.9659%2013%2019.5%2013H18.5C18.0341%2013%2017.8011%2013%2017.6173%2012.9239C17.3723%2012.8224%2017.1776%2012.6277%2017.0761%2012.3827C17%2012.1989%2017%2011.9659%2017%2011.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.5%2014.5C9.5%2014.0341%209.5%2013.8011%209.57612%2013.6173C9.67761%2013.3723%209.87229%2013.1776%2010.1173%2013.0761C10.3011%2013%2010.5341%2013%2011%2013H12C12.4659%2013%2012.6989%2013%2012.8827%2013.0761C13.1277%2013.1776%2013.3224%2013.3723%2013.4239%2013.6173C13.5%2013.8011%2013.5%2014.0341%2013.5%2014.5C13.5%2014.9659%2013.5%2015.1989%2013.4239%2015.3827C13.3224%2015.6277%2013.1277%2015.8224%2012.8827%2015.9239C12.6989%2016%2012.4659%2016%2012%2016H11C10.5341%2016%2010.3011%2016%2010.1173%2015.9239C9.87229%2015.8224%209.67761%2015.6277%209.57612%2015.3827C9.5%2015.1989%209.5%2014.9659%209.5%2014.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A`,windowMin:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M6%2012h12%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E%0A`,windowMax:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Crect%20x%3D%226.5%22%20y%3D%226.5%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%221.5%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E%0A`,windowClose:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m6%206%2012%2012M18%206%206%2018%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A`};function T(e){return(()=>{let n=i(`image`);return t(n,`src`,()=>w[e.name]),t(n,`style`,()=>({width:e.size??16,height:e.size??16,tintColor:e.color})),n})()}function E(r){return(()=>{let s=i(`view`);t(s,`onPress`,()=>r.onPress),o(s,`role`,`button`),t(s,`accessibilityState`,()=>({selected:r.selected})),o(s,`class`,`flex-row items-center gap-2 rounded-lg px-2.5`),t(s,`style`,()=>({height:v.rowHeight,backgroundColor:r.selected?r.colors.card:`transparent`}));let c=i(`text`);return o(c,`class`,`text-[13px]`),t(c,`style`,()=>({color:r.selected?r.colors.foreground:r.colors.muted})),a(c,()=>r.label),e(s,c),a(s,n(T,{get name(){return r.icon},get color(){return r.colors.muted}}),c),s})()}function D(r){if(!r.visible)return null;let s=e=>n(E,{get key(){return e.route},get label(){return e.label},get icon(){return e.icon},get selected(){return r.current===e.route},get colors(){return r.colors},onPress:()=>r.onNavigate(e.route)});return(()=>{let l=i(`view`);o(l,`class`,`shrink-0 border-r px-2 pt-1`),t(l,`style`,()=>({width:v.sidebarWidth,borderColor:r.colors.border}));let u=i(`view`);o(u,`class`,`gap-0.5`),a(u,()=>r.navigation.map(s));let d=i(`view`);o(d,`class`,`mt-5 rounded-lg px-2 pt-2`),t(d,`style`,()=>({backgroundColor:r.colors.card}));let f=i(`view`);o(f,`class`,`mb-1 h-8 flex-row items-center gap-2 px-0.5`);let p=i(`text`);o(p,`class`,`flex-1 text-[13px]`),t(p,`style`,()=>({color:r.colors.muted}));let m=c(`Проекты`);e(p,m),e(f,p),a(f,n(T,{name:`project`,get color(){return r.colors.muted}}),p),a(f,n(T,{name:`plus`,get color(){return r.colors.muted}})),e(d,f),a(d,()=>r.projects.map(n=>(()=>{let s=i(`view`);t(s,`key`,()=>n.id),o(s,`onPress`,()=>r.onProject(n.id)),o(s,`role`,`button`),o(s,`class`,`h-8 flex-row items-center gap-2`);let c=i(`view`);o(c,`class`,`h-2 w-2 rounded-full`),t(c,`style`,()=>({backgroundColor:r.colors.muted}));let l=i(`text`);return o(l,`class`,`text-[13px]`),t(l,`style`,()=>({color:r.colors.muted})),a(l,()=>n.title),e(s,c),e(s,l),s})()));let h=i(`view`);o(h,`class`,`mt-auto mb-2`);let g=i(`view`);t(g,`onPress`,()=>r.onToggleMore),o(g,`role`,`button`),o(g,`class`,`h-8 flex-row items-center gap-2 px-2.5`);let _=i(`text`);o(_,`class`,`text-[13px]`),t(_,`style`,()=>({color:r.colors.muted}));let y=c(`Другое`);return e(_,y),e(g,_),a(g,n(T,{name:`more`,get color(){return r.colors.muted}}),_),e(h,g),a(h,()=>r.moreOpen&&(()=>{let e=i(`view`);return o(e,`class`,`mb-2 rounded-lg p-1`),t(e,`style`,()=>({backgroundColor:r.colors.card})),a(e,()=>r.otherPages.map(s)),e})(),g),e(l,u),e(l,d),e(l,h),l})()}function O(r){u(()=>g.setTitleBar(`hidden`,v.titlebarHeight));let s=_(),c=s.left===0&&s.right===0;return(()=>{let l=i(`view`);o(l,`class`,`w-full flex-row items-center`),t(l,`style`,()=>({height:s.height||v.titlebarHeight})),o(l,`desktop`,{windowDrag:!0});let u=i(`view`);o(u,`class`,`flex-row items-center`),t(u,`style`,()=>({width:(r.sidebarVisible===!1?40:v.sidebarWidth)+s.left,height:v.titlebarHeight}));let d=i(`view`);t(d,`style`,()=>({width:s.left}));let f=i(`view`);t(f,`onPress`,()=>r.onToggleSidebar),o(f,`role`,`button`),o(f,`accessibilityLabel`,`Боковая панель`),o(f,`class`,`w-10 items-center justify-center`),t(f,`style`,()=>({height:v.titlebarHeight})),a(f,n(T,{name:`sidebar`,get color(){return r.colors.muted}}));let p=i(`view`);o(p,`class`,`flex-1`),o(p,`desktop`,{windowDrag:!0}),e(u,d),e(u,f),e(u,p);let m=i(`view`);return t(m,`onPress`,()=>r.onAppearance),o(m,`role`,`button`),o(m,`accessibilityLabel`,`Настройки отображения`),o(m,`class`,`w-10 items-center justify-center`),t(m,`style`,()=>({height:v.titlebarHeight})),a(m,n(T,{name:`display`,get color(){return r.colors.muted}})),e(l,u),e(l,m),a(l,()=>r.showPageIdentity===!1?(()=>{let e=i(`view`);return o(e,`class`,`flex-1`),o(e,`desktop`,{windowDrag:!0}),e})():(()=>{let s=i(`view`);o(s,`class`,`flex-1 flex-row items-center gap-1.5`),o(s,`desktop`,{windowDrag:!0});let c=i(`text`);return o(c,`class`,`font-medium`),t(c,`style`,()=>({fontSize:y.titlebar,color:r.colors.foreground})),a(c,()=>r.title),e(s,c),a(s,n(T,{get name(){return r.icon},size:15,get color(){return r.colors.muted}}),c),s})(),m),a(l,()=>c?(()=>{let s=i(`view`);o(s,`class`,`flex-row`),t(s,`style`,()=>({width:138,height:v.titlebarHeight}));let c=i(`view`);o(c,`onPress`,()=>g.minimize()),o(c,`role`,`button`),o(c,`accessibilityLabel`,`Свернуть окно`),o(c,`class`,`w-[46px] items-center justify-center`),t(c,`style`,()=>({height:v.titlebarHeight})),a(c,n(T,{name:`windowMin`,get color(){return r.colors.foreground},size:14}));let l=i(`view`);o(l,`onPress`,()=>g.toggleMaximize()),o(l,`role`,`button`),o(l,`accessibilityLabel`,`Развернуть окно`),o(l,`class`,`w-[46px] items-center justify-center`),t(l,`style`,()=>({height:v.titlebarHeight})),a(l,n(T,{name:`windowMax`,get color(){return r.colors.foreground},size:14}));let u=i(`view`);return o(u,`onPress`,()=>g.close()),o(u,`role`,`button`),o(u,`accessibilityLabel`,`Закрыть окно`),o(u,`class`,`w-[46px] items-center justify-center`),t(u,`style`,()=>({height:v.titlebarHeight})),a(u,n(T,{name:`windowClose`,get color(){return r.colors.foreground},size:14})),e(s,c),e(s,l),e(s,u),s})():(()=>{let e=i(`view`);return t(e,`style`,()=>({width:s.right})),e})()),l})()}function k(n){return(()=>{let r=i(`view`);t(r,`onPress`,()=>n.disabled?void 0:n.onPress),o(r,`role`,`button`),t(r,`accessibilityState`,()=>({selected:!!n.selected,disabled:!!n.disabled})),t(r,`class`,()=>`rounded-md border px-3 py-2 ${n.className??``}`),t(r,`style`,()=>({backgroundColor:n.selected?n.colors.card:n.colors.background,borderColor:n.selected?n.colors.accent:n.colors.border,opacity:n.disabled?.5:1,...n.style}));let s=i(`text`);return o(s,`class`,`text-[13px]`),t(s,`style`,()=>({color:n.textColor??(n.selected?n.colors.foreground:n.colors.muted)})),a(s,()=>n.label),e(r,s),r})()}function A(e){return(()=>{let n=i(`input`);return t(n,`value`,()=>e.value),t(n,`onChange`,()=>e.onChange),t(n,`onSubmit`,()=>e.onSubmit?t=>e.onSubmit?.(t.text):void 0),t(n,`accessibilityLabel`,()=>e.accessibilityLabel),t(n,`placeholder`,()=>e.placeholder),o(n,`class`,`h-10 rounded-lg px-3 text-[13px]`),t(n,`style`,()=>({backgroundColor:e.colors.background,color:e.colors.foreground})),n})()}function j(e){return(()=>{let n=i(`view`);return t(n,`onPress`,()=>e.onPress),t(n,`role`,()=>e.onPress?`button`:void 0),o(n,`class`,`h-9 justify-center border-b`),t(n,`style`,()=>({borderColor:e.colors.border})),a(n,()=>e.children),n})()}function M(n){return(()=>{let r=i(`view`);o(r,`class`,`absolute inset-0 items-center justify-center bg-[#00000080] px-4`);let s=i(`view`);o(s,`class`,`w-full max-w-[440px] rounded-xl border p-4`),t(s,`style`,()=>({borderColor:n.colors.border,backgroundColor:n.colors.card}));let c=i(`text`);return o(c,`class`,`mb-3 text-[14px]`),t(c,`style`,()=>({color:n.colors.foreground})),a(c,()=>n.title),e(s,c),a(s,()=>n.children),e(r,s),r})()}s(null,`{
-  "cssVars": {
-    "theme": {
-      "font-sans": "Inter, sans-serif",
-      "radius": "0.625rem",
-      "radius-control": "0.5rem",
-      "spacing-sidebar": "240px",
-      "spacing-titlebar": "40px",
-      "spacing-row": "32px",
-      "font-size-body": "13px",
-      "font-size-label": "12px"
-    },
-    "light": {
-      "background": "#faf9fb",
-      "foreground": "#26242a",
-      "card": "#f2f0f4",
-      "card-foreground": "#26242a",
-      "muted": "#ece9ef",
-      "muted-foreground": "#77727e",
-      "primary": "#7152bf",
-      "primary-foreground": "#ffffff",
-      "border": "#dedbe2",
-      "input": "#dedbe2",
-      "ring": "#b18aff"
-    },
-    "dark": {
-      "background": "#0d0c10",
-      "foreground": "#e7e5ea",
-      "card": "#131216",
-      "card-foreground": "#e7e5ea",
-      "muted": "#27262a",
-      "muted-foreground": "#8d8a94",
-      "primary": "#af94f9",
-      "primary-foreground": "#0d0c10",
-      "border": "#27262a",
-      "input": "#27262a",
-      "ring": "#af94f9"
-    }
-  }
+import { append, bindProp, component, each, element, insert, prop, setup, text } from "nsh:rt";
+import { effect, mount, signal } from "nsh";
+import { nativeComponent } from "nsh/native";
+import { keymap } from "nsh/keymap";
+import { Storage } from "nsh/storage";
+import { Window, titleBar } from "nsh/desktop";
+
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+0dc83f181d0f091f7da074583079582278c407fd/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/types.ts
+const spacing = {
+	sidebarWidth: 240,
+	titlebarHeight: 40,
+	rowHeight: 32,
+	compactRowHeight: 28,
+	pageGutter: 28
+};
+const typography = {
+	body: 13,
+	label: 12,
+	title: 24,
+	titlebar: 13
+};
+const defaultColors = {
+	background: "#0d0c10",
+	foreground: "#e7e5ea",
+	muted: "#8d8a94",
+	border: "#27262a",
+	accent: "#af94f9",
+	card: "#131216"
+};
+const accentChoices = [
+	"#8ec07c",
+	"#d79921",
+	"#b18aff",
+	"#83a598",
+	"#fb4934",
+	"#d3869b",
+	"#458588",
+	"#fabd2f"
+];
+const densityChoices = [
+	[12, "Компактная"],
+	[13, "Обычная"],
+	[15, "Свободная"]
+];
+
+//#endregion
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+0dc83f181d0f091f7da074583079582278c407fd/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/AppearanceSettings.tsx
+function AppearanceSettings(props) {
+	const appearance = () => props.appearance;
+	const settings = () => appearance()?.settings;
+	const colors = () => props.colors;
+	const patch = (values) => {
+		if (props.editable) props.onPatch(values);
+	};
+	const choice = (label, selected, onPress) => (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "onPress", onPress);
+		prop(__nsh_hv0, "role", "button");
+		prop(__nsh_hv0, "accessibilityState", { selected });
+		prop(__nsh_hv0, "class", "rounded-md border px-3 py-2");
+		bindProp(__nsh_hv0, "style", () => ({
+			backgroundColor: selected ? colors().card : colors().background,
+			borderColor: selected ? colors().accent : colors().border
+		}));
+		const __nsh_hv1 = element("text");
+		bindProp(__nsh_hv1, "style", () => ({ color: selected ? colors().foreground : colors().muted }));
+		insert(__nsh_hv1, label);
+		append(__nsh_hv0, __nsh_hv1);
+		return __nsh_hv0;
+	})();
+	const shortcutRow = (name, label) => (() => {
+		const __nsh_hv2 = element("view");
+		prop(__nsh_hv2, "class", "h-10 flex-row items-center border-b");
+		bindProp(__nsh_hv2, "style", () => ({ borderColor: colors().border }));
+		const __nsh_hv3 = element("text");
+		prop(__nsh_hv3, "class", "flex-1 text-[13px]");
+		bindProp(__nsh_hv3, "style", () => ({ color: colors().foreground }));
+		insert(__nsh_hv3, label);
+		const __nsh_hv4 = element("view");
+		prop(__nsh_hv4, "onPress", () => props.onChangeShortcut(name));
+		prop(__nsh_hv4, "role", "button");
+		prop(__nsh_hv4, "accessibilityLabel", `Изменить сочетание: ${label}`);
+		prop(__nsh_hv4, "class", "rounded-md px-3 py-1");
+		bindProp(__nsh_hv4, "style", () => ({ backgroundColor: colors().background }));
+		const __nsh_hv5 = element("text");
+		prop(__nsh_hv5, "class", "text-[12px]");
+		bindProp(__nsh_hv5, "style", () => ({ color: colors().accent }));
+		insert(__nsh_hv5, () => keymap.label(props.shortcuts[name]));
+		append(__nsh_hv4, __nsh_hv5);
+		append(__nsh_hv2, __nsh_hv3);
+		append(__nsh_hv2, __nsh_hv4);
+		return __nsh_hv2;
+	})();
+	if (!settings() || !appearance()) return (() => {
+		const __nsh_hv6 = element("scroll");
+		prop(__nsh_hv6, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
+		const __nsh_hv7 = element("text");
+		prop(__nsh_hv7, "class", "text-[13px]");
+		bindProp(__nsh_hv7, "style", () => ({ color: colors().muted }));
+		const __nsh_hv8 = text("Загружаем настройки внешнего вида…");
+		append(__nsh_hv7, __nsh_hv8);
+		append(__nsh_hv6, __nsh_hv7);
+		return __nsh_hv6;
+	})();
+	const modes = [
+		["system", "Системная"],
+		["light", "Светлая"],
+		["dark", "Тёмная"]
+	];
+	return (() => {
+		const __nsh_hv9 = element("scroll");
+		prop(__nsh_hv9, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
+		bindProp(__nsh_hv9, "style", () => ({ backgroundColor: colors().background }));
+		const __nsh_hv10 = element("view");
+		prop(__nsh_hv10, "class", "mx-auto w-full max-w-[720px]");
+		const __nsh_hv11 = element("text");
+		prop(__nsh_hv11, "class", "mb-6 text-[24px] font-bold");
+		bindProp(__nsh_hv11, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv12 = text("Отображение");
+		append(__nsh_hv11, __nsh_hv12);
+		const __nsh_hv17 = element("text");
+		prop(__nsh_hv17, "class", "mb-3 text-[13px]");
+		bindProp(__nsh_hv17, "style", () => ({ color: colors().muted }));
+		const __nsh_hv18 = text("Режим");
+		append(__nsh_hv17, __nsh_hv18);
+		const __nsh_hv19 = element("view");
+		prop(__nsh_hv19, "class", "mb-6 flex-row gap-2");
+		insert(__nsh_hv19, () => modes.map(([mode, label]) => choice(label, settings().mode === mode, () => patch({ mode }))));
+		const __nsh_hv20 = element("text");
+		prop(__nsh_hv20, "class", "mb-3 text-[13px]");
+		bindProp(__nsh_hv20, "style", () => ({ color: colors().muted }));
+		const __nsh_hv21 = text("Светлая тема");
+		append(__nsh_hv20, __nsh_hv21);
+		const __nsh_hv22 = element("view");
+		prop(__nsh_hv22, "class", "mb-5 flex-row flex-wrap gap-2");
+		insert(__nsh_hv22, () => props.themes.map((theme) => choice(theme.name, settings().light_theme === theme.key, () => patch({ light_theme: theme.key }))));
+		const __nsh_hv23 = element("text");
+		prop(__nsh_hv23, "class", "mb-3 text-[13px]");
+		bindProp(__nsh_hv23, "style", () => ({ color: colors().muted }));
+		const __nsh_hv24 = text("Тёмная тема");
+		append(__nsh_hv23, __nsh_hv24);
+		const __nsh_hv25 = element("view");
+		prop(__nsh_hv25, "class", "mb-5 flex-row flex-wrap gap-2");
+		insert(__nsh_hv25, () => props.themes.map((theme) => choice(theme.name, settings().dark_theme === theme.key, () => patch({ dark_theme: theme.key }))));
+		const __nsh_hv26 = element("text");
+		prop(__nsh_hv26, "class", "mb-3 text-[13px]");
+		bindProp(__nsh_hv26, "style", () => ({ color: colors().muted }));
+		const __nsh_hv27 = text("Акцентный цвет");
+		append(__nsh_hv26, __nsh_hv27);
+		const __nsh_hv28 = element("view");
+		prop(__nsh_hv28, "class", "mb-3 flex-row gap-2");
+		insert(__nsh_hv28, [
+			() => choice("Цвет темы", settings().accent_source === "theme", () => patch({
+				accent_source: "theme",
+				accent_color: null
+			})),
+			() => choice("Свой цвет", settings().accent_source === "custom", () => patch({
+				accent_source: "custom",
+				accent_color: settings().accent_color ?? accentChoices[0]
+			})),
+			() => appearance().capabilities.wallpaper_accent && choice("Обои", settings().accent_source === "wallpaper", () => patch({ accent_source: "wallpaper" }))
+		]);
+		const __nsh_hv29 = element("view");
+		prop(__nsh_hv29, "class", "mb-6 flex-row gap-2");
+		insert(__nsh_hv29, () => accentChoices.map((accent) => (() => {
+			const __nsh_hv30 = element("view");
+			prop(__nsh_hv30, "onPress", () => patch({
+				accent_source: "custom",
+				accent_color: accent
+			}));
+			prop(__nsh_hv30, "role", "button");
+			prop(__nsh_hv30, "accessibilityLabel", `Акцент ${accent}`);
+			bindProp(__nsh_hv30, "accessibilityState", () => ({ selected: settings().accent_source === "custom" && settings().accent_color?.toLowerCase() === accent }));
+			prop(__nsh_hv30, "class", "h-7 w-7 rounded-full border-2");
+			bindProp(__nsh_hv30, "style", () => ({
+				backgroundColor: accent,
+				borderColor: settings().accent_color?.toLowerCase() === accent ? colors().foreground : colors().border
+			}));
+			return __nsh_hv30;
+		})()));
+		const __nsh_hv31 = element("text");
+		prop(__nsh_hv31, "class", "mb-3 text-[13px]");
+		bindProp(__nsh_hv31, "style", () => ({ color: colors().muted }));
+		const __nsh_hv32 = text("Материал окна");
+		append(__nsh_hv31, __nsh_hv32);
+		const __nsh_hv33 = element("view");
+		prop(__nsh_hv33, "class", "mb-6 flex-row gap-2");
+		insert(__nsh_hv33, () => [
+			"default",
+			"frosted",
+			"mica"
+		].filter((material) => appearance().capabilities.materials.includes(material)).map((material) => choice(material === "default" ? "Сплошной" : material === "frosted" ? "Стекло" : "Системный", settings().material === material, () => patch({ material }))));
+		const __nsh_hv34 = element("text");
+		prop(__nsh_hv34, "class", "mb-3 text-[13px]");
+		bindProp(__nsh_hv34, "style", () => ({ color: colors().muted }));
+		const __nsh_hv35 = text("Плотность интерфейса");
+		append(__nsh_hv34, __nsh_hv35);
+		const __nsh_hv36 = element("view");
+		prop(__nsh_hv36, "class", "mb-6 flex-row gap-2");
+		insert(__nsh_hv36, () => densityChoices.map(([size, label]) => choice(label, settings().font_size === size, () => patch({ font_size: size }))));
+		const __nsh_hv37 = element("text");
+		prop(__nsh_hv37, "class", "mb-3 text-[13px]");
+		bindProp(__nsh_hv37, "style", () => ({ color: colors().muted }));
+		const __nsh_hv38 = text("Горячие клавиши");
+		append(__nsh_hv37, __nsh_hv38);
+		const __nsh_hv39 = element("view");
+		prop(__nsh_hv39, "class", "rounded-xl px-4");
+		bindProp(__nsh_hv39, "style", () => ({ backgroundColor: colors().card }));
+		const __nsh_hv40 = element("view");
+		prop(__nsh_hv40, "class", "h-10 flex-row items-center");
+		const __nsh_hv41 = element("text");
+		prop(__nsh_hv41, "class", "flex-1 text-[13px]");
+		bindProp(__nsh_hv41, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv42 = text("Закрыть панель / поиск");
+		append(__nsh_hv41, __nsh_hv42);
+		const __nsh_hv43 = element("text");
+		prop(__nsh_hv43, "class", "text-[12px]");
+		bindProp(__nsh_hv43, "style", () => ({ color: colors().muted }));
+		const __nsh_hv44 = text("Esc");
+		append(__nsh_hv43, __nsh_hv44);
+		append(__nsh_hv40, __nsh_hv41);
+		append(__nsh_hv40, __nsh_hv43);
+		append(__nsh_hv39, __nsh_hv40);
+		insert(__nsh_hv39, [
+			() => shortcutRow("sidebar", "Боковая панель — открыть/скрыть"),
+			() => shortcutRow("create", "Новая задача — панель справа"),
+			() => shortcutRow("search", "Быстрый поиск"),
+			() => shortcutRow("reload", "Обновить данные из Engine")
+		], __nsh_hv40);
+		append(__nsh_hv10, __nsh_hv11);
+		append(__nsh_hv10, __nsh_hv17);
+		append(__nsh_hv10, __nsh_hv19);
+		append(__nsh_hv10, __nsh_hv20);
+		append(__nsh_hv10, __nsh_hv22);
+		append(__nsh_hv10, __nsh_hv23);
+		append(__nsh_hv10, __nsh_hv25);
+		append(__nsh_hv10, __nsh_hv26);
+		append(__nsh_hv10, __nsh_hv28);
+		append(__nsh_hv10, __nsh_hv29);
+		append(__nsh_hv10, __nsh_hv31);
+		append(__nsh_hv10, __nsh_hv33);
+		append(__nsh_hv10, __nsh_hv34);
+		append(__nsh_hv10, __nsh_hv36);
+		append(__nsh_hv10, __nsh_hv37);
+		append(__nsh_hv10, __nsh_hv39);
+		insert(__nsh_hv10, [() => appearance()?.policy.following && (() => {
+			const __nsh_hv13 = element("text");
+			prop(__nsh_hv13, "class", "mb-4 text-[12px]");
+			bindProp(__nsh_hv13, "style", () => ({ color: colors().accent }));
+			const __nsh_hv14 = text("Общий стиль задаётся в Mundus Manager. Настройки доступны только для просмотра.");
+			append(__nsh_hv13, __nsh_hv14);
+			return __nsh_hv13;
+		})(), () => !props.editable && !appearance()?.policy.following && (() => {
+			const __nsh_hv15 = element("text");
+			prop(__nsh_hv15, "class", "mb-4 text-[12px]");
+			bindProp(__nsh_hv15, "style", () => ({ color: colors().accent }));
+			const __nsh_hv16 = text("Настройки внешнего вида сейчас недоступны.");
+			append(__nsh_hv15, __nsh_hv16);
+			return __nsh_hv15;
+		})()], __nsh_hv17);
+		append(__nsh_hv9, __nsh_hv10);
+		return __nsh_hv9;
+	})();
 }
-`,null,null);const N={route:`inbox`,title:`Входящие`,todos:[],projects:[],archivedCount:0,trashCount:0,todoCount:0,version:``,activity:[],appearance:{settings:{mode:`dark`,light_theme:`default`,dark_theme:`default`,accent_source:`theme`,material:`default`,font_size:13,font_family:`Inter`},policy:{following:!1,editable:!0},capabilities:{materials:[`default`,`frosted`,`mica`],wallpaper_accent:!1}},appearanceEditable:!0,themes:[{key:`default`,name:`Default`},{key:`claude`,name:`Claude`},{key:`graphite`,name:`Graphite`}],colors:b,sidebarVisible:!0},P=globalThis.__MUNDUS_ATLAS_INITIAL__??N,F=f(P),I=f(`inbox`),L=f(`dev-proj-release`),R=f(!1),z=f(!1),B=f(``),V=f(!1),H=f(``),U=f(!0),W=[`sidebar`,`create`,`search`,`reload`],G={sidebar:`mod+b`,create:`mod+n`,search:`mod+k`,reload:`mod+r`},K={sidebar:[`mod+b`,`mod+shift+b`],create:[`mod+n`,`mod+shift+n`],search:[`mod+k`,`mod+shift+k`],reload:[`mod+r`,`mod+shift+r`]},q=f(G);h.getItem(`mundus.agenda.shortcuts.v1`).then(e=>{if(e)try{let t=JSON.parse(e);q.set(Object.fromEntries(W.map(e=>[e,K[e].includes(t[e]??``)?t[e]:G[e]])))}catch{}});const J=p(`atlas.bridge`,{props:[`route`,`projectId`],events:[`state`]}),Y=[[`inbox`,`inbox`,`Входящие`],[`week`,`week`,`Эта неделя`],[`next-week`,`nextWeek`,`Следующая неделя`],[`someday`,`someday`,`Потом`]],X=[[`logbook`,`logbook`,`Архив`],[`statistics`,`statistics`,`Активность`],[`settings`,`settings`,`Настройки`],[`about`,`about`,`О приложении`],[`trash`,`trash`,`Корзина`]];function Z(){return r(()=>F().todos,r=>(()=>{let s=i(`view`);o(s,`class`,`flex-row items-center border-b px-3`),t(s,`style`,()=>({height:37*(F().appearance?.settings.font_size??13)/13,borderColor:F().colors.border}));let c=i(`view`);o(c,`onPress`,()=>Q?.(`complete`,{id:r().id})),o(c,`role`,`checkbox`),t(c,`accessibilityLabel`,()=>r().title),t(c,`accessibilityState`,()=>({checked:r().is_completed})),o(c,`class`,`mr-3 h-[14px] w-[14px] items-center justify-center rounded-full border`),t(c,`style`,()=>({borderColor:r().is_completed?F().colors.accent:F().colors.muted,backgroundColor:r().is_completed?F().colors.accent:`transparent`})),a(c,()=>r().is_completed&&n(T,{name:`check`,size:10,get color(){return F().colors.background}}));let l=i(`text`);return t(l,`class`,()=>r().is_completed&&F().route!==`logbook`?`line-through`:``),t(l,`style`,()=>({fontSize:F().appearance?.settings.font_size??13,color:r().is_completed&&F().route!==`logbook`?F().colors.muted:F().colors.foreground})),a(l,()=>r().title),e(s,c),e(s,l),s})())}let Q;function $(e){let t=F();t.appearance&&t.appearanceEditable&&F.set({...t,appearance:{...t.appearance,settings:{...t.appearance.settings,...e}}}),Q?.(`appearance.set`,e)}function ee(e){let t=q(),n=K[e],r=n[(n.indexOf(t[e])+1)%n.length],i={...t,[e]:r};q.set(i),h.setItem(`mundus.agenda.shortcuts.v1`,JSON.stringify(i))}u(()=>{let e=q(),t=[m.bind(e.sidebar,()=>Q?.(`toggle-sidebar`),{when:`notEditing`}),m.bind(e.create,()=>{B.set(``),z.set(!0)},{when:`notEditing`}),m.bind(e.search,()=>{H.set(``),V.set(!0)},{when:`notEditing`}),m.bind(e.reload,()=>Q?.(`reload`),{when:`notEditing`})];return()=>t.forEach(e=>e())});function te(){return n(C,{get appearance(){return F().appearance},get editable(){return F().appearanceEditable},get themes(){return F().themes},get colors(){return F().colors},get shortcuts(){return q()},onPatch:$,onChangeShortcut:ee})}function ne(){return(()=>{let s=i(`view`);o(s,`class`,`flex-1 px-7 pt-0`);let u=i(`view`);o(u,`class`,`mx-auto w-full max-w-[665px]`);let d=i(`view`);o(d,`class`,`h-[90px] flex-row items-end justify-between border-b border-dashed border-[#28282c] pb-2`),a(d,r(()=>F().activity,e=>(()=>{let t=i(`view`);return o(t,`class`,`h-[55px] flex-1 flex-col justify-between px-px`),a(t,()=>Array.from({length:5},(t,n)=>{let r=n>=5-Math.min(5,Math.max(0,Math.floor(e().done)));return(()=>{let e=i(`view`);return o(e,`class`,`h-[7px] w-[7px] rounded-full ${r?n===4?`bg-[#8ec07c]`:`bg-[#d79921]`:`bg-[#29292e]`}`),e})()})),t})()));let f=i(`view`);o(f,`class`,`mt-3 h-[200px] border-b`),t(f,`style`,()=>({borderColor:F().colors.border})),a(f,[()=>[`20%`,`40%`,`60%`,`80%`].map(e=>(()=>{let e=i(`view`);return o(e,`class`,`h-1/4 border-b border-dashed`),t(e,`style`,()=>({borderColor:F().colors.border})),e})()),n(l,{class:`absolute inset-0`,draw:(e,t)=>{let n=F().activity;if(n.length<2)return;let r=Math.max(1,...n.map(e=>e.done));e.beginPath(),n.forEach((i,a)=>{let o=a/(n.length-1)*t.width,s=t.height-i.done/r*t.height;a===0?e.moveTo(o,s):e.lineTo(o,s)}),e.strokeStyle=F().colors.accent,e.lineWidth=1.5,e.stroke()}})]);let p=i(`view`);o(p,`class`,`mt-2 flex-row justify-between px-4`);let m=i(`text`);o(m,`class`,`text-[10px]`),t(m,`style`,()=>({color:F().colors.muted}));let h=c(`1 дек.`);e(m,h);let g=i(`text`);o(g,`class`,`text-[10px]`),t(g,`style`,()=>({color:F().colors.muted}));let _=c(`12 янв.`);e(g,_);let v=i(`text`);o(v,`class`,`text-[10px]`),t(v,`style`,()=>({color:F().colors.muted}));let y=c(`23 февр.`);e(v,y);let b=i(`text`);o(b,`class`,`text-[10px]`),t(b,`style`,()=>({color:F().colors.muted}));let x=c(`6 апр.`);e(b,x);let S=i(`text`);o(S,`class`,`text-[10px]`),t(S,`style`,()=>({color:F().colors.muted}));let C=c(`18 мая`);e(S,C);let w=i(`text`);o(w,`class`,`text-[10px]`),t(w,`style`,()=>({color:F().colors.muted}));let T=c(`29 июня`);e(w,T);let E=i(`text`);o(E,`class`,`text-[10px]`),t(E,`style`,()=>({color:F().colors.muted}));let D=c(`10 авг.`);e(E,D);let O=i(`text`);o(O,`class`,`text-[10px]`),t(O,`style`,()=>({color:F().colors.muted}));let k=c(`21 сент.`);return e(O,k),e(p,m),e(p,g),e(p,v),e(p,b),e(p,S),e(p,w),e(p,E),e(p,O),e(u,d),e(u,f),e(u,p),e(s,u),s})()}function re(){return(()=>{let r=i(`scroll`);o(r,`class`,`flex-1 px-7 pt-12`);let s=i(`view`);o(s,`class`,`mx-auto w-full max-w-[760px]`);let l=i(`view`);o(l,`class`,`mb-16 items-center`);let u=i(`text`);o(u,`class`,`mb-2 text-[23px] font-bold`),t(u,`style`,()=>({color:F().colors.foreground}));let d=c(`Atlas`);e(u,d);let f=i(`text`);o(f,`class`,`mb-2 text-[13px]`),t(f,`style`,()=>({color:F().colors.muted}));let p=c(`Версия `);e(f,p),a(f,()=>F().version);let m=i(`text`);o(m,`class`,`text-[12px]`),t(m,`style`,()=>({color:F().colors.muted}));let h=c(`© Yoso Industries 2025–2026`);e(m,h),e(l,u),e(l,f),e(l,m),a(l,n(T,{name:`about`,size:88,get color(){return F().colors.accent}}),u);let g=i(`text`);o(g,`class`,`mb-3 text-[13px]`),t(g,`style`,()=>({color:F().colors.foreground}));let _=c(`Диагностика`);e(g,_);let v=i(`view`);o(v,`class`,`h-10 flex-row items-center rounded-xl px-4`),t(v,`style`,()=>({backgroundColor:F().colors.card}));let y=i(`view`);o(y,`class`,`mr-3 h-4 w-4 items-center justify-center rounded-full border`),t(y,`style`,()=>({borderColor:F().colors.accent})),a(y,n(T,{name:`check`,size:10,get color(){return F().colors.accent}}));let b=i(`text`);o(b,`class`,`text-[13px]`),t(b,`style`,()=>({color:F().colors.foreground}));let x=c(`Всё в порядке`);return e(b,x),e(v,y),e(v,b),e(s,l),e(s,g),e(s,v),e(r,s),r})()}function ie(){return(()=>{let s=i(`view`);o(s,`class`,`h-full w-full flex-col`),t(s,`style`,()=>({backgroundColor:F().colors.background}));let l=i(`view`);o(l,`class`,`min-h-0 flex-1 flex-row`);let u=i(`view`);return o(u,`class`,`relative min-w-0 flex-1`),a(u,[()=>(I()===`inbox`||I()===`week`||I()===`next-week`||I()===`someday`||I()===`project`)&&(()=>{let r=i(`view`);return o(r,`class`,`flex-1`),a(r,[()=>I()===`project`&&(()=>{let n=i(`view`);o(n,`class`,`px-6 pt-6 pb-4`);let r=i(`text`);return o(r,`class`,`text-[24px] font-bold`),t(r,`style`,()=>({color:F().colors.foreground})),a(r,()=>F().project?.title??`Проект`),e(n,r),n})(),n(Z,{})]),r})(),()=>I()===`logbook`&&(()=>{let r=i(`view`);o(r,`class`,`flex-1`);let s=i(`view`);o(s,`class`,`h-8 flex-row items-center px-7 pt-1`);let l=i(`text`);o(l,`class`,`text-[13px]`),t(l,`style`,()=>({color:F().colors.muted}));let u=c(`Задачи · `);return e(l,u),a(l,()=>F().todos.length),e(s,l),e(r,s),a(r,n(Z,{})),r})(),()=>I()===`trash`&&n(Z,{}),()=>I()===`statistics`&&n(ne,{}),()=>I()===`settings`&&n(te,{}),()=>I()===`about`&&n(re,{}),()=>(I()===`inbox`||I()===`week`||I()===`next-week`||I()===`someday`||I()===`project`)&&(()=>{let e=i(`view`);return o(e,`onPress`,()=>{z.set(!0),B.set(``)}),o(e,`role`,`button`),o(e,`accessibilityLabel`,`Новая задача`),o(e,`class`,`absolute right-6 bottom-6 h-11 w-11 items-center justify-center rounded-full`),t(e,`style`,()=>({backgroundColor:F().colors.foreground})),a(e,n(T,{name:`plus`,size:20,get color(){return F().colors.background}})),e})(),()=>z()&&n(M,{title:`Новая задача`,get colors(){return F().colors},get children(){return[n(A,{get value(){return B()},onChange:e=>B.set(e),onSubmit:e=>{Q?.(`create`,{title:e}),z.set(!1)},placeholder:`Название задачи`,get colors(){return F().colors}}),(()=>{let e=i(`view`);return o(e,`class`,`mt-3 flex-row justify-end gap-2`),a(e,[n(k,{label:`Отмена`,get colors(){return F().colors},onPress:()=>z.set(!1),className:`border-0 px-0 py-0`,style:{backgroundColor:`transparent`,borderColor:`transparent`}}),n(k,{label:`Добавить`,get colors(){return F().colors},onPress:()=>{Q?.(`create`,{title:B()}),z.set(!1)},selected:!0,className:`h-9 w-[90px] items-center justify-center px-0 py-0`,get style(){return{backgroundColor:F().colors.accent,borderColor:`transparent`}},get textColor(){return F().colors.background}})]),e})()]}}),()=>V()&&n(M,{title:`Быстрый поиск`,get colors(){return F().colors},get children(){return[n(A,{get value(){return H()},onChange:e=>H.set(e),placeholder:`Найти задачу на этом экране`,get colors(){return F().colors}}),r(()=>F().todos.filter(e=>e.title.toLowerCase().includes(H().toLowerCase())),e=>n(j,{get colors(){return F().colors},onPress:()=>V.set(!1),get children(){return(()=>{let n=i(`text`);return o(n,`class`,`text-[13px]`),t(n,`style`,()=>({color:F().colors.foreground})),a(n,()=>e().title),n})()}})),n(k,{label:`Закрыть`,get colors(){return F().colors},onPress:()=>V.set(!1),className:`mt-3 self-end border-0 px-0 py-0`,style:{backgroundColor:`transparent`,borderColor:`transparent`}})]}})]),e(l,u),a(l,n(D,{get visible(){return U()},get current(){return I()},get navigation(){return Y.map(([e,t,n])=>({route:e,label:n,icon:t}))},get otherPages(){return X.map(([e,t,n])=>({route:e,label:n,icon:t}))},get projects(){return F().projects},get moreOpen(){return R()},get colors(){return F().colors},onNavigate:e=>I.set(e),onProject:e=>{L.set(e),I.set(`project`)},onToggleMore:()=>R.update(e=>!e)}),u),e(s,l),a(s,[n(J,{class:`absolute left-0 top-0 h-px w-px`,ref:e=>{Q=(t,n)=>e.command(t,n)},get route(){return I()},get projectId(){return L()},onState:e=>{I.set(e.route),F.set(e),U.set(e.sidebarVisible)}}),n(O,{get title(){return F().title},get icon(){return I()===`next-week`?`nextWeek`:I()===`project`?`project`:I()},get colors(){return F().colors},onToggleSidebar:()=>Q?.(`toggle-sidebar`),onAppearance:()=>I.set(`settings`),get sidebarVisible(){return U()},get showPageIdentity(){return I()!==`settings`}})],l),s})()}d(ie);
+
+//#endregion
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+0dc83f181d0f091f7da074583079582278c407fd/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
+const icons = {
+	about: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	inbox: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M2.5%2012C2.5%207.52166%202.5%205.28249%203.89124%203.89124C5.28249%202.5%207.52166%202.5%2012%202.5C16.4783%202.5%2018.7175%202.5%2020.1088%203.89124C21.5%205.28249%2021.5%207.52166%2021.5%2012C21.5%2016.4783%2021.5%2018.7175%2020.1088%2020.1088C18.7175%2021.5%2016.4783%2021.5%2012%2021.5C7.52166%2021.5%205.28249%2021.5%203.89124%2020.1088C2.5%2018.7175%202.5%2016.4783%202.5%2012Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M21.5%2013.5H16.5743C15.7322%2013.5%2015.0706%2014.2036%2014.6995%2014.9472C14.2963%2015.7551%2013.4889%2016.5%2012%2016.5C10.5111%2016.5%209.70373%2015.7551%209.30054%2014.9472C8.92942%2014.2036%208.26777%2013.5%207.42566%2013.5H2.5%22%20stroke%3D%22currentColor%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	logbook: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7.99978%203.5H6.60021C4.43183%203.5%203.34764%203.5%202.67399%204.17362C2.00034%204.84724%202.00029%205.93144%202.00021%208.09982L2%2013.3998C1.99992%2015.5684%201.99987%2016.6526%202.67353%2017.3263C3.34719%2018%204.43146%2018%206.6%2018H8.95042C10.4329%2018%2011.7092%2019.0464%2011.9999%2020.5V5.5C11.0556%204.24097%209.99989%203.5%207.99978%203.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M16.0001%203.5H17.3997C19.5681%203.5%2020.6523%203.5%2021.3259%204.17362C21.9996%204.84724%2021.9996%205.93144%2021.9997%208.09982L21.9999%2013.3998C22%2015.5684%2022%2016.6526%2021.3264%2017.3263C20.6527%2018%2019.5684%2018%2017.3999%2018H15.0495C13.567%2018%2012.2907%2019.0464%2012%2020.5V5.5C12.9443%204.24097%2014%203.5%2016.0001%203.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	more: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M21%2012C21%2011.1716%2020.3284%2010.5%2019.5%2010.5C18.6716%2010.5%2018%2011.1716%2018%2012C18%2012.8284%2018.6716%2013.5%2019.5%2013.5C20.3284%2013.5%2021%2012.8284%2021%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13.5%2012C13.5%2011.1716%2012.8284%2010.5%2012%2010.5C11.1716%2010.5%2010.5%2011.1716%2010.5%2012C10.5%2012.8284%2011.1716%2013.5%2012%2013.5C12.8284%2013.5%2013.5%2012.8284%2013.5%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M6%2012C6%2011.1716%205.32843%2010.5%204.5%2010.5C3.67157%2010.5%203%2011.1716%203%2012C3%2012.8284%203.67157%2013.5%204.5%2013.5C5.32843%2013.5%206%2012.8284%206%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	nextWeek: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11%2014H16M8%2014H8.00898M13%2018H8M16%2018H15.991%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	plus: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M12%204V20M20%2012H4%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	project: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M8%207H16.75C18.8567%207%2019.91%207%2020.6667%207.50559C20.9943%207.72447%2021.2755%208.00572%2021.4944%208.33329C22%209.08996%2022%2010.1433%2022%2012.25C22%2015.7612%2022%2017.5167%2021.1573%2018.7779C20.7926%2019.3238%2020.3238%2019.7926%2019.7779%2020.1573C18.5167%2021%2016.7612%2021%2013.25%2021H12C7.28595%2021%204.92893%2021%203.46447%2019.5355C2%2018.0711%202%2015.714%202%2011V7.94427C2%206.1278%202%205.21956%202.38032%204.53806C2.65142%204.05227%203.05227%203.65142%203.53806%203.38032C4.21956%203%205.1278%203%206.94427%203C8.10802%203%208.6899%203%209.19926%203.19101C10.3622%203.62712%2010.8418%204.68358%2011.3666%205.73313L12%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	settings: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M3.99963%205.00055L9.99963%205.00031%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12.9996%205.00031L19.9996%205.00031%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M15.9996%209.00031L15.9996%2015.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.99963%202.00031L9.99963%208.00031%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.9996%2016.0003L11.9996%2022.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M15.9996%2012.0001L19.9996%2012.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3.99963%2012.0005L12.9996%2012.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.9996%2019.0003L19.9996%2019.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3.99963%2019.0005L8.99963%2019.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	sidebar: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M2%2012C2%208.31087%202%206.4663%202.81382%205.15877C3.1149%204.67502%203.48891%204.25427%203.91891%203.91554C5.08116%203%206.72077%203%2010%203H14C17.2792%203%2018.9188%203%2020.0811%203.91554C20.5111%204.25427%2020.8851%204.67502%2021.1862%205.15877C22%206.4663%2022%208.31087%2022%2012C22%2015.6891%2022%2017.5337%2021.1862%2018.8412C20.8851%2019.325%2020.5111%2019.7457%2020.0811%2020.0845C18.9188%2021%2017.2792%2021%2014%2021H10C6.72077%2021%205.08116%2021%203.91891%2020.0845C3.48891%2019.7457%203.1149%2019.325%202.81382%2018.8412C2%2017.5337%202%2015.6891%202%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.5%203L9.5%2021%22%20stroke%3D%22currentColor%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M5%207H6M5%2010H6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	someday: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%2210%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12%208V12L14%2014%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	statistics: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%2017L7%2013%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12%2017L12%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M17%2017L17%2011%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M2.5%2012C2.5%207.52166%202.5%205.28249%203.89124%203.89124C5.28249%202.5%207.52166%202.5%2012%202.5C16.4783%202.5%2018.7175%202.5%2020.1088%203.89124C21.5%205.28249%2021.5%207.52166%2021.5%2012C21.5%2016.4783%2021.5%2018.7175%2020.1088%2020.1088C18.7175%2021.5%2016.4783%2021.5%2012%2021.5C7.52166%2021.5%205.28249%2021.5%203.89124%2020.1088C2.5%2018.7175%202.5%2016.4783%202.5%2012Z%22%20stroke%3D%22currentColor%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	trash: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M19.5%205.5L18.8803%2015.5251C18.7219%2018.0864%2018.6428%2019.3671%2018.0008%2020.2879C17.6833%2020.7431%2017.2747%2021.1273%2016.8007%2021.416C15.8421%2022%2014.559%2022%2011.9927%2022C9.42312%2022%208.1383%2022%207.17905%2021.4149C6.7048%2021.1257%206.296%2020.7408%205.97868%2020.2848C5.33688%2019.3626%205.25945%2018.0801%205.10461%2015.5152L4.5%205.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%205.5H21M16.0557%205.5L15.3731%204.09173C14.9196%203.15626%2014.6928%202.68852%2014.3017%202.39681C14.215%202.3321%2014.1231%202.27454%2014.027%202.2247C13.5939%202%2013.0741%202%2012.0345%202C10.9688%202%2010.436%202%209.99568%202.23412C9.8981%202.28601%209.80498%202.3459%209.71729%202.41317C9.32164%202.7167%209.10063%203.20155%208.65861%204.17126L8.05292%205.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.5%2016.5L9.5%2010.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M14.5%2016.5L14.5%2010.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	week: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	display: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M4%2011L4%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%2013L19%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%203L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.5%203L11.5%2013%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M4%203L4%205%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.5%2019L11.5%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M2%209.5C2%209.03406%202%208.80109%202.07612%208.61732C2.17761%208.37229%202.37229%208.17761%202.61732%208.07612C2.80109%208%203.03406%208%203.5%208H4.5C4.96594%208%205.19891%208%205.38268%208.07612C5.62771%208.17761%205.82239%208.37229%205.92388%208.61732C6%208.80109%206%209.03406%206%209.5C6%209.96594%206%2010.1989%205.92388%2010.3827C5.82239%2010.6277%205.62771%2010.8224%205.38268%2010.9239C5.19891%2011%204.96594%2011%204.5%2011H3.5C3.03406%2011%202.80109%2011%202.61732%2010.9239C2.37229%2010.8224%202.17761%2010.6277%202.07612%2010.3827C2%2010.1989%202%209.96594%202%209.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M17%2011.5C17%2011.0341%2017%2010.8011%2017.0761%2010.6173C17.1776%2010.3723%2017.3723%2010.1776%2017.6173%2010.0761C17.8011%2010%2018.0341%2010%2018.5%2010H19.5C19.9659%2010%2020.1989%2010%2020.3827%2010.0761C20.6277%2010.1776%2020.8224%2010.3723%2020.9239%2010.6173C21%2010.8011%2021%2011.0341%2021%2011.5C21%2011.9659%2021%2012.1989%2020.9239%2012.3827C20.8224%2012.6277%2020.6277%2012.8224%2020.3827%2012.9239C20.1989%2013%2019.9659%2013%2019.5%2013H18.5C18.0341%2013%2017.8011%2013%2017.6173%2012.9239C17.3723%2012.8224%2017.1776%2012.6277%2017.0761%2012.3827C17%2012.1989%2017%2011.9659%2017%2011.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.5%2014.5C9.5%2014.0341%209.5%2013.8011%209.57612%2013.6173C9.67761%2013.3723%209.87229%2013.1776%2010.1173%2013.0761C10.3011%2013%2010.5341%2013%2011%2013H12C12.4659%2013%2012.6989%2013%2012.8827%2013.0761C13.1277%2013.1776%2013.3224%2013.3723%2013.4239%2013.6173C13.5%2013.8011%2013.5%2014.0341%2013.5%2014.5C13.5%2014.9659%2013.5%2015.1989%2013.4239%2015.3827C13.3224%2015.6277%2013.1277%2015.8224%2012.8827%2015.9239C12.6989%2016%2012.4659%2016%2012%2016H11C10.5341%2016%2010.3011%2016%2010.1173%2015.9239C9.87229%2015.8224%209.67761%2015.6277%209.57612%2015.3827C9.5%2015.1989%209.5%2014.9659%209.5%2014.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A",
+	windowMin: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M6%2012h12%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E%0A",
+	windowMax: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Crect%20x%3D%226.5%22%20y%3D%226.5%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%221.5%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E%0A",
+	windowClose: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m6%206%2012%2012M18%206%206%2018%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A"
+};
+
+//#endregion
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+0dc83f181d0f091f7da074583079582278c407fd/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
+function Icon(props) {
+	return (() => {
+		const __nsh_hv0 = element("image");
+		bindProp(__nsh_hv0, "src", () => icons[props.name]);
+		bindProp(__nsh_hv0, "style", () => ({
+			width: props.size ?? 16,
+			height: props.size ?? 16,
+			tintColor: props.color
+		}));
+		return __nsh_hv0;
+	})();
+}
+function NavigationItem(props) {
+	return (() => {
+		const __nsh_hv1 = element("view");
+		bindProp(__nsh_hv1, "onPress", () => props.onPress);
+		prop(__nsh_hv1, "role", "button");
+		bindProp(__nsh_hv1, "accessibilityState", () => ({ selected: props.selected }));
+		prop(__nsh_hv1, "class", "flex-row items-center gap-2 rounded-lg px-2.5");
+		bindProp(__nsh_hv1, "style", () => ({
+			height: spacing.rowHeight,
+			backgroundColor: props.selected ? props.colors.card : "transparent"
+		}));
+		const __nsh_hv2 = element("text");
+		prop(__nsh_hv2, "class", "text-[13px]");
+		bindProp(__nsh_hv2, "style", () => ({ color: props.selected ? props.colors.foreground : props.colors.muted }));
+		insert(__nsh_hv2, () => props.label);
+		append(__nsh_hv1, __nsh_hv2);
+		insert(__nsh_hv1, component(Icon, {
+			get name() {
+				return props.icon;
+			},
+			get color() {
+				return props.colors.muted;
+			}
+		}), __nsh_hv2);
+		return __nsh_hv1;
+	})();
+}
+function Titlebar(props) {
+	effect(() => Window.setTitleBar("hidden", spacing.titlebarHeight));
+	const controls = titleBar();
+	const customControls = controls.left === 0 && controls.right === 0;
+	return (() => {
+		const __nsh_hv17 = element("view");
+		prop(__nsh_hv17, "class", "w-full flex-row items-center");
+		bindProp(__nsh_hv17, "style", () => ({ height: controls.height || spacing.titlebarHeight }));
+		prop(__nsh_hv17, "desktop", { windowDrag: true });
+		const __nsh_hv18 = element("view");
+		prop(__nsh_hv18, "class", "flex-row items-center");
+		bindProp(__nsh_hv18, "style", () => ({
+			width: (props.sidebarVisible === false ? 40 : spacing.sidebarWidth) + controls.left,
+			height: spacing.titlebarHeight
+		}));
+		const __nsh_hv19 = element("view");
+		bindProp(__nsh_hv19, "style", () => ({ width: controls.left }));
+		const __nsh_hv20 = element("view");
+		bindProp(__nsh_hv20, "onPress", () => props.onToggleSidebar);
+		prop(__nsh_hv20, "role", "button");
+		prop(__nsh_hv20, "accessibilityLabel", "Боковая панель");
+		prop(__nsh_hv20, "class", "w-10 items-center justify-center");
+		bindProp(__nsh_hv20, "style", () => ({ height: spacing.titlebarHeight }));
+		insert(__nsh_hv20, component(Icon, {
+			name: "sidebar",
+			get color() {
+				return props.colors.muted;
+			}
+		}));
+		const __nsh_hv21 = element("view");
+		prop(__nsh_hv21, "class", "flex-1");
+		prop(__nsh_hv21, "desktop", { windowDrag: true });
+		append(__nsh_hv18, __nsh_hv19);
+		append(__nsh_hv18, __nsh_hv20);
+		append(__nsh_hv18, __nsh_hv21);
+		const __nsh_hv25 = element("view");
+		bindProp(__nsh_hv25, "onPress", () => props.onAppearance);
+		prop(__nsh_hv25, "role", "button");
+		prop(__nsh_hv25, "accessibilityLabel", "Настройки отображения");
+		prop(__nsh_hv25, "class", "w-10 items-center justify-center");
+		bindProp(__nsh_hv25, "style", () => ({ height: spacing.titlebarHeight }));
+		insert(__nsh_hv25, component(Icon, {
+			name: "display",
+			get color() {
+				return props.colors.muted;
+			}
+		}));
+		append(__nsh_hv17, __nsh_hv18);
+		append(__nsh_hv17, __nsh_hv25);
+		insert(__nsh_hv17, () => props.showPageIdentity === false ? (() => {
+			const __nsh_hv22 = element("view");
+			prop(__nsh_hv22, "class", "flex-1");
+			prop(__nsh_hv22, "desktop", { windowDrag: true });
+			return __nsh_hv22;
+		})() : (() => {
+			const __nsh_hv23 = element("view");
+			prop(__nsh_hv23, "class", "flex-1 flex-row items-center gap-1.5");
+			prop(__nsh_hv23, "desktop", { windowDrag: true });
+			const __nsh_hv24 = element("text");
+			prop(__nsh_hv24, "class", "font-medium");
+			bindProp(__nsh_hv24, "style", () => ({
+				fontSize: typography.titlebar,
+				color: props.colors.foreground
+			}));
+			insert(__nsh_hv24, () => props.title);
+			append(__nsh_hv23, __nsh_hv24);
+			insert(__nsh_hv23, component(Icon, {
+				get name() {
+					return props.icon;
+				},
+				size: 15,
+				get color() {
+					return props.colors.muted;
+				}
+			}), __nsh_hv24);
+			return __nsh_hv23;
+		})(), __nsh_hv25);
+		insert(__nsh_hv17, () => customControls ? (() => {
+			const __nsh_hv26 = element("view");
+			prop(__nsh_hv26, "class", "flex-row");
+			bindProp(__nsh_hv26, "style", () => ({
+				width: 138,
+				height: spacing.titlebarHeight
+			}));
+			const __nsh_hv27 = element("view");
+			prop(__nsh_hv27, "onPress", () => Window.minimize());
+			prop(__nsh_hv27, "role", "button");
+			prop(__nsh_hv27, "accessibilityLabel", "Свернуть окно");
+			prop(__nsh_hv27, "class", "w-[46px] items-center justify-center");
+			bindProp(__nsh_hv27, "style", () => ({ height: spacing.titlebarHeight }));
+			insert(__nsh_hv27, component(Icon, {
+				name: "windowMin",
+				get color() {
+					return props.colors.foreground;
+				},
+				size: 14
+			}));
+			const __nsh_hv28 = element("view");
+			prop(__nsh_hv28, "onPress", () => Window.toggleMaximize());
+			prop(__nsh_hv28, "role", "button");
+			prop(__nsh_hv28, "accessibilityLabel", "Развернуть окно");
+			prop(__nsh_hv28, "class", "w-[46px] items-center justify-center");
+			bindProp(__nsh_hv28, "style", () => ({ height: spacing.titlebarHeight }));
+			insert(__nsh_hv28, component(Icon, {
+				name: "windowMax",
+				get color() {
+					return props.colors.foreground;
+				},
+				size: 14
+			}));
+			const __nsh_hv29 = element("view");
+			prop(__nsh_hv29, "onPress", () => Window.close());
+			prop(__nsh_hv29, "role", "button");
+			prop(__nsh_hv29, "accessibilityLabel", "Закрыть окно");
+			prop(__nsh_hv29, "class", "w-[46px] items-center justify-center");
+			bindProp(__nsh_hv29, "style", () => ({ height: spacing.titlebarHeight }));
+			insert(__nsh_hv29, component(Icon, {
+				name: "windowClose",
+				get color() {
+					return props.colors.foreground;
+				},
+				size: 14
+			}));
+			append(__nsh_hv26, __nsh_hv27);
+			append(__nsh_hv26, __nsh_hv28);
+			append(__nsh_hv26, __nsh_hv29);
+			return __nsh_hv26;
+		})() : (() => {
+			const __nsh_hv30 = element("view");
+			bindProp(__nsh_hv30, "style", () => ({ width: controls.right }));
+			return __nsh_hv30;
+		})());
+		return __nsh_hv17;
+	})();
+}
+function Button(props) {
+	return (() => {
+		const __nsh_hv31 = element("view");
+		bindProp(__nsh_hv31, "onPress", () => props.disabled ? void 0 : props.onPress);
+		prop(__nsh_hv31, "role", "button");
+		bindProp(__nsh_hv31, "accessibilityState", () => ({
+			selected: !!props.selected,
+			disabled: !!props.disabled
+		}));
+		bindProp(__nsh_hv31, "class", () => `rounded-md border px-3 py-2 ${props.className ?? ""}`);
+		bindProp(__nsh_hv31, "style", () => ({
+			backgroundColor: props.selected ? props.colors.card : props.colors.background,
+			borderColor: props.selected ? props.colors.accent : props.colors.border,
+			opacity: props.disabled ? .5 : 1,
+			...props.style
+		}));
+		const __nsh_hv32 = element("text");
+		prop(__nsh_hv32, "class", "text-[13px]");
+		bindProp(__nsh_hv32, "style", () => ({ color: props.textColor ?? (props.selected ? props.colors.foreground : props.colors.muted) }));
+		insert(__nsh_hv32, () => props.label);
+		append(__nsh_hv31, __nsh_hv32);
+		return __nsh_hv31;
+	})();
+}
+function Dialog(props) {
+	return (() => {
+		const __nsh_hv35 = element("view");
+		prop(__nsh_hv35, "class", "absolute inset-0 items-center justify-center bg-[#00000080] px-4");
+		const __nsh_hv36 = element("view");
+		prop(__nsh_hv36, "class", "w-full max-w-[440px] rounded-xl border p-4");
+		bindProp(__nsh_hv36, "style", () => ({
+			borderColor: props.colors.border,
+			backgroundColor: props.colors.card
+		}));
+		const __nsh_hv37 = element("text");
+		prop(__nsh_hv37, "class", "mb-3 text-[14px]");
+		bindProp(__nsh_hv37, "style", () => ({ color: props.colors.foreground }));
+		insert(__nsh_hv37, () => props.title);
+		append(__nsh_hv36, __nsh_hv37);
+		insert(__nsh_hv36, () => props.children);
+		append(__nsh_hv35, __nsh_hv36);
+		return __nsh_hv35;
+	})();
+}
+
+//#endregion
+//#region navigation.json
+var navigation_default = [
+	{
+		"id": "journal",
+		"label": "Дневник",
+		"icon": "book.closed",
+		"footer": false
+	},
+	{
+		"id": "tasks",
+		"label": "Задачи",
+		"icon": "checklist",
+		"footer": false
+	},
+	{
+		"id": "settings",
+		"label": "Настройки",
+		"icon": "gearshape",
+		"footer": true
+	},
+	{
+		"id": "about",
+		"label": "О приложении",
+		"icon": "info.circle",
+		"footer": true
+	}
+];
+
+//#endregion
+//#region App.tsx
+setup(null, "{\n  \"cssVars\": {\n    \"theme\": {\n      \"font-sans\": \"Inter, sans-serif\",\n      \"radius\": \"0.625rem\",\n      \"radius-control\": \"0.5rem\",\n      \"spacing-sidebar\": \"240px\",\n      \"spacing-titlebar\": \"40px\",\n      \"spacing-row\": \"32px\",\n      \"font-size-body\": \"13px\",\n      \"font-size-label\": \"12px\"\n    },\n    \"light\": {\n      \"background\": \"#faf9fb\",\n      \"foreground\": \"#26242a\",\n      \"card\": \"#f2f0f4\",\n      \"card-foreground\": \"#26242a\",\n      \"muted\": \"#ece9ef\",\n      \"muted-foreground\": \"#77727e\",\n      \"primary\": \"#7152bf\",\n      \"primary-foreground\": \"#ffffff\",\n      \"border\": \"#dedbe2\",\n      \"input\": \"#dedbe2\",\n      \"ring\": \"#b18aff\"\n    },\n    \"dark\": {\n      \"background\": \"#0d0c10\",\n      \"foreground\": \"#e7e5ea\",\n      \"card\": \"#131216\",\n      \"card-foreground\": \"#e7e5ea\",\n      \"muted\": \"#27262a\",\n      \"muted-foreground\": \"#8d8a94\",\n      \"primary\": \"#af94f9\",\n      \"primary-foreground\": \"#0d0c10\",\n      \"border\": \"#27262a\",\n      \"input\": \"#27262a\",\n      \"ring\": \"#af94f9\"\n    }\n  }\n}\n", null, null);
+const fallback = {
+	route: "journal",
+	title: "Дневник",
+	todos: [],
+	journalEntries: [],
+	version: "",
+	appearance: {
+		settings: {
+			mode: "dark",
+			light_theme: "default",
+			dark_theme: "default",
+			accent_source: "theme",
+			material: "default",
+			font_size: 13,
+			font_family: "Inter"
+		},
+		policy: { following: false },
+		capabilities: {
+			materials: [
+				"default",
+				"frosted",
+				"mica"
+			],
+			wallpaper_accent: false
+		}
+	},
+	appearanceEditable: true,
+	themes: [
+		{
+			key: "default",
+			name: "Default"
+		},
+		{
+			key: "claude",
+			name: "Claude"
+		},
+		{
+			key: "graphite",
+			name: "Graphite"
+		}
+	],
+	colors: defaultColors,
+	sidebarVisible: true,
+	chrome: "tsx"
+};
+const initialValue = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__");
+const initial = isSnapshot(initialValue) ? initialValue : fallback;
+const snapshot = signal(initial);
+const route = signal(initial.route);
+const journalDraft = signal("");
+const editingJournalId = signal(null);
+const editingJournalText = signal("");
+const addTaskOpen = signal(false);
+const newTaskTitle = signal("");
+const sidebarVisible = signal(true);
+const shortcutNames = [
+	"sidebar",
+	"create",
+	"search",
+	"reload"
+];
+const defaultShortcuts = {
+	sidebar: "mod+b",
+	create: "mod+n",
+	search: "mod+k",
+	reload: "mod+r"
+};
+const shortcutOptions = {
+	sidebar: ["mod+b", "mod+shift+b"],
+	create: ["mod+n", "mod+shift+n"],
+	search: ["mod+k", "mod+shift+k"],
+	reload: ["mod+r", "mod+shift+r"]
+};
+const shortcuts = signal(defaultShortcuts);
+Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
+	if (!value) return;
+	try {
+		const saved = JSON.parse(value);
+		shortcuts.set(Object.fromEntries(shortcutNames.map((name) => [name, shortcutOptions[name].includes(saved[name] ?? "") ? saved[name] : defaultShortcuts[name]])));
+	} catch {}
+});
+const Bridge = nativeComponent("atlas.bridge", {
+	props: ["route"],
+	events: ["state", "navigate"]
+});
+function isSnapshot(value) {
+	if (typeof value !== "object" || value === null || !("route" in value) || !isRoute(value.route)) return false;
+	if (!("title" in value) || typeof value.title !== "string" || !("todos" in value) || !Array.isArray(value.todos)) return false;
+	if (!value.todos.every(isTodo) || !("journalEntries" in value) || !Array.isArray(value.journalEntries) || !value.journalEntries.every(isJournalEntry)) return false;
+	return "version" in value && typeof value.version === "string" && "appearanceEditable" in value && typeof value.appearanceEditable === "boolean" && "themes" in value && Array.isArray(value.themes) && "colors" in value && isColors(value.colors) && "sidebarVisible" in value && typeof value.sidebarVisible === "boolean" && "chrome" in value && (value.chrome === "native" || value.chrome === "tsx");
+}
+function isRoute(value) {
+	return value === "journal" || value === "tasks" || value === "settings" || value === "about";
+}
+function isTodo(value) {
+	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "title" in value && typeof value.title === "string" && "is_completed" in value && typeof value.is_completed === "boolean";
+}
+function isJournalEntry(value) {
+	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "text" in value && typeof value.text === "string" && "createdAt" in value && typeof value.createdAt === "string";
+}
+function isColors(value) {
+	if (typeof value !== "object" || value === null) return false;
+	return "background" in value && typeof value.background === "string" && "foreground" in value && typeof value.foreground === "string" && "muted" in value && typeof value.muted === "string" && "border" in value && typeof value.border === "string" && "accent" in value && typeof value.accent === "string" && "card" in value && typeof value.card === "string";
+}
+function iconForNavigation(id) {
+	switch (id) {
+		case "journal": return "logbook";
+		case "tasks": return "week";
+		case "settings": return "settings";
+		default: return "about";
+	}
+}
+function TaskRows() {
+	return each(() => snapshot().todos, (todo) => (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "class", "flex-row items-center border-b px-3");
+		bindProp(__nsh_hv0, "style", () => ({
+			height: 37 * (snapshot().appearance?.settings.font_size ?? 13) / 13,
+			borderColor: snapshot().colors.border
+		}));
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "onPress", () => commandRef?.("complete", { id: todo().id }));
+		prop(__nsh_hv1, "role", "checkbox");
+		bindProp(__nsh_hv1, "accessibilityLabel", () => todo().title);
+		bindProp(__nsh_hv1, "accessibilityState", () => ({ checked: todo().is_completed }));
+		prop(__nsh_hv1, "class", "mr-3 h-[14px] w-[14px] items-center justify-center rounded-full border");
+		bindProp(__nsh_hv1, "style", () => ({
+			borderColor: todo().is_completed ? snapshot().colors.accent : snapshot().colors.muted,
+			backgroundColor: todo().is_completed ? snapshot().colors.accent : "transparent"
+		}));
+		insert(__nsh_hv1, () => todo().is_completed && component(Icon, {
+			name: "check",
+			size: 10,
+			get color() {
+				return snapshot().colors.background;
+			}
+		}));
+		const __nsh_hv2 = element("text");
+		bindProp(__nsh_hv2, "class", () => todo().is_completed ? "line-through" : "");
+		bindProp(__nsh_hv2, "style", () => ({
+			fontSize: snapshot().appearance?.settings.font_size ?? 13,
+			color: todo().is_completed ? snapshot().colors.muted : snapshot().colors.foreground
+		}));
+		insert(__nsh_hv2, () => todo().title);
+		append(__nsh_hv0, __nsh_hv1);
+		append(__nsh_hv0, __nsh_hv2);
+		return __nsh_hv0;
+	})());
+}
+let commandRef;
+function setAppearance(patch) {
+	const current = snapshot();
+	if (current.appearance && current.appearanceEditable) snapshot.set({
+		...current,
+		appearance: {
+			...current.appearance,
+			settings: {
+				...current.appearance.settings,
+				...patch
+			}
+		}
+	});
+	commandRef?.("appearance.set", patch);
+}
+function cycleShortcut(name) {
+	const current = shortcuts();
+	const choices = shortcutOptions[name];
+	const next = choices[(choices.indexOf(current[name]) + 1) % choices.length];
+	const updated = {
+		...current,
+		[name]: next
+	};
+	shortcuts.set(updated);
+	Storage.setItem("mundus.atlas.shortcuts.v1", JSON.stringify(updated));
+}
+function sendJournal(text) {
+	const value = text.trim();
+	if (!value) return;
+	commandRef?.("journal.create", { text: value });
+	journalDraft.set("");
+}
+function dayLabel(createdAt) {
+	const date = new Date(createdAt);
+	return Number.isNaN(date.valueOf()) ? createdAt : date.toLocaleDateString("ru-RU", {
+		day: "numeric",
+		month: "long",
+		year: "numeric"
+	});
+}
+function timeLabel(createdAt) {
+	const date = new Date(createdAt);
+	return Number.isNaN(date.valueOf()) ? "" : date.toLocaleTimeString("ru-RU", {
+		hour: "2-digit",
+		minute: "2-digit"
+	});
+}
+function JournalPage() {
+	let feedRef;
+	effect(() => {
+		if (snapshot().journalEntries.length) queueMicrotask(() => feedRef?.scrollToEnd({ animated: true }));
+	});
+	let previousDay = "";
+	return (() => {
+		const __nsh_hv3 = element("view");
+		prop(__nsh_hv3, "class", "min-h-0 flex-1 items-center px-5");
+		const __nsh_hv4 = element("scroll");
+		prop(__nsh_hv4, "ref", (node) => {
+			feedRef = node;
+		});
+		prop(__nsh_hv4, "class", "min-h-0 w-full max-w-[620px] flex-1 py-6");
+		insert(__nsh_hv4, [each(() => snapshot().journalEntries, (entry) => {
+			const label = dayLabel(entry().createdAt);
+			const showDay = label !== previousDay;
+			previousDay = label;
+			return (() => {
+				const __nsh_hv5 = element("view");
+				prop(__nsh_hv5, "class", "mb-4");
+				const __nsh_hv10 = element("view");
+				prop(__nsh_hv10, "class", "self-end w-full max-w-[560px] rounded-2xl px-4 py-3");
+				bindProp(__nsh_hv10, "style", () => ({ backgroundColor: snapshot().colors.card }));
+				const __nsh_hv16 = element("view");
+				prop(__nsh_hv16, "class", "mt-2 flex-row items-center justify-end gap-3");
+				const __nsh_hv17 = element("text");
+				prop(__nsh_hv17, "class", "text-[10px]");
+				bindProp(__nsh_hv17, "style", () => ({ color: snapshot().colors.muted }));
+				insert(__nsh_hv17, () => timeLabel(entry().createdAt));
+				append(__nsh_hv16, __nsh_hv17);
+				insert(__nsh_hv16, () => editingJournalId() !== entry().id && (() => {
+					const __nsh_hv18 = element("view");
+					prop(__nsh_hv18, "class", "flex-row gap-3");
+					const __nsh_hv19 = element("view");
+					prop(__nsh_hv19, "onPress", () => {
+						editingJournalId.set(entry().id);
+						editingJournalText.set(entry().text);
+					});
+					prop(__nsh_hv19, "role", "button");
+					prop(__nsh_hv19, "accessibilityLabel", "Изменить запись");
+					const __nsh_hv20 = element("text");
+					prop(__nsh_hv20, "class", "text-[11px]");
+					bindProp(__nsh_hv20, "style", () => ({ color: snapshot().colors.muted }));
+					const __nsh_hv21 = text("Изменить");
+					append(__nsh_hv20, __nsh_hv21);
+					append(__nsh_hv19, __nsh_hv20);
+					const __nsh_hv22 = element("view");
+					prop(__nsh_hv22, "onPress", () => commandRef?.("journal.delete", { id: entry().id }));
+					prop(__nsh_hv22, "role", "button");
+					prop(__nsh_hv22, "accessibilityLabel", "Удалить запись");
+					const __nsh_hv23 = element("text");
+					prop(__nsh_hv23, "class", "text-[11px]");
+					bindProp(__nsh_hv23, "style", () => ({ color: snapshot().colors.muted }));
+					const __nsh_hv24 = text("Удалить");
+					append(__nsh_hv23, __nsh_hv24);
+					append(__nsh_hv22, __nsh_hv23);
+					append(__nsh_hv18, __nsh_hv19);
+					append(__nsh_hv18, __nsh_hv22);
+					return __nsh_hv18;
+				})());
+				append(__nsh_hv10, __nsh_hv16);
+				insert(__nsh_hv10, () => editingJournalId() === entry().id ? (() => {
+					const __nsh_hv11 = element("view");
+					const __nsh_hv12 = element("input");
+					bindProp(__nsh_hv12, "value", () => editingJournalText());
+					prop(__nsh_hv12, "onChange", (value) => editingJournalText.set(value));
+					prop(__nsh_hv12, "multiline", true);
+					prop(__nsh_hv12, "submitBehavior", "newline");
+					prop(__nsh_hv12, "class", "min-h-[56px] w-full rounded-lg px-2 py-1 text-[13px]");
+					bindProp(__nsh_hv12, "style", () => ({
+						color: snapshot().colors.foreground,
+						backgroundColor: snapshot().colors.background
+					}));
+					const __nsh_hv13 = element("view");
+					prop(__nsh_hv13, "class", "mt-2 flex-row justify-end gap-2");
+					insert(__nsh_hv13, [component(Button, {
+						label: "Отмена",
+						get colors() {
+							return snapshot().colors;
+						},
+						onPress: () => editingJournalId.set(null)
+					}), component(Button, {
+						label: "Сохранить",
+						get colors() {
+							return snapshot().colors;
+						},
+						selected: true,
+						onPress: () => {
+							commandRef?.("journal.update", {
+								id: entry().id,
+								text: editingJournalText()
+							});
+							editingJournalId.set(null);
+						}
+					})]);
+					append(__nsh_hv11, __nsh_hv12);
+					append(__nsh_hv11, __nsh_hv13);
+					return __nsh_hv11;
+				})() : (() => {
+					const __nsh_hv14 = element("view");
+					prop(__nsh_hv14, "class", "gap-0.5");
+					insert(__nsh_hv14, () => entry().text.split("\n").map((line) => (() => {
+						const __nsh_hv15 = element("text");
+						prop(__nsh_hv15, "class", "text-[14px] leading-6");
+						bindProp(__nsh_hv15, "style", () => ({ color: snapshot().colors.foreground }));
+						insert(__nsh_hv15, line || " ");
+						return __nsh_hv15;
+					})()));
+					return __nsh_hv14;
+				})(), __nsh_hv16);
+				append(__nsh_hv5, __nsh_hv10);
+				insert(__nsh_hv5, () => showDay && (() => {
+					const __nsh_hv6 = element("view");
+					prop(__nsh_hv6, "class", "mb-3 flex-row items-center justify-center");
+					const __nsh_hv7 = element("view");
+					prop(__nsh_hv7, "class", "h-px flex-1");
+					bindProp(__nsh_hv7, "style", () => ({ backgroundColor: snapshot().colors.border }));
+					const __nsh_hv8 = element("text");
+					prop(__nsh_hv8, "class", "mx-3 text-[11px] capitalize");
+					bindProp(__nsh_hv8, "style", () => ({ color: snapshot().colors.muted }));
+					insert(__nsh_hv8, label);
+					const __nsh_hv9 = element("view");
+					prop(__nsh_hv9, "class", "h-px flex-1");
+					bindProp(__nsh_hv9, "style", () => ({ backgroundColor: snapshot().colors.border }));
+					append(__nsh_hv6, __nsh_hv7);
+					append(__nsh_hv6, __nsh_hv8);
+					append(__nsh_hv6, __nsh_hv9);
+					return __nsh_hv6;
+				})(), __nsh_hv10);
+				return __nsh_hv5;
+			})();
+		}), () => snapshot().journalEntries.length === 0 && (() => {
+			const __nsh_hv25 = element("view");
+			prop(__nsh_hv25, "class", "flex-1 items-center justify-center py-12");
+			const __nsh_hv26 = element("text");
+			prop(__nsh_hv26, "class", "text-[13px]");
+			bindProp(__nsh_hv26, "style", () => ({ color: snapshot().colors.muted }));
+			const __nsh_hv27 = text("Записей пока нет");
+			append(__nsh_hv26, __nsh_hv27);
+			append(__nsh_hv25, __nsh_hv26);
+			return __nsh_hv25;
+		})()]);
+		const __nsh_hv28 = element("view");
+		prop(__nsh_hv28, "class", "w-full max-w-[620px] flex-row items-end gap-2 border-t py-4");
+		bindProp(__nsh_hv28, "style", () => ({ borderColor: snapshot().colors.border }));
+		const __nsh_hv29 = element("input");
+		bindProp(__nsh_hv29, "value", () => journalDraft());
+		prop(__nsh_hv29, "onChange", (value) => journalDraft.set(value));
+		prop(__nsh_hv29, "onSubmit", (event) => sendJournal(event.text));
+		prop(__nsh_hv29, "multiline", true);
+		prop(__nsh_hv29, "submitBehavior", "submit");
+		prop(__nsh_hv29, "placeholder", "Запись в дневник…");
+		prop(__nsh_hv29, "accessibilityLabel", "Новая запись в дневник");
+		prop(__nsh_hv29, "class", "max-h-[150px] min-h-[42px] flex-1 rounded-xl px-3 py-2 text-[13px]");
+		bindProp(__nsh_hv29, "style", () => ({
+			backgroundColor: snapshot().colors.card,
+			color: snapshot().colors.foreground
+		}));
+		append(__nsh_hv28, __nsh_hv29);
+		insert(__nsh_hv28, component(Button, {
+			label: "Отправить",
+			get colors() {
+				return snapshot().colors;
+			},
+			selected: true,
+			onPress: () => sendJournal(journalDraft())
+		}));
+		append(__nsh_hv3, __nsh_hv4);
+		append(__nsh_hv3, __nsh_hv28);
+		return __nsh_hv3;
+	})();
+}
+function TaskPage() {
+	return (() => {
+		const __nsh_hv30 = element("scroll");
+		prop(__nsh_hv30, "class", "min-h-0 flex-1 px-7 py-5");
+		const __nsh_hv31 = element("view");
+		prop(__nsh_hv31, "class", "mx-auto w-full max-w-[640px]");
+		insert(__nsh_hv31, () => snapshot().todos.length === 0 ? (() => {
+			const __nsh_hv32 = element("view");
+			prop(__nsh_hv32, "class", "items-center py-12");
+			const __nsh_hv33 = element("text");
+			prop(__nsh_hv33, "class", "text-[13px]");
+			bindProp(__nsh_hv33, "style", () => ({ color: snapshot().colors.muted }));
+			const __nsh_hv34 = text("Задач пока нет");
+			append(__nsh_hv33, __nsh_hv34);
+			append(__nsh_hv32, __nsh_hv33);
+			return __nsh_hv32;
+		})() : component(TaskRows, {}));
+		append(__nsh_hv30, __nsh_hv31);
+		return __nsh_hv30;
+	})();
+}
+effect(() => {
+	const active = shortcuts();
+	const unbind = [
+		keymap.bind(active.sidebar, () => commandRef?.("toggle-sidebar"), { when: "notEditing" }),
+		keymap.bind(active.create, () => {
+			newTaskTitle.set("");
+			addTaskOpen.set(true);
+		}, { when: "notEditing" }),
+		keymap.bind(active.reload, () => commandRef?.("reload"), { when: "notEditing" })
+	];
+	return () => unbind.forEach((remove) => remove());
+});
+function SettingsPage() {
+	return component(AppearanceSettings, {
+		get appearance() {
+			return snapshot().appearance;
+		},
+		get editable() {
+			return snapshot().appearanceEditable;
+		},
+		get themes() {
+			return snapshot().themes;
+		},
+		get colors() {
+			return snapshot().colors;
+		},
+		get shortcuts() {
+			return shortcuts();
+		},
+		onPatch: setAppearance,
+		onChangeShortcut: cycleShortcut
+	});
+}
+function InfoPage() {
+	return (() => {
+		const __nsh_hv35 = element("scroll");
+		prop(__nsh_hv35, "class", "flex-1 px-7 pt-12");
+		const __nsh_hv36 = element("view");
+		prop(__nsh_hv36, "class", "mx-auto w-full max-w-[760px]");
+		const __nsh_hv37 = element("view");
+		prop(__nsh_hv37, "class", "mb-16 items-center");
+		const __nsh_hv38 = element("text");
+		prop(__nsh_hv38, "class", "mb-2 text-[23px] font-bold");
+		bindProp(__nsh_hv38, "style", () => ({ color: snapshot().colors.foreground }));
+		const __nsh_hv39 = text("Atlas");
+		append(__nsh_hv38, __nsh_hv39);
+		const __nsh_hv40 = element("text");
+		prop(__nsh_hv40, "class", "mb-2 text-[13px]");
+		bindProp(__nsh_hv40, "style", () => ({ color: snapshot().colors.muted }));
+		const __nsh_hv41 = text("Версия ");
+		append(__nsh_hv40, __nsh_hv41);
+		insert(__nsh_hv40, () => snapshot().version);
+		const __nsh_hv42 = element("text");
+		prop(__nsh_hv42, "class", "text-[12px]");
+		bindProp(__nsh_hv42, "style", () => ({ color: snapshot().colors.muted }));
+		const __nsh_hv43 = text("© Yoso Industries 2025–2026");
+		append(__nsh_hv42, __nsh_hv43);
+		append(__nsh_hv37, __nsh_hv38);
+		append(__nsh_hv37, __nsh_hv40);
+		append(__nsh_hv37, __nsh_hv42);
+		insert(__nsh_hv37, component(Icon, {
+			name: "about",
+			size: 88,
+			get color() {
+				return snapshot().colors.accent;
+			}
+		}), __nsh_hv38);
+		const __nsh_hv44 = element("text");
+		prop(__nsh_hv44, "class", "mb-3 text-[13px]");
+		bindProp(__nsh_hv44, "style", () => ({ color: snapshot().colors.foreground }));
+		const __nsh_hv45 = text("Диагностика");
+		append(__nsh_hv44, __nsh_hv45);
+		const __nsh_hv46 = element("view");
+		prop(__nsh_hv46, "class", "h-10 flex-row items-center rounded-xl px-4");
+		bindProp(__nsh_hv46, "style", () => ({ backgroundColor: snapshot().colors.card }));
+		const __nsh_hv47 = element("view");
+		prop(__nsh_hv47, "class", "mr-3 h-4 w-4 items-center justify-center rounded-full border");
+		bindProp(__nsh_hv47, "style", () => ({ borderColor: snapshot().colors.accent }));
+		insert(__nsh_hv47, component(Icon, {
+			name: "check",
+			size: 10,
+			get color() {
+				return snapshot().colors.accent;
+			}
+		}));
+		const __nsh_hv48 = element("text");
+		prop(__nsh_hv48, "class", "text-[13px]");
+		bindProp(__nsh_hv48, "style", () => ({ color: snapshot().colors.foreground }));
+		const __nsh_hv49 = text("Всё в порядке");
+		append(__nsh_hv48, __nsh_hv49);
+		append(__nsh_hv46, __nsh_hv47);
+		append(__nsh_hv46, __nsh_hv48);
+		append(__nsh_hv36, __nsh_hv37);
+		append(__nsh_hv36, __nsh_hv44);
+		append(__nsh_hv36, __nsh_hv46);
+		append(__nsh_hv35, __nsh_hv36);
+		return __nsh_hv35;
+	})();
+}
+function App() {
+	const primaryNavigation = navigation_default.filter((item) => !item.footer);
+	const footerNavigation = navigation_default.filter((item) => item.footer);
+	const openNewTask = () => {
+		newTaskTitle.set("");
+		addTaskOpen.set(true);
+	};
+	const changeRoute = (target) => {
+		if (isRoute(target)) route.set(target);
+	};
+	return (() => {
+		const __nsh_hv50 = element("view");
+		prop(__nsh_hv50, "class", "h-full w-full flex-col");
+		bindProp(__nsh_hv50, "style", () => ({ backgroundColor: snapshot().colors.background }));
+		const __nsh_hv51 = element("view");
+		prop(__nsh_hv51, "class", "min-h-0 flex-1 flex-row");
+		const __nsh_hv55 = element("view");
+		prop(__nsh_hv55, "class", "relative min-w-0 flex-1");
+		insert(__nsh_hv55, [
+			() => route() === "journal" && component(JournalPage, {}),
+			() => route() === "tasks" && (() => {
+				const __nsh_hv56 = element("view");
+				prop(__nsh_hv56, "class", "min-h-0 flex-1");
+				insert(__nsh_hv56, [component(TaskPage, {}), () => snapshot().chrome === "tsx" && (() => {
+					const __nsh_hv57 = element("view");
+					prop(__nsh_hv57, "onPress", openNewTask);
+					prop(__nsh_hv57, "role", "button");
+					prop(__nsh_hv57, "accessibilityLabel", "Новая задача");
+					prop(__nsh_hv57, "class", "absolute right-6 bottom-6 h-11 w-11 items-center justify-center rounded-full");
+					bindProp(__nsh_hv57, "style", () => ({ backgroundColor: snapshot().colors.foreground }));
+					insert(__nsh_hv57, component(Icon, {
+						name: "plus",
+						size: 20,
+						get color() {
+							return snapshot().colors.background;
+						}
+					}));
+					return __nsh_hv57;
+				})()]);
+				return __nsh_hv56;
+			})(),
+			() => route() === "settings" && component(SettingsPage, {}),
+			() => route() === "about" && component(InfoPage, {}),
+			() => addTaskOpen() && component(Dialog, {
+				title: "Новая задача",
+				get colors() {
+					return snapshot().colors;
+				},
+				get children() {
+					return [(() => {
+						const __nsh_hv58 = element("input");
+						bindProp(__nsh_hv58, "value", () => newTaskTitle());
+						prop(__nsh_hv58, "onChange", (value) => newTaskTitle.set(value));
+						prop(__nsh_hv58, "onSubmit", (event) => {
+							commandRef?.("create", { title: event.text });
+							addTaskOpen.set(false);
+						});
+						prop(__nsh_hv58, "placeholder", "Название задачи");
+						prop(__nsh_hv58, "class", "h-10 rounded-lg px-3 text-[13px]");
+						bindProp(__nsh_hv58, "style", () => ({
+							backgroundColor: snapshot().colors.background,
+							color: snapshot().colors.foreground
+						}));
+						return __nsh_hv58;
+					})(), (() => {
+						const __nsh_hv59 = element("view");
+						prop(__nsh_hv59, "class", "mt-3 flex-row justify-end gap-2");
+						insert(__nsh_hv59, [component(Button, {
+							label: "Отмена",
+							get colors() {
+								return snapshot().colors;
+							},
+							onPress: () => addTaskOpen.set(false),
+							className: "border-0 px-0 py-0",
+							style: {
+								backgroundColor: "transparent",
+								borderColor: "transparent"
+							}
+						}), component(Button, {
+							label: "Добавить",
+							get colors() {
+								return snapshot().colors;
+							},
+							onPress: () => {
+								commandRef?.("create", { title: newTaskTitle() });
+								addTaskOpen.set(false);
+							},
+							selected: true,
+							className: "h-9 w-[90px] items-center justify-center px-0 py-0",
+							get style() {
+								return {
+									backgroundColor: snapshot().colors.accent,
+									borderColor: "transparent"
+								};
+							},
+							get textColor() {
+								return snapshot().colors.background;
+							}
+						})]);
+						return __nsh_hv59;
+					})()];
+				}
+			})
+		]);
+		append(__nsh_hv51, __nsh_hv55);
+		insert(__nsh_hv51, () => snapshot().chrome === "tsx" && (() => {
+			const __nsh_hv52 = element("view");
+			prop(__nsh_hv52, "class", "w-[240px] shrink-0 border-r px-2 pt-1");
+			bindProp(__nsh_hv52, "style", () => ({
+				borderColor: snapshot().colors.border,
+				display: sidebarVisible() ? "flex" : "none"
+			}));
+			const __nsh_hv53 = element("view");
+			prop(__nsh_hv53, "class", "gap-0.5");
+			insert(__nsh_hv53, () => primaryNavigation.map((item) => component(NavigationItem, {
+				get label() {
+					return item.label;
+				},
+				get icon() {
+					return iconForNavigation(item.id);
+				},
+				get selected() {
+					return route() === item.id;
+				},
+				get colors() {
+					return snapshot().colors;
+				},
+				onPress: () => changeRoute(item.id)
+			})));
+			const __nsh_hv54 = element("view");
+			prop(__nsh_hv54, "class", "mt-auto mb-2 gap-0.5");
+			insert(__nsh_hv54, () => footerNavigation.map((item) => component(NavigationItem, {
+				get label() {
+					return item.label;
+				},
+				get icon() {
+					return iconForNavigation(item.id);
+				},
+				get selected() {
+					return route() === item.id;
+				},
+				get colors() {
+					return snapshot().colors;
+				},
+				onPress: () => changeRoute(item.id)
+			})));
+			append(__nsh_hv52, __nsh_hv53);
+			append(__nsh_hv52, __nsh_hv54);
+			return __nsh_hv52;
+		})(), __nsh_hv55);
+		append(__nsh_hv50, __nsh_hv51);
+		insert(__nsh_hv50, [component(Bridge, {
+			class: "absolute left-0 top-0 h-px w-px",
+			ref: (node) => {
+				commandRef = (name, args) => node.command(name, args);
+			},
+			get route() {
+				return route();
+			},
+			onState: (next) => {
+				route.set(next.route);
+				snapshot.set(next);
+				sidebarVisible.set(next.sidebarVisible);
+			},
+			onNavigate: (event) => changeRoute(event.route)
+		}), () => snapshot().chrome === "tsx" && component(Titlebar, {
+			get title() {
+				return snapshot().title;
+			},
+			get icon() {
+				return iconForNavigation(route());
+			},
+			get colors() {
+				return snapshot().colors;
+			},
+			onToggleSidebar: () => commandRef?.("toggle-sidebar"),
+			onAppearance: () => route.set("settings"),
+			get sidebarVisible() {
+				return sidebarVisible();
+			},
+			get showPageIdentity() {
+				return route() !== "settings";
+			}
+		})], __nsh_hv51);
+		return __nsh_hv50;
+	})();
+}
+mount(App);
+
+//#endregion
