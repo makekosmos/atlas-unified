@@ -195,25 +195,41 @@ const fallback = {
 			wallpaper_accent: false
 		}
 	},
-	appearanceEditable: true,
+	appearanceEditable: false,
 	themes: [
 		{
 			key: "default",
-			name: "Default"
+			name: "Default",
+			light: defaultColors,
+			dark: defaultColors
 		},
 		{
 			key: "claude",
-			name: "Claude"
+			name: "Claude",
+			light: defaultColors,
+			dark: defaultColors
 		},
 		{
 			key: "graphite",
-			name: "Graphite"
+			name: "Graphite",
+			light: defaultColors,
+			dark: defaultColors
 		}
 	],
 	colors: defaultColors,
 	sidebarVisible: true,
 	chrome: "tsx"
 };
+function resolveAppearanceColors(appearance, themes, fallbackColors) {
+	const settings = appearance.settings;
+	const dark = settings.mode !== "light";
+	const themeKey = dark ? settings.dark_theme : settings.light_theme;
+	const themeColors = themes.find((theme) => theme.key === themeKey)?.[dark ? "dark" : "light"] ?? fallbackColors;
+	return {
+		...themeColors,
+		accent: settings.accent_source === "custom" && settings.accent_color ? settings.accent_color : themeColors.accent
+	};
+}
 function isSnapshot(value) {
 	if (typeof value !== "object" || value === null || !("route" in value) || !isRoute(value.route)) return false;
 	if (!("title" in value) || typeof value.title !== "string" || !("todos" in value) || !Array.isArray(value.todos)) return false;
@@ -792,11 +808,12 @@ const fontSizes = [
 	18
 ];
 function AtlasAppearanceSettings(props) {
-	const appearance = () => props.appearance;
+	const appearance = () => props.appearance();
 	const settings = () => appearance()?.settings;
-	const colors = () => props.colors;
+	const colors = () => props.colors();
+	const canEdit = () => props.editable() || !appearance()?.policy.following;
 	const patch = (values) => {
-		if (props.editable) props.onPatch(values);
+		if (canEdit() && appearance()) props.onPatch(values);
 	};
 	const heading = (label) => (() => {
 		const __nsh_hv0 = element("text");
@@ -807,17 +824,17 @@ function AtlasAppearanceSettings(props) {
 	})();
 	const card = (selected, label, onPress) => (() => {
 		const __nsh_hv1 = element("view");
-		bindProp(__nsh_hv1, "onPress", () => props.editable ? onPress : void 0);
+		bindProp(__nsh_hv1, "onPress", () => canEdit() ? onPress : void 0);
 		prop(__nsh_hv1, "role", "button");
 		bindProp(__nsh_hv1, "accessibilityState", () => ({
 			selected,
-			disabled: !props.editable
+			disabled: !canEdit()
 		}));
 		prop(__nsh_hv1, "class", "rounded-lg border px-2.5 py-2");
 		bindProp(__nsh_hv1, "style", () => ({
 			backgroundColor: selected ? colors().card : colors().background,
 			borderColor: selected ? colors().accent : colors().border,
-			opacity: props.editable ? 1 : .65
+			opacity: canEdit() ? 1 : .65
 		}));
 		const __nsh_hv2 = element("text");
 		prop(__nsh_hv2, "class", "text-[12px]");
@@ -833,406 +850,401 @@ function AtlasAppearanceSettings(props) {
 			prop(__nsh_hv3, "class", "relative");
 			prop(__nsh_hv3, "style", { width });
 			const __nsh_hv4 = element("view");
-			prop(__nsh_hv4, "onPress", () => props.editable && openSelector.set(expanded ? null : id));
+			prop(__nsh_hv4, "onPress", () => canEdit() && openSelector.set(expanded ? null : id));
 			prop(__nsh_hv4, "role", "button");
 			bindProp(__nsh_hv4, "accessibilityState", () => ({
 				expanded,
-				disabled: !props.editable
+				disabled: !canEdit()
 			}));
 			prop(__nsh_hv4, "class", "h-8 flex-row items-center justify-between rounded-lg border px-2.5");
 			bindProp(__nsh_hv4, "style", () => ({
 				backgroundColor: colors().card,
 				borderColor: expanded ? colors().accent : colors().border,
-				opacity: props.editable ? 1 : .65
+				opacity: canEdit() ? 1 : .65
 			}));
 			const __nsh_hv5 = element("view");
 			prop(__nsh_hv5, "class", "min-w-0 flex-1 flex-row items-center gap-2");
-			const __nsh_hv8 = element("text");
-			prop(__nsh_hv8, "class", "text-[12px]");
-			bindProp(__nsh_hv8, "style", () => ({ color: colors().foreground }));
-			insert(__nsh_hv8, () => options.find((option) => option.value === value)?.label ?? value);
-			append(__nsh_hv5, __nsh_hv8);
-			insert(__nsh_hv5, () => preview && (() => {
-				const __nsh_hv6 = element("view");
-				prop(__nsh_hv6, "class", "h-4 w-5 rounded border");
-				bindProp(__nsh_hv6, "style", () => ({
-					backgroundColor: paletteSample(value, id === "light" ? "light" : "dark").background,
-					borderColor: colors().border
-				}));
-				const __nsh_hv7 = element("view");
-				prop(__nsh_hv7, "class", "h-1 w-full");
-				bindProp(__nsh_hv7, "style", () => ({ backgroundColor: paletteSample(value, id === "light" ? "light" : "dark").accent }));
-				append(__nsh_hv6, __nsh_hv7);
-				return __nsh_hv6;
-			})(), __nsh_hv8);
-			const __nsh_hv9 = element("text");
-			prop(__nsh_hv9, "class", "text-[11px]");
-			bindProp(__nsh_hv9, "style", () => ({ color: colors().muted }));
-			insert(__nsh_hv9, expanded ? "⌃" : "⌄");
+			const __nsh_hv6 = element("text");
+			prop(__nsh_hv6, "class", "text-[12px]");
+			bindProp(__nsh_hv6, "style", () => ({ color: colors().foreground }));
+			insert(__nsh_hv6, () => options.find((option) => option.value === value)?.label ?? value);
+			append(__nsh_hv5, __nsh_hv6);
+			insert(__nsh_hv5, () => preview && component(PaletteChip, {
+				get palette() {
+					return options.find((option) => option.value === value)?.preview ?? colors();
+				},
+				get border() {
+					return colors().border;
+				}
+			}), __nsh_hv6);
+			const __nsh_hv7 = element("text");
+			prop(__nsh_hv7, "class", "text-[11px]");
+			bindProp(__nsh_hv7, "style", () => ({ color: colors().muted }));
+			insert(__nsh_hv7, expanded ? "⌃" : "⌄");
 			append(__nsh_hv4, __nsh_hv5);
-			append(__nsh_hv4, __nsh_hv9);
+			append(__nsh_hv4, __nsh_hv7);
 			append(__nsh_hv3, __nsh_hv4);
 			insert(__nsh_hv3, () => expanded && (() => {
-				const __nsh_hv10 = element("view");
-				prop(__nsh_hv10, "class", "absolute left-0 top-9 z-20 rounded-xl border p-1");
-				bindProp(__nsh_hv10, "style", () => ({
+				const __nsh_hv8 = element("view");
+				prop(__nsh_hv8, "class", "absolute left-0 top-9 z-20 rounded-xl border p-1");
+				bindProp(__nsh_hv8, "style", () => ({
 					width: menuWidth,
 					backgroundColor: colors().card,
 					borderColor: colors().border
 				}));
-				insert(__nsh_hv10, () => options.map((option) => (() => {
-					const __nsh_hv11 = element("view");
-					prop(__nsh_hv11, "onPress", () => {
+				insert(__nsh_hv8, () => options.map((option) => (() => {
+					const __nsh_hv9 = element("view");
+					prop(__nsh_hv9, "onPress", () => {
 						onSelect(option.value);
 						openSelector.set(null);
 					});
-					prop(__nsh_hv11, "role", "button");
-					bindProp(__nsh_hv11, "accessibilityState", () => ({ selected: option.value === value }));
-					prop(__nsh_hv11, "class", "h-8 flex-row items-center gap-2 rounded-md px-2");
-					const __nsh_hv14 = element("text");
-					prop(__nsh_hv14, "class", "flex-1 text-[12px]");
-					bindProp(__nsh_hv14, "style", () => ({ color: colors().foreground }));
-					insert(__nsh_hv14, () => option.label);
-					append(__nsh_hv11, __nsh_hv14);
-					insert(__nsh_hv11, () => preview && (() => {
-						const __nsh_hv12 = element("view");
-						prop(__nsh_hv12, "class", "h-4 w-5 rounded border");
-						bindProp(__nsh_hv12, "style", () => ({
-							backgroundColor: paletteSample(option.value, id === "light" ? "light" : "dark").background,
-							borderColor: colors().border
-						}));
-						const __nsh_hv13 = element("view");
-						prop(__nsh_hv13, "class", "h-1 w-full");
-						bindProp(__nsh_hv13, "style", () => ({ backgroundColor: paletteSample(option.value, id === "light" ? "light" : "dark").accent }));
-						append(__nsh_hv12, __nsh_hv13);
-						return __nsh_hv12;
-					})(), __nsh_hv14);
-					insert(__nsh_hv11, () => option.value === value && (() => {
-						const __nsh_hv15 = element("text");
-						prop(__nsh_hv15, "class", "text-[12px]");
-						bindProp(__nsh_hv15, "style", () => ({ color: colors().accent }));
-						const __nsh_hv16 = text("✓");
-						append(__nsh_hv15, __nsh_hv16);
-						return __nsh_hv15;
+					prop(__nsh_hv9, "role", "button");
+					bindProp(__nsh_hv9, "accessibilityState", () => ({ selected: option.value === value }));
+					prop(__nsh_hv9, "class", "h-8 flex-row items-center gap-2 rounded-md px-2");
+					const __nsh_hv10 = element("text");
+					prop(__nsh_hv10, "class", "flex-1 text-[12px]");
+					bindProp(__nsh_hv10, "style", () => ({ color: colors().foreground }));
+					insert(__nsh_hv10, () => option.label);
+					append(__nsh_hv9, __nsh_hv10);
+					insert(__nsh_hv9, () => preview && component(PaletteChip, {
+						get palette() {
+							return option.preview ?? colors();
+						},
+						get border() {
+							return colors().border;
+						}
+					}), __nsh_hv10);
+					insert(__nsh_hv9, () => option.value === value && (() => {
+						const __nsh_hv11 = element("text");
+						prop(__nsh_hv11, "class", "text-[12px]");
+						bindProp(__nsh_hv11, "style", () => ({ color: colors().accent }));
+						const __nsh_hv12 = text("✓");
+						append(__nsh_hv11, __nsh_hv12);
+						return __nsh_hv11;
 					})());
-					return __nsh_hv11;
+					return __nsh_hv9;
 				})()));
-				return __nsh_hv10;
+				return __nsh_hv8;
 			})());
 			return __nsh_hv3;
 		})();
 	};
 	const shortcutRow = (name, label) => (() => {
-		const __nsh_hv17 = element("view");
-		prop(__nsh_hv17, "class", "h-10 flex-row items-center border-b");
-		bindProp(__nsh_hv17, "style", () => ({ borderColor: colors().border }));
-		const __nsh_hv18 = element("text");
-		prop(__nsh_hv18, "class", "flex-1 text-[13px]");
-		bindProp(__nsh_hv18, "style", () => ({ color: colors().foreground }));
-		insert(__nsh_hv18, label);
-		const __nsh_hv19 = element("view");
-		prop(__nsh_hv19, "onPress", () => props.onChangeShortcut(name));
-		prop(__nsh_hv19, "role", "button");
-		prop(__nsh_hv19, "accessibilityLabel", `Изменить сочетание: ${label}`);
-		prop(__nsh_hv19, "class", "rounded-md px-3 py-1");
-		bindProp(__nsh_hv19, "style", () => ({ backgroundColor: colors().background }));
-		const __nsh_hv20 = element("text");
-		prop(__nsh_hv20, "class", "text-[12px]");
-		bindProp(__nsh_hv20, "style", () => ({ color: colors().accent }));
-		insert(__nsh_hv20, () => keymap.label(props.shortcuts[name]));
-		append(__nsh_hv19, __nsh_hv20);
-		append(__nsh_hv17, __nsh_hv18);
-		append(__nsh_hv17, __nsh_hv19);
-		return __nsh_hv17;
+		const __nsh_hv13 = element("view");
+		prop(__nsh_hv13, "class", "h-10 flex-row items-center border-b");
+		bindProp(__nsh_hv13, "style", () => ({ borderColor: colors().border }));
+		const __nsh_hv14 = element("text");
+		prop(__nsh_hv14, "class", "flex-1 text-[13px]");
+		bindProp(__nsh_hv14, "style", () => ({ color: colors().foreground }));
+		insert(__nsh_hv14, label);
+		const __nsh_hv15 = element("view");
+		prop(__nsh_hv15, "onPress", () => props.onChangeShortcut(name));
+		prop(__nsh_hv15, "role", "button");
+		prop(__nsh_hv15, "accessibilityLabel", `Изменить сочетание: ${label}`);
+		prop(__nsh_hv15, "class", "rounded-md px-3 py-1");
+		bindProp(__nsh_hv15, "style", () => ({ backgroundColor: colors().background }));
+		const __nsh_hv16 = element("text");
+		prop(__nsh_hv16, "class", "text-[12px]");
+		bindProp(__nsh_hv16, "style", () => ({ color: colors().accent }));
+		insert(__nsh_hv16, () => keymap.label(props.shortcuts[name]));
+		append(__nsh_hv15, __nsh_hv16);
+		append(__nsh_hv13, __nsh_hv14);
+		append(__nsh_hv13, __nsh_hv15);
+		return __nsh_hv13;
 	})();
 	if (!settings() || !appearance()) return (() => {
-		const __nsh_hv21 = element("scroll");
-		prop(__nsh_hv21, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
-		const __nsh_hv22 = element("text");
-		prop(__nsh_hv22, "class", "text-[13px]");
-		bindProp(__nsh_hv22, "style", () => ({ color: colors().muted }));
-		const __nsh_hv23 = text("Загружаем настройки внешнего вида…");
-		append(__nsh_hv22, __nsh_hv23);
-		append(__nsh_hv21, __nsh_hv22);
-		return __nsh_hv21;
+		const __nsh_hv17 = element("scroll");
+		prop(__nsh_hv17, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
+		const __nsh_hv18 = element("text");
+		prop(__nsh_hv18, "class", "text-[13px]");
+		bindProp(__nsh_hv18, "style", () => ({ color: colors().muted }));
+		const __nsh_hv19 = text("Загружаем настройки внешнего вида…");
+		append(__nsh_hv18, __nsh_hv19);
+		append(__nsh_hv17, __nsh_hv18);
+		return __nsh_hv17;
 	})();
-	const current = settings();
-	const modeCard = (mode) => (() => {
-		const __nsh_hv24 = element("view");
-		prop(__nsh_hv24, "onPress", () => patch({ mode: mode.value }));
-		prop(__nsh_hv24, "role", "button");
-		bindProp(__nsh_hv24, "accessibilityState", () => ({
-			selected: current.mode === mode.value,
-			disabled: !props.editable
-		}));
-		prop(__nsh_hv24, "class", "min-w-0 flex-1");
-		bindProp(__nsh_hv24, "style", () => ({ opacity: props.editable ? 1 : .65 }));
-		const __nsh_hv25 = element("view");
-		prop(__nsh_hv25, "class", "h-[148px] items-center justify-center overflow-hidden rounded-md border p-3");
-		bindProp(__nsh_hv25, "style", () => ({
-			borderColor: current.mode === mode.value ? colors().accent : colors().border,
-			backgroundColor: mode.value === "light" ? "#f5f4f1" : mode.value === "dark" ? "#211f26" : colors().card
-		}));
-		const __nsh_hv26 = element("view");
-		prop(__nsh_hv26, "class", "h-full w-full flex-row overflow-hidden rounded-md border");
-		bindProp(__nsh_hv26, "style", () => ({
-			borderColor: mode.value === "light" ? "#dedce0" : "#3b3940",
-			backgroundColor: mode.value === "light" ? "#fff" : "#17151b"
-		}));
-		const __nsh_hv27 = element("view");
-		prop(__nsh_hv27, "class", "w-1/3 gap-2 border-r p-2");
-		bindProp(__nsh_hv27, "style", () => ({ borderColor: mode.value === "light" ? "#dedce0" : "#3b3940" }));
-		const __nsh_hv28 = element("view");
-		prop(__nsh_hv28, "class", "h-2 rounded");
-		bindProp(__nsh_hv28, "style", () => ({ backgroundColor: colors().accent }));
-		const __nsh_hv29 = element("view");
-		prop(__nsh_hv29, "class", "h-1.5 rounded");
-		bindProp(__nsh_hv29, "style", () => ({ backgroundColor: mode.value === "light" ? "#d5d2d8" : "#4b4850" }));
-		const __nsh_hv30 = element("view");
-		prop(__nsh_hv30, "class", "h-1.5 rounded");
-		bindProp(__nsh_hv30, "style", () => ({ backgroundColor: mode.value === "light" ? "#e3e1e5" : "#38353d" }));
-		append(__nsh_hv27, __nsh_hv28);
-		append(__nsh_hv27, __nsh_hv29);
-		append(__nsh_hv27, __nsh_hv30);
-		const __nsh_hv31 = element("view");
-		prop(__nsh_hv31, "class", "flex-1 gap-2 p-2");
-		const __nsh_hv32 = element("view");
-		prop(__nsh_hv32, "class", "h-2 w-1/2 rounded");
-		bindProp(__nsh_hv32, "style", () => ({ backgroundColor: mode.value === "light" ? "#d5d2d8" : "#4b4850" }));
-		const __nsh_hv33 = element("view");
-		prop(__nsh_hv33, "class", "h-9 rounded");
-		bindProp(__nsh_hv33, "style", () => ({ backgroundColor: mode.value === "light" ? "#f0eef2" : "#28252d" }));
-		const __nsh_hv34 = element("view");
-		prop(__nsh_hv34, "class", "h-1.5 w-2/3 rounded");
-		bindProp(__nsh_hv34, "style", () => ({ backgroundColor: mode.value === "light" ? "#e3e1e5" : "#38353d" }));
-		append(__nsh_hv31, __nsh_hv32);
-		append(__nsh_hv31, __nsh_hv33);
-		append(__nsh_hv31, __nsh_hv34);
-		append(__nsh_hv26, __nsh_hv27);
-		append(__nsh_hv26, __nsh_hv31);
-		append(__nsh_hv25, __nsh_hv26);
-		const __nsh_hv35 = element("text");
-		prop(__nsh_hv35, "class", "mt-2 text-center text-[12px]");
-		bindProp(__nsh_hv35, "style", () => ({ color: current.mode === mode.value ? colors().accent : colors().muted }));
-		insert(__nsh_hv35, () => mode.label);
-		append(__nsh_hv24, __nsh_hv25);
-		append(__nsh_hv24, __nsh_hv35);
-		return __nsh_hv24;
-	})();
+	const current = () => settings();
+	const modePalette = (mode) => {
+		if (mode === "system") return colors();
+		const themeKey = mode === "light" ? current().light_theme : current().dark_theme;
+		const theme = props.themes.find((item) => item.key === themeKey);
+		return (mode === "light" ? theme?.light : theme?.dark) ?? colors();
+	};
+	const modeCard = (mode) => {
+		const palette = modePalette(mode.value);
+		return (() => {
+			const __nsh_hv20 = element("view");
+			prop(__nsh_hv20, "onPress", () => patch({ mode: mode.value }));
+			prop(__nsh_hv20, "role", "button");
+			bindProp(__nsh_hv20, "accessibilityState", () => ({
+				selected: current().mode === mode.value,
+				disabled: !canEdit()
+			}));
+			prop(__nsh_hv20, "class", "min-w-0 flex-1");
+			bindProp(__nsh_hv20, "style", () => ({ opacity: canEdit() ? 1 : .65 }));
+			const __nsh_hv21 = element("view");
+			prop(__nsh_hv21, "class", "h-[148px] items-center justify-center overflow-hidden rounded-md border p-3");
+			bindProp(__nsh_hv21, "style", () => ({
+				borderColor: current().mode === mode.value ? colors().accent : palette.border,
+				backgroundColor: palette.background
+			}));
+			const __nsh_hv22 = element("view");
+			prop(__nsh_hv22, "class", "h-full w-full flex-row overflow-hidden rounded-md border");
+			bindProp(__nsh_hv22, "style", () => ({
+				borderColor: palette.border,
+				backgroundColor: palette.card
+			}));
+			const __nsh_hv23 = element("view");
+			prop(__nsh_hv23, "class", "w-1/3 gap-2 border-r p-2");
+			bindProp(__nsh_hv23, "style", () => ({ borderColor: palette.border }));
+			const __nsh_hv24 = element("view");
+			prop(__nsh_hv24, "class", "h-2 rounded");
+			bindProp(__nsh_hv24, "style", () => ({ backgroundColor: palette.accent }));
+			const __nsh_hv25 = element("view");
+			prop(__nsh_hv25, "class", "h-1.5 rounded");
+			bindProp(__nsh_hv25, "style", () => ({ backgroundColor: palette.muted }));
+			const __nsh_hv26 = element("view");
+			prop(__nsh_hv26, "class", "h-1.5 rounded");
+			bindProp(__nsh_hv26, "style", () => ({ backgroundColor: palette.border }));
+			append(__nsh_hv23, __nsh_hv24);
+			append(__nsh_hv23, __nsh_hv25);
+			append(__nsh_hv23, __nsh_hv26);
+			const __nsh_hv27 = element("view");
+			prop(__nsh_hv27, "class", "flex-1 gap-2 p-2");
+			const __nsh_hv28 = element("view");
+			prop(__nsh_hv28, "class", "h-2 w-1/2 rounded");
+			bindProp(__nsh_hv28, "style", () => ({ backgroundColor: palette.muted }));
+			const __nsh_hv29 = element("view");
+			prop(__nsh_hv29, "class", "h-9 rounded");
+			bindProp(__nsh_hv29, "style", () => ({ backgroundColor: palette.background }));
+			const __nsh_hv30 = element("view");
+			prop(__nsh_hv30, "class", "h-1.5 w-2/3 rounded");
+			bindProp(__nsh_hv30, "style", () => ({ backgroundColor: palette.border }));
+			append(__nsh_hv27, __nsh_hv28);
+			append(__nsh_hv27, __nsh_hv29);
+			append(__nsh_hv27, __nsh_hv30);
+			append(__nsh_hv22, __nsh_hv23);
+			append(__nsh_hv22, __nsh_hv27);
+			append(__nsh_hv21, __nsh_hv22);
+			const __nsh_hv31 = element("text");
+			prop(__nsh_hv31, "class", "mt-2 text-center text-[12px]");
+			bindProp(__nsh_hv31, "style", () => ({ color: current().mode === mode.value ? colors().accent : colors().muted }));
+			insert(__nsh_hv31, () => mode.label);
+			append(__nsh_hv20, __nsh_hv21);
+			append(__nsh_hv20, __nsh_hv31);
+			return __nsh_hv20;
+		})();
+	};
 	return (() => {
-		const __nsh_hv36 = element("scroll");
-		prop(__nsh_hv36, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
-		bindProp(__nsh_hv36, "style", () => ({ backgroundColor: colors().background }));
-		const __nsh_hv37 = element("view");
-		prop(__nsh_hv37, "class", "mx-auto w-full max-w-[720px]");
-		const __nsh_hv38 = element("text");
-		prop(__nsh_hv38, "class", "mb-5 text-[22px] font-semibold");
-		bindProp(__nsh_hv38, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv39 = text("Оформление");
-		append(__nsh_hv38, __nsh_hv39);
-		const __nsh_hv44 = element("view");
-		prop(__nsh_hv44, "class", "mb-6 flex-row gap-4");
-		insert(__nsh_hv44, () => modePreviews.map(modeCard));
-		const __nsh_hv45 = element("view");
-		prop(__nsh_hv45, "class", "mb-6 gap-2 rounded-xl border p-3");
-		bindProp(__nsh_hv45, "style", () => ({
+		const __nsh_hv32 = element("scroll");
+		prop(__nsh_hv32, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
+		bindProp(__nsh_hv32, "style", () => ({ backgroundColor: colors().background }));
+		const __nsh_hv33 = element("view");
+		prop(__nsh_hv33, "class", "mx-auto w-full max-w-[720px]");
+		const __nsh_hv34 = element("text");
+		prop(__nsh_hv34, "class", "mb-5 text-[22px] font-semibold");
+		bindProp(__nsh_hv34, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv35 = text("Оформление");
+		append(__nsh_hv34, __nsh_hv35);
+		const __nsh_hv40 = element("view");
+		prop(__nsh_hv40, "class", "mb-6 flex-row gap-4");
+		insert(__nsh_hv40, () => modePreviews.map(modeCard));
+		const __nsh_hv41 = element("view");
+		prop(__nsh_hv41, "class", "mb-6 gap-2 rounded-xl border p-3");
+		bindProp(__nsh_hv41, "style", () => ({
 			backgroundColor: colors().card,
 			borderColor: colors().border
 		}));
-		const __nsh_hv46 = element("view");
-		prop(__nsh_hv46, "class", "h-10 flex-row items-center justify-between border-b");
-		bindProp(__nsh_hv46, "style", () => ({ borderColor: colors().border }));
-		const __nsh_hv47 = element("text");
-		prop(__nsh_hv47, "class", "text-[12px]");
-		bindProp(__nsh_hv47, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv48 = text("Светлая тема");
-		append(__nsh_hv47, __nsh_hv48);
-		append(__nsh_hv46, __nsh_hv47);
-		insert(__nsh_hv46, () => select("light", current.light_theme, props.themes.map((theme) => ({
+		const __nsh_hv42 = element("view");
+		prop(__nsh_hv42, "class", "h-10 flex-row items-center justify-between border-b");
+		bindProp(__nsh_hv42, "style", () => ({ borderColor: colors().border }));
+		const __nsh_hv43 = element("text");
+		prop(__nsh_hv43, "class", "text-[12px]");
+		bindProp(__nsh_hv43, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv44 = text("Светлая тема");
+		append(__nsh_hv43, __nsh_hv44);
+		append(__nsh_hv42, __nsh_hv43);
+		insert(__nsh_hv42, () => select("light", current().light_theme, props.themes.map((theme) => ({
 			value: theme.key,
-			label: theme.name
+			label: theme.name,
+			preview: theme.light
 		})), (value) => patch({ light_theme: value }), 218, true, 260));
-		const __nsh_hv49 = element("view");
-		prop(__nsh_hv49, "class", "h-10 flex-row items-center justify-between");
-		const __nsh_hv50 = element("text");
-		prop(__nsh_hv50, "class", "text-[12px]");
-		bindProp(__nsh_hv50, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv51 = text("Тёмная тема");
-		append(__nsh_hv50, __nsh_hv51);
-		append(__nsh_hv49, __nsh_hv50);
-		insert(__nsh_hv49, () => select("dark", current.dark_theme, props.themes.map((theme) => ({
-			value: theme.key,
-			label: theme.name
-		})), (value) => patch({ dark_theme: value }), 218, true, 260));
+		const __nsh_hv45 = element("view");
+		prop(__nsh_hv45, "class", "h-10 flex-row items-center justify-between");
+		const __nsh_hv46 = element("text");
+		prop(__nsh_hv46, "class", "text-[12px]");
+		bindProp(__nsh_hv46, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv47 = text("Тёмная тема");
+		append(__nsh_hv46, __nsh_hv47);
 		append(__nsh_hv45, __nsh_hv46);
-		append(__nsh_hv45, __nsh_hv49);
-		const __nsh_hv52 = element("view");
-		prop(__nsh_hv52, "class", "mb-6 rounded-xl border p-3");
-		bindProp(__nsh_hv52, "style", () => ({
+		insert(__nsh_hv45, () => select("dark", current().dark_theme, props.themes.map((theme) => ({
+			value: theme.key,
+			label: theme.name,
+			preview: theme.dark
+		})), (value) => patch({ dark_theme: value }), 218, true, 260));
+		append(__nsh_hv41, __nsh_hv42);
+		append(__nsh_hv41, __nsh_hv45);
+		const __nsh_hv48 = element("view");
+		prop(__nsh_hv48, "class", "mb-6 rounded-xl border p-3");
+		bindProp(__nsh_hv48, "style", () => ({
 			backgroundColor: colors().card,
 			borderColor: colors().border
 		}));
-		const __nsh_hv53 = element("view");
-		prop(__nsh_hv53, "class", "mb-3 flex-row gap-2");
-		insert(__nsh_hv53, [
-			() => card(current.accent_source === "theme", "Цвет темы", () => patch({
+		const __nsh_hv49 = element("view");
+		prop(__nsh_hv49, "class", "mb-3 flex-row gap-2");
+		insert(__nsh_hv49, [
+			() => card(current().accent_source === "theme", "Цвет темы", () => patch({
 				accent_source: "theme",
 				accent_color: null
 			})),
-			() => card(current.accent_source === "custom", "Свой цвет", () => patch({
+			() => card(current().accent_source === "custom", "Свой цвет", () => patch({
 				accent_source: "custom",
-				accent_color: current.accent_color ?? accentChoices[0]
+				accent_color: current().accent_color ?? accentChoices[0]
 			})),
-			() => appearance()?.capabilities.wallpaper_accent && card(current.accent_source === "wallpaper", "Обои", () => patch({ accent_source: "wallpaper" }))
+			() => appearance()?.capabilities.wallpaper_accent && card(current().accent_source === "wallpaper", "Обои", () => patch({ accent_source: "wallpaper" }))
 		]);
-		const __nsh_hv54 = element("view");
-		prop(__nsh_hv54, "class", "flex-row gap-2");
-		insert(__nsh_hv54, () => accentChoices.map((accent) => (() => {
-			const __nsh_hv55 = element("view");
-			prop(__nsh_hv55, "onPress", () => patch({
+		const __nsh_hv50 = element("view");
+		prop(__nsh_hv50, "class", "flex-row gap-2");
+		insert(__nsh_hv50, () => accentChoices.map((accent) => (() => {
+			const __nsh_hv51 = element("view");
+			prop(__nsh_hv51, "onPress", () => patch({
 				accent_source: "custom",
 				accent_color: accent
 			}));
-			prop(__nsh_hv55, "role", "button");
-			prop(__nsh_hv55, "accessibilityLabel", `Акцент ${accent}`);
-			bindProp(__nsh_hv55, "accessibilityState", () => ({ selected: current.accent_source === "custom" && current.accent_color?.toLowerCase() === accent }));
-			prop(__nsh_hv55, "class", "h-7 w-7 items-center justify-center rounded-lg border");
-			bindProp(__nsh_hv55, "style", () => ({
+			prop(__nsh_hv51, "role", "button");
+			prop(__nsh_hv51, "accessibilityLabel", `Акцент ${accent}`);
+			bindProp(__nsh_hv51, "accessibilityState", () => ({ selected: current().accent_source === "custom" && current().accent_color?.toLowerCase() === accent }));
+			prop(__nsh_hv51, "class", "h-7 w-7 items-center justify-center rounded-lg border");
+			bindProp(__nsh_hv51, "style", () => ({
 				backgroundColor: accent,
-				borderColor: current.accent_color?.toLowerCase() === accent ? colors().foreground : colors().border
+				borderColor: current().accent_color?.toLowerCase() === accent ? colors().foreground : colors().border
 			}));
-			insert(__nsh_hv55, () => current.accent_color?.toLowerCase() === accent && (() => {
-				const __nsh_hv56 = element("text");
-				prop(__nsh_hv56, "class", "text-[12px]");
-				prop(__nsh_hv56, "style", { color: "#ffffff" });
-				const __nsh_hv57 = text("✓");
-				append(__nsh_hv56, __nsh_hv57);
-				return __nsh_hv56;
+			insert(__nsh_hv51, () => current().accent_color?.toLowerCase() === accent && (() => {
+				const __nsh_hv52 = element("text");
+				prop(__nsh_hv52, "class", "text-[12px]");
+				prop(__nsh_hv52, "style", { color: "#ffffff" });
+				const __nsh_hv53 = text("✓");
+				append(__nsh_hv52, __nsh_hv53);
+				return __nsh_hv52;
 			})());
-			return __nsh_hv55;
+			return __nsh_hv51;
 		})()));
-		append(__nsh_hv52, __nsh_hv53);
-		append(__nsh_hv52, __nsh_hv54);
-		const __nsh_hv58 = element("view");
-		prop(__nsh_hv58, "class", "mb-6 flex-row gap-2");
-		insert(__nsh_hv58, () => (appearance()?.capabilities.materials ?? []).map((material) => selectLabel(material, materialLabels[material] ?? material, current.material, (next) => patch({ material: next }), colors(), props.editable)));
-		const __nsh_hv59 = element("view");
-		prop(__nsh_hv59, "class", "mb-6 flex-row items-center gap-3");
-		const __nsh_hv60 = element("text");
-		prop(__nsh_hv60, "class", "flex-1 text-[12px]");
-		bindProp(__nsh_hv60, "style", () => ({ color: colors().muted }));
-		const __nsh_hv61 = text("Размер интерфейсного текста");
-		append(__nsh_hv60, __nsh_hv61);
-		append(__nsh_hv59, __nsh_hv60);
-		insert(__nsh_hv59, () => select("fontSize", String(current.font_size), [.../* @__PURE__ */ new Set([...fontSizes, current.font_size])].sort((a, b) => a - b).map((size) => ({
+		append(__nsh_hv48, __nsh_hv49);
+		append(__nsh_hv48, __nsh_hv50);
+		const __nsh_hv54 = element("view");
+		prop(__nsh_hv54, "class", "mb-6 flex-row gap-2");
+		insert(__nsh_hv54, () => (appearance()?.capabilities.materials ?? []).map((material) => selectLabel(material, materialLabels[material] ?? material, current().material, (next) => patch({ material: next }), colors(), canEdit())));
+		const __nsh_hv55 = element("view");
+		prop(__nsh_hv55, "class", "mb-6 flex-row items-center gap-3");
+		const __nsh_hv56 = element("text");
+		prop(__nsh_hv56, "class", "flex-1 text-[12px]");
+		bindProp(__nsh_hv56, "style", () => ({ color: colors().muted }));
+		const __nsh_hv57 = text("Размер интерфейсного текста");
+		append(__nsh_hv56, __nsh_hv57);
+		append(__nsh_hv55, __nsh_hv56);
+		insert(__nsh_hv55, () => select("fontSize", String(current().font_size), [.../* @__PURE__ */ new Set([...fontSizes, current().font_size])].sort((a, b) => a - b).map((size) => ({
 			value: String(size),
 			label: `${size} px`
 		})), (value) => patch({ font_size: Number(value) }), 128));
-		const __nsh_hv62 = element("view");
-		prop(__nsh_hv62, "class", "rounded-xl border px-4");
-		bindProp(__nsh_hv62, "style", () => ({
+		const __nsh_hv58 = element("view");
+		prop(__nsh_hv58, "class", "rounded-xl border px-4");
+		bindProp(__nsh_hv58, "style", () => ({
 			backgroundColor: colors().card,
 			borderColor: colors().border
 		}));
-		const __nsh_hv63 = element("view");
-		prop(__nsh_hv63, "class", "h-10 flex-row items-center");
-		const __nsh_hv64 = element("text");
-		prop(__nsh_hv64, "class", "flex-1 text-[13px]");
-		bindProp(__nsh_hv64, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv65 = text("Закрыть панель / поиск");
-		append(__nsh_hv64, __nsh_hv65);
-		const __nsh_hv66 = element("text");
-		prop(__nsh_hv66, "class", "text-[12px]");
-		bindProp(__nsh_hv66, "style", () => ({ color: colors().muted }));
-		const __nsh_hv67 = text("Esc");
-		append(__nsh_hv66, __nsh_hv67);
-		append(__nsh_hv63, __nsh_hv64);
-		append(__nsh_hv63, __nsh_hv66);
+		const __nsh_hv59 = element("view");
+		prop(__nsh_hv59, "class", "h-10 flex-row items-center");
+		const __nsh_hv60 = element("text");
+		prop(__nsh_hv60, "class", "flex-1 text-[13px]");
+		bindProp(__nsh_hv60, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv61 = text("Закрыть панель / поиск");
+		append(__nsh_hv60, __nsh_hv61);
+		const __nsh_hv62 = element("text");
+		prop(__nsh_hv62, "class", "text-[12px]");
+		bindProp(__nsh_hv62, "style", () => ({ color: colors().muted }));
+		const __nsh_hv63 = text("Esc");
 		append(__nsh_hv62, __nsh_hv63);
-		insert(__nsh_hv62, [
+		append(__nsh_hv59, __nsh_hv60);
+		append(__nsh_hv59, __nsh_hv62);
+		append(__nsh_hv58, __nsh_hv59);
+		insert(__nsh_hv58, [
 			() => shortcutRow("sidebar", "Боковая панель — открыть/скрыть"),
 			() => shortcutRow("create", "Новая задача — панель справа"),
 			() => shortcutRow("search", "Быстрый поиск"),
 			() => shortcutRow("reload", "Обновить данные из Engine")
-		], __nsh_hv63);
-		append(__nsh_hv37, __nsh_hv38);
-		append(__nsh_hv37, __nsh_hv44);
-		append(__nsh_hv37, __nsh_hv45);
-		append(__nsh_hv37, __nsh_hv52);
-		append(__nsh_hv37, __nsh_hv58);
-		append(__nsh_hv37, __nsh_hv59);
-		append(__nsh_hv37, __nsh_hv62);
-		insert(__nsh_hv37, [
+		], __nsh_hv59);
+		append(__nsh_hv33, __nsh_hv34);
+		append(__nsh_hv33, __nsh_hv40);
+		append(__nsh_hv33, __nsh_hv41);
+		append(__nsh_hv33, __nsh_hv48);
+		append(__nsh_hv33, __nsh_hv54);
+		append(__nsh_hv33, __nsh_hv55);
+		append(__nsh_hv33, __nsh_hv58);
+		insert(__nsh_hv33, [
 			() => appearance()?.policy.following && (() => {
-				const __nsh_hv40 = element("text");
-				prop(__nsh_hv40, "class", "mb-4 text-[12px]");
-				bindProp(__nsh_hv40, "style", () => ({ color: colors().accent }));
-				const __nsh_hv41 = text("Общий стиль задаётся в Mundus Manager. Настройки доступны только для просмотра.");
-				append(__nsh_hv40, __nsh_hv41);
-				return __nsh_hv40;
+				const __nsh_hv36 = element("text");
+				prop(__nsh_hv36, "class", "mb-4 text-[12px]");
+				bindProp(__nsh_hv36, "style", () => ({ color: colors().accent }));
+				const __nsh_hv37 = text("Общий стиль задаётся в Mundus Manager. Настройки доступны только для просмотра.");
+				append(__nsh_hv36, __nsh_hv37);
+				return __nsh_hv36;
 			})(),
-			() => !props.editable && !appearance()?.policy.following && (() => {
-				const __nsh_hv42 = element("text");
-				prop(__nsh_hv42, "class", "mb-4 text-[12px]");
-				bindProp(__nsh_hv42, "style", () => ({ color: colors().accent }));
-				const __nsh_hv43 = text("Настройки внешнего вида сейчас недоступны.");
-				append(__nsh_hv42, __nsh_hv43);
-				return __nsh_hv42;
+			() => !props.editable() && !appearance()?.policy.following && (() => {
+				const __nsh_hv38 = element("text");
+				prop(__nsh_hv38, "class", "mb-4 text-[12px]");
+				bindProp(__nsh_hv38, "style", () => ({ color: colors().muted }));
+				const __nsh_hv39 = text("Engine не подключён. Можно временно менять оформление; выбор действует только до закрытия Atlas.");
+				append(__nsh_hv38, __nsh_hv39);
+				return __nsh_hv38;
 			})(),
 			() => heading("Режим")
-		], __nsh_hv44);
-		insert(__nsh_hv37, () => heading("Темы"), __nsh_hv45);
-		insert(__nsh_hv37, () => heading("Акцент"), __nsh_hv52);
-		insert(__nsh_hv37, () => heading("Стекло"), __nsh_hv58);
-		insert(__nsh_hv37, () => heading("Размер текста"), __nsh_hv59);
-		insert(__nsh_hv37, () => heading("Горячие клавиши"), __nsh_hv62);
-		append(__nsh_hv36, __nsh_hv37);
-		return __nsh_hv36;
+		], __nsh_hv40);
+		insert(__nsh_hv33, () => heading("Темы"), __nsh_hv41);
+		insert(__nsh_hv33, () => heading("Акцент"), __nsh_hv48);
+		insert(__nsh_hv33, () => heading("Стекло"), __nsh_hv54);
+		insert(__nsh_hv33, () => heading("Размер текста"), __nsh_hv55);
+		insert(__nsh_hv33, () => heading("Горячие клавиши"), __nsh_hv58);
+		append(__nsh_hv32, __nsh_hv33);
+		return __nsh_hv32;
 	})();
 }
 function selectLabel(material, label, selected, onPress, colors, editable) {
 	return (() => {
-		const __nsh_hv68 = element("view");
-		bindProp(__nsh_hv68, "onPress", () => editable ? () => onPress(material) : void 0);
-		prop(__nsh_hv68, "role", "button");
-		prop(__nsh_hv68, "accessibilityState", {
+		const __nsh_hv64 = element("view");
+		bindProp(__nsh_hv64, "onPress", () => editable ? () => onPress(material) : void 0);
+		prop(__nsh_hv64, "role", "button");
+		prop(__nsh_hv64, "accessibilityState", {
 			selected: selected === material,
 			disabled: !editable
 		});
-		prop(__nsh_hv68, "class", "rounded-lg border px-3 py-2");
-		bindProp(__nsh_hv68, "style", () => ({
+		prop(__nsh_hv64, "class", "rounded-lg border px-3 py-2");
+		bindProp(__nsh_hv64, "style", () => ({
 			backgroundColor: selected === material ? colors.card : colors.background,
 			borderColor: selected === material ? colors.accent : colors.border,
 			opacity: editable ? 1 : .65
 		}));
-		const __nsh_hv69 = element("text");
-		prop(__nsh_hv69, "class", "text-[12px]");
-		bindProp(__nsh_hv69, "style", () => ({ color: selected === material ? colors.foreground : colors.muted }));
-		insert(__nsh_hv69, label);
-		append(__nsh_hv68, __nsh_hv69);
-		return __nsh_hv68;
+		const __nsh_hv65 = element("text");
+		prop(__nsh_hv65, "class", "text-[12px]");
+		bindProp(__nsh_hv65, "style", () => ({ color: selected === material ? colors.foreground : colors.muted }));
+		insert(__nsh_hv65, label);
+		append(__nsh_hv64, __nsh_hv65);
+		return __nsh_hv64;
 	})();
 }
-function paletteSample(key, mode) {
-	const palettes = {
-		default: {
-			light: ["#f8f7f9", "#7239ca"],
-			dark: ["#0d0c10", "#af94f9"]
-		},
-		claude: {
-			light: ["#faf9f5", "#c96442"],
-			dark: ["#262624", "#d97757"]
-		},
-		graphite: {
-			light: ["#f0f0f0", "#606060"],
-			dark: ["#1a1a1a", "#a0a0a0"]
-		}
-	};
-	const [background, accent] = (palettes[key] ?? palettes.default)[mode];
-	return {
-		background,
-		accent
-	};
+function PaletteChip(props) {
+	return (() => {
+		const __nsh_hv66 = element("view");
+		prop(__nsh_hv66, "class", "h-4 w-5 overflow-hidden rounded border");
+		bindProp(__nsh_hv66, "style", () => ({
+			backgroundColor: props.palette.background,
+			borderColor: props.border
+		}));
+		const __nsh_hv67 = element("view");
+		prop(__nsh_hv67, "class", "h-1 w-full");
+		bindProp(__nsh_hv67, "style", () => ({ backgroundColor: props.palette.accent }));
+		append(__nsh_hv66, __nsh_hv67);
+		return __nsh_hv66;
+	})();
 }
 
 //#endregion
@@ -1447,17 +1459,21 @@ function TaskRows() {
 let commandRef;
 function setAppearance(patch) {
 	const current = snapshot();
-	if (current.appearance && current.appearanceEditable) snapshot.set({
-		...current,
-		appearance: {
+	if (current.appearance && !current.appearance.policy.following) {
+		const appearance = {
 			...current.appearance,
 			settings: {
 				...current.appearance.settings,
 				...patch
 			}
-		}
-	});
-	commandRef?.("appearance.set", patch);
+		};
+		snapshot.set({
+			...current,
+			appearance,
+			colors: resolveAppearanceColors(appearance, current.themes, current.colors)
+		});
+	}
+	if (current.appearanceEditable) commandRef?.("appearance.set", patch);
 }
 function cycleShortcut(name) {
 	const current = shortcuts();
@@ -1505,18 +1521,12 @@ effect(() => {
 });
 function SettingsPage() {
 	return component(AtlasAppearanceSettings, {
-		get appearance() {
-			return snapshot().appearance;
-		},
-		get editable() {
-			return snapshot().appearanceEditable;
-		},
+		appearance: () => snapshot().appearance,
+		editable: () => snapshot().appearanceEditable,
 		get themes() {
 			return snapshot().themes;
 		},
-		get colors() {
-			return snapshot().colors;
-		},
+		colors: () => snapshot().colors,
 		get shortcuts() {
 			return shortcuts();
 		},

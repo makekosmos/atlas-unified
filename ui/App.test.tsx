@@ -79,6 +79,11 @@ test("keeps appearance settings and configurable keyboard shortcuts", async () =
   expect(app.texts()).toContain("Размер текста");
   expect(app.texts()).toContain("Светлая тема");
   expect(app.texts()).toContain("Акцент");
+  expect(app.texts()).toContain("Engine не подключён. Можно временно менять оформление; выбор действует только до закрытия Atlas.");
+  await app.press("Default >> nth=0");
+  expect(app.texts()).toContain("Claude");
+  await app.press("Claude");
+  await app.waitUntil(() => app.texts().includes("Claude"));
   await app.press("Изменить сочетание: Боковая панель — открыть/скрыть");
   await app.waitUntil(() => app.storage()["mundus.atlas.shortcuts.v1"]?.includes("mod+shift+b") === true);
 });

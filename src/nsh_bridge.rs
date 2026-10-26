@@ -92,7 +92,7 @@ fn snapshot(agenda: &Atlas, route: &str) -> Value {
         "version": env!("CARGO_PKG_VERSION"),
         "appearance": agenda.appearance,
         "appearanceEditable": agenda.appearance_editable(),
-        "themes": crate::palettes::THEMES.iter().map(|theme| json!({"key": theme.key, "name": theme.name})).collect::<Vec<_>>(),
+        "themes": crate::palettes::choices_json(),
         "colors": {
             "background": color(palette.bg),
             "foreground": color(palette.fg),

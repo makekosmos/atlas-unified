@@ -4,7 +4,7 @@ import { Window as DesktopWindow, titleBar } from "nsh/desktop";
 import { Icon as SharedIcon, NavigationItem, Button as SharedButton, Dialog as SharedDialog, spacing, typography } from "@makekosmos/imago-nsh";
 import type { Appearance, IconName } from "@makekosmos/imago-nsh";
 import navigation from "./navigation.json";
-import { fallback, isRoute, isSnapshot } from "./state";
+import { fallback, isRoute, isSnapshot, resolveAppearanceColors } from "./state";
 import type { JournalEntry, Route, Snapshot } from "./state";
 import { JournalPage, journalCalendarOpen, toggleJournalCalendar } from "./JournalPage";
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
@@ -97,16 +97,18 @@ let commandRef: ((name: string, args?: unknown) => void) | undefined;
 
 function setAppearance(patch: Record<string, unknown>) {
   const current = snapshot();
-  if (current.appearance && current.appearanceEditable) {
+  if (current.appearance && !current.appearance.policy.following) {
+    const appearance = {
+      ...current.appearance,
+      settings: { ...current.appearance.settings, ...patch } as Appearance["settings"],
+    };
     snapshot.set({
       ...current,
-      appearance: {
-        ...current.appearance,
-        settings: { ...current.appearance.settings, ...patch } as Appearance["settings"],
-      },
+      appearance,
+      colors: resolveAppearanceColors(appearance, current.themes, current.colors),
     });
   }
-  commandRef?.("appearance.set", patch);
+  if (current.appearanceEditable) commandRef?.("appearance.set", patch);
 }
 
 function cycleShortcut(name: ShortcutName) {
@@ -140,10 +142,10 @@ effect(() => {
 
 function SettingsPage() {
   return <AtlasAppearanceSettings
-    appearance={snapshot().appearance}
-    editable={snapshot().appearanceEditable}
+    appearance={() => snapshot().appearance}
+    editable={() => snapshot().appearanceEditable}
     themes={snapshot().themes}
-    colors={snapshot().colors}
+    colors={() => snapshot().colors}
     shortcuts={shortcuts()}
     onPatch={setAppearance}
     onChangeShortcut={cycleShortcut}

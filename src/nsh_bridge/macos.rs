@@ -32,10 +32,7 @@ pub(crate) fn register(view: &AppView) {
 pub(crate) fn initial_snapshot() -> Value {
     let palette = &crate::palettes::THEMES[0].dark;
     let color = |value: u32| format!("#{value:06x}");
-    let themes: Vec<Value> = crate::palettes::THEMES
-        .iter()
-        .map(|theme| json!({"key": theme.key, "name": theme.name}))
-        .collect();
+    let themes = crate::palettes::choices_json();
     json!({
         "route": "journal",
         "title": "Дневник",
@@ -228,10 +225,7 @@ fn publish(engine: &Engine, context: &ComponentContext, route: &str, entries: &[
             "accent": color(accent),
         "card": color(palette.card),
     });
-    let theme_choices: Vec<Value> = crate::palettes::THEMES
-        .iter()
-        .map(|theme| json!({"key": theme.key, "name": theme.name}))
-        .collect();
+    let theme_choices = crate::palettes::choices_json();
     let title = match route {
         "tasks" => "Задачи",
         "settings" => "Настройки",
