@@ -34,19 +34,10 @@ void Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
     shortcuts.set(Object.fromEntries(shortcutNames.map((name) => [name, shortcutOptions[name].includes(saved[name] ?? "") ? saved[name] : defaultShortcuts[name]])) as Shortcuts);
   } catch { /* A damaged preference falls back to the defaults. */ }
 });
-const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[]; titlebarAction: { id: string } }>("atlas.bridge", {
+const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[] }>("atlas.bridge", {
   props: ["route"],
-  events: ["state", "navigate", "journal", "titlebarAction"],
+  events: ["state", "navigate", "journal"],
 });
-
-function openJournalCalendar() {
-  if (route() !== "journal") {
-    route.set("journal");
-    if (!journalCalendarOpen()) toggleJournalCalendar();
-    return;
-  }
-  toggleJournalCalendar();
-}
 
 function iconForNavigation(id: string): IconName {
   switch (id) {
@@ -163,7 +154,11 @@ function App() {
   const primaryNavigation = navigation.filter((item) => !item.footer);
   const footerNavigation = navigation.filter((item) => item.footer);
   const openNewTask = () => { newTaskTitle.set(""); addTaskOpen.set(true); };
-  const changeRoute = (target: string) => { if (isRoute(target)) route.set(target); };
+  const changeRoute = (target: string) => {
+    if (!isRoute(target)) return;
+    if (target !== "journal" && journalCalendarOpen()) toggleJournalCalendar();
+    route.set(target);
+  };
   return (
     <View class="relative h-full w-full flex-col" style={{ backgroundColor: snapshot().colors.background }}>
       <Bridge
@@ -179,7 +174,6 @@ function App() {
         }}
         onJournal={(entries) => snapshot.set({ ...snapshot(), journalEntries: entries })}
         onNavigate={(event) => changeRoute(event.route)}
-        onTitlebarAction={(event) => { if (event.id === "journal.calendar") openJournalCalendar(); }}
       />
       {snapshot().chrome === "tsx" && <AtlasTitlebar
           title={snapshot().title}
@@ -205,7 +199,7 @@ function App() {
           onCreate={(text) => commandRef?.("journal.create", { text })}
           onUpdate={(id, text) => commandRef?.("journal.update", { id, text })}
           onDelete={(id) => commandRef?.("journal.delete", { id })}
-          showCalendarToggle={snapshot().chrome === "tsx"}
+          nativeCalendarButton={snapshot().chrome === "native"}
         />}
         {route() === "tasks" && <View class="min-h-0 flex-1">
           <TaskPage />

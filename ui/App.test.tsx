@@ -64,6 +64,15 @@ test("routes to the all-tasks screen", async () => {
   expect(app.texts()).toContain("Задач пока нет");
 });
 
+test("closes the journal calendar and its toggle outside the journal", async () => {
+  const app = await open("./App.tsx");
+  await app.press("Показать календарь");
+  expect(app.texts()).toContain("Окт 2026");
+  await app.press("Задачи");
+  expect(app.texts()).not.toContain("Окт 2026");
+  expect(app.texts()).not.toContain("Показать календарь");
+});
+
 test("keeps appearance settings and configurable keyboard shortcuts", async () => {
   const app = await open("./App.tsx");
   await app.press("Настройки");

@@ -419,6 +419,10 @@ function JournalCalendar(props) {
 //#endregion
 //#region JournalPage.tsx
 const journalCalendarOpen = signal(false);
+const NativeCalendarToggle = nativeComponent("atlas.journalCalendarToggle", {
+	props: ["expanded", "label"],
+	events: ["press"]
+});
 const journalCalendarWidth = signal(260);
 const journalDraft = signal("");
 const journalDraftContentHeight = signal(20);
@@ -680,7 +684,19 @@ function JournalPage(props) {
 		append(__nsh_hv29, __nsh_hv30);
 		append(__nsh_hv1, __nsh_hv3);
 		append(__nsh_hv1, __nsh_hv29);
-		insert(__nsh_hv1, () => props.showCalendarToggle && (() => {
+		insert(__nsh_hv1, () => props.nativeCalendarButton ? component(NativeCalendarToggle, {
+			get expanded() {
+				return journalCalendarOpen();
+			},
+			get label() {
+				return journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь";
+			},
+			onPress: toggleJournalCalendar,
+			get accessibilityLabel() {
+				return journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь";
+			},
+			class: "absolute right-4 top-4 z-10 h-8 w-8"
+		}) : (() => {
 			const __nsh_hv2 = element("view");
 			prop(__nsh_hv2, "onPress", toggleJournalCalendar);
 			prop(__nsh_hv2, "role", "button");
@@ -1260,18 +1276,9 @@ const Bridge = nativeComponent("atlas.bridge", {
 	events: [
 		"state",
 		"navigate",
-		"journal",
-		"titlebarAction"
+		"journal"
 	]
 });
-function openJournalCalendar() {
-	if (route() !== "journal") {
-		route.set("journal");
-		if (!journalCalendarOpen()) toggleJournalCalendar();
-		return;
-	}
-	toggleJournalCalendar();
-}
 function iconForNavigation(id) {
 	switch (id) {
 		case "journal": return "logbook";
@@ -1525,7 +1532,9 @@ function App() {
 		addTaskOpen.set(true);
 	};
 	const changeRoute = (target) => {
-		if (isRoute(target)) route.set(target);
+		if (!isRoute(target)) return;
+		if (target !== "journal" && journalCalendarOpen()) toggleJournalCalendar();
+		route.set(target);
 	};
 	return (() => {
 		const __nsh_hv21 = element("view");
@@ -1549,8 +1558,8 @@ function App() {
 					text
 				}),
 				onDelete: (id) => commandRef?.("journal.delete", { id }),
-				get showCalendarToggle() {
-					return snapshot().chrome === "tsx";
+				get nativeCalendarButton() {
+					return snapshot().chrome === "native";
 				}
 			}),
 			() => route() === "tasks" && (() => {
@@ -1703,10 +1712,7 @@ function App() {
 				...snapshot(),
 				journalEntries: entries
 			}),
-			onNavigate: (event) => changeRoute(event.route),
-			onTitlebarAction: (event) => {
-				if (event.id === "journal.calendar") openJournalCalendar();
-			}
+			onNavigate: (event) => changeRoute(event.route)
 		}), () => snapshot().chrome === "tsx" && component(AtlasTitlebar, {
 			get title() {
 				return snapshot().title;

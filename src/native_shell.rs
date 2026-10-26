@@ -5,10 +5,16 @@ use std::{process::ExitCode, rc::Rc};
 
 use imago_native_sidebar::Row;
 use nsh_core::prelude::*;
-use nsh_platform_macos::objc2::{sel, MainThreadOnly};
-use nsh_platform_macos::objc2_app_kit::{NSApplication, NSMenu, NSMenuItem};
-use nsh_platform_macos::objc2_foundation::{MainThreadMarker, NSString};
-use nsh_platform_macos::{App, AppOptions, AppView, Bundle, NativeComponent};
+use nsh_platform_macos::objc2::{
+    define_class, msg_send, rc::Retained, runtime::AnyObject, sel, DefinedClass, MainThreadOnly,
+};
+use nsh_platform_macos::objc2_app_kit::{
+    NSApplication, NSBezelStyle, NSButton, NSButtonType, NSCellImagePosition, NSImage, NSMenu,
+    NSMenuItem, NSView,
+};
+use nsh_platform_macos::objc2_foundation::{MainThreadMarker, NSObject, NSString};
+use nsh_platform_macos::{App, AppOptions, AppView, Bundle, ComponentContext, NativeComponent};
+use serde_json::Value;
 
 #[component]
 fn AtlasNativeRoot() -> impl IntoElement {
@@ -17,6 +23,92 @@ fn AtlasNativeRoot() -> impl IntoElement {
 
 struct BundleHost {
     view: Rc<AppView>,
+}
+
+struct CalendarToggleTargetIvars {
+    context: ComponentContext,
+}
+
+define_class!(
+    #[unsafe(super(NSObject))]
+    #[thread_kind = MainThreadOnly]
+    #[ivars = CalendarToggleTargetIvars]
+    struct CalendarToggleTarget;
+
+    impl CalendarToggleTarget {
+        #[unsafe(method(pressed:))]
+        fn pressed(&self, _sender: Option<&NSButton>) {
+            self.ivars().context.emit("press", serde_json::json!({}));
+        }
+    }
+);
+
+impl CalendarToggleTarget {
+    fn new(mtm: MainThreadMarker, context: ComponentContext) -> Retained<Self> {
+        let allocated = Self::alloc(mtm).set_ivars(CalendarToggleTargetIvars { context });
+        // SAFETY: initialize a freshly allocated NSObject subclass.
+        unsafe { msg_send![super(allocated), init] }
+    }
+}
+
+struct CalendarToggle {
+    button: Retained<NSButton>,
+    _target: Retained<CalendarToggleTarget>,
+}
+
+impl CalendarToggle {
+    fn new(context: ComponentContext) -> Self {
+        let mtm = MainThreadMarker::new().expect("native calendar button is on AppKit thread");
+        let target = CalendarToggleTarget::new(mtm, context);
+        let target_object: &AnyObject = &target;
+        let button = unsafe {
+            NSButton::buttonWithTitle_target_action(
+                &NSString::new(),
+                Some(target_object),
+                Some(sel!(pressed:)),
+                mtm,
+            )
+        };
+        button.setButtonType(NSButtonType::Toggle);
+        button.setBezelStyle(NSBezelStyle::AccessoryBar);
+        button.setBordered(true);
+        button.setImagePosition(NSCellImagePosition::ImageOnly);
+        button.setImage(
+            NSImage::imageWithSystemSymbolName_accessibilityDescription(
+                &NSString::from_str("sidebar.right"),
+                Some(&NSString::from_str("Показать календарь")),
+            )
+            .as_deref(),
+        );
+        Self {
+            button,
+            _target: target,
+        }
+    }
+}
+
+impl NativeComponent for CalendarToggle {
+    fn view(&self) -> Retained<NSView> {
+        Retained::into_super(Retained::into_super(self.button.clone()))
+    }
+
+    fn set_prop(&mut self, name: &str, value: Option<&Value>) {
+        match name {
+            "expanded" => {
+                self.button
+                    .setState(if value.and_then(Value::as_bool).unwrap_or(false) {
+                        1
+                    } else {
+                        0
+                    })
+            }
+            "label" => {
+                let tooltip = value.and_then(Value::as_str).map(NSString::from_str);
+                self.button.setToolTip(tooltip.as_deref());
+            }
+            _ => {}
+        }
+    }
 }
 
 impl BundleHost {
@@ -31,6 +123,10 @@ impl BundleHost {
                 size: (1440, 900),
                 ..Default::default()
             },
+        );
+        view.register_component(
+            "atlas.journalCalendarToggle",
+            Rc::new(|context| Box::new(CalendarToggle::new(context))),
         );
         crate::nsh_bridge::macos::register(&view);
         let initial = crate::nsh_bridge::macos::initial_snapshot();
@@ -124,11 +220,7 @@ pub(crate) fn run(rows: Vec<Row>, footer: Vec<Row>) -> ExitCode {
         "Atlas",
         (1440.0, 900.0),
         imago_window_macos::SidebarSections { rows, footer },
-        vec![imago_window_macos::TitlebarAction {
-            id: "journal.calendar".into(),
-            symbol: "sidebar.right".into(),
-            label: "Календарь дневника".into(),
-        }],
+        Vec::new(),
         nsh_platform_macos::Root::of::<AtlasNativeRoot>,
         nsh_platform_macos::Root::of::<AtlasNativeRoot>,
         register_components,

@@ -1,4 +1,4 @@
-import { effect, LayoutAnimation, PanResponder, Scroll, signal, Text, View } from "nsh";
+import { effect, LayoutAnimation, PanResponder, Scroll, signal, Text, View, nativeComponent } from "nsh";
 import { Input } from "nsh/base";
 import { Button as SharedButton, Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
@@ -7,6 +7,10 @@ import { buildJournalDays, closestJournalDay, formatJournalDay } from "./journal
 import type { JournalEntry } from "./state";
 
 export const journalCalendarOpen = signal(false);
+const NativeCalendarToggle = nativeComponent<{ expanded: boolean; label: string }, { press: Record<string, never> }>("atlas.journalCalendarToggle", {
+  props: ["expanded", "label"],
+  events: ["press"],
+});
 const journalCalendarWidth = signal(260);
 const journalDraft = signal("");
 const journalDraftContentHeight = signal(20);
@@ -32,7 +36,7 @@ export function JournalPage(props: {
   onCreate(text: string): void;
   onUpdate(id: string, text: string): void;
   onDelete(id: string): void;
-  showCalendarToggle: boolean;
+  nativeCalendarButton: boolean;
 }) {
   let feedRef: { scrollTo: (options: { y?: number; animated?: boolean }) => void; scrollToEnd: (options?: { animated?: boolean }) => void } | undefined;
   let pageWidth = 0;
@@ -77,9 +81,11 @@ export function JournalPage(props: {
 
   return <View onLayout={(bounds) => { pageWidth = bounds.size.width; }} class="min-h-0 flex-1 flex-row overflow-hidden">
     <View class="relative min-w-0 flex-1 flex-col items-center">
-      {props.showCalendarToggle && <View onPress={toggleJournalCalendar} role="button" accessibilityLabel={journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь"} accessibilityState={{ selected: journalCalendarOpen() }} class="absolute right-4 top-4 z-10 h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: journalCalendarOpen() ? props.colors.card : "transparent" }}>
-        <SharedIcon name="sidebar" color={journalCalendarOpen() ? props.colors.accent : props.colors.muted} />
-      </View>}
+      {props.nativeCalendarButton
+        ? <NativeCalendarToggle expanded={journalCalendarOpen()} label={journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь"} onPress={toggleJournalCalendar} accessibilityLabel={journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь"} class="absolute right-4 top-4 z-10 h-8 w-8" />
+        : <View onPress={toggleJournalCalendar} role="button" accessibilityLabel={journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь"} accessibilityState={{ selected: journalCalendarOpen() }} class="absolute right-4 top-4 z-10 h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: journalCalendarOpen() ? props.colors.card : "transparent" }}>
+            <SharedIcon name="sidebar" color={journalCalendarOpen() ? props.colors.accent : props.colors.muted} />
+          </View>}
       <View class="relative min-h-0 w-full flex-1">
       <Scroll ref={(node) => { feedRef = node; }} class="min-h-0 w-full flex-1 py-4">
         <View class="mx-auto w-full max-w-[690px] px-5">
