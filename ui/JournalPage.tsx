@@ -1,13 +1,12 @@
 import { effect, Input, Scroll, signal, Text, View } from "nsh";
 import { LayoutAnimation } from "nsh/animated";
+import { Button as SharedButton, Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
-import { Button as SharedButton } from "@makekosmos/imago-nsh";
 import { JournalCalendar } from "./JournalCalendar";
 import { buildJournalDays, closestJournalDay, formatJournalDay } from "./journal-model";
 import type { JournalEntry } from "./state";
 
 export const journalCalendarOpen = signal(false);
-const calendarMonth = signal(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 const journalDraft = signal("");
 const editingJournalId = signal<string | null>(null);
 const editingJournalText = signal("");
@@ -77,14 +76,17 @@ export function JournalPage(props: {
       </Scroll>
       <View pointerEvents="none" class="absolute right-0 top-0 bottom-0 w-[8px]" style={{ backgroundColor: props.colors.background, opacity: 0.68 }} />
       </View>
-      <View class="mb-4 w-full max-w-[620px] flex-row items-end gap-2 rounded-[22px] border px-3 py-2" style={{ backgroundColor: props.colors.card, borderColor: props.colors.border }}>
+      <View class="mb-4 w-full max-w-[960px] flex-row items-center gap-2 rounded-full border px-2 py-2" style={{ backgroundColor: props.colors.card, borderColor: props.colors.border }}>
+        <View class="h-9 w-9 shrink-0 items-center justify-center rounded-full border" style={{ backgroundColor: props.colors.card, borderColor: props.colors.border }}>
+          <SharedIcon name="plus" size={19} color={props.colors.muted} />
+        </View>
         <Input value={journalDraft()} onChange={(value) => journalDraft.set(value)} onSubmit={(event) => send(event.text)} multiline={true} submitBehavior="submit" placeholder="Запись в дневник…" accessibilityLabel="Новая запись в дневник" class="max-h-[150px] min-h-[38px] flex-1 px-2 py-2 text-[14px]" style={{ backgroundColor: "transparent", color: props.colors.foreground }} />
-        <View onPress={() => send(journalDraft())} role="button" accessibilityLabel="Отправить запись" class="h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: props.colors.accent }}>
-          <Text class="text-[20px]" style={{ color: props.colors.background }}>↑</Text>
+        <View onPress={() => send(journalDraft())} role="button" accessibilityLabel="Отправить запись" class="h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: "#00a86b" }}>
+          <Text class="text-[20px] font-semibold" style={{ color: "#ffffff" }}>↑</Text>
         </View>
       </View>
     </View>
-    {journalCalendarOpen() && <View class="absolute right-0 top-0 bottom-0 z-10"><JournalCalendar month={calendarMonth()} groups={groups} colors={props.colors} onMonthChange={(month) => calendarMonth.set(month)} onSelect={jumpToDay} /></View>}
+    {journalCalendarOpen() && <View class="absolute right-0 top-0 bottom-0 z-10"><JournalCalendar groups={groups} colors={props.colors} onSelect={jumpToDay} /></View>}
   </View>;
 }
 

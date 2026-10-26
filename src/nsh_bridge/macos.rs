@@ -132,6 +132,9 @@ impl AtlasBridge {
                         refresh = true;
                     }
                 }
+                for id in imago_window_macos::titlebar_action_presses() {
+                    context.emit("titlebarAction", json!({"id": id}));
+                }
                 if refresh {
                     publish(&engine, &context, &route, &entries);
                 }

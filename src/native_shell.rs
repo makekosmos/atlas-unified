@@ -29,7 +29,6 @@ impl BundleHost {
                 ..Default::default()
             },
         );
-        crate::titlebar_calendar::register(&view);
         crate::nsh_bridge::macos::register(&view);
         let initial = crate::nsh_bridge::macos::initial_snapshot();
         let source = format!(
@@ -66,10 +65,15 @@ fn register_components(view: &AppView) {
 }
 
 pub(crate) fn run(rows: Vec<Row>) -> ExitCode {
-    imago_window_macos::run(
+    imago_window_macos::run_with_titlebar_actions(
         "Atlas",
         (1440.0, 900.0),
         rows,
+        vec![imago_window_macos::TitlebarAction {
+            id: "journal.calendar".into(),
+            symbol: "sidebar.right".into(),
+            label: "Календарь дневника".into(),
+        }],
         nsh_platform_macos::Root::of::<AtlasNativeRoot>,
         nsh_platform_macos::Root::of::<AtlasNativeRoot>,
         register_components,

@@ -4,9 +4,8 @@ export type JournalDayGroup =
   | { kind: "dated"; key: string; date: Date; entries: JournalEntry[] }
   | { kind: "invalid"; key: string; label: string; entries: JournalEntry[] };
 
-export type CalendarCell = { key: string; day: number; entryCount: number } | null;
-const monthNames = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
 const monthNamesInDate = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+const monthNamesShort = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 
 function localDayKey(date: Date) {
   const year = date.getFullYear();
@@ -40,23 +39,23 @@ export function formatJournalDay(group: JournalDayGroup, now = new Date()) {
   return `${group.date.getDate()} ${monthNamesInDate[group.date.getMonth()]}${year}`;
 }
 
-export function formatCalendarMonth(month: Date) {
-  return `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
-}
+export type CalendarDay = { key: string; date: Date; count: number; period: string };
 
-export function buildCalendarWeeks(month: Date, groups: readonly JournalDayGroup[]): CalendarCell[][] {
+export function buildCalendarDays(groups: readonly JournalDayGroup[], now = new Date()): CalendarDay[] {
   const counts = new Map(groups.flatMap((group) => group.kind === "dated" ? [[group.key, group.entries.length] as const] : []));
-  const year = month.getFullYear();
-  const monthIndex = month.getMonth();
-  const dayCount = new Date(year, monthIndex + 1, 0).getDate();
-  const leading = (new Date(year, monthIndex, 1).getDay() + 6) % 7;
-  const cells: CalendarCell[] = Array.from({ length: leading }, () => null);
-  for (let day = 1; day <= dayCount; day += 1) {
-    const key = localDayKey(new Date(year, monthIndex, day, 12));
-    cells.push({ key, day, entryCount: counts.get(key) ?? 0 });
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dated = groups.filter((group) => group.kind === "dated");
+  const oldest = dated.reduce((date, group) => group.kind === "dated" && group.date < date ? group.date : date, today);
+  const start = dated.length ? new Date(oldest.getFullYear(), oldest.getMonth(), oldest.getDate() - 40) : new Date(today.getFullYear(), today.getMonth(), today.getDate() - 40);
+  const days: CalendarDay[] = [];
+  for (const date = today; date >= start; date.setDate(date.getDate() - 1)) {
+    const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const key = localDayKey(day);
+    const weekLabel = day.getDay() === 0 || day.valueOf() === today.valueOf();
+    const period = weekLabel ? `${monthNamesShort[day.getMonth()]} ${day.getFullYear()}` : "";
+    days.push({ key, date: day, count: counts.get(key) ?? 0, period });
   }
-  while (cells.length % 7 !== 0) cells.push(null);
-  return Array.from({ length: cells.length / 7 }, (_, index) => cells.slice(index * 7, index * 7 + 7));
+  return days;
 }
 
 export function closestJournalDay(groups: readonly JournalDayGroup[], key: string): JournalDayGroup | undefined {

@@ -1,5 +1,5 @@
 import { expect, open, test } from "nsh/test";
-import { buildCalendarWeeks, buildJournalDays, closestJournalDay, formatJournalDay } from "./journal-model";
+import { buildCalendarDays, buildJournalDays, closestJournalDay, formatJournalDay } from "./journal-model";
 
 test("shows the shared Atlas navigation and journal composer", async () => {
   const app = await open("./App.tsx");
@@ -26,11 +26,12 @@ test("groups journal bubbles by date and omits the current year", () => {
   expect(formatJournalDay(groups[1], new Date(2025, 11, 31))).toEqual("17 сентября 2024");
 });
 
-test("marks journal dates in the calendar", () => {
+test("shows recent journal days in reverse chronological order with entry counts", () => {
   const groups = buildJournalDays([{ id: "one", text: "запись", createdAt: new Date(2025, 11, 23, 9).toISOString() }]);
-  const weeks = buildCalendarWeeks(new Date(2025, 11, 1), groups);
-  const marked = weeks.flat().find((cell) => cell?.key === "2025-12-23");
-  expect(marked?.entryCount).toEqual(1);
+  const days = buildCalendarDays(groups, new Date(2025, 11, 24, 12));
+  expect(days[0].key).toEqual("2025-12-24");
+  expect(days[1].key).toEqual("2025-12-23");
+  expect(days[1].count).toEqual(1);
 });
 
 test("chooses the closest dated group for an empty calendar day", () => {
@@ -41,17 +42,13 @@ test("chooses the closest dated group for an empty calendar day", () => {
   expect(closestJournalDay(groups, "2025-12-26")?.key).toEqual("2025-12-27");
 });
 
-test("opens the journal calendar and moves between months", async () => {
+test("opens the journal timeline and closes it from the titlebar control", async () => {
   const app = await open("./App.tsx", { width: 1100, clock: { time: new Date(2026, 9, 26) } });
-  await app.press("Открыть календарь");
-  expect(app.texts()).toContain("Календарь дневника");
-  expect(app.texts()).toContain("Октябрь 2026");
-  await app.press("Предыдущий месяц");
-  expect(app.texts()).toContain("Сентябрь 2026");
-  await app.press("Следующий месяц");
-  expect(app.texts()).toContain("Октябрь 2026");
-  await app.press("Закрыть календарь");
-  expect(app.texts()).not.toContain("Календарь дневника");
+  await app.press("Календарь дневника");
+  expect(app.texts()).toContain("КАЛЕНДАРЬ");
+  expect(app.texts()).toContain("Окт 2026");
+  await app.press("Календарь дневника");
+  expect(app.texts()).not.toContain("КАЛЕНДАРЬ");
 });
 
 test("submits on Enter and accepts multiline text", async () => {
