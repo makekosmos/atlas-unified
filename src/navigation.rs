@@ -8,20 +8,23 @@ struct Item {
     id: String,
     label: String,
     icon: String,
-    #[allow(dead_code)]
     footer: bool,
 }
 
 #[cfg(target_os = "macos")]
-pub(crate) fn native_rows() -> Vec<Row> {
+pub(crate) fn native_rows() -> (Vec<Row>, Vec<Row>) {
     let items: Vec<Item> = serde_json::from_str(include_str!("../ui/navigation.json"))
         .expect("Atlas navigation catalog is valid JSON");
-    items
-        .into_iter()
-        .map(|item| Row {
-            id: Box::leak(item.id.into_boxed_str()),
-            label: item.label,
-            symbol: Some(Box::leak(item.icon.into_boxed_str())),
-        })
-        .collect()
+    let (footer, primary): (Vec<_>, Vec<_>) = items.into_iter().partition(|item| item.footer);
+    let rows = |items: Vec<Item>| {
+        items
+            .into_iter()
+            .map(|item| Row {
+                id: Box::leak(item.id.into_boxed_str()),
+                label: item.label,
+                symbol: Some(Box::leak(item.icon.into_boxed_str())),
+            })
+            .collect()
+    };
+    (rows(primary), rows(footer))
 }

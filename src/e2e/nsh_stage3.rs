@@ -11,14 +11,9 @@ pub(super) async fn run(run: &Run, cx: &mut AsyncApp) {
         task_count > 0,
     );
     run.shot(cx, "journal").await;
-    for name in ["tasks", "about"] {
-        run.navigate_nsh(cx, name).await;
-        run.shot(cx, name).await;
-        run.check(
-            &format!("captured nsh {name}"),
-            run.out.join(format!("{name}.png")).exists(),
-        );
-    }
+    run.navigate_nsh(cx, "tasks").await;
+    run.shot(cx, "tasks").await;
+    run.check("captured nsh tasks", run.out.join("tasks.png").exists());
     run.navigate_nsh(cx, "settings").await;
     run.shot(cx, "settings").await;
     run.check(

@@ -138,7 +138,8 @@ fn open_atlas_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Atlas
 
 #[cfg(target_os = "macos")]
 fn main() -> std::process::ExitCode {
-    native_shell::run(navigation::native_rows())
+    let (rows, footer) = navigation::native_rows();
+    native_shell::run(rows, footer)
 }
 
 #[cfg(not(target_os = "macos"))]

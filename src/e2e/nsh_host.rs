@@ -48,7 +48,6 @@ impl Run {
             "journal" => (100.0, 60.0),
             "tasks" => (100.0, 100.0),
             "settings" => (100.0, 820.0),
-            "about" => (100.0, 860.0),
             _ => panic!("unknown nsh route {name}"),
         };
         self.click_at(cx, position.0, position.1).await;

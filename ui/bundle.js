@@ -1,42 +1,1733 @@
-import{append as e,bindProp as t,component as n,each as r,element as i,insert as a,prop as o,setup as s,text as c}from"nsh:rt";import{LayoutAnimation as l,Storage as u,effect as d,keymap as f,mount as p,nativeComponent as m,signal as h}from"nsh";import{Window as g,titleBar as _}from"nsh/desktop";const v={sidebarWidth:240,titlebarHeight:40,rowHeight:32,compactRowHeight:28,pageGutter:28},y={body:13,label:12,title:24,titlebar:13},b={background:`#0d0c10`,foreground:`#e7e5ea`,muted:`#8d8a94`,border:`#27262a`,accent:`#af94f9`,card:`#131216`},x=[`#8ec07c`,`#d79921`,`#b18aff`,`#83a598`,`#fb4934`,`#d3869b`,`#458588`,`#fabd2f`],S=[[12,`Компактная`],[13,`Обычная`],[15,`Свободная`]];function C(n){let r=()=>n.appearance,s=()=>r()?.settings,l=()=>n.colors,u=e=>{n.editable&&n.onPatch(e)},d=(n,r,s)=>(()=>{let c=i(`view`);o(c,`onPress`,s),o(c,`role`,`button`),o(c,`accessibilityState`,{selected:r}),o(c,`class`,`rounded-md border px-3 py-2`),t(c,`style`,()=>({backgroundColor:r?l().card:l().background,borderColor:r?l().accent:l().border}));let u=i(`text`);return t(u,`style`,()=>({color:r?l().foreground:l().muted})),a(u,n),e(c,u),c})(),p=(r,s)=>(()=>{let c=i(`view`);o(c,`class`,`h-10 flex-row items-center border-b`),t(c,`style`,()=>({borderColor:l().border}));let u=i(`text`);o(u,`class`,`flex-1 text-[13px]`),t(u,`style`,()=>({color:l().foreground})),a(u,s);let d=i(`view`);o(d,`onPress`,()=>n.onChangeShortcut(r)),o(d,`role`,`button`),o(d,`accessibilityLabel`,`Изменить сочетание: ${s}`),o(d,`class`,`rounded-md px-3 py-1`),t(d,`style`,()=>({backgroundColor:l().background}));let p=i(`text`);return o(p,`class`,`text-[12px]`),t(p,`style`,()=>({color:l().accent})),a(p,()=>f.label(n.shortcuts[r])),e(d,p),e(c,u),e(c,d),c})();if(!s()||!r())return(()=>{let n=i(`scroll`);o(n,`class`,`min-h-0 flex-1 px-7 pt-4 pb-8`);let r=i(`text`);o(r,`class`,`text-[13px]`),t(r,`style`,()=>({color:l().muted}));let a=c(`Загружаем настройки внешнего вида…`);return e(r,a),e(n,r),n})();let m=[[`system`,`Системная`],[`light`,`Светлая`],[`dark`,`Тёмная`]];return(()=>{let f=i(`scroll`);o(f,`class`,`min-h-0 flex-1 px-7 pt-4 pb-8`),t(f,`style`,()=>({backgroundColor:l().background}));let h=i(`view`);o(h,`class`,`mx-auto w-full max-w-[720px]`);let g=i(`text`);o(g,`class`,`mb-6 text-[24px] font-bold`),t(g,`style`,()=>({color:l().foreground}));let _=c(`Отображение`);e(g,_);let v=i(`text`);o(v,`class`,`mb-3 text-[13px]`),t(v,`style`,()=>({color:l().muted}));let y=c(`Режим`);e(v,y);let b=i(`view`);o(b,`class`,`mb-6 flex-row gap-2`),a(b,()=>m.map(([e,t])=>d(t,s().mode===e,()=>u({mode:e}))));let C=i(`text`);o(C,`class`,`mb-3 text-[13px]`),t(C,`style`,()=>({color:l().muted}));let w=c(`Светлая тема`);e(C,w);let T=i(`view`);o(T,`class`,`mb-5 flex-row flex-wrap gap-2`),a(T,()=>n.themes.map(e=>d(e.name,s().light_theme===e.key,()=>u({light_theme:e.key}))));let E=i(`text`);o(E,`class`,`mb-3 text-[13px]`),t(E,`style`,()=>({color:l().muted}));let ee=c(`Тёмная тема`);e(E,ee);let D=i(`view`);o(D,`class`,`mb-5 flex-row flex-wrap gap-2`),a(D,()=>n.themes.map(e=>d(e.name,s().dark_theme===e.key,()=>u({dark_theme:e.key}))));let O=i(`text`);o(O,`class`,`mb-3 text-[13px]`),t(O,`style`,()=>({color:l().muted}));let k=c(`Акцентный цвет`);e(O,k);let A=i(`view`);o(A,`class`,`mb-3 flex-row gap-2`),a(A,[()=>d(`Цвет темы`,s().accent_source===`theme`,()=>u({accent_source:`theme`,accent_color:null})),()=>d(`Свой цвет`,s().accent_source===`custom`,()=>u({accent_source:`custom`,accent_color:s().accent_color??x[0]})),()=>r().capabilities.wallpaper_accent&&d(`Обои`,s().accent_source===`wallpaper`,()=>u({accent_source:`wallpaper`}))]);let j=i(`view`);o(j,`class`,`mb-6 flex-row gap-2`),a(j,()=>x.map(e=>(()=>{let n=i(`view`);return o(n,`onPress`,()=>u({accent_source:`custom`,accent_color:e})),o(n,`role`,`button`),o(n,`accessibilityLabel`,`Акцент ${e}`),t(n,`accessibilityState`,()=>({selected:s().accent_source===`custom`&&s().accent_color?.toLowerCase()===e})),o(n,`class`,`h-7 w-7 rounded-full border-2`),t(n,`style`,()=>({backgroundColor:e,borderColor:s().accent_color?.toLowerCase()===e?l().foreground:l().border})),n})()));let M=i(`text`);o(M,`class`,`mb-3 text-[13px]`),t(M,`style`,()=>({color:l().muted}));let te=c(`Материал окна`);e(M,te);let N=i(`view`);o(N,`class`,`mb-6 flex-row gap-2`),a(N,()=>[`default`,`frosted`,`mica`].filter(e=>r().capabilities.materials.includes(e)).map(e=>d(e==="default"?`Сплошной`:e===`frosted`?`Стекло`:`Системный`,s().material===e,()=>u({material:e}))));let P=i(`text`);o(P,`class`,`mb-3 text-[13px]`),t(P,`style`,()=>({color:l().muted}));let F=c(`Плотность интерфейса`);e(P,F);let I=i(`view`);o(I,`class`,`mb-6 flex-row gap-2`),a(I,()=>S.map(([e,t])=>d(t,s().font_size===e,()=>u({font_size:e}))));let L=i(`text`);o(L,`class`,`mb-3 text-[13px]`),t(L,`style`,()=>({color:l().muted}));let ne=c(`Горячие клавиши`);e(L,ne);let R=i(`view`);o(R,`class`,`rounded-xl px-4`),t(R,`style`,()=>({backgroundColor:l().card}));let z=i(`view`);o(z,`class`,`h-10 flex-row items-center`);let B=i(`text`);o(B,`class`,`flex-1 text-[13px]`),t(B,`style`,()=>({color:l().foreground}));let re=c(`Закрыть панель / поиск`);e(B,re);let V=i(`text`);o(V,`class`,`text-[12px]`),t(V,`style`,()=>({color:l().muted}));let ie=c(`Esc`);return e(V,ie),e(z,B),e(z,V),e(R,z),a(R,[()=>p(`sidebar`,`Боковая панель — открыть/скрыть`),()=>p(`create`,`Новая задача — панель справа`),()=>p(`search`,`Быстрый поиск`),()=>p(`reload`,`Обновить данные из Engine`)],z),e(h,g),e(h,v),e(h,b),e(h,C),e(h,T),e(h,E),e(h,D),e(h,O),e(h,A),e(h,j),e(h,M),e(h,N),e(h,P),e(h,I),e(h,L),e(h,R),a(h,[()=>r()?.policy.following&&(()=>{let n=i(`text`);o(n,`class`,`mb-4 text-[12px]`),t(n,`style`,()=>({color:l().accent}));let r=c(`Общий стиль задаётся в Mundus Manager. Настройки доступны только для просмотра.`);return e(n,r),n})(),()=>!n.editable&&!r()?.policy.following&&(()=>{let n=i(`text`);o(n,`class`,`mb-4 text-[12px]`),t(n,`style`,()=>({color:l().accent}));let r=c(`Настройки внешнего вида сейчас недоступны.`);return e(n,r),n})()],v),e(f,h),f})()}const w={about:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,check:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,inbox:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M2.5%2012C2.5%207.52166%202.5%205.28249%203.89124%203.89124C5.28249%202.5%207.52166%202.5%2012%202.5C16.4783%202.5%2018.7175%202.5%2020.1088%203.89124C21.5%205.28249%2021.5%207.52166%2021.5%2012C21.5%2016.4783%2021.5%2018.7175%2020.1088%2020.1088C18.7175%2021.5%2016.4783%2021.5%2012%2021.5C7.52166%2021.5%205.28249%2021.5%203.89124%2020.1088C2.5%2018.7175%202.5%2016.4783%202.5%2012Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M21.5%2013.5H16.5743C15.7322%2013.5%2015.0706%2014.2036%2014.6995%2014.9472C14.2963%2015.7551%2013.4889%2016.5%2012%2016.5C10.5111%2016.5%209.70373%2015.7551%209.30054%2014.9472C8.92942%2014.2036%208.26777%2013.5%207.42566%2013.5H2.5%22%20stroke%3D%22currentColor%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,logbook:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7.99978%203.5H6.60021C4.43183%203.5%203.34764%203.5%202.67399%204.17362C2.00034%204.84724%202.00029%205.93144%202.00021%208.09982L2%2013.3998C1.99992%2015.5684%201.99987%2016.6526%202.67353%2017.3263C3.34719%2018%204.43146%2018%206.6%2018H8.95042C10.4329%2018%2011.7092%2019.0464%2011.9999%2020.5V5.5C11.0556%204.24097%209.99989%203.5%207.99978%203.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M16.0001%203.5H17.3997C19.5681%203.5%2020.6523%203.5%2021.3259%204.17362C21.9996%204.84724%2021.9996%205.93144%2021.9997%208.09982L21.9999%2013.3998C22%2015.5684%2022%2016.6526%2021.3264%2017.3263C20.6527%2018%2019.5684%2018%2017.3999%2018H15.0495C13.567%2018%2012.2907%2019.0464%2012%2020.5V5.5C12.9443%204.24097%2014%203.5%2016.0001%203.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,more:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M21%2012C21%2011.1716%2020.3284%2010.5%2019.5%2010.5C18.6716%2010.5%2018%2011.1716%2018%2012C18%2012.8284%2018.6716%2013.5%2019.5%2013.5C20.3284%2013.5%2021%2012.8284%2021%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13.5%2012C13.5%2011.1716%2012.8284%2010.5%2012%2010.5C11.1716%2010.5%2010.5%2011.1716%2010.5%2012C10.5%2012.8284%2011.1716%2013.5%2012%2013.5C12.8284%2013.5%2013.5%2012.8284%2013.5%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M6%2012C6%2011.1716%205.32843%2010.5%204.5%2010.5C3.67157%2010.5%203%2011.1716%203%2012C3%2012.8284%203.67157%2013.5%204.5%2013.5C5.32843%2013.5%206%2012.8284%206%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,nextWeek:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11%2014H16M8%2014H8.00898M13%2018H8M16%2018H15.991%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,plus:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M12%204V20M20%2012H4%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,project:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M8%207H16.75C18.8567%207%2019.91%207%2020.6667%207.50559C20.9943%207.72447%2021.2755%208.00572%2021.4944%208.33329C22%209.08996%2022%2010.1433%2022%2012.25C22%2015.7612%2022%2017.5167%2021.1573%2018.7779C20.7926%2019.3238%2020.3238%2019.7926%2019.7779%2020.1573C18.5167%2021%2016.7612%2021%2013.25%2021H12C7.28595%2021%204.92893%2021%203.46447%2019.5355C2%2018.0711%202%2015.714%202%2011V7.94427C2%206.1278%202%205.21956%202.38032%204.53806C2.65142%204.05227%203.05227%203.65142%203.53806%203.38032C4.21956%203%205.1278%203%206.94427%203C8.10802%203%208.6899%203%209.19926%203.19101C10.3622%203.62712%2010.8418%204.68358%2011.3666%205.73313L12%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,settings:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M3.99963%205.00055L9.99963%205.00031%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12.9996%205.00031L19.9996%205.00031%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M15.9996%209.00031L15.9996%2015.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.99963%202.00031L9.99963%208.00031%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.9996%2016.0003L11.9996%2022.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M15.9996%2012.0001L19.9996%2012.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3.99963%2012.0005L12.9996%2012.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.9996%2019.0003L19.9996%2019.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3.99963%2019.0005L8.99963%2019.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,sidebar:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M2%2012C2%208.31087%202%206.4663%202.81382%205.15877C3.1149%204.67502%203.48891%204.25427%203.91891%203.91554C5.08116%203%206.72077%203%2010%203H14C17.2792%203%2018.9188%203%2020.0811%203.91554C20.5111%204.25427%2020.8851%204.67502%2021.1862%205.15877C22%206.4663%2022%208.31087%2022%2012C22%2015.6891%2022%2017.5337%2021.1862%2018.8412C20.8851%2019.325%2020.5111%2019.7457%2020.0811%2020.0845C18.9188%2021%2017.2792%2021%2014%2021H10C6.72077%2021%205.08116%2021%203.91891%2020.0845C3.48891%2019.7457%203.1149%2019.325%202.81382%2018.8412C2%2017.5337%202%2015.6891%202%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.5%203L9.5%2021%22%20stroke%3D%22currentColor%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M5%207H6M5%2010H6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,someday:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%2210%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12%208V12L14%2014%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,statistics:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%2017L7%2013%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12%2017L12%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M17%2017L17%2011%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M2.5%2012C2.5%207.52166%202.5%205.28249%203.89124%203.89124C5.28249%202.5%207.52166%202.5%2012%202.5C16.4783%202.5%2018.7175%202.5%2020.1088%203.89124C21.5%205.28249%2021.5%207.52166%2021.5%2012C21.5%2016.4783%2021.5%2018.7175%2020.1088%2020.1088C18.7175%2021.5%2016.4783%2021.5%2012%2021.5C7.52166%2021.5%205.28249%2021.5%203.89124%2020.1088C2.5%2018.7175%202.5%2016.4783%202.5%2012Z%22%20stroke%3D%22currentColor%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,trash:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M19.5%205.5L18.8803%2015.5251C18.7219%2018.0864%2018.6428%2019.3671%2018.0008%2020.2879C17.6833%2020.7431%2017.2747%2021.1273%2016.8007%2021.416C15.8421%2022%2014.559%2022%2011.9927%2022C9.42312%2022%208.1383%2022%207.17905%2021.4149C6.7048%2021.1257%206.296%2020.7408%205.97868%2020.2848C5.33688%2019.3626%205.25945%2018.0801%205.10461%2015.5152L4.5%205.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%205.5H21M16.0557%205.5L15.3731%204.09173C14.9196%203.15626%2014.6928%202.68852%2014.3017%202.39681C14.215%202.3321%2014.1231%202.27454%2014.027%202.2247C13.5939%202%2013.0741%202%2012.0345%202C10.9688%202%2010.436%202%209.99568%202.23412C9.8981%202.28601%209.80498%202.3459%209.71729%202.41317C9.32164%202.7167%209.10063%203.20155%208.65861%204.17126L8.05292%205.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.5%2016.5L9.5%2010.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M14.5%2016.5L14.5%2010.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,week:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E`,display:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M4%2011L4%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%2013L19%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%203L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.5%203L11.5%2013%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M4%203L4%205%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.5%2019L11.5%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M2%209.5C2%209.03406%202%208.80109%202.07612%208.61732C2.17761%208.37229%202.37229%208.17761%202.61732%208.07612C2.80109%208%203.03406%208%203.5%208H4.5C4.96594%208%205.19891%208%205.38268%208.07612C5.62771%208.17761%205.82239%208.37229%205.92388%208.61732C6%208.80109%206%209.03406%206%209.5C6%209.96594%206%2010.1989%205.92388%2010.3827C5.82239%2010.6277%205.62771%2010.8224%205.38268%2010.9239C5.19891%2011%204.96594%2011%204.5%2011H3.5C3.03406%2011%202.80109%2011%202.61732%2010.9239C2.37229%2010.8224%202.17761%2010.6277%202.07612%2010.3827C2%2010.1989%202%209.96594%202%209.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M17%2011.5C17%2011.0341%2017%2010.8011%2017.0761%2010.6173C17.1776%2010.3723%2017.3723%2010.1776%2017.6173%2010.0761C17.8011%2010%2018.0341%2010%2018.5%2010H19.5C19.9659%2010%2020.1989%2010%2020.3827%2010.0761C20.6277%2010.1776%2020.8224%2010.3723%2020.9239%2010.6173C21%2010.8011%2021%2011.0341%2021%2011.5C21%2011.9659%2021%2012.1989%2020.9239%2012.3827C20.8224%2012.6277%2020.6277%2012.8224%2020.3827%2012.9239C20.1989%2013%2019.9659%2013%2019.5%2013H18.5C18.0341%2013%2017.8011%2013%2017.6173%2012.9239C17.3723%2012.8224%2017.1776%2012.6277%2017.0761%2012.3827C17%2012.1989%2017%2011.9659%2017%2011.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.5%2014.5C9.5%2014.0341%209.5%2013.8011%209.57612%2013.6173C9.67761%2013.3723%209.87229%2013.1776%2010.1173%2013.0761C10.3011%2013%2010.5341%2013%2011%2013H12C12.4659%2013%2012.6989%2013%2012.8827%2013.0761C13.1277%2013.1776%2013.3224%2013.3723%2013.4239%2013.6173C13.5%2013.8011%2013.5%2014.0341%2013.5%2014.5C13.5%2014.9659%2013.5%2015.1989%2013.4239%2015.3827C13.3224%2015.6277%2013.1277%2015.8224%2012.8827%2015.9239C12.6989%2016%2012.4659%2016%2012%2016H11C10.5341%2016%2010.3011%2016%2010.1173%2015.9239C9.87229%2015.8224%209.67761%2015.6277%209.57612%2015.3827C9.5%2015.1989%209.5%2014.9659%209.5%2014.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A`,windowMin:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M6%2012h12%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E%0A`,windowMax:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Crect%20x%3D%226.5%22%20y%3D%226.5%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%221.5%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E%0A`,windowClose:`data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m6%206%2012%2012M18%206%206%2018%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A`};function T(e){return(()=>{let n=i(`image`);return t(n,`src`,()=>w[e.name]),t(n,`style`,()=>({width:e.size??16,height:e.size??16,tintColor:e.color})),n})()}function E(r){return(()=>{let s=i(`view`);t(s,`onPress`,()=>r.onPress),o(s,`role`,`button`),t(s,`accessibilityState`,()=>({selected:r.selected})),o(s,`class`,`flex-row items-center gap-2 rounded-lg px-2.5`),t(s,`style`,()=>({height:v.rowHeight,backgroundColor:r.selected?r.colors.card:`transparent`}));let c=i(`text`);return o(c,`class`,`text-[13px]`),t(c,`style`,()=>({color:r.selected?r.colors.foreground:r.colors.muted})),a(c,()=>r.label),e(s,c),a(s,n(T,{get name(){return r.icon},get color(){return r.colors.muted}}),c),s})()}function ee(r){d(()=>g.setTitleBar(`hidden`,v.titlebarHeight));let s=_(),c=s.left===0&&s.right===0;return(()=>{let l=i(`view`);o(l,`class`,`w-full flex-row items-center`),t(l,`style`,()=>({height:s.height||v.titlebarHeight})),o(l,`desktop`,{windowDrag:!0});let u=i(`view`);o(u,`class`,`flex-row items-center`),t(u,`style`,()=>({width:(r.sidebarVisible===!1?40:v.sidebarWidth)+s.left,height:v.titlebarHeight}));let d=i(`view`);t(d,`style`,()=>({width:s.left}));let f=i(`view`);t(f,`onPress`,()=>r.onToggleSidebar),o(f,`role`,`button`),o(f,`accessibilityLabel`,`Боковая панель`),o(f,`class`,`w-10 items-center justify-center`),t(f,`style`,()=>({height:v.titlebarHeight})),a(f,n(T,{name:`sidebar`,get color(){return r.colors.muted}}));let p=i(`view`);o(p,`class`,`flex-1`),o(p,`desktop`,{windowDrag:!0}),e(u,d),e(u,f),e(u,p);let m=i(`view`);return t(m,`onPress`,()=>r.onAppearance),o(m,`role`,`button`),o(m,`accessibilityLabel`,`Настройки отображения`),o(m,`class`,`w-10 items-center justify-center`),t(m,`style`,()=>({height:v.titlebarHeight})),a(m,n(T,{name:`display`,get color(){return r.colors.muted}})),e(l,u),e(l,m),a(l,()=>r.showPageIdentity===!1?(()=>{let e=i(`view`);return o(e,`class`,`flex-1`),o(e,`desktop`,{windowDrag:!0}),e})():(()=>{let s=i(`view`);o(s,`class`,`flex-1 flex-row items-center gap-1.5`),o(s,`desktop`,{windowDrag:!0});let c=i(`text`);return o(c,`class`,`font-medium`),t(c,`style`,()=>({fontSize:y.titlebar,color:r.colors.foreground})),a(c,()=>r.title),e(s,c),a(s,n(T,{get name(){return r.icon},size:15,get color(){return r.colors.muted}}),c),s})(),m),a(l,[()=>r.actions?.map(e=>(()=>{let s=i(`view`);return o(s,`onPress`,()=>r.onAction?.(e.id)),o(s,`role`,`button`),t(s,`accessibilityLabel`,()=>e.label),o(s,`class`,`w-10 items-center justify-center`),t(s,`style`,()=>({height:v.titlebarHeight})),a(s,n(T,{get name(){return e.icon},get color(){return r.colors.muted}})),s})()),()=>c?(()=>{let s=i(`view`);o(s,`class`,`flex-row`),t(s,`style`,()=>({width:138,height:v.titlebarHeight}));let c=i(`view`);o(c,`onPress`,()=>g.minimize()),o(c,`role`,`button`),o(c,`accessibilityLabel`,`Свернуть окно`),o(c,`class`,`w-[46px] items-center justify-center`),t(c,`style`,()=>({height:v.titlebarHeight})),a(c,n(T,{name:`windowMin`,get color(){return r.colors.foreground},size:14}));let l=i(`view`);o(l,`onPress`,()=>g.toggleMaximize()),o(l,`role`,`button`),o(l,`accessibilityLabel`,`Развернуть окно`),o(l,`class`,`w-[46px] items-center justify-center`),t(l,`style`,()=>({height:v.titlebarHeight})),a(l,n(T,{name:`windowMax`,get color(){return r.colors.foreground},size:14}));let u=i(`view`);return o(u,`onPress`,()=>g.close()),o(u,`role`,`button`),o(u,`accessibilityLabel`,`Закрыть окно`),o(u,`class`,`w-[46px] items-center justify-center`),t(u,`style`,()=>({height:v.titlebarHeight})),a(u,n(T,{name:`windowClose`,get color(){return r.colors.foreground},size:14})),e(s,c),e(s,l),e(s,u),s})():(()=>{let e=i(`view`);return t(e,`style`,()=>({width:s.right})),e})()]),l})()}function D(n){return(()=>{let r=i(`view`);t(r,`onPress`,()=>n.disabled?void 0:n.onPress),o(r,`role`,`button`),t(r,`accessibilityState`,()=>({selected:!!n.selected,disabled:!!n.disabled})),t(r,`class`,()=>`rounded-md border px-3 py-2 ${n.className??``}`),t(r,`style`,()=>({backgroundColor:n.selected?n.colors.card:n.colors.background,borderColor:n.selected?n.colors.accent:n.colors.border,opacity:n.disabled?.5:1,...n.style}));let s=i(`text`);return o(s,`class`,`text-[13px]`),t(s,`style`,()=>({color:n.textColor??(n.selected?n.colors.foreground:n.colors.muted)})),a(s,()=>n.label),e(r,s),r})()}function O(n){return(()=>{let r=i(`view`);o(r,`class`,`absolute inset-0 items-center justify-center bg-[#00000080] px-4`);let s=i(`view`);o(s,`class`,`w-full max-w-[440px] rounded-xl border p-4`),t(s,`style`,()=>({borderColor:n.colors.border,backgroundColor:n.colors.card}));let c=i(`text`);return o(c,`class`,`mb-3 text-[14px]`),t(c,`style`,()=>({color:n.colors.foreground})),a(c,()=>n.title),e(s,c),a(s,()=>n.children),e(r,s),r})()}var k=[{id:`journal`,label:`Дневник`,icon:`book.closed`,footer:!1},{id:`tasks`,label:`Задачи`,icon:`checklist`,footer:!1},{id:`settings`,label:`Настройки`,icon:`gearshape`,footer:!0},{id:`about`,label:`О приложении`,icon:`info.circle`,footer:!0}];const A={route:`journal`,title:`Дневник`,todos:[],journalEntries:[],version:``,appearance:{settings:{mode:`dark`,light_theme:`default`,dark_theme:`default`,accent_source:`theme`,material:`default`,font_size:13,font_family:`Inter`},policy:{following:!1},capabilities:{materials:[`default`,`frosted`,`mica`],wallpaper_accent:!1}},appearanceEditable:!0,themes:[{key:`default`,name:`Default`},{key:`claude`,name:`Claude`},{key:`graphite`,name:`Graphite`}],colors:b,sidebarVisible:!0,chrome:`tsx`};function j(e){return typeof e!=`object`||!e||!(`route`in e)||!M(e.route)||!(`title`in e)||typeof e.title!=`string`||!(`todos`in e)||!Array.isArray(e.todos)||!e.todos.every(te)||!(`journalEntries`in e)||!Array.isArray(e.journalEntries)||!e.journalEntries.every(N)?!1:`version`in e&&typeof e.version==`string`&&`appearanceEditable`in e&&typeof e.appearanceEditable==`boolean`&&`themes`in e&&Array.isArray(e.themes)&&`colors`in e&&P(e.colors)&&`sidebarVisible`in e&&typeof e.sidebarVisible==`boolean`&&`chrome`in e&&(e.chrome===`native`||e.chrome===`tsx`)}function M(e){return e===`journal`||e===`tasks`||e===`settings`||e===`about`}function te(e){return typeof e==`object`&&!!e&&`id`in e&&typeof e.id==`string`&&`title`in e&&typeof e.title==`string`&&`is_completed`in e&&typeof e.is_completed==`boolean`}function N(e){return typeof e==`object`&&!!e&&`id`in e&&typeof e.id==`string`&&`text`in e&&typeof e.text==`string`&&`createdAt`in e&&typeof e.createdAt==`string`}function P(e){return typeof e!=`object`||!e?!1:`background`in e&&typeof e.background==`string`&&`foreground`in e&&typeof e.foreground==`string`&&`muted`in e&&typeof e.muted==`string`&&`border`in e&&typeof e.border==`string`&&`accent`in e&&typeof e.accent==`string`&&`card`in e&&typeof e.card==`string`}const F=[`января`,`февраля`,`марта`,`апреля`,`мая`,`июня`,`июля`,`августа`,`сентября`,`октября`,`ноября`,`декабря`],I=[`янв`,`фев`,`мар`,`апр`,`май`,`июн`,`июл`,`авг`,`сен`,`окт`,`ноя`,`дек`];function L(e){return`${e.getFullYear()}-${String(e.getMonth()+1).padStart(2,`0`)}-${String(e.getDate()).padStart(2,`0`)}`}function ne(e){let t=/* @__PURE__ */ new Map;for(let n of e){let e=new Date(n.createdAt);if(Number.isNaN(e.valueOf())){let e=`invalid:${n.createdAt}`,r=t.get(e);r?r.entries.push(n):t.set(e,{kind:`invalid`,key:e,label:n.createdAt,entries:[n]});continue}let r=L(e),i=t.get(r);i?i.entries.push(n):t.set(r,{kind:`dated`,key:r,date:e,entries:[n]})}return[...t.values()]}function R(e,t=/* @__PURE__ */ new Date){if(e.kind===`invalid`)return e.label;let n=e.date.getFullYear()===t.getFullYear()?``:` ${e.date.getFullYear()}`;return`${e.date.getDate()} ${F[e.date.getMonth()]}${n}`}function z(e,t=/* @__PURE__ */ new Date){let n=new Map(e.flatMap(e=>e.kind===`dated`?[[e.key,e.entries.length]]:[])),r=new Date(t.getFullYear(),t.getMonth(),t.getDate()),i=e.filter(e=>e.kind===`dated`),a=i.reduce((e,t)=>t.kind===`dated`&&t.date<e?t.date:e,r),o=i.length?new Date(a.getFullYear(),a.getMonth(),a.getDate()-40):new Date(r.getFullYear(),r.getMonth(),r.getDate()-40),s=[];for(let e=r;e>=o;e.setDate(e.getDate()-1)){let t=new Date(e.getFullYear(),e.getMonth(),e.getDate()),i=L(t),a=t.getDay()===0||t.valueOf()===r.valueOf()?`${I[t.getMonth()]} ${t.getFullYear()}`:``;s.push({key:i,date:t,count:n.get(i)??0,period:a})}return s}function B(e,t){let[n,r,i]=t.split(`-`).map(Number),a=new Date(n,r-1,i,12).valueOf();return e.reduce((e,t)=>t.kind===`dated`&&(!e||e.kind!==`dated`||Math.abs(t.date.valueOf()-a)<Math.abs(e.date.valueOf()-a))?t:e,void 0)}const re=[`вс`,`пн`,`вт`,`ср`,`чт`,`пт`,`сб`],V=[`января`,`февраля`,`марта`,`апреля`,`мая`,`июня`,`июля`,`августа`,`сентября`,`октября`,`ноября`,`декабря`];function ie(n){let r=z(n.groups),s=/* @__PURE__ */ new Date;return(()=>{let l=i(`view`);o(l,`class`,`h-full w-[260px] border-l`),t(l,`style`,()=>({backgroundColor:n.colors.card,borderColor:n.colors.border}));let u=i(`text`);o(u,`class`,`px-5 pt-4 pb-3 text-[12px] font-medium`),t(u,`style`,()=>({color:n.colors.muted}));let d=c(`КАЛЕНДАРЬ`);e(u,d);let f=i(`scroll`);return o(f,`class`,`min-h-0 flex-1 px-3 pb-4`),a(f,()=>r.map(r=>(()=>{let c=i(`view`),l=i(`view`);o(l,`onPress`,()=>n.onSelect(r.key)),o(l,`role`,`button`),t(l,`accessibilityLabel`,()=>`${r.date.getDate()} ${V[r.date.getMonth()]}, ${r.count} записей`),o(l,`class`,`h-[25px] flex-row items-center justify-end gap-1.5 rounded-md px-1`);let u=i(`view`);o(u,`class`,`max-w-[86px] flex-row flex-wrap justify-end gap-[3px]`),a(u,()=>Array.from({length:Math.min(r.count,24)},()=>(()=>{let e=i(`view`);return o(e,`class`,`h-[3px] w-[3px] rounded-full`),t(e,`style`,()=>({backgroundColor:r.date.toDateString()===s.toDateString()?n.colors.accent:n.colors.muted})),e})()));let d=i(`view`);o(d,`class`,`h-px w-5`),t(d,`style`,()=>({backgroundColor:r.date.toDateString()===s.toDateString()?n.colors.accent:n.colors.border}));let f=i(`text`);o(f,`class`,`w-5 text-right text-[10px]`),t(f,`style`,()=>({color:r.date.toDateString()===s.toDateString()?n.colors.accent:n.colors.muted})),a(f,()=>re[r.date.getDay()]);let p=i(`text`);return o(p,`class`,`w-5 text-right text-[11px]`),t(p,`style`,()=>({color:r.date.toDateString()===s.toDateString()?n.colors.accent:n.colors.foreground})),a(p,()=>r.date.getDate()),e(l,u),e(l,d),e(l,f),e(l,p),e(c,l),a(c,()=>r.period&&(()=>{let e=i(`text`);return o(e,`class`,`pt-3 pb-1 pl-1 text-[10px] capitalize`),t(e,`style`,()=>({color:n.colors.muted})),a(e,()=>r.period),e})(),l),c})())),e(l,u),e(l,f),l})()}const H=h(!1),U=h(``),W=h(null),G=h(``);function ae(e){let t=new Date(e);return Number.isNaN(t.valueOf())?``:t.toLocaleTimeString(`ru-RU`,{hour:`2-digit`,minute:`2-digit`})}function oe(r){let s,l=/* @__PURE__ */ new Map,u=ne(r.entries);d(()=>{r.entries.length&&queueMicrotask(()=>s?.scrollToEnd({animated:!0}))});let f=e=>{let t=e.trim();t&&(r.onCreate(t),U.set(``))},p=e=>{let t=B(u,e);if(H.set(!1),t?.kind===`dated`){let e=l.get(t.key);e!==void 0&&s?.scrollTo({y:Math.max(0,e-12),animated:!0})}};return(()=>{let d=i(`view`);o(d,`class`,`relative min-h-0 flex-1 flex-row`);let m=i(`view`);o(m,`class`,`min-w-0 flex-1 flex-col items-center`);let h=i(`view`);o(h,`class`,`relative min-h-0 w-full flex-1`);let g=i(`scroll`);o(g,`ref`,e=>{s=e}),o(g,`class`,`min-h-0 w-full flex-1 py-4`);let _=i(`view`);o(_,`class`,`mx-auto w-full max-w-[620px] px-5`),a(_,[()=>u.map(s=>(()=>{let u=i(`view`);o(u,`onLayout`,e=>{l.set(s.key,e.origin.y)}),o(u,`class`,`mb-5`);let d=i(`view`);o(d,`class`,`mb-3 flex-row items-center justify-center`);let f=i(`view`);o(f,`class`,`h-px flex-1`),t(f,`style`,()=>({backgroundColor:r.colors.border}));let p=i(`text`);o(p,`class`,`mx-3 text-[12px] capitalize`),t(p,`style`,()=>({color:r.colors.muted})),a(p,()=>R(s));let m=i(`view`);return o(m,`class`,`h-px flex-1`),t(m,`style`,()=>({backgroundColor:r.colors.border})),e(d,f),e(d,p),e(d,m),e(u,d),a(u,()=>s.entries.map(s=>(()=>{let l=i(`view`);o(l,`class`,`mb-3 self-end w-full max-w-[560px] rounded-2xl px-4 py-3`),t(l,`style`,()=>({backgroundColor:r.colors.card}));let u=i(`view`);o(u,`class`,`mt-2 flex-row items-center justify-end gap-3`);let d=i(`text`);return o(d,`class`,`text-[10px]`),t(d,`style`,()=>({color:r.colors.muted})),a(d,()=>ae(s.createdAt)),e(u,d),a(u,()=>W()!==s.id&&(()=>{let n=i(`view`);o(n,`class`,`flex-row gap-3`);let a=i(`view`);o(a,`onPress`,()=>{W.set(s.id),G.set(s.text)}),o(a,`role`,`button`),o(a,`accessibilityLabel`,`Изменить запись`);let l=i(`text`);o(l,`class`,`text-[11px]`),t(l,`style`,()=>({color:r.colors.muted}));let u=c(`Изменить`);e(l,u),e(a,l);let d=i(`view`);o(d,`onPress`,()=>r.onDelete(s.id)),o(d,`role`,`button`),o(d,`accessibilityLabel`,`Удалить запись`);let f=i(`text`);o(f,`class`,`text-[11px]`),t(f,`style`,()=>({color:r.colors.muted}));let p=c(`Удалить`);return e(f,p),e(d,f),e(n,a),e(n,d),n})()),e(l,u),a(l,()=>W()===s.id?(()=>{let c=i(`view`),l=i(`input`);t(l,`value`,()=>G()),o(l,`onChange`,e=>G.set(e)),o(l,`multiline`,!0),o(l,`submitBehavior`,`newline`),o(l,`class`,`min-h-[56px] w-full rounded-lg px-2 py-1 text-[13px]`),t(l,`style`,()=>({color:r.colors.foreground,backgroundColor:r.colors.background}));let u=i(`view`);return o(u,`class`,`mt-2 flex-row justify-end gap-2`),a(u,[n(D,{label:`Отмена`,get colors(){return r.colors},onPress:()=>W.set(null)}),n(D,{label:`Сохранить`,get colors(){return r.colors},onPress:()=>{r.onUpdate(s.id,G()),W.set(null)},selected:!0})]),e(c,l),e(c,u),c})():(()=>{let e=i(`view`);return o(e,`class`,`gap-0.5`),a(e,()=>s.text.split(`
-`).map(e=>(()=>{let n=i(`text`);return o(n,`class`,`text-[14px] leading-6`),t(n,`style`,()=>({color:r.colors.foreground})),a(n,e||` `),n})())),e})(),u),l})())),u})()),()=>u.length===0&&(()=>{let n=i(`view`);o(n,`class`,`flex-1 items-center justify-center py-12`);let a=i(`text`);o(a,`class`,`text-[13px]`),t(a,`style`,()=>({color:r.colors.muted}));let s=c(`Записей пока нет`);return e(a,s),e(n,a),n})()]),e(g,_);let v=i(`view`);o(v,`pointerEvents`,`none`),o(v,`class`,`absolute right-0 top-0 bottom-0 w-[8px]`),t(v,`style`,()=>({backgroundColor:r.colors.background,opacity:.68})),e(h,g),e(h,v);let y=i(`view`);o(y,`class`,`mb-4 w-full max-w-[960px] flex-row items-center gap-2 rounded-full border px-2 py-2`),t(y,`style`,()=>({backgroundColor:r.colors.card,borderColor:r.colors.border}));let b=i(`view`);o(b,`class`,`h-9 w-9 shrink-0 items-center justify-center rounded-full border`),t(b,`style`,()=>({backgroundColor:r.colors.card,borderColor:r.colors.border})),a(b,n(T,{name:`plus`,size:19,get color(){return r.colors.muted}}));let x=i(`input`);t(x,`value`,()=>U()),o(x,`onChange`,e=>U.set(e)),o(x,`onSubmit`,e=>f(e.text)),o(x,`multiline`,!0),o(x,`submitBehavior`,`submit`),o(x,`placeholder`,`Запись в дневник…`),o(x,`accessibilityLabel`,`Новая запись в дневник`),o(x,`class`,`max-h-[150px] min-h-[38px] flex-1 px-2 py-2 text-[14px]`),t(x,`style`,()=>({backgroundColor:`transparent`,color:r.colors.foreground}));let S=i(`view`);o(S,`onPress`,()=>f(U())),o(S,`role`,`button`),o(S,`accessibilityLabel`,`Отправить запись`),o(S,`class`,`h-10 w-10 shrink-0 items-center justify-center rounded-full`),o(S,`style`,{backgroundColor:`#00a86b`});let C=i(`text`);o(C,`class`,`text-[20px] font-semibold`),o(C,`style`,{color:`#ffffff`});let w=c(`↑`);return e(C,w),e(S,C),e(y,b),e(y,x),e(y,S),e(m,h),e(m,y),e(d,m),a(d,()=>H()&&(()=>{let e=i(`view`);return o(e,`class`,`absolute right-0 top-0 bottom-0 z-10`),a(e,n(ie,{groups:u,get colors(){return r.colors},onSelect:p})),e})()),d})()}function se(){l.easeInEaseOut(),H.update(e=>!e)}s(null,`{
-  "cssVars": {
-    "theme": {
-      "font-sans": "Inter, sans-serif",
-      "radius": "0.625rem",
-      "radius-control": "0.5rem",
-      "spacing-sidebar": "240px",
-      "spacing-titlebar": "40px",
-      "spacing-row": "32px",
-      "font-size-body": "13px",
-      "font-size-label": "12px"
-    },
-    "light": {
-      "background": "#faf9fb",
-      "foreground": "#26242a",
-      "card": "#f2f0f4",
-      "card-foreground": "#26242a",
-      "muted": "#ece9ef",
-      "muted-foreground": "#77727e",
-      "primary": "#7152bf",
-      "primary-foreground": "#ffffff",
-      "border": "#dedbe2",
-      "input": "#dedbe2",
-      "ring": "#b18aff"
-    },
-    "dark": {
-      "background": "#0d0c10",
-      "foreground": "#e7e5ea",
-      "card": "#131216",
-      "card-foreground": "#e7e5ea",
-      "muted": "#27262a",
-      "muted-foreground": "#8d8a94",
-      "primary": "#af94f9",
-      "primary-foreground": "#0d0c10",
-      "border": "#27262a",
-      "input": "#27262a",
-      "ring": "#af94f9"
-    }
-  }
+import { append, bindProp, component, each, element, insert, prop, setup, spread, text } from "nsh:rt";
+import { LayoutAnimation, PanResponder, Storage, effect, keymap, mount, nativeComponent, signal } from "nsh";
+import { Window, titleBar } from "nsh/desktop";
+
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/types.ts
+const spacing = {
+	sidebarWidth: 240,
+	titlebarHeight: 40,
+	rowHeight: 32,
+	compactRowHeight: 28,
+	pageGutter: 28
+};
+const typography = {
+	body: 13,
+	label: 12,
+	title: 24,
+	titlebar: 13
+};
+const defaultColors = {
+	background: "#0d0c10",
+	foreground: "#e7e5ea",
+	muted: "#8d8a94",
+	border: "#27262a",
+	accent: "#af94f9",
+	card: "#131216"
+};
+const accentChoices = [
+	"#8ec07c",
+	"#d79921",
+	"#b18aff",
+	"#83a598",
+	"#fb4934",
+	"#d3869b",
+	"#458588",
+	"#fabd2f"
+];
+
+//#endregion
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
+const icons = {
+	about: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	inbox: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M2.5%2012C2.5%207.52166%202.5%205.28249%203.89124%203.89124C5.28249%202.5%207.52166%202.5%2012%202.5C16.4783%202.5%2018.7175%202.5%2020.1088%203.89124C21.5%205.28249%2021.5%207.52166%2021.5%2012C21.5%2016.4783%2021.5%2018.7175%2020.1088%2020.1088C18.7175%2021.5%2016.4783%2021.5%2012%2021.5C7.52166%2021.5%205.28249%2021.5%203.89124%2020.1088C2.5%2018.7175%202.5%2016.4783%202.5%2012Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M21.5%2013.5H16.5743C15.7322%2013.5%2015.0706%2014.2036%2014.6995%2014.9472C14.2963%2015.7551%2013.4889%2016.5%2012%2016.5C10.5111%2016.5%209.70373%2015.7551%209.30054%2014.9472C8.92942%2014.2036%208.26777%2013.5%207.42566%2013.5H2.5%22%20stroke%3D%22currentColor%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	logbook: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7.99978%203.5H6.60021C4.43183%203.5%203.34764%203.5%202.67399%204.17362C2.00034%204.84724%202.00029%205.93144%202.00021%208.09982L2%2013.3998C1.99992%2015.5684%201.99987%2016.6526%202.67353%2017.3263C3.34719%2018%204.43146%2018%206.6%2018H8.95042C10.4329%2018%2011.7092%2019.0464%2011.9999%2020.5V5.5C11.0556%204.24097%209.99989%203.5%207.99978%203.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M16.0001%203.5H17.3997C19.5681%203.5%2020.6523%203.5%2021.3259%204.17362C21.9996%204.84724%2021.9996%205.93144%2021.9997%208.09982L21.9999%2013.3998C22%2015.5684%2022%2016.6526%2021.3264%2017.3263C20.6527%2018%2019.5684%2018%2017.3999%2018H15.0495C13.567%2018%2012.2907%2019.0464%2012%2020.5V5.5C12.9443%204.24097%2014%203.5%2016.0001%203.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	more: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M21%2012C21%2011.1716%2020.3284%2010.5%2019.5%2010.5C18.6716%2010.5%2018%2011.1716%2018%2012C18%2012.8284%2018.6716%2013.5%2019.5%2013.5C20.3284%2013.5%2021%2012.8284%2021%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13.5%2012C13.5%2011.1716%2012.8284%2010.5%2012%2010.5C11.1716%2010.5%2010.5%2011.1716%2010.5%2012C10.5%2012.8284%2011.1716%2013.5%2012%2013.5C12.8284%2013.5%2013.5%2012.8284%2013.5%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M6%2012C6%2011.1716%205.32843%2010.5%204.5%2010.5C3.67157%2010.5%203%2011.1716%203%2012C3%2012.8284%203.67157%2013.5%204.5%2013.5C5.32843%2013.5%206%2012.8284%206%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	nextWeek: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11%2014H16M8%2014H8.00898M13%2018H8M16%2018H15.991%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	plus: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M12%204V20M20%2012H4%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	project: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M8%207H16.75C18.8567%207%2019.91%207%2020.6667%207.50559C20.9943%207.72447%2021.2755%208.00572%2021.4944%208.33329C22%209.08996%2022%2010.1433%2022%2012.25C22%2015.7612%2022%2017.5167%2021.1573%2018.7779C20.7926%2019.3238%2020.3238%2019.7926%2019.7779%2020.1573C18.5167%2021%2016.7612%2021%2013.25%2021H12C7.28595%2021%204.92893%2021%203.46447%2019.5355C2%2018.0711%202%2015.714%202%2011V7.94427C2%206.1278%202%205.21956%202.38032%204.53806C2.65142%204.05227%203.05227%203.65142%203.53806%203.38032C4.21956%203%205.1278%203%206.94427%203C8.10802%203%208.6899%203%209.19926%203.19101C10.3622%203.62712%2010.8418%204.68358%2011.3666%205.73313L12%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	settings: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M3.99963%205.00055L9.99963%205.00031%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12.9996%205.00031L19.9996%205.00031%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M15.9996%209.00031L15.9996%2015.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.99963%202.00031L9.99963%208.00031%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.9996%2016.0003L11.9996%2022.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M15.9996%2012.0001L19.9996%2012.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3.99963%2012.0005L12.9996%2012.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.9996%2019.0003L19.9996%2019.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3.99963%2019.0005L8.99963%2019.0003%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	sidebar: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M2%2012C2%208.31087%202%206.4663%202.81382%205.15877C3.1149%204.67502%203.48891%204.25427%203.91891%203.91554C5.08116%203%206.72077%203%2010%203H14C17.2792%203%2018.9188%203%2020.0811%203.91554C20.5111%204.25427%2020.8851%204.67502%2021.1862%205.15877C22%206.4663%2022%208.31087%2022%2012C22%2015.6891%2022%2017.5337%2021.1862%2018.8412C20.8851%2019.325%2020.5111%2019.7457%2020.0811%2020.0845C18.9188%2021%2017.2792%2021%2014%2021H10C6.72077%2021%205.08116%2021%203.91891%2020.0845C3.48891%2019.7457%203.1149%2019.325%202.81382%2018.8412C2%2017.5337%202%2015.6891%202%2012Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.5%203L9.5%2021%22%20stroke%3D%22currentColor%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M5%207H6M5%2010H6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	someday: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%2210%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12%208V12L14%2014%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	statistics: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%2017L7%2013%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12%2017L12%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M17%2017L17%2011%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M2.5%2012C2.5%207.52166%202.5%205.28249%203.89124%203.89124C5.28249%202.5%207.52166%202.5%2012%202.5C16.4783%202.5%2018.7175%202.5%2020.1088%203.89124C21.5%205.28249%2021.5%207.52166%2021.5%2012C21.5%2016.4783%2021.5%2018.7175%2020.1088%2020.1088C18.7175%2021.5%2016.4783%2021.5%2012%2021.5C7.52166%2021.5%205.28249%2021.5%203.89124%2020.1088C2.5%2018.7175%202.5%2016.4783%202.5%2012Z%22%20stroke%3D%22currentColor%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	trash: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M19.5%205.5L18.8803%2015.5251C18.7219%2018.0864%2018.6428%2019.3671%2018.0008%2020.2879C17.6833%2020.7431%2017.2747%2021.1273%2016.8007%2021.416C15.8421%2022%2014.559%2022%2011.9927%2022C9.42312%2022%208.1383%2022%207.17905%2021.4149C6.7048%2021.1257%206.296%2020.7408%205.97868%2020.2848C5.33688%2019.3626%205.25945%2018.0801%205.10461%2015.5152L4.5%205.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%205.5H21M16.0557%205.5L15.3731%204.09173C14.9196%203.15626%2014.6928%202.68852%2014.3017%202.39681C14.215%202.3321%2014.1231%202.27454%2014.027%202.2247C13.5939%202%2013.0741%202%2012.0345%202C10.9688%202%2010.436%202%209.99568%202.23412C9.8981%202.28601%209.80498%202.3459%209.71729%202.41317C9.32164%202.7167%209.10063%203.20155%208.65861%204.17126L8.05292%205.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.5%2016.5L9.5%2010.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M14.5%2016.5L14.5%2010.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	week: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	display: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M4%2011L4%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%2013L19%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%203L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.5%203L11.5%2013%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M4%203L4%205%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.5%2019L11.5%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M2%209.5C2%209.03406%202%208.80109%202.07612%208.61732C2.17761%208.37229%202.37229%208.17761%202.61732%208.07612C2.80109%208%203.03406%208%203.5%208H4.5C4.96594%208%205.19891%208%205.38268%208.07612C5.62771%208.17761%205.82239%208.37229%205.92388%208.61732C6%208.80109%206%209.03406%206%209.5C6%209.96594%206%2010.1989%205.92388%2010.3827C5.82239%2010.6277%205.62771%2010.8224%205.38268%2010.9239C5.19891%2011%204.96594%2011%204.5%2011H3.5C3.03406%2011%202.80109%2011%202.61732%2010.9239C2.37229%2010.8224%202.17761%2010.6277%202.07612%2010.3827C2%2010.1989%202%209.96594%202%209.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M17%2011.5C17%2011.0341%2017%2010.8011%2017.0761%2010.6173C17.1776%2010.3723%2017.3723%2010.1776%2017.6173%2010.0761C17.8011%2010%2018.0341%2010%2018.5%2010H19.5C19.9659%2010%2020.1989%2010%2020.3827%2010.0761C20.6277%2010.1776%2020.8224%2010.3723%2020.9239%2010.6173C21%2010.8011%2021%2011.0341%2021%2011.5C21%2011.9659%2021%2012.1989%2020.9239%2012.3827C20.8224%2012.6277%2020.6277%2012.8224%2020.3827%2012.9239C20.1989%2013%2019.9659%2013%2019.5%2013H18.5C18.0341%2013%2017.8011%2013%2017.6173%2012.9239C17.3723%2012.8224%2017.1776%2012.6277%2017.0761%2012.3827C17%2012.1989%2017%2011.9659%2017%2011.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.5%2014.5C9.5%2014.0341%209.5%2013.8011%209.57612%2013.6173C9.67761%2013.3723%209.87229%2013.1776%2010.1173%2013.0761C10.3011%2013%2010.5341%2013%2011%2013H12C12.4659%2013%2012.6989%2013%2012.8827%2013.0761C13.1277%2013.1776%2013.3224%2013.3723%2013.4239%2013.6173C13.5%2013.8011%2013.5%2014.0341%2013.5%2014.5C13.5%2014.9659%2013.5%2015.1989%2013.4239%2015.3827C13.3224%2015.6277%2013.1277%2015.8224%2012.8827%2015.9239C12.6989%2016%2012.4659%2016%2012%2016H11C10.5341%2016%2010.3011%2016%2010.1173%2015.9239C9.87229%2015.8224%209.67761%2015.6277%209.57612%2015.3827C9.5%2015.1989%209.5%2014.9659%209.5%2014.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A",
+	windowMin: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M6%2012h12%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E%0A",
+	windowMax: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Crect%20x%3D%226.5%22%20y%3D%226.5%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%221.5%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E%0A",
+	windowClose: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m6%206%2012%2012M18%206%206%2018%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A"
+};
+
+//#endregion
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
+function Icon(props) {
+	return (() => {
+		const __nsh_hv0 = element("image");
+		bindProp(__nsh_hv0, "src", () => icons[props.name]);
+		bindProp(__nsh_hv0, "style", () => ({
+			width: props.size ?? 16,
+			height: props.size ?? 16,
+			tintColor: props.color
+		}));
+		return __nsh_hv0;
+	})();
 }
-`,null,null);const ce=Reflect.get(globalThis,`__MUNDUS_ATLAS_INITIAL__`),le=j(ce)?ce:A,K=h(le),q=h(le.route),J=h(!1),Y=h(``),X=h(!0),ue=[`sidebar`,`create`,`search`,`reload`],de={sidebar:`mod+b`,create:`mod+n`,search:`mod+k`,reload:`mod+r`},fe={sidebar:[`mod+b`,`mod+shift+b`],create:[`mod+n`,`mod+shift+n`],search:[`mod+k`,`mod+shift+k`],reload:[`mod+r`,`mod+shift+r`]},Z=h(de);u.getItem(`mundus.atlas.shortcuts.v1`).then(e=>{if(e)try{let t=JSON.parse(e);Z.set(Object.fromEntries(ue.map(e=>[e,fe[e].includes(t[e]??``)?t[e]:de[e]])))}catch{}});const pe=m(`atlas.bridge`,{props:[`route`],events:[`state`,`navigate`,`journal`,`titlebarAction`]}),me=[{id:`journal.calendar`,label:`Календарь дневника`,icon:`sidebar`}];function he(){q()===`journal`?se():(q.set(`journal`),H()||se())}function Q(e){switch(e){case`journal`:return`logbook`;case`tasks`:return`week`;case`settings`:return`settings`;default:return`about`}}function ge(){return r(()=>K().todos,r=>(()=>{let s=i(`view`);o(s,`class`,`flex-row items-center border-b px-3`),t(s,`style`,()=>({height:37*(K().appearance?.settings.font_size??13)/13,borderColor:K().colors.border}));let c=i(`view`);o(c,`onPress`,()=>$?.(`complete`,{id:r().id})),o(c,`role`,`checkbox`),t(c,`accessibilityLabel`,()=>r().title),t(c,`accessibilityState`,()=>({checked:r().is_completed})),o(c,`class`,`mr-3 h-[14px] w-[14px] items-center justify-center rounded-full border`),t(c,`style`,()=>({borderColor:r().is_completed?K().colors.accent:K().colors.muted,backgroundColor:r().is_completed?K().colors.accent:`transparent`})),a(c,()=>r().is_completed&&n(T,{name:`check`,size:10,get color(){return K().colors.background}}));let l=i(`text`);return t(l,`class`,()=>r().is_completed?`line-through`:``),t(l,`style`,()=>({fontSize:K().appearance?.settings.font_size??13,color:r().is_completed?K().colors.muted:K().colors.foreground})),a(l,()=>r().title),e(s,c),e(s,l),s})())}let $;function _e(e){let t=K();t.appearance&&t.appearanceEditable&&K.set({...t,appearance:{...t.appearance,settings:{...t.appearance.settings,...e}}}),$?.(`appearance.set`,e)}function ve(e){let t=Z(),n=fe[e],r=n[(n.indexOf(t[e])+1)%n.length],i={...t,[e]:r};Z.set(i),u.setItem(`mundus.atlas.shortcuts.v1`,JSON.stringify(i))}function ye(){return(()=>{let r=i(`scroll`);o(r,`class`,`min-h-0 flex-1 px-7 py-5`);let s=i(`view`);return o(s,`class`,`mx-auto w-full max-w-[640px]`),a(s,()=>K().todos.length===0?(()=>{let n=i(`view`);o(n,`class`,`items-center py-12`);let r=i(`text`);o(r,`class`,`text-[13px]`),t(r,`style`,()=>({color:K().colors.muted}));let a=c(`Задач пока нет`);return e(r,a),e(n,r),n})():n(ge,{})),e(r,s),r})()}d(()=>{let e=Z(),t=[f.bind(e.sidebar,()=>$?.(`toggle-sidebar`),{when:`notEditing`}),f.bind(e.create,()=>{Y.set(``),J.set(!0)},{when:`notEditing`}),f.bind(e.reload,()=>$?.(`reload`),{when:`notEditing`})];return()=>t.forEach(e=>e())});function be(){return n(C,{get appearance(){return K().appearance},get editable(){return K().appearanceEditable},get themes(){return K().themes},get colors(){return K().colors},get shortcuts(){return Z()},onPatch:_e,onChangeShortcut:ve})}function xe(){return(()=>{let r=i(`scroll`);o(r,`class`,`flex-1 px-7 pt-12`);let s=i(`view`);o(s,`class`,`mx-auto w-full max-w-[760px]`);let l=i(`view`);o(l,`class`,`mb-16 items-center`);let u=i(`text`);o(u,`class`,`mb-2 text-[23px] font-bold`),t(u,`style`,()=>({color:K().colors.foreground}));let d=c(`Atlas`);e(u,d);let f=i(`text`);o(f,`class`,`mb-2 text-[13px]`),t(f,`style`,()=>({color:K().colors.muted}));let p=c(`Версия `);e(f,p),a(f,()=>K().version);let m=i(`text`);o(m,`class`,`text-[12px]`),t(m,`style`,()=>({color:K().colors.muted}));let h=c(`© Yoso Industries 2025–2026`);e(m,h),e(l,u),e(l,f),e(l,m),a(l,n(T,{name:`about`,size:88,get color(){return K().colors.accent}}),u);let g=i(`text`);o(g,`class`,`mb-3 text-[13px]`),t(g,`style`,()=>({color:K().colors.foreground}));let _=c(`Диагностика`);e(g,_);let v=i(`view`);o(v,`class`,`h-10 flex-row items-center rounded-xl px-4`),t(v,`style`,()=>({backgroundColor:K().colors.card}));let y=i(`view`);o(y,`class`,`mr-3 h-4 w-4 items-center justify-center rounded-full border`),t(y,`style`,()=>({borderColor:K().colors.accent})),a(y,n(T,{name:`check`,size:10,get color(){return K().colors.accent}}));let b=i(`text`);o(b,`class`,`text-[13px]`),t(b,`style`,()=>({color:K().colors.foreground}));let x=c(`Всё в порядке`);return e(b,x),e(v,y),e(v,b),e(s,l),e(s,g),e(s,v),e(r,s),r})()}function Se(){let r=k.filter(e=>!e.footer),s=k.filter(e=>e.footer),c=()=>{Y.set(``),J.set(!0)},l=e=>{M(e)&&q.set(e)};return(()=>{let u=i(`view`);o(u,`class`,`relative h-full w-full flex-col`),t(u,`style`,()=>({backgroundColor:K().colors.background}));let d=i(`view`);o(d,`class`,`min-h-0 flex-1 flex-row`);let f=i(`view`);return o(f,`class`,`relative min-w-0 flex-1`),a(f,[()=>q()===`journal`&&n(oe,{get entries(){return K().journalEntries},get colors(){return K().colors},onCreate:e=>$?.(`journal.create`,{text:e}),onUpdate:(e,t)=>$?.(`journal.update`,{id:e,text:t}),onDelete:e=>$?.(`journal.delete`,{id:e})}),()=>q()===`tasks`&&(()=>{let e=i(`view`);return o(e,`class`,`min-h-0 flex-1`),a(e,[n(ye,{}),()=>K().chrome===`tsx`&&(()=>{let e=i(`view`);return o(e,`onPress`,c),o(e,`role`,`button`),o(e,`accessibilityLabel`,`Новая задача`),o(e,`class`,`absolute right-6 bottom-6 h-11 w-11 items-center justify-center rounded-full`),t(e,`style`,()=>({backgroundColor:K().colors.foreground})),a(e,n(T,{name:`plus`,size:20,get color(){return K().colors.background}})),e})()]),e})(),()=>q()===`settings`&&n(be,{}),()=>q()===`about`&&n(xe,{}),()=>J()&&n(O,{title:`Новая задача`,get colors(){return K().colors},get children(){return[(()=>{let e=i(`input`);return t(e,`value`,()=>Y()),o(e,`onChange`,e=>Y.set(e)),o(e,`onSubmit`,e=>{$?.(`create`,{title:e.text}),J.set(!1)}),o(e,`placeholder`,`Название задачи`),o(e,`class`,`h-10 rounded-lg px-3 text-[13px]`),t(e,`style`,()=>({backgroundColor:K().colors.background,color:K().colors.foreground})),e})(),(()=>{let e=i(`view`);return o(e,`class`,`mt-3 flex-row justify-end gap-2`),a(e,[n(D,{label:`Отмена`,get colors(){return K().colors},onPress:()=>J.set(!1),className:`border-0 px-0 py-0`,style:{backgroundColor:`transparent`,borderColor:`transparent`}}),n(D,{label:`Добавить`,get colors(){return K().colors},onPress:()=>{$?.(`create`,{title:Y()}),J.set(!1)},selected:!0,className:`h-9 w-[90px] items-center justify-center px-0 py-0`,get style(){return{backgroundColor:K().colors.accent,borderColor:`transparent`}},get textColor(){return K().colors.background}})]),e})()]}})]),e(d,f),a(d,()=>K().chrome===`tsx`&&(()=>{let c=i(`view`);o(c,`class`,`w-[240px] shrink-0 border-r px-2 pt-1`),t(c,`style`,()=>({borderColor:K().colors.border,display:X()?`flex`:`none`}));let u=i(`view`);o(u,`class`,`gap-0.5`),a(u,()=>r.map(e=>n(E,{get label(){return e.label},get icon(){return Q(e.id)},get selected(){return q()===e.id},get colors(){return K().colors},onPress:()=>l(e.id)})));let d=i(`view`);return o(d,`class`,`mt-auto mb-2 gap-0.5`),a(d,()=>s.map(e=>n(E,{get label(){return e.label},get icon(){return Q(e.id)},get selected(){return q()===e.id},get colors(){return K().colors},onPress:()=>l(e.id)}))),e(c,u),e(c,d),c})(),f),e(u,d),a(u,[n(pe,{class:`absolute left-0 top-0 h-px w-px`,ref:e=>{$=(t,n)=>e.command(t,n)},get route(){return q()},onState:e=>{q.set(e.route),K.set({...e,journalEntries:K().journalEntries}),X.set(e.sidebarVisible)},onJournal:e=>K.set({...K(),journalEntries:e}),onNavigate:e=>l(e.route),onTitlebarAction:e=>{e.id===`journal.calendar`&&he()}}),()=>K().chrome===`tsx`&&n(ee,{get title(){return K().title},get icon(){return Q(q())},get colors(){return K().colors},onToggleSidebar:()=>$?.(`toggle-sidebar`),onAppearance:()=>q.set(`settings`),get sidebarVisible(){return X()},get showPageIdentity(){return q()!==`settings`},actions:me,onAction:e=>{e===`journal.calendar`&&he()}})],d),u})()}p(Se);
+function NavigationItem(props) {
+	return (() => {
+		const __nsh_hv1 = element("view");
+		bindProp(__nsh_hv1, "onPress", () => props.onPress);
+		prop(__nsh_hv1, "role", "button");
+		bindProp(__nsh_hv1, "accessibilityState", () => ({ selected: props.selected }));
+		prop(__nsh_hv1, "class", "flex-row items-center gap-2 rounded-lg px-2.5");
+		bindProp(__nsh_hv1, "style", () => ({
+			height: spacing.rowHeight,
+			backgroundColor: props.selected ? props.colors.card : "transparent"
+		}));
+		const __nsh_hv2 = element("text");
+		prop(__nsh_hv2, "class", "text-[13px]");
+		bindProp(__nsh_hv2, "style", () => ({ color: props.selected ? props.colors.foreground : props.colors.muted }));
+		insert(__nsh_hv2, () => props.label);
+		append(__nsh_hv1, __nsh_hv2);
+		insert(__nsh_hv1, component(Icon, {
+			get name() {
+				return props.icon;
+			},
+			get color() {
+				return props.colors.muted;
+			}
+		}), __nsh_hv2);
+		return __nsh_hv1;
+	})();
+}
+function Button(props) {
+	return (() => {
+		const __nsh_hv32 = element("view");
+		bindProp(__nsh_hv32, "onPress", () => props.disabled ? void 0 : props.onPress);
+		prop(__nsh_hv32, "role", "button");
+		bindProp(__nsh_hv32, "accessibilityState", () => ({
+			selected: !!props.selected,
+			disabled: !!props.disabled
+		}));
+		bindProp(__nsh_hv32, "class", () => `rounded-md border px-3 py-2 ${props.className ?? ""}`);
+		bindProp(__nsh_hv32, "style", () => ({
+			backgroundColor: props.selected ? props.colors.card : props.colors.background,
+			borderColor: props.selected ? props.colors.accent : props.colors.border,
+			opacity: props.disabled ? .5 : 1,
+			...props.style
+		}));
+		const __nsh_hv33 = element("text");
+		prop(__nsh_hv33, "class", "text-[13px]");
+		bindProp(__nsh_hv33, "style", () => ({ color: props.textColor ?? (props.selected ? props.colors.foreground : props.colors.muted) }));
+		insert(__nsh_hv33, () => props.label);
+		append(__nsh_hv32, __nsh_hv33);
+		return __nsh_hv32;
+	})();
+}
+function Dialog(props) {
+	return (() => {
+		const __nsh_hv36 = element("view");
+		prop(__nsh_hv36, "class", "absolute inset-0 items-center justify-center bg-[#00000080] px-4");
+		const __nsh_hv37 = element("view");
+		prop(__nsh_hv37, "class", "w-full max-w-[440px] rounded-xl border p-4");
+		bindProp(__nsh_hv37, "style", () => ({
+			borderColor: props.colors.border,
+			backgroundColor: props.colors.card
+		}));
+		const __nsh_hv38 = element("text");
+		prop(__nsh_hv38, "class", "mb-3 text-[14px]");
+		bindProp(__nsh_hv38, "style", () => ({ color: props.colors.foreground }));
+		insert(__nsh_hv38, () => props.title);
+		append(__nsh_hv37, __nsh_hv38);
+		insert(__nsh_hv37, () => props.children);
+		append(__nsh_hv36, __nsh_hv37);
+		return __nsh_hv36;
+	})();
+}
+
+//#endregion
+//#region navigation.json
+var navigation_default = [
+	{
+		"id": "journal",
+		"label": "Дневник",
+		"icon": "book.closed",
+		"footer": false
+	},
+	{
+		"id": "tasks",
+		"label": "Задачи",
+		"icon": "checklist",
+		"footer": false
+	},
+	{
+		"id": "settings",
+		"label": "Настройки",
+		"icon": "gearshape",
+		"footer": true
+	}
+];
+
+//#endregion
+//#region state.ts
+const fallback = {
+	route: "journal",
+	title: "Дневник",
+	todos: [],
+	journalEntries: [],
+	version: "",
+	appearance: {
+		settings: {
+			mode: "dark",
+			light_theme: "default",
+			dark_theme: "default",
+			accent_source: "theme",
+			material: "default",
+			font_size: 13,
+			font_family: "Inter"
+		},
+		policy: { following: false },
+		capabilities: {
+			materials: [
+				"default",
+				"frosted",
+				"mica"
+			],
+			wallpaper_accent: false
+		}
+	},
+	appearanceEditable: true,
+	themes: [
+		{
+			key: "default",
+			name: "Default"
+		},
+		{
+			key: "claude",
+			name: "Claude"
+		},
+		{
+			key: "graphite",
+			name: "Graphite"
+		}
+	],
+	colors: defaultColors,
+	sidebarVisible: true,
+	chrome: "tsx"
+};
+function isSnapshot(value) {
+	if (typeof value !== "object" || value === null || !("route" in value) || !isRoute(value.route)) return false;
+	if (!("title" in value) || typeof value.title !== "string" || !("todos" in value) || !Array.isArray(value.todos)) return false;
+	if (!value.todos.every(isTodo) || !("journalEntries" in value) || !Array.isArray(value.journalEntries) || !value.journalEntries.every(isJournalEntry)) return false;
+	return "version" in value && typeof value.version === "string" && "appearanceEditable" in value && typeof value.appearanceEditable === "boolean" && "themes" in value && Array.isArray(value.themes) && "colors" in value && isColors(value.colors) && "sidebarVisible" in value && typeof value.sidebarVisible === "boolean" && "chrome" in value && (value.chrome === "native" || value.chrome === "tsx");
+}
+function isRoute(value) {
+	return value === "journal" || value === "tasks" || value === "settings";
+}
+function isTodo(value) {
+	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "title" in value && typeof value.title === "string" && "is_completed" in value && typeof value.is_completed === "boolean";
+}
+function isJournalEntry(value) {
+	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "text" in value && typeof value.text === "string" && "createdAt" in value && typeof value.createdAt === "string";
+}
+function isColors(value) {
+	if (typeof value !== "object" || value === null) return false;
+	return "background" in value && typeof value.background === "string" && "foreground" in value && typeof value.foreground === "string" && "muted" in value && typeof value.muted === "string" && "border" in value && typeof value.border === "string" && "accent" in value && typeof value.accent === "string" && "card" in value && typeof value.card === "string";
+}
+
+//#endregion
+//#region journal-model.ts
+const monthNamesInDate = [
+	"января",
+	"февраля",
+	"марта",
+	"апреля",
+	"мая",
+	"июня",
+	"июля",
+	"августа",
+	"сентября",
+	"октября",
+	"ноября",
+	"декабря"
+];
+const monthNamesShort = [
+	"янв",
+	"фев",
+	"мар",
+	"апр",
+	"май",
+	"июн",
+	"июл",
+	"авг",
+	"сен",
+	"окт",
+	"ноя",
+	"дек"
+];
+function localDayKey(date) {
+	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+function buildJournalDays(entries) {
+	const groups = /* @__PURE__ */ new Map();
+	for (const entry of entries) {
+		const date = new Date(entry.createdAt);
+		if (Number.isNaN(date.valueOf())) {
+			const key = `invalid:${entry.createdAt}`;
+			const group = groups.get(key);
+			if (group) group.entries.push(entry);
+			else groups.set(key, {
+				kind: "invalid",
+				key,
+				label: entry.createdAt,
+				entries: [entry]
+			});
+			continue;
+		}
+		const key = localDayKey(date);
+		const group = groups.get(key);
+		if (group) group.entries.push(entry);
+		else groups.set(key, {
+			kind: "dated",
+			key,
+			date,
+			entries: [entry]
+		});
+	}
+	return [...groups.values()];
+}
+function formatJournalDay(group, now = /* @__PURE__ */ new Date()) {
+	if (group.kind === "invalid") return group.label;
+	const year = group.date.getFullYear() === now.getFullYear() ? "" : ` ${group.date.getFullYear()}`;
+	return `${group.date.getDate()} ${monthNamesInDate[group.date.getMonth()]}${year}`;
+}
+function buildCalendarDays(groups, now = /* @__PURE__ */ new Date()) {
+	const counts = new Map(groups.flatMap((group) => group.kind === "dated" ? [[group.key, group.entries.length]] : []));
+	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const dated = groups.filter((group) => group.kind === "dated");
+	const oldest = dated.reduce((date, group) => group.kind === "dated" && group.date < date ? group.date : date, today);
+	const start = dated.length ? new Date(oldest.getFullYear(), oldest.getMonth(), oldest.getDate() - 40) : new Date(today.getFullYear(), today.getMonth(), today.getDate() - 40);
+	const days = [];
+	for (const date = today; date >= start; date.setDate(date.getDate() - 1)) {
+		const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+		const key = localDayKey(day);
+		const period = day.getDay() === 0 || day.valueOf() === today.valueOf() ? `${monthNamesShort[day.getMonth()]} ${day.getFullYear()}` : "";
+		days.push({
+			key,
+			date: day,
+			count: counts.get(key) ?? 0,
+			period
+		});
+	}
+	return days;
+}
+function closestJournalDay(groups, key) {
+	const [year, month, day] = key.split("-").map(Number);
+	const target = new Date(year, month - 1, day, 12).valueOf();
+	return groups.reduce((closest, group) => {
+		if (group.kind !== "dated") return closest;
+		if (!closest || closest.kind !== "dated") return group;
+		return Math.abs(group.date.valueOf() - target) < Math.abs(closest.date.valueOf() - target) ? group : closest;
+	}, void 0);
+}
+
+//#endregion
+//#region JournalCalendar.tsx
+const weekdays = [
+	"вс",
+	"пн",
+	"вт",
+	"ср",
+	"чт",
+	"пт",
+	"сб"
+];
+const months = [
+	"января",
+	"февраля",
+	"марта",
+	"апреля",
+	"мая",
+	"июня",
+	"июля",
+	"августа",
+	"сентября",
+	"октября",
+	"ноября",
+	"декабря"
+];
+function JournalCalendar(props) {
+	const days = buildCalendarDays(props.groups);
+	const today = /* @__PURE__ */ new Date();
+	return (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "class", "h-full border-l");
+		bindProp(__nsh_hv0, "style", () => ({
+			width: props.width,
+			backgroundColor: props.colors.card,
+			borderColor: props.resizeHovered ? props.colors.muted : props.colors.border,
+			transitionProperty: "borderColor",
+			transitionDuration: 150,
+			transitionTimingFunction: "ease-out"
+		}));
+		const __nsh_hv1 = element("scroll");
+		prop(__nsh_hv1, "class", "min-h-0 flex-1 px-3 pb-4");
+		insert(__nsh_hv1, () => days.map((day) => (() => {
+			const __nsh_hv2 = element("view");
+			const __nsh_hv4 = element("view");
+			prop(__nsh_hv4, "onPress", () => props.onSelect(day.key));
+			prop(__nsh_hv4, "role", "button");
+			bindProp(__nsh_hv4, "accessibilityLabel", () => `${day.date.getDate()} ${months[day.date.getMonth()]}, ${day.count} записей`);
+			prop(__nsh_hv4, "class", "h-[25px] flex-row items-center justify-end gap-1.5 rounded-md px-1");
+			const __nsh_hv5 = element("view");
+			prop(__nsh_hv5, "class", "max-w-[86px] flex-row flex-wrap justify-end gap-[3px]");
+			insert(__nsh_hv5, () => Array.from({ length: Math.min(day.count, 24) }, () => (() => {
+				const __nsh_hv6 = element("view");
+				prop(__nsh_hv6, "class", "h-[3px] w-[3px] rounded-full");
+				bindProp(__nsh_hv6, "style", () => ({ backgroundColor: day.date.toDateString() === today.toDateString() ? props.colors.accent : props.colors.muted }));
+				return __nsh_hv6;
+			})()));
+			const __nsh_hv7 = element("view");
+			prop(__nsh_hv7, "class", "h-px w-5");
+			bindProp(__nsh_hv7, "style", () => ({ backgroundColor: day.date.toDateString() === today.toDateString() ? props.colors.accent : props.colors.border }));
+			const __nsh_hv8 = element("text");
+			prop(__nsh_hv8, "class", "w-5 text-right text-[10px]");
+			bindProp(__nsh_hv8, "style", () => ({ color: day.date.toDateString() === today.toDateString() ? props.colors.accent : props.colors.muted }));
+			insert(__nsh_hv8, () => weekdays[day.date.getDay()]);
+			const __nsh_hv9 = element("text");
+			prop(__nsh_hv9, "class", "w-5 text-right text-[11px]");
+			bindProp(__nsh_hv9, "style", () => ({ color: day.date.toDateString() === today.toDateString() ? props.colors.accent : props.colors.foreground }));
+			insert(__nsh_hv9, () => day.date.getDate());
+			append(__nsh_hv4, __nsh_hv5);
+			append(__nsh_hv4, __nsh_hv7);
+			append(__nsh_hv4, __nsh_hv8);
+			append(__nsh_hv4, __nsh_hv9);
+			append(__nsh_hv2, __nsh_hv4);
+			insert(__nsh_hv2, () => day.period && (() => {
+				const __nsh_hv3 = element("text");
+				prop(__nsh_hv3, "class", "pt-3 pb-1 pl-1 text-[10px] capitalize");
+				bindProp(__nsh_hv3, "style", () => ({ color: props.colors.muted }));
+				insert(__nsh_hv3, () => day.period);
+				return __nsh_hv3;
+			})(), __nsh_hv4);
+			return __nsh_hv2;
+		})()));
+		append(__nsh_hv0, __nsh_hv1);
+		return __nsh_hv0;
+	})();
+}
+
+//#endregion
+//#region JournalPage.tsx
+const journalCalendarOpen = signal(false);
+const journalCalendarWidth = signal(260);
+const journalDraft = signal("");
+const journalDraftContentHeight = signal(20);
+const journalDraftMinContentHeight = 20;
+const journalDraftMaxContentHeight = 100;
+const journalDraftExpandedHeight = journalDraftMinContentHeight * 1.5;
+const journalDraftVerticalPadding = 20;
+const journalCalendarMinWidth = 220;
+const journalCalendarMaxWidth = 420;
+const journalCalendarResizeHovered = signal(false);
+const journalCalendarResizeActive = signal(false);
+const editingJournalId = signal(null);
+const editingJournalText = signal("");
+function timeLabel(createdAt) {
+	const date = new Date(createdAt);
+	return Number.isNaN(date.valueOf()) ? "" : date.toLocaleTimeString("ru-RU", {
+		hour: "2-digit",
+		minute: "2-digit"
+	});
+}
+function JournalPage(props) {
+	let feedRef;
+	let pageWidth = 0;
+	let resizeStartWidth = journalCalendarWidth();
+	const resizeCalendar = PanResponder.create({
+		onStartShouldSetPanResponder: () => true,
+		onPanResponderGrant: () => {
+			resizeStartWidth = journalCalendarWidth();
+			journalCalendarResizeActive.set(true);
+		},
+		onPanResponderMove: (_, gesture) => {
+			const maxWidth = pageWidth > 0 ? Math.max(journalCalendarMinWidth, Math.min(journalCalendarMaxWidth, pageWidth * .42)) : journalCalendarMaxWidth;
+			journalCalendarWidth.set(Math.max(journalCalendarMinWidth, Math.min(maxWidth, resizeStartWidth - gesture.dx)));
+		},
+		onPanResponderRelease: () => journalCalendarResizeActive.set(false),
+		onPanResponderTerminate: () => journalCalendarResizeActive.set(false),
+		onPanResponderTerminationRequest: () => false
+	});
+	const dayOffsets = /* @__PURE__ */ new Map();
+	const groups = buildJournalDays(props.entries);
+	effect(() => {
+		if (props.entries.length) queueMicrotask(() => feedRef?.scrollToEnd({ animated: true }));
+	});
+	const send = (text) => {
+		const value = text.trim();
+		if (!value) return;
+		props.onCreate(value);
+		journalDraft.set("");
+		journalDraftContentHeight.set(journalDraftMinContentHeight);
+	};
+	const jumpToDay = (key) => {
+		const target = closestJournalDay(groups, key);
+		if (journalCalendarOpen()) toggleJournalCalendar();
+		if (target?.kind === "dated") {
+			const offset = dayOffsets.get(target.key);
+			if (offset !== void 0) feedRef?.scrollTo({
+				y: Math.max(0, offset - 12),
+				animated: true
+			});
+		}
+	};
+	return (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "onLayout", (bounds) => {
+			pageWidth = bounds.size.width;
+		});
+		prop(__nsh_hv0, "class", "min-h-0 flex-1 flex-row overflow-hidden");
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "class", "relative min-w-0 flex-1 flex-col items-center");
+		const __nsh_hv3 = element("view");
+		prop(__nsh_hv3, "class", "relative min-h-0 w-full flex-1");
+		const __nsh_hv4 = element("scroll");
+		prop(__nsh_hv4, "ref", (node) => {
+			feedRef = node;
+		});
+		prop(__nsh_hv4, "class", "min-h-0 w-full flex-1 py-4");
+		const __nsh_hv5 = element("view");
+		prop(__nsh_hv5, "class", "mx-auto w-full max-w-[690px] px-5");
+		insert(__nsh_hv5, [() => groups.map((group) => (() => {
+			const __nsh_hv6 = element("view");
+			prop(__nsh_hv6, "onLayout", (bounds) => {
+				dayOffsets.set(group.key, bounds.origin.y);
+			});
+			prop(__nsh_hv6, "class", "mb-5");
+			const __nsh_hv7 = element("view");
+			prop(__nsh_hv7, "class", "mb-3 flex-row items-center justify-center");
+			const __nsh_hv8 = element("view");
+			prop(__nsh_hv8, "class", "h-px flex-1");
+			bindProp(__nsh_hv8, "style", () => ({ backgroundColor: props.colors.border }));
+			const __nsh_hv9 = element("text");
+			prop(__nsh_hv9, "class", "mx-3 text-[12px] capitalize");
+			bindProp(__nsh_hv9, "style", () => ({ color: props.colors.muted }));
+			insert(__nsh_hv9, () => formatJournalDay(group));
+			const __nsh_hv10 = element("view");
+			prop(__nsh_hv10, "class", "h-px flex-1");
+			bindProp(__nsh_hv10, "style", () => ({ backgroundColor: props.colors.border }));
+			append(__nsh_hv7, __nsh_hv8);
+			append(__nsh_hv7, __nsh_hv9);
+			append(__nsh_hv7, __nsh_hv10);
+			append(__nsh_hv6, __nsh_hv7);
+			insert(__nsh_hv6, () => group.entries.map((entry) => (() => {
+				const __nsh_hv11 = element("view");
+				prop(__nsh_hv11, "class", "mb-3 self-end w-full max-w-[650px] rounded-2xl px-4 py-3");
+				bindProp(__nsh_hv11, "style", () => ({ backgroundColor: props.colors.card }));
+				const __nsh_hv16 = element("view");
+				prop(__nsh_hv16, "class", "mt-2 flex-row items-center justify-end gap-3");
+				const __nsh_hv17 = element("text");
+				prop(__nsh_hv17, "class", "text-[10px]");
+				bindProp(__nsh_hv17, "style", () => ({ color: props.colors.muted }));
+				insert(__nsh_hv17, () => timeLabel(entry.createdAt));
+				append(__nsh_hv16, __nsh_hv17);
+				insert(__nsh_hv16, () => editingJournalId() !== entry.id && (() => {
+					const __nsh_hv18 = element("view");
+					prop(__nsh_hv18, "class", "flex-row gap-3");
+					const __nsh_hv19 = element("view");
+					prop(__nsh_hv19, "onPress", () => {
+						editingJournalId.set(entry.id);
+						editingJournalText.set(entry.text);
+					});
+					prop(__nsh_hv19, "role", "button");
+					prop(__nsh_hv19, "accessibilityLabel", "Изменить запись");
+					const __nsh_hv20 = element("text");
+					prop(__nsh_hv20, "class", "text-[11px]");
+					bindProp(__nsh_hv20, "style", () => ({ color: props.colors.muted }));
+					const __nsh_hv21 = text("Изменить");
+					append(__nsh_hv20, __nsh_hv21);
+					append(__nsh_hv19, __nsh_hv20);
+					const __nsh_hv22 = element("view");
+					prop(__nsh_hv22, "onPress", () => props.onDelete(entry.id));
+					prop(__nsh_hv22, "role", "button");
+					prop(__nsh_hv22, "accessibilityLabel", "Удалить запись");
+					const __nsh_hv23 = element("text");
+					prop(__nsh_hv23, "class", "text-[11px]");
+					bindProp(__nsh_hv23, "style", () => ({ color: props.colors.muted }));
+					const __nsh_hv24 = text("Удалить");
+					append(__nsh_hv23, __nsh_hv24);
+					append(__nsh_hv22, __nsh_hv23);
+					append(__nsh_hv18, __nsh_hv19);
+					append(__nsh_hv18, __nsh_hv22);
+					return __nsh_hv18;
+				})());
+				append(__nsh_hv11, __nsh_hv16);
+				insert(__nsh_hv11, () => editingJournalId() === entry.id ? (() => {
+					const __nsh_hv12 = element("view");
+					const __nsh_hv13 = element("input");
+					bindProp(__nsh_hv13, "value", () => editingJournalText());
+					prop(__nsh_hv13, "onChange", (value) => editingJournalText.set(value));
+					prop(__nsh_hv13, "multiline", true);
+					prop(__nsh_hv13, "submitBehavior", "newline");
+					prop(__nsh_hv13, "class", "min-h-[56px] w-full rounded-lg px-2 py-1 text-[13px]");
+					bindProp(__nsh_hv13, "style", () => ({
+						color: props.colors.foreground,
+						backgroundColor: props.colors.background
+					}));
+					const __nsh_hv14 = element("view");
+					prop(__nsh_hv14, "class", "mt-2 flex-row justify-end gap-2");
+					insert(__nsh_hv14, [component(Button, {
+						label: "Отмена",
+						get colors() {
+							return props.colors;
+						},
+						onPress: () => editingJournalId.set(null)
+					}), component(Button, {
+						label: "Сохранить",
+						get colors() {
+							return props.colors;
+						},
+						onPress: () => {
+							props.onUpdate(entry.id, editingJournalText());
+							editingJournalId.set(null);
+						},
+						selected: true
+					})]);
+					append(__nsh_hv12, __nsh_hv13);
+					append(__nsh_hv12, __nsh_hv14);
+					return __nsh_hv12;
+				})() : (() => {
+					const __nsh_hv15 = element("text");
+					prop(__nsh_hv15, "selectable", true);
+					prop(__nsh_hv15, "class", "text-[14px] leading-6");
+					bindProp(__nsh_hv15, "style", () => ({
+						color: props.colors.foreground,
+						selectionColor: props.colors.accent
+					}));
+					insert(__nsh_hv15, () => entry.text);
+					return __nsh_hv15;
+				})(), __nsh_hv16);
+				return __nsh_hv11;
+			})()));
+			return __nsh_hv6;
+		})()), () => groups.length === 0 && (() => {
+			const __nsh_hv25 = element("view");
+			prop(__nsh_hv25, "class", "flex-1 items-center justify-center py-12");
+			const __nsh_hv26 = element("text");
+			prop(__nsh_hv26, "class", "text-[13px]");
+			bindProp(__nsh_hv26, "style", () => ({ color: props.colors.muted }));
+			const __nsh_hv27 = text("Записей пока нет");
+			append(__nsh_hv26, __nsh_hv27);
+			append(__nsh_hv25, __nsh_hv26);
+			return __nsh_hv25;
+		})()]);
+		append(__nsh_hv4, __nsh_hv5);
+		const __nsh_hv28 = element("view");
+		prop(__nsh_hv28, "pointerEvents", "none");
+		prop(__nsh_hv28, "class", "absolute right-0 top-0 bottom-0 w-[8px]");
+		bindProp(__nsh_hv28, "style", () => ({
+			backgroundColor: props.colors.background,
+			opacity: .86
+		}));
+		append(__nsh_hv3, __nsh_hv4);
+		append(__nsh_hv3, __nsh_hv28);
+		const __nsh_hv29 = element("view");
+		prop(__nsh_hv29, "class", "mb-4 w-full px-5");
+		const __nsh_hv30 = element("view");
+		prop(__nsh_hv30, "class", "mx-auto w-full max-w-[650px] flex-row items-end gap-2 border pl-3 pr-1.5 py-1.5");
+		bindProp(__nsh_hv30, "style", () => ({
+			backgroundColor: props.colors.card,
+			borderColor: props.colors.border,
+			borderRadius: journalDraftContentHeight() > journalDraftExpandedHeight ? 24 : 999,
+			transitionProperty: "borderRadius",
+			transitionDuration: 180,
+			transitionTimingFunction: "ease-out"
+		}));
+		const __nsh_hv31 = element("input");
+		bindProp(__nsh_hv31, "value", () => journalDraft());
+		prop(__nsh_hv31, "onChange", (value) => journalDraft.set(value));
+		prop(__nsh_hv31, "onContentSizeChange", ({ height }) => journalDraftContentHeight.set(Math.max(journalDraftMinContentHeight, Math.min(journalDraftMaxContentHeight, height))));
+		prop(__nsh_hv31, "onSubmit", (event) => send(event.text));
+		prop(__nsh_hv31, "multiline", true);
+		prop(__nsh_hv31, "submitBehavior", "submit");
+		prop(__nsh_hv31, "placeholder", "Запись в дневник…");
+		prop(__nsh_hv31, "accessibilityLabel", "Новая запись в дневник");
+		prop(__nsh_hv31, "class", "max-h-[120px] flex-1 text-[15px]");
+		bindProp(__nsh_hv31, "style", () => ({
+			placeholderColor: props.colors.muted,
+			selectionColor: props.colors.accent,
+			height: journalDraftContentHeight() + journalDraftVerticalPadding,
+			fontSize: 15,
+			lineHeight: 20,
+			paddingHorizontal: 10,
+			paddingVertical: 10,
+			backgroundColor: "transparent",
+			color: props.colors.foreground
+		}));
+		const __nsh_hv32 = element("view");
+		prop(__nsh_hv32, "onPress", () => send(journalDraft()));
+		prop(__nsh_hv32, "role", "button");
+		prop(__nsh_hv32, "accessibilityLabel", "Отправить запись");
+		prop(__nsh_hv32, "class", "h-10 w-10 shrink-0 items-center justify-center rounded-full");
+		bindProp(__nsh_hv32, "style", () => ({ backgroundColor: props.colors.accent }));
+		const __nsh_hv33 = element("text");
+		prop(__nsh_hv33, "class", "text-[20px] font-semibold");
+		bindProp(__nsh_hv33, "style", () => ({ color: props.colors.foreground }));
+		const __nsh_hv34 = text("↑");
+		append(__nsh_hv33, __nsh_hv34);
+		append(__nsh_hv32, __nsh_hv33);
+		append(__nsh_hv30, __nsh_hv31);
+		append(__nsh_hv30, __nsh_hv32);
+		append(__nsh_hv29, __nsh_hv30);
+		append(__nsh_hv1, __nsh_hv3);
+		append(__nsh_hv1, __nsh_hv29);
+		insert(__nsh_hv1, () => props.showCalendarToggle && (() => {
+			const __nsh_hv2 = element("view");
+			prop(__nsh_hv2, "onPress", toggleJournalCalendar);
+			prop(__nsh_hv2, "role", "button");
+			bindProp(__nsh_hv2, "accessibilityLabel", () => journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь");
+			bindProp(__nsh_hv2, "accessibilityState", () => ({ selected: journalCalendarOpen() }));
+			prop(__nsh_hv2, "class", "absolute right-4 top-4 z-10 h-8 w-8 items-center justify-center rounded-lg");
+			bindProp(__nsh_hv2, "style", () => ({ backgroundColor: journalCalendarOpen() ? props.colors.card : "transparent" }));
+			insert(__nsh_hv2, component(Icon, {
+				name: "sidebar",
+				get color() {
+					return journalCalendarOpen() ? props.colors.accent : props.colors.muted;
+				}
+			}));
+			return __nsh_hv2;
+		})(), __nsh_hv3);
+		const __nsh_hv35 = element("view");
+		prop(__nsh_hv35, "class", "relative h-full shrink-0");
+		bindProp(__nsh_hv35, "style", () => ({ width: journalCalendarOpen() ? journalCalendarWidth() : 0 }));
+		const __nsh_hv36 = element("view");
+		prop(__nsh_hv36, "class", "h-full w-full overflow-hidden");
+		insert(__nsh_hv36, component(JournalCalendar, {
+			get width() {
+				return journalCalendarWidth();
+			},
+			get resizeHovered() {
+				return journalCalendarResizeHovered() || journalCalendarResizeActive();
+			},
+			groups,
+			get colors() {
+				return props.colors;
+			},
+			onSelect: jumpToDay
+		}));
+		append(__nsh_hv35, __nsh_hv36);
+		insert(__nsh_hv35, () => journalCalendarOpen() && (() => {
+			const __nsh_hv37 = element("view");
+			spread(__nsh_hv37, resizeCalendar.panHandlers);
+			prop(__nsh_hv37, "role", "button");
+			prop(__nsh_hv37, "accessibilityLabel", "Изменить ширину календаря");
+			prop(__nsh_hv37, "onHoverIn", () => journalCalendarResizeHovered.set(true));
+			prop(__nsh_hv37, "onHoverOut", () => journalCalendarResizeHovered.set(false));
+			prop(__nsh_hv37, "class", "absolute top-0 bottom-0 z-10 w-5");
+			prop(__nsh_hv37, "style", {
+				left: -10,
+				cursor: "col-resize"
+			});
+			return __nsh_hv37;
+		})());
+		append(__nsh_hv0, __nsh_hv1);
+		append(__nsh_hv0, __nsh_hv35);
+		return __nsh_hv0;
+	})();
+}
+function toggleJournalCalendar() {
+	LayoutAnimation.configureNext({
+		duration: 200,
+		update: {
+			type: "easeOut",
+			duration: 200
+		}
+	});
+	journalCalendarOpen.update((open) => !open);
+}
+
+//#endregion
+//#region AtlasAppearanceSettings.tsx
+const openSelector = signal(null);
+const modePreviews = [
+	{
+		value: "system",
+		label: "Система"
+	},
+	{
+		value: "light",
+		label: "Светлая"
+	},
+	{
+		value: "dark",
+		label: "Тёмная"
+	}
+];
+const materialLabels = {
+	default: "Сплошной",
+	frosted: "Стекло",
+	mica: "Системный"
+};
+const fontSizes = [
+	12,
+	13,
+	14,
+	15,
+	16,
+	18
+];
+function AtlasAppearanceSettings(props) {
+	const appearance = () => props.appearance;
+	const settings = () => appearance()?.settings;
+	const colors = () => props.colors;
+	const patch = (values) => {
+		if (props.editable) props.onPatch(values);
+	};
+	const heading = (label) => (() => {
+		const __nsh_hv0 = element("text");
+		prop(__nsh_hv0, "class", "mb-2 text-[12px]");
+		bindProp(__nsh_hv0, "style", () => ({ color: colors().muted }));
+		insert(__nsh_hv0, label);
+		return __nsh_hv0;
+	})();
+	const card = (selected, label, onPress) => (() => {
+		const __nsh_hv1 = element("view");
+		bindProp(__nsh_hv1, "onPress", () => props.editable ? onPress : void 0);
+		prop(__nsh_hv1, "role", "button");
+		bindProp(__nsh_hv1, "accessibilityState", () => ({
+			selected,
+			disabled: !props.editable
+		}));
+		prop(__nsh_hv1, "class", "rounded-lg border px-2.5 py-2");
+		bindProp(__nsh_hv1, "style", () => ({
+			backgroundColor: selected ? colors().card : colors().background,
+			borderColor: selected ? colors().accent : colors().border,
+			opacity: props.editable ? 1 : .65
+		}));
+		const __nsh_hv2 = element("text");
+		prop(__nsh_hv2, "class", "text-[12px]");
+		bindProp(__nsh_hv2, "style", () => ({ color: selected ? colors().foreground : colors().muted }));
+		insert(__nsh_hv2, label);
+		append(__nsh_hv1, __nsh_hv2);
+		return __nsh_hv1;
+	})();
+	const select = (id, value, options, onSelect, width, preview, menuWidth = width) => {
+		const expanded = openSelector() === id;
+		return (() => {
+			const __nsh_hv3 = element("view");
+			prop(__nsh_hv3, "class", "relative");
+			prop(__nsh_hv3, "style", { width });
+			const __nsh_hv4 = element("view");
+			prop(__nsh_hv4, "onPress", () => props.editable && openSelector.set(expanded ? null : id));
+			prop(__nsh_hv4, "role", "button");
+			bindProp(__nsh_hv4, "accessibilityState", () => ({
+				expanded,
+				disabled: !props.editable
+			}));
+			prop(__nsh_hv4, "class", "h-8 flex-row items-center justify-between rounded-lg border px-2.5");
+			bindProp(__nsh_hv4, "style", () => ({
+				backgroundColor: colors().card,
+				borderColor: expanded ? colors().accent : colors().border,
+				opacity: props.editable ? 1 : .65
+			}));
+			const __nsh_hv5 = element("view");
+			prop(__nsh_hv5, "class", "min-w-0 flex-1 flex-row items-center gap-2");
+			const __nsh_hv8 = element("text");
+			prop(__nsh_hv8, "class", "text-[12px]");
+			bindProp(__nsh_hv8, "style", () => ({ color: colors().foreground }));
+			insert(__nsh_hv8, () => options.find((option) => option.value === value)?.label ?? value);
+			append(__nsh_hv5, __nsh_hv8);
+			insert(__nsh_hv5, () => preview && (() => {
+				const __nsh_hv6 = element("view");
+				prop(__nsh_hv6, "class", "h-4 w-5 rounded border");
+				bindProp(__nsh_hv6, "style", () => ({
+					backgroundColor: paletteSample(value, id === "light" ? "light" : "dark").background,
+					borderColor: colors().border
+				}));
+				const __nsh_hv7 = element("view");
+				prop(__nsh_hv7, "class", "h-1 w-full");
+				bindProp(__nsh_hv7, "style", () => ({ backgroundColor: paletteSample(value, id === "light" ? "light" : "dark").accent }));
+				append(__nsh_hv6, __nsh_hv7);
+				return __nsh_hv6;
+			})(), __nsh_hv8);
+			const __nsh_hv9 = element("text");
+			prop(__nsh_hv9, "class", "text-[11px]");
+			bindProp(__nsh_hv9, "style", () => ({ color: colors().muted }));
+			insert(__nsh_hv9, expanded ? "⌃" : "⌄");
+			append(__nsh_hv4, __nsh_hv5);
+			append(__nsh_hv4, __nsh_hv9);
+			append(__nsh_hv3, __nsh_hv4);
+			insert(__nsh_hv3, () => expanded && (() => {
+				const __nsh_hv10 = element("view");
+				prop(__nsh_hv10, "class", "absolute left-0 top-9 z-20 rounded-xl border p-1");
+				bindProp(__nsh_hv10, "style", () => ({
+					width: menuWidth,
+					backgroundColor: colors().card,
+					borderColor: colors().border
+				}));
+				insert(__nsh_hv10, () => options.map((option) => (() => {
+					const __nsh_hv11 = element("view");
+					prop(__nsh_hv11, "onPress", () => {
+						onSelect(option.value);
+						openSelector.set(null);
+					});
+					prop(__nsh_hv11, "role", "button");
+					bindProp(__nsh_hv11, "accessibilityState", () => ({ selected: option.value === value }));
+					prop(__nsh_hv11, "class", "h-8 flex-row items-center gap-2 rounded-md px-2");
+					const __nsh_hv14 = element("text");
+					prop(__nsh_hv14, "class", "flex-1 text-[12px]");
+					bindProp(__nsh_hv14, "style", () => ({ color: colors().foreground }));
+					insert(__nsh_hv14, () => option.label);
+					append(__nsh_hv11, __nsh_hv14);
+					insert(__nsh_hv11, () => preview && (() => {
+						const __nsh_hv12 = element("view");
+						prop(__nsh_hv12, "class", "h-4 w-5 rounded border");
+						bindProp(__nsh_hv12, "style", () => ({
+							backgroundColor: paletteSample(option.value, id === "light" ? "light" : "dark").background,
+							borderColor: colors().border
+						}));
+						const __nsh_hv13 = element("view");
+						prop(__nsh_hv13, "class", "h-1 w-full");
+						bindProp(__nsh_hv13, "style", () => ({ backgroundColor: paletteSample(option.value, id === "light" ? "light" : "dark").accent }));
+						append(__nsh_hv12, __nsh_hv13);
+						return __nsh_hv12;
+					})(), __nsh_hv14);
+					insert(__nsh_hv11, () => option.value === value && (() => {
+						const __nsh_hv15 = element("text");
+						prop(__nsh_hv15, "class", "text-[12px]");
+						bindProp(__nsh_hv15, "style", () => ({ color: colors().accent }));
+						const __nsh_hv16 = text("✓");
+						append(__nsh_hv15, __nsh_hv16);
+						return __nsh_hv15;
+					})());
+					return __nsh_hv11;
+				})()));
+				return __nsh_hv10;
+			})());
+			return __nsh_hv3;
+		})();
+	};
+	const shortcutRow = (name, label) => (() => {
+		const __nsh_hv17 = element("view");
+		prop(__nsh_hv17, "class", "h-10 flex-row items-center border-b");
+		bindProp(__nsh_hv17, "style", () => ({ borderColor: colors().border }));
+		const __nsh_hv18 = element("text");
+		prop(__nsh_hv18, "class", "flex-1 text-[13px]");
+		bindProp(__nsh_hv18, "style", () => ({ color: colors().foreground }));
+		insert(__nsh_hv18, label);
+		const __nsh_hv19 = element("view");
+		prop(__nsh_hv19, "onPress", () => props.onChangeShortcut(name));
+		prop(__nsh_hv19, "role", "button");
+		prop(__nsh_hv19, "accessibilityLabel", `Изменить сочетание: ${label}`);
+		prop(__nsh_hv19, "class", "rounded-md px-3 py-1");
+		bindProp(__nsh_hv19, "style", () => ({ backgroundColor: colors().background }));
+		const __nsh_hv20 = element("text");
+		prop(__nsh_hv20, "class", "text-[12px]");
+		bindProp(__nsh_hv20, "style", () => ({ color: colors().accent }));
+		insert(__nsh_hv20, () => keymap.label(props.shortcuts[name]));
+		append(__nsh_hv19, __nsh_hv20);
+		append(__nsh_hv17, __nsh_hv18);
+		append(__nsh_hv17, __nsh_hv19);
+		return __nsh_hv17;
+	})();
+	if (!settings() || !appearance()) return (() => {
+		const __nsh_hv21 = element("scroll");
+		prop(__nsh_hv21, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
+		const __nsh_hv22 = element("text");
+		prop(__nsh_hv22, "class", "text-[13px]");
+		bindProp(__nsh_hv22, "style", () => ({ color: colors().muted }));
+		const __nsh_hv23 = text("Загружаем настройки внешнего вида…");
+		append(__nsh_hv22, __nsh_hv23);
+		append(__nsh_hv21, __nsh_hv22);
+		return __nsh_hv21;
+	})();
+	const current = settings();
+	const modeCard = (mode) => (() => {
+		const __nsh_hv24 = element("view");
+		prop(__nsh_hv24, "onPress", () => patch({ mode: mode.value }));
+		prop(__nsh_hv24, "role", "button");
+		bindProp(__nsh_hv24, "accessibilityState", () => ({
+			selected: current.mode === mode.value,
+			disabled: !props.editable
+		}));
+		prop(__nsh_hv24, "class", "min-w-0 flex-1");
+		bindProp(__nsh_hv24, "style", () => ({ opacity: props.editable ? 1 : .65 }));
+		const __nsh_hv25 = element("view");
+		prop(__nsh_hv25, "class", "h-[148px] items-center justify-center overflow-hidden rounded-md border p-3");
+		bindProp(__nsh_hv25, "style", () => ({
+			borderColor: current.mode === mode.value ? colors().accent : colors().border,
+			backgroundColor: mode.value === "light" ? "#f5f4f1" : mode.value === "dark" ? "#211f26" : colors().card
+		}));
+		const __nsh_hv26 = element("view");
+		prop(__nsh_hv26, "class", "h-full w-full flex-row overflow-hidden rounded-md border");
+		bindProp(__nsh_hv26, "style", () => ({
+			borderColor: mode.value === "light" ? "#dedce0" : "#3b3940",
+			backgroundColor: mode.value === "light" ? "#fff" : "#17151b"
+		}));
+		const __nsh_hv27 = element("view");
+		prop(__nsh_hv27, "class", "w-1/3 gap-2 border-r p-2");
+		bindProp(__nsh_hv27, "style", () => ({ borderColor: mode.value === "light" ? "#dedce0" : "#3b3940" }));
+		const __nsh_hv28 = element("view");
+		prop(__nsh_hv28, "class", "h-2 rounded");
+		bindProp(__nsh_hv28, "style", () => ({ backgroundColor: colors().accent }));
+		const __nsh_hv29 = element("view");
+		prop(__nsh_hv29, "class", "h-1.5 rounded");
+		bindProp(__nsh_hv29, "style", () => ({ backgroundColor: mode.value === "light" ? "#d5d2d8" : "#4b4850" }));
+		const __nsh_hv30 = element("view");
+		prop(__nsh_hv30, "class", "h-1.5 rounded");
+		bindProp(__nsh_hv30, "style", () => ({ backgroundColor: mode.value === "light" ? "#e3e1e5" : "#38353d" }));
+		append(__nsh_hv27, __nsh_hv28);
+		append(__nsh_hv27, __nsh_hv29);
+		append(__nsh_hv27, __nsh_hv30);
+		const __nsh_hv31 = element("view");
+		prop(__nsh_hv31, "class", "flex-1 gap-2 p-2");
+		const __nsh_hv32 = element("view");
+		prop(__nsh_hv32, "class", "h-2 w-1/2 rounded");
+		bindProp(__nsh_hv32, "style", () => ({ backgroundColor: mode.value === "light" ? "#d5d2d8" : "#4b4850" }));
+		const __nsh_hv33 = element("view");
+		prop(__nsh_hv33, "class", "h-9 rounded");
+		bindProp(__nsh_hv33, "style", () => ({ backgroundColor: mode.value === "light" ? "#f0eef2" : "#28252d" }));
+		const __nsh_hv34 = element("view");
+		prop(__nsh_hv34, "class", "h-1.5 w-2/3 rounded");
+		bindProp(__nsh_hv34, "style", () => ({ backgroundColor: mode.value === "light" ? "#e3e1e5" : "#38353d" }));
+		append(__nsh_hv31, __nsh_hv32);
+		append(__nsh_hv31, __nsh_hv33);
+		append(__nsh_hv31, __nsh_hv34);
+		append(__nsh_hv26, __nsh_hv27);
+		append(__nsh_hv26, __nsh_hv31);
+		append(__nsh_hv25, __nsh_hv26);
+		const __nsh_hv35 = element("text");
+		prop(__nsh_hv35, "class", "mt-2 text-center text-[12px]");
+		bindProp(__nsh_hv35, "style", () => ({ color: current.mode === mode.value ? colors().accent : colors().muted }));
+		insert(__nsh_hv35, () => mode.label);
+		append(__nsh_hv24, __nsh_hv25);
+		append(__nsh_hv24, __nsh_hv35);
+		return __nsh_hv24;
+	})();
+	return (() => {
+		const __nsh_hv36 = element("scroll");
+		prop(__nsh_hv36, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
+		bindProp(__nsh_hv36, "style", () => ({ backgroundColor: colors().background }));
+		const __nsh_hv37 = element("view");
+		prop(__nsh_hv37, "class", "mx-auto w-full max-w-[720px]");
+		const __nsh_hv38 = element("text");
+		prop(__nsh_hv38, "class", "mb-5 text-[22px] font-semibold");
+		bindProp(__nsh_hv38, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv39 = text("Оформление");
+		append(__nsh_hv38, __nsh_hv39);
+		const __nsh_hv44 = element("view");
+		prop(__nsh_hv44, "class", "mb-6 flex-row gap-4");
+		insert(__nsh_hv44, () => modePreviews.map(modeCard));
+		const __nsh_hv45 = element("view");
+		prop(__nsh_hv45, "class", "mb-6 gap-2 rounded-xl border p-3");
+		bindProp(__nsh_hv45, "style", () => ({
+			backgroundColor: colors().card,
+			borderColor: colors().border
+		}));
+		const __nsh_hv46 = element("view");
+		prop(__nsh_hv46, "class", "h-10 flex-row items-center justify-between border-b");
+		bindProp(__nsh_hv46, "style", () => ({ borderColor: colors().border }));
+		const __nsh_hv47 = element("text");
+		prop(__nsh_hv47, "class", "text-[12px]");
+		bindProp(__nsh_hv47, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv48 = text("Светлая тема");
+		append(__nsh_hv47, __nsh_hv48);
+		append(__nsh_hv46, __nsh_hv47);
+		insert(__nsh_hv46, () => select("light", current.light_theme, props.themes.map((theme) => ({
+			value: theme.key,
+			label: theme.name
+		})), (value) => patch({ light_theme: value }), 218, true, 260));
+		const __nsh_hv49 = element("view");
+		prop(__nsh_hv49, "class", "h-10 flex-row items-center justify-between");
+		const __nsh_hv50 = element("text");
+		prop(__nsh_hv50, "class", "text-[12px]");
+		bindProp(__nsh_hv50, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv51 = text("Тёмная тема");
+		append(__nsh_hv50, __nsh_hv51);
+		append(__nsh_hv49, __nsh_hv50);
+		insert(__nsh_hv49, () => select("dark", current.dark_theme, props.themes.map((theme) => ({
+			value: theme.key,
+			label: theme.name
+		})), (value) => patch({ dark_theme: value }), 218, true, 260));
+		append(__nsh_hv45, __nsh_hv46);
+		append(__nsh_hv45, __nsh_hv49);
+		const __nsh_hv52 = element("view");
+		prop(__nsh_hv52, "class", "mb-6 rounded-xl border p-3");
+		bindProp(__nsh_hv52, "style", () => ({
+			backgroundColor: colors().card,
+			borderColor: colors().border
+		}));
+		const __nsh_hv53 = element("view");
+		prop(__nsh_hv53, "class", "mb-3 flex-row gap-2");
+		insert(__nsh_hv53, [
+			() => card(current.accent_source === "theme", "Цвет темы", () => patch({
+				accent_source: "theme",
+				accent_color: null
+			})),
+			() => card(current.accent_source === "custom", "Свой цвет", () => patch({
+				accent_source: "custom",
+				accent_color: current.accent_color ?? accentChoices[0]
+			})),
+			() => appearance()?.capabilities.wallpaper_accent && card(current.accent_source === "wallpaper", "Обои", () => patch({ accent_source: "wallpaper" }))
+		]);
+		const __nsh_hv54 = element("view");
+		prop(__nsh_hv54, "class", "flex-row gap-2");
+		insert(__nsh_hv54, () => accentChoices.map((accent) => (() => {
+			const __nsh_hv55 = element("view");
+			prop(__nsh_hv55, "onPress", () => patch({
+				accent_source: "custom",
+				accent_color: accent
+			}));
+			prop(__nsh_hv55, "role", "button");
+			prop(__nsh_hv55, "accessibilityLabel", `Акцент ${accent}`);
+			bindProp(__nsh_hv55, "accessibilityState", () => ({ selected: current.accent_source === "custom" && current.accent_color?.toLowerCase() === accent }));
+			prop(__nsh_hv55, "class", "h-7 w-7 items-center justify-center rounded-lg border");
+			bindProp(__nsh_hv55, "style", () => ({
+				backgroundColor: accent,
+				borderColor: current.accent_color?.toLowerCase() === accent ? colors().foreground : colors().border
+			}));
+			insert(__nsh_hv55, () => current.accent_color?.toLowerCase() === accent && (() => {
+				const __nsh_hv56 = element("text");
+				prop(__nsh_hv56, "class", "text-[12px]");
+				prop(__nsh_hv56, "style", { color: "#ffffff" });
+				const __nsh_hv57 = text("✓");
+				append(__nsh_hv56, __nsh_hv57);
+				return __nsh_hv56;
+			})());
+			return __nsh_hv55;
+		})()));
+		append(__nsh_hv52, __nsh_hv53);
+		append(__nsh_hv52, __nsh_hv54);
+		const __nsh_hv58 = element("view");
+		prop(__nsh_hv58, "class", "mb-6 flex-row gap-2");
+		insert(__nsh_hv58, () => (appearance()?.capabilities.materials ?? []).map((material) => selectLabel(material, materialLabels[material] ?? material, current.material, (next) => patch({ material: next }), colors(), props.editable)));
+		const __nsh_hv59 = element("view");
+		prop(__nsh_hv59, "class", "mb-6 flex-row items-center gap-3");
+		const __nsh_hv60 = element("text");
+		prop(__nsh_hv60, "class", "flex-1 text-[12px]");
+		bindProp(__nsh_hv60, "style", () => ({ color: colors().muted }));
+		const __nsh_hv61 = text("Размер интерфейсного текста");
+		append(__nsh_hv60, __nsh_hv61);
+		append(__nsh_hv59, __nsh_hv60);
+		insert(__nsh_hv59, () => select("fontSize", String(current.font_size), [.../* @__PURE__ */ new Set([...fontSizes, current.font_size])].sort((a, b) => a - b).map((size) => ({
+			value: String(size),
+			label: `${size} px`
+		})), (value) => patch({ font_size: Number(value) }), 128));
+		const __nsh_hv62 = element("view");
+		prop(__nsh_hv62, "class", "rounded-xl border px-4");
+		bindProp(__nsh_hv62, "style", () => ({
+			backgroundColor: colors().card,
+			borderColor: colors().border
+		}));
+		const __nsh_hv63 = element("view");
+		prop(__nsh_hv63, "class", "h-10 flex-row items-center");
+		const __nsh_hv64 = element("text");
+		prop(__nsh_hv64, "class", "flex-1 text-[13px]");
+		bindProp(__nsh_hv64, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv65 = text("Закрыть панель / поиск");
+		append(__nsh_hv64, __nsh_hv65);
+		const __nsh_hv66 = element("text");
+		prop(__nsh_hv66, "class", "text-[12px]");
+		bindProp(__nsh_hv66, "style", () => ({ color: colors().muted }));
+		const __nsh_hv67 = text("Esc");
+		append(__nsh_hv66, __nsh_hv67);
+		append(__nsh_hv63, __nsh_hv64);
+		append(__nsh_hv63, __nsh_hv66);
+		append(__nsh_hv62, __nsh_hv63);
+		insert(__nsh_hv62, [
+			() => shortcutRow("sidebar", "Боковая панель — открыть/скрыть"),
+			() => shortcutRow("create", "Новая задача — панель справа"),
+			() => shortcutRow("search", "Быстрый поиск"),
+			() => shortcutRow("reload", "Обновить данные из Engine")
+		], __nsh_hv63);
+		append(__nsh_hv37, __nsh_hv38);
+		append(__nsh_hv37, __nsh_hv44);
+		append(__nsh_hv37, __nsh_hv45);
+		append(__nsh_hv37, __nsh_hv52);
+		append(__nsh_hv37, __nsh_hv58);
+		append(__nsh_hv37, __nsh_hv59);
+		append(__nsh_hv37, __nsh_hv62);
+		insert(__nsh_hv37, [
+			() => appearance()?.policy.following && (() => {
+				const __nsh_hv40 = element("text");
+				prop(__nsh_hv40, "class", "mb-4 text-[12px]");
+				bindProp(__nsh_hv40, "style", () => ({ color: colors().accent }));
+				const __nsh_hv41 = text("Общий стиль задаётся в Mundus Manager. Настройки доступны только для просмотра.");
+				append(__nsh_hv40, __nsh_hv41);
+				return __nsh_hv40;
+			})(),
+			() => !props.editable && !appearance()?.policy.following && (() => {
+				const __nsh_hv42 = element("text");
+				prop(__nsh_hv42, "class", "mb-4 text-[12px]");
+				bindProp(__nsh_hv42, "style", () => ({ color: colors().accent }));
+				const __nsh_hv43 = text("Настройки внешнего вида сейчас недоступны.");
+				append(__nsh_hv42, __nsh_hv43);
+				return __nsh_hv42;
+			})(),
+			() => heading("Режим")
+		], __nsh_hv44);
+		insert(__nsh_hv37, () => heading("Темы"), __nsh_hv45);
+		insert(__nsh_hv37, () => heading("Акцент"), __nsh_hv52);
+		insert(__nsh_hv37, () => heading("Стекло"), __nsh_hv58);
+		insert(__nsh_hv37, () => heading("Размер текста"), __nsh_hv59);
+		insert(__nsh_hv37, () => heading("Горячие клавиши"), __nsh_hv62);
+		append(__nsh_hv36, __nsh_hv37);
+		return __nsh_hv36;
+	})();
+}
+function selectLabel(material, label, selected, onPress, colors, editable) {
+	return (() => {
+		const __nsh_hv68 = element("view");
+		bindProp(__nsh_hv68, "onPress", () => editable ? () => onPress(material) : void 0);
+		prop(__nsh_hv68, "role", "button");
+		prop(__nsh_hv68, "accessibilityState", {
+			selected: selected === material,
+			disabled: !editable
+		});
+		prop(__nsh_hv68, "class", "rounded-lg border px-3 py-2");
+		bindProp(__nsh_hv68, "style", () => ({
+			backgroundColor: selected === material ? colors.card : colors.background,
+			borderColor: selected === material ? colors.accent : colors.border,
+			opacity: editable ? 1 : .65
+		}));
+		const __nsh_hv69 = element("text");
+		prop(__nsh_hv69, "class", "text-[12px]");
+		bindProp(__nsh_hv69, "style", () => ({ color: selected === material ? colors.foreground : colors.muted }));
+		insert(__nsh_hv69, label);
+		append(__nsh_hv68, __nsh_hv69);
+		return __nsh_hv68;
+	})();
+}
+function paletteSample(key, mode) {
+	const palettes = {
+		default: {
+			light: ["#f8f7f9", "#7239ca"],
+			dark: ["#0d0c10", "#af94f9"]
+		},
+		claude: {
+			light: ["#faf9f5", "#c96442"],
+			dark: ["#262624", "#d97757"]
+		},
+		graphite: {
+			light: ["#f0f0f0", "#606060"],
+			dark: ["#1a1a1a", "#a0a0a0"]
+		}
+	};
+	const [background, accent] = (palettes[key] ?? palettes.default)[mode];
+	return {
+		background,
+		accent
+	};
+}
+
+//#endregion
+//#region App.tsx
+setup(null, "{\n  \"cssVars\": {\n    \"theme\": {\n      \"font-sans\": \"Inter, sans-serif\",\n      \"radius\": \"0.625rem\",\n      \"radius-control\": \"0.5rem\",\n      \"spacing-sidebar\": \"240px\",\n      \"spacing-titlebar\": \"40px\",\n      \"spacing-row\": \"32px\",\n      \"font-size-body\": \"13px\",\n      \"font-size-label\": \"12px\"\n    },\n    \"light\": {\n      \"background\": \"#faf9fb\",\n      \"foreground\": \"#26242a\",\n      \"card\": \"#f2f0f4\",\n      \"card-foreground\": \"#26242a\",\n      \"muted\": \"#ece9ef\",\n      \"muted-foreground\": \"#77727e\",\n      \"primary\": \"#7152bf\",\n      \"primary-foreground\": \"#ffffff\",\n      \"border\": \"#dedbe2\",\n      \"input\": \"#dedbe2\",\n      \"ring\": \"#b18aff\"\n    },\n    \"dark\": {\n      \"background\": \"#0d0c10\",\n      \"foreground\": \"#e7e5ea\",\n      \"card\": \"#131216\",\n      \"card-foreground\": \"#e7e5ea\",\n      \"muted\": \"#27262a\",\n      \"muted-foreground\": \"#8d8a94\",\n      \"primary\": \"#af94f9\",\n      \"primary-foreground\": \"#0d0c10\",\n      \"border\": \"#27262a\",\n      \"input\": \"#27262a\",\n      \"ring\": \"#af94f9\"\n    }\n  }\n}\n", null, null);
+const initialValue = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__");
+const initial = isSnapshot(initialValue) ? initialValue : fallback;
+const snapshot = signal(initial);
+const route = signal(initial.route);
+const addTaskOpen = signal(false);
+const newTaskTitle = signal("");
+const sidebarVisible = signal(true);
+const shortcutNames = [
+	"sidebar",
+	"create",
+	"search",
+	"reload"
+];
+const defaultShortcuts = {
+	sidebar: "mod+b",
+	create: "mod+n",
+	search: "mod+k",
+	reload: "mod+r"
+};
+const shortcutOptions = {
+	sidebar: ["mod+b", "mod+shift+b"],
+	create: ["mod+n", "mod+shift+n"],
+	search: ["mod+k", "mod+shift+k"],
+	reload: ["mod+r", "mod+shift+r"]
+};
+const shortcuts = signal(defaultShortcuts);
+Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
+	if (!value) return;
+	try {
+		const saved = JSON.parse(value);
+		shortcuts.set(Object.fromEntries(shortcutNames.map((name) => [name, shortcutOptions[name].includes(saved[name] ?? "") ? saved[name] : defaultShortcuts[name]])));
+	} catch {}
+});
+const Bridge = nativeComponent("atlas.bridge", {
+	props: ["route"],
+	events: [
+		"state",
+		"navigate",
+		"journal",
+		"titlebarAction"
+	]
+});
+function openJournalCalendar() {
+	if (route() !== "journal") {
+		route.set("journal");
+		if (!journalCalendarOpen()) toggleJournalCalendar();
+		return;
+	}
+	toggleJournalCalendar();
+}
+function iconForNavigation(id) {
+	switch (id) {
+		case "journal": return "logbook";
+		case "tasks": return "week";
+		default: return "settings";
+	}
+}
+function AtlasTitlebar(props) {
+	effect(() => Window.setTitleBar("hidden", spacing.titlebarHeight));
+	const controls = titleBar();
+	const customControls = controls.left === 0 && controls.right === 0;
+	return (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "class", "w-full flex-row items-center");
+		bindProp(__nsh_hv0, "style", () => ({ height: controls.height || spacing.titlebarHeight }));
+		prop(__nsh_hv0, "desktop", { windowDrag: true });
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "class", "flex-row items-center");
+		bindProp(__nsh_hv1, "style", () => ({
+			width: (props.sidebarVisible ? spacing.sidebarWidth : 40) + controls.left,
+			height: spacing.titlebarHeight
+		}));
+		const __nsh_hv2 = element("view");
+		bindProp(__nsh_hv2, "style", () => ({ width: controls.left }));
+		const __nsh_hv3 = element("view");
+		bindProp(__nsh_hv3, "onPress", () => props.onToggleSidebar);
+		prop(__nsh_hv3, "role", "button");
+		prop(__nsh_hv3, "accessibilityLabel", "Боковая панель");
+		prop(__nsh_hv3, "class", "w-10 items-center justify-center");
+		bindProp(__nsh_hv3, "style", () => ({ height: spacing.titlebarHeight }));
+		insert(__nsh_hv3, component(Icon, {
+			name: "sidebar",
+			get color() {
+				return props.colors.muted;
+			}
+		}));
+		const __nsh_hv4 = element("view");
+		prop(__nsh_hv4, "class", "flex-1");
+		prop(__nsh_hv4, "desktop", { windowDrag: true });
+		append(__nsh_hv1, __nsh_hv2);
+		append(__nsh_hv1, __nsh_hv3);
+		append(__nsh_hv1, __nsh_hv4);
+		append(__nsh_hv0, __nsh_hv1);
+		insert(__nsh_hv0, [() => props.showPageIdentity ? (() => {
+			const __nsh_hv5 = element("view");
+			prop(__nsh_hv5, "class", "flex-1 flex-row items-center gap-1.5");
+			prop(__nsh_hv5, "desktop", { windowDrag: true });
+			const __nsh_hv6 = element("text");
+			prop(__nsh_hv6, "class", "font-medium");
+			bindProp(__nsh_hv6, "style", () => ({
+				fontSize: typography.titlebar,
+				color: props.colors.foreground
+			}));
+			insert(__nsh_hv6, () => props.title);
+			append(__nsh_hv5, __nsh_hv6);
+			insert(__nsh_hv5, component(Icon, {
+				get name() {
+					return props.icon;
+				},
+				size: 15,
+				get color() {
+					return props.colors.muted;
+				}
+			}), __nsh_hv6);
+			return __nsh_hv5;
+		})() : (() => {
+			const __nsh_hv7 = element("view");
+			prop(__nsh_hv7, "class", "flex-1");
+			prop(__nsh_hv7, "desktop", { windowDrag: true });
+			return __nsh_hv7;
+		})(), () => customControls ? (() => {
+			const __nsh_hv8 = element("view");
+			prop(__nsh_hv8, "class", "flex-row");
+			bindProp(__nsh_hv8, "style", () => ({
+				width: 138,
+				height: spacing.titlebarHeight
+			}));
+			const __nsh_hv9 = element("view");
+			prop(__nsh_hv9, "onPress", () => Window.minimize());
+			prop(__nsh_hv9, "role", "button");
+			prop(__nsh_hv9, "accessibilityLabel", "Свернуть окно");
+			prop(__nsh_hv9, "class", "w-[46px] items-center justify-center");
+			bindProp(__nsh_hv9, "style", () => ({ height: spacing.titlebarHeight }));
+			insert(__nsh_hv9, component(Icon, {
+				name: "windowMin",
+				get color() {
+					return props.colors.foreground;
+				},
+				size: 14
+			}));
+			const __nsh_hv10 = element("view");
+			prop(__nsh_hv10, "onPress", () => Window.toggleMaximize());
+			prop(__nsh_hv10, "role", "button");
+			prop(__nsh_hv10, "accessibilityLabel", "Развернуть окно");
+			prop(__nsh_hv10, "class", "w-[46px] items-center justify-center");
+			bindProp(__nsh_hv10, "style", () => ({ height: spacing.titlebarHeight }));
+			insert(__nsh_hv10, component(Icon, {
+				name: "windowMax",
+				get color() {
+					return props.colors.foreground;
+				},
+				size: 14
+			}));
+			const __nsh_hv11 = element("view");
+			prop(__nsh_hv11, "onPress", () => Window.close());
+			prop(__nsh_hv11, "role", "button");
+			prop(__nsh_hv11, "accessibilityLabel", "Закрыть окно");
+			prop(__nsh_hv11, "class", "w-[46px] items-center justify-center");
+			bindProp(__nsh_hv11, "style", () => ({ height: spacing.titlebarHeight }));
+			insert(__nsh_hv11, component(Icon, {
+				name: "windowClose",
+				get color() {
+					return props.colors.foreground;
+				},
+				size: 14
+			}));
+			append(__nsh_hv8, __nsh_hv9);
+			append(__nsh_hv8, __nsh_hv10);
+			append(__nsh_hv8, __nsh_hv11);
+			return __nsh_hv8;
+		})() : (() => {
+			const __nsh_hv12 = element("view");
+			bindProp(__nsh_hv12, "style", () => ({ width: controls.right }));
+			return __nsh_hv12;
+		})()]);
+		return __nsh_hv0;
+	})();
+}
+function TaskRows() {
+	return each(() => snapshot().todos, (todo) => (() => {
+		const __nsh_hv13 = element("view");
+		prop(__nsh_hv13, "class", "flex-row items-center border-b px-3");
+		bindProp(__nsh_hv13, "style", () => ({
+			height: 37 * (snapshot().appearance?.settings.font_size ?? 13) / 13,
+			borderColor: snapshot().colors.border
+		}));
+		const __nsh_hv14 = element("view");
+		prop(__nsh_hv14, "onPress", () => commandRef?.("complete", { id: todo().id }));
+		prop(__nsh_hv14, "role", "checkbox");
+		bindProp(__nsh_hv14, "accessibilityLabel", () => todo().title);
+		bindProp(__nsh_hv14, "accessibilityState", () => ({ checked: todo().is_completed }));
+		prop(__nsh_hv14, "class", "mr-3 h-[14px] w-[14px] items-center justify-center rounded-full border");
+		bindProp(__nsh_hv14, "style", () => ({
+			borderColor: todo().is_completed ? snapshot().colors.accent : snapshot().colors.muted,
+			backgroundColor: todo().is_completed ? snapshot().colors.accent : "transparent"
+		}));
+		insert(__nsh_hv14, () => todo().is_completed && component(Icon, {
+			name: "check",
+			size: 10,
+			get color() {
+				return snapshot().colors.background;
+			}
+		}));
+		const __nsh_hv15 = element("text");
+		bindProp(__nsh_hv15, "class", () => todo().is_completed ? "line-through" : "");
+		bindProp(__nsh_hv15, "style", () => ({
+			fontSize: snapshot().appearance?.settings.font_size ?? 13,
+			color: todo().is_completed ? snapshot().colors.muted : snapshot().colors.foreground
+		}));
+		insert(__nsh_hv15, () => todo().title);
+		append(__nsh_hv13, __nsh_hv14);
+		append(__nsh_hv13, __nsh_hv15);
+		return __nsh_hv13;
+	})());
+}
+let commandRef;
+function setAppearance(patch) {
+	const current = snapshot();
+	if (current.appearance && current.appearanceEditable) snapshot.set({
+		...current,
+		appearance: {
+			...current.appearance,
+			settings: {
+				...current.appearance.settings,
+				...patch
+			}
+		}
+	});
+	commandRef?.("appearance.set", patch);
+}
+function cycleShortcut(name) {
+	const current = shortcuts();
+	const choices = shortcutOptions[name];
+	const next = choices[(choices.indexOf(current[name]) + 1) % choices.length];
+	const updated = {
+		...current,
+		[name]: next
+	};
+	shortcuts.set(updated);
+	Storage.setItem("mundus.atlas.shortcuts.v1", JSON.stringify(updated));
+}
+function TaskPage() {
+	return (() => {
+		const __nsh_hv16 = element("scroll");
+		prop(__nsh_hv16, "class", "min-h-0 flex-1 px-7 py-5");
+		const __nsh_hv17 = element("view");
+		prop(__nsh_hv17, "class", "mx-auto w-full max-w-[640px]");
+		insert(__nsh_hv17, () => snapshot().todos.length === 0 ? (() => {
+			const __nsh_hv18 = element("view");
+			prop(__nsh_hv18, "class", "items-center py-12");
+			const __nsh_hv19 = element("text");
+			prop(__nsh_hv19, "class", "text-[13px]");
+			bindProp(__nsh_hv19, "style", () => ({ color: snapshot().colors.muted }));
+			const __nsh_hv20 = text("Задач пока нет");
+			append(__nsh_hv19, __nsh_hv20);
+			append(__nsh_hv18, __nsh_hv19);
+			return __nsh_hv18;
+		})() : component(TaskRows, {}));
+		append(__nsh_hv16, __nsh_hv17);
+		return __nsh_hv16;
+	})();
+}
+effect(() => {
+	const active = shortcuts();
+	const unbind = [
+		keymap.bind(active.sidebar, () => commandRef?.("toggle-sidebar"), { when: "notEditing" }),
+		keymap.bind(active.create, () => {
+			newTaskTitle.set("");
+			addTaskOpen.set(true);
+		}, { when: "notEditing" }),
+		keymap.bind(active.reload, () => commandRef?.("reload"), { when: "notEditing" })
+	];
+	return () => unbind.forEach((remove) => remove());
+});
+function SettingsPage() {
+	return component(AtlasAppearanceSettings, {
+		get appearance() {
+			return snapshot().appearance;
+		},
+		get editable() {
+			return snapshot().appearanceEditable;
+		},
+		get themes() {
+			return snapshot().themes;
+		},
+		get colors() {
+			return snapshot().colors;
+		},
+		get shortcuts() {
+			return shortcuts();
+		},
+		onPatch: setAppearance,
+		onChangeShortcut: cycleShortcut
+	});
+}
+function App() {
+	const primaryNavigation = navigation_default.filter((item) => !item.footer);
+	const footerNavigation = navigation_default.filter((item) => item.footer);
+	const openNewTask = () => {
+		newTaskTitle.set("");
+		addTaskOpen.set(true);
+	};
+	const changeRoute = (target) => {
+		if (isRoute(target)) route.set(target);
+	};
+	return (() => {
+		const __nsh_hv21 = element("view");
+		prop(__nsh_hv21, "class", "relative h-full w-full flex-col");
+		bindProp(__nsh_hv21, "style", () => ({ backgroundColor: snapshot().colors.background }));
+		const __nsh_hv22 = element("view");
+		prop(__nsh_hv22, "class", "min-h-0 flex-1 flex-row");
+		const __nsh_hv26 = element("view");
+		prop(__nsh_hv26, "class", "relative min-w-0 flex-1");
+		insert(__nsh_hv26, [
+			() => route() === "journal" && component(JournalPage, {
+				get entries() {
+					return snapshot().journalEntries;
+				},
+				get colors() {
+					return snapshot().colors;
+				},
+				onCreate: (text) => commandRef?.("journal.create", { text }),
+				onUpdate: (id, text) => commandRef?.("journal.update", {
+					id,
+					text
+				}),
+				onDelete: (id) => commandRef?.("journal.delete", { id }),
+				get showCalendarToggle() {
+					return snapshot().chrome === "tsx";
+				}
+			}),
+			() => route() === "tasks" && (() => {
+				const __nsh_hv27 = element("view");
+				prop(__nsh_hv27, "class", "min-h-0 flex-1");
+				insert(__nsh_hv27, [component(TaskPage, {}), () => snapshot().chrome === "tsx" && (() => {
+					const __nsh_hv28 = element("view");
+					prop(__nsh_hv28, "onPress", openNewTask);
+					prop(__nsh_hv28, "role", "button");
+					prop(__nsh_hv28, "accessibilityLabel", "Новая задача");
+					prop(__nsh_hv28, "class", "absolute right-6 bottom-6 h-11 w-11 items-center justify-center rounded-full");
+					bindProp(__nsh_hv28, "style", () => ({ backgroundColor: snapshot().colors.foreground }));
+					insert(__nsh_hv28, component(Icon, {
+						name: "plus",
+						size: 20,
+						get color() {
+							return snapshot().colors.background;
+						}
+					}));
+					return __nsh_hv28;
+				})()]);
+				return __nsh_hv27;
+			})(),
+			() => route() === "settings" && component(SettingsPage, {}),
+			() => addTaskOpen() && component(Dialog, {
+				title: "Новая задача",
+				get colors() {
+					return snapshot().colors;
+				},
+				get children() {
+					return [(() => {
+						const __nsh_hv29 = element("input");
+						bindProp(__nsh_hv29, "value", () => newTaskTitle());
+						prop(__nsh_hv29, "onChange", (value) => newTaskTitle.set(value));
+						prop(__nsh_hv29, "onSubmit", (event) => {
+							commandRef?.("create", { title: event.text });
+							addTaskOpen.set(false);
+						});
+						prop(__nsh_hv29, "placeholder", "Название задачи");
+						prop(__nsh_hv29, "class", "h-10 rounded-lg px-3 text-[13px]");
+						bindProp(__nsh_hv29, "style", () => ({
+							backgroundColor: snapshot().colors.background,
+							color: snapshot().colors.foreground
+						}));
+						return __nsh_hv29;
+					})(), (() => {
+						const __nsh_hv30 = element("view");
+						prop(__nsh_hv30, "class", "mt-3 flex-row justify-end gap-2");
+						insert(__nsh_hv30, [component(Button, {
+							label: "Отмена",
+							get colors() {
+								return snapshot().colors;
+							},
+							onPress: () => addTaskOpen.set(false),
+							className: "border-0 px-0 py-0",
+							style: {
+								backgroundColor: "transparent",
+								borderColor: "transparent"
+							}
+						}), component(Button, {
+							label: "Добавить",
+							get colors() {
+								return snapshot().colors;
+							},
+							onPress: () => {
+								commandRef?.("create", { title: newTaskTitle() });
+								addTaskOpen.set(false);
+							},
+							selected: true,
+							className: "h-9 w-[90px] items-center justify-center px-0 py-0",
+							get style() {
+								return {
+									backgroundColor: snapshot().colors.accent,
+									borderColor: "transparent"
+								};
+							},
+							get textColor() {
+								return snapshot().colors.background;
+							}
+						})]);
+						return __nsh_hv30;
+					})()];
+				}
+			})
+		]);
+		append(__nsh_hv22, __nsh_hv26);
+		insert(__nsh_hv22, () => snapshot().chrome === "tsx" && (() => {
+			const __nsh_hv23 = element("view");
+			prop(__nsh_hv23, "class", "w-[240px] shrink-0 border-r px-2 pt-1");
+			bindProp(__nsh_hv23, "style", () => ({
+				borderColor: snapshot().colors.border,
+				display: sidebarVisible() ? "flex" : "none"
+			}));
+			const __nsh_hv24 = element("view");
+			prop(__nsh_hv24, "class", "gap-0.5");
+			insert(__nsh_hv24, () => primaryNavigation.map((item) => component(NavigationItem, {
+				get label() {
+					return item.label;
+				},
+				get icon() {
+					return iconForNavigation(item.id);
+				},
+				get selected() {
+					return route() === item.id;
+				},
+				get colors() {
+					return snapshot().colors;
+				},
+				onPress: () => changeRoute(item.id)
+			})));
+			const __nsh_hv25 = element("view");
+			prop(__nsh_hv25, "class", "mt-auto mb-2 gap-0.5");
+			insert(__nsh_hv25, () => footerNavigation.map((item) => component(NavigationItem, {
+				get label() {
+					return item.label;
+				},
+				get icon() {
+					return iconForNavigation(item.id);
+				},
+				get selected() {
+					return route() === item.id;
+				},
+				get colors() {
+					return snapshot().colors;
+				},
+				onPress: () => changeRoute(item.id)
+			})));
+			append(__nsh_hv23, __nsh_hv24);
+			append(__nsh_hv23, __nsh_hv25);
+			return __nsh_hv23;
+		})(), __nsh_hv26);
+		append(__nsh_hv21, __nsh_hv22);
+		insert(__nsh_hv21, [component(Bridge, {
+			class: "absolute left-0 top-0 h-px w-px",
+			ref: (node) => {
+				commandRef = (name, args) => node.command(name, args);
+			},
+			get route() {
+				return route();
+			},
+			onState: (next) => {
+				route.set(next.route);
+				snapshot.set({
+					...next,
+					journalEntries: snapshot().journalEntries
+				});
+				sidebarVisible.set(next.sidebarVisible);
+			},
+			onJournal: (entries) => snapshot.set({
+				...snapshot(),
+				journalEntries: entries
+			}),
+			onNavigate: (event) => changeRoute(event.route),
+			onTitlebarAction: (event) => {
+				if (event.id === "journal.calendar") openJournalCalendar();
+			}
+		}), () => snapshot().chrome === "tsx" && component(AtlasTitlebar, {
+			get title() {
+				return snapshot().title;
+			},
+			get icon() {
+				return iconForNavigation(route());
+			},
+			get colors() {
+				return snapshot().colors;
+			},
+			onToggleSidebar: () => commandRef?.("toggle-sidebar"),
+			get sidebarVisible() {
+				return sidebarVisible();
+			},
+			get showPageIdentity() {
+				return route() !== "settings";
+			}
+		})], __nsh_hv22);
+		return __nsh_hv21;
+	})();
+}
+mount(App);
+
+//#endregion

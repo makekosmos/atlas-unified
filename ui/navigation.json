@@ -1,6 +1,5 @@
 [
   { "id": "journal", "label": "Дневник", "icon": "book.closed", "footer": false },
   { "id": "tasks", "label": "Задачи", "icon": "checklist", "footer": false },
-  { "id": "settings", "label": "Настройки", "icon": "gearshape", "footer": true },
-  { "id": "about", "label": "О приложении", "icon": "info.circle", "footer": true }
+  { "id": "settings", "label": "Настройки", "icon": "gearshape", "footer": true }
 ]

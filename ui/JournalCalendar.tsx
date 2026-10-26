@@ -7,14 +7,15 @@ const weekdays = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
 const months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
 
 export function JournalCalendar(props: {
+  width: number;
+  resizeHovered: boolean;
   groups: readonly JournalDayGroup[];
   colors: ThemeColors;
   onSelect(dayKey: string): void;
 }) {
   const days = buildCalendarDays(props.groups);
   const today = new Date();
-  return <View class="h-full w-[260px] border-l" style={{ backgroundColor: props.colors.card, borderColor: props.colors.border }}>
-    <Text class="px-5 pt-4 pb-3 text-[12px] font-medium" style={{ color: props.colors.muted }}>КАЛЕНДАРЬ</Text>
+  return <View class="h-full border-l" style={{ width: props.width, backgroundColor: props.colors.card, borderColor: props.resizeHovered ? props.colors.muted : props.colors.border, transitionProperty: "borderColor", transitionDuration: 150, transitionTimingFunction: "ease-out" }}>
     <Scroll class="min-h-0 flex-1 px-3 pb-4">
       {days.map((day) => <View>
         {day.period && <Text class="pt-3 pb-1 pl-1 text-[10px] capitalize" style={{ color: props.colors.muted }}>{day.period}</Text>}

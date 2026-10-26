@@ -5,6 +5,9 @@ use std::{process::ExitCode, rc::Rc};
 
 use imago_native_sidebar::Row;
 use nsh_core::prelude::*;
+use nsh_platform_macos::objc2::{sel, MainThreadOnly};
+use nsh_platform_macos::objc2_app_kit::{NSApplication, NSMenu, NSMenuItem};
+use nsh_platform_macos::objc2_foundation::{MainThreadMarker, NSString};
 use nsh_platform_macos::{App, AppOptions, AppView, Bundle, NativeComponent};
 
 #[component]
@@ -58,17 +61,70 @@ impl NativeComponent for BundleHost {
 }
 
 fn register_components(view: &AppView) {
+    install_edit_menu();
     view.register_component(
         "atlas.content",
         Rc::new(|context| Box::new(BundleHost::new(context))),
     );
 }
 
-pub(crate) fn run(rows: Vec<Row>) -> ExitCode {
-    imago_window_macos::run_with_titlebar_actions(
+fn install_edit_menu() {
+    let mtm = MainThreadMarker::new().expect("edit menu is installed on the AppKit thread");
+    let app = NSApplication::sharedApplication(mtm);
+    let Some(main) = app.mainMenu() else {
+        return;
+    };
+    let title = NSString::from_str("Правка");
+    if main.itemWithTitle(&title).is_some() {
+        return;
+    }
+
+    let edit = NSMenu::initWithTitle(NSMenu::alloc(mtm), &title);
+    add_edit_item(mtm, &edit, "Отменить", sel!(undo:), "z");
+    add_edit_item(mtm, &edit, "Повторить", sel!(redo:), "Z");
+    edit.addItem(&NSMenuItem::separatorItem(mtm));
+    add_edit_item(mtm, &edit, "Вырезать", sel!(cut:), "x");
+    add_edit_item(mtm, &edit, "Скопировать", sel!(copy:), "c");
+    add_edit_item(mtm, &edit, "Вставить", sel!(paste:), "v");
+    add_edit_item(mtm, &edit, "Выбрать всё", sel!(selectAll:), "a");
+
+    let menu_item = unsafe {
+        NSMenuItem::initWithTitle_action_keyEquivalent(
+            NSMenuItem::alloc(mtm),
+            &title,
+            None,
+            &NSString::from_str(""),
+        )
+    };
+    menu_item.setSubmenu(Some(&edit));
+    main.insertItem_atIndex(&menu_item, 1);
+    app.setMainMenu(Some(&main));
+}
+
+fn add_edit_item(
+    mtm: MainThreadMarker,
+    menu: &NSMenu,
+    title: &str,
+    action: nsh_platform_macos::objc2::runtime::Sel,
+    key: &str,
+) {
+    let item = unsafe {
+        NSMenuItem::initWithTitle_action_keyEquivalent(
+            NSMenuItem::alloc(mtm),
+            &NSString::from_str(title),
+            Some(action),
+            &NSString::from_str(key),
+        )
+    };
+    menu.addItem(&item);
+}
+
+pub(crate) fn run(rows: Vec<Row>, footer: Vec<Row>) -> ExitCode {
+    imago_window_macos::run_with_sidebar_sections(
         "Atlas",
         (1440.0, 900.0),
         rows,
+        footer,
         vec![imago_window_macos::TitlebarAction {
             id: "journal.calendar".into(),
             symbol: "sidebar.right".into(),

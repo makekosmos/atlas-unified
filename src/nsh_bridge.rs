@@ -63,7 +63,6 @@ fn snapshot(agenda: &Atlas, route: &str) -> Value {
         "journal" => "Дневник",
         "tasks" => "Задачи",
         "settings" => "Настройки",
-        "about" => "О приложении",
         _ => "Дневник",
     };
     let theme_idx = agenda

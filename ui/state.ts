@@ -1,7 +1,7 @@
 import { defaultColors } from "@makekosmos/imago-nsh";
 import type { Appearance, ThemeChoice, ThemeColors } from "@makekosmos/imago-nsh";
 
-export type Route = "journal" | "tasks" | "settings" | "about";
+export type Route = "journal" | "tasks" | "settings";
 export type Todo = { id: string; title: string; is_completed: boolean; scheduled_date?: string; notes?: string };
 export type JournalEntry = { id: string; text: string; createdAt: string };
 export type Snapshot = { route: Route; title: string; todos: Todo[]; journalEntries: JournalEntry[]; version: string; appearance?: Appearance; appearanceEditable: boolean; themes: ThemeChoice[]; colors: ThemeColors; sidebarVisible: boolean; chrome: "native" | "tsx" };
@@ -21,7 +21,7 @@ export function isSnapshot(value: unknown): value is Snapshot {
 }
 
 export function isRoute(value: unknown): value is Route {
-  return value === "journal" || value === "tasks" || value === "settings" || value === "about";
+  return value === "journal" || value === "tasks" || value === "settings";
 }
 
 function isTodo(value: unknown): value is Todo {

@@ -42,6 +42,7 @@ pub(crate) fn initial_snapshot() -> Value {
         "todos": [],
         "journalEntries": [],
         "version": env!("CARGO_PKG_VERSION"),
+        "appearance": default_appearance(),
         "appearanceEditable": false,
         "themes": themes,
         "colors": {
@@ -126,14 +127,14 @@ impl AtlasBridge {
                     Err(mpsc::RecvTimeoutError::Timeout) => {}
                 }
                 for picked in imago_window_macos::sidebar_presses() {
-                    if matches!(picked.as_str(), "journal" | "tasks" | "settings" | "about") {
+                    if matches!(picked.as_str(), "journal" | "tasks" | "settings") {
                         route = picked.clone();
                         context.emit("navigate", json!({"route": picked}));
                         refresh = true;
                     }
                 }
-                for id in imago_window_macos::titlebar_action_presses() {
-                    context.emit("titlebarAction", json!({"id": id}));
+                for action in imago_window_macos::titlebar_action_presses() {
+                    context.emit("titlebarAction", json!({"id": action}));
                 }
                 if refresh {
                     publish(&engine, &context, &route, &entries);
@@ -198,7 +199,13 @@ impl NativeComponent for AtlasBridge {
 fn publish(engine: &Engine, context: &ComponentContext, route: &str, entries: &[JournalEntry]) {
     let loaded = engine.load();
     let todos = loaded.map(|value| value.todos).unwrap_or_default();
-    let appearance = engine.rpc("appearance.get", json!({"app_id": APP_ID})).ok();
+    let appearance = match engine.rpc("appearance.get", json!({"app_id": APP_ID})) {
+        Ok(appearance) => Some(appearance),
+        Err(error) => {
+            eprintln!("[atlas-appearance] load failed; showing defaults read-only: {error:?}");
+            None
+        }
+    };
     let response = appearance
         .as_ref()
         .and_then(|value| Response::parse(value).ok());
@@ -231,7 +238,6 @@ fn publish(engine: &Engine, context: &ComponentContext, route: &str, entries: &[
     let title = match route {
         "tasks" => "Задачи",
         "settings" => "Настройки",
-        "about" => "О приложении",
         _ => "Дневник",
     };
     let state = json!({
@@ -240,7 +246,7 @@ fn publish(engine: &Engine, context: &ComponentContext, route: &str, entries: &[
         "todos": todos,
         "journalEntries": entries.iter().map(journal_json).collect::<Vec<_>>(),
         "version": env!("CARGO_PKG_VERSION"),
-        "appearance": appearance,
+        "appearance": appearance.clone().unwrap_or_else(default_appearance),
         "appearanceEditable": response.as_ref().is_some_and(|value| value.policy.editable),
         "themes": theme_choices,
         "colors": colors,
@@ -252,6 +258,25 @@ fn publish(engine: &Engine, context: &ComponentContext, route: &str, entries: &[
         json!(entries.iter().map(journal_json).collect::<Vec<_>>()),
     );
     context.emit("state", state);
+}
+
+fn default_appearance() -> Value {
+    json!({
+        "settings": {
+            "schema_version": 1,
+            "mode": "dark",
+            "light_theme": "default",
+            "dark_theme": "default",
+            "accent_source": "theme",
+            "accent_color": null,
+            "material": "default",
+            "font_size": 13.0,
+            "font_family": "Inter",
+            "revision": 0
+        },
+        "policy": {"following": false, "editable": false},
+        "capabilities": {"materials": ["default", "frosted", "mica"], "wallpaper_accent": false}
+    })
 }
 
 fn journal_json(entry: &JournalEntry) -> Value {

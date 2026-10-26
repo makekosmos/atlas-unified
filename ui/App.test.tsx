@@ -6,7 +6,7 @@ test("shows the shared Atlas navigation and journal composer", async () => {
   expect(app.texts()).toContain("Дневник");
   expect(app.texts()).toContain("Задачи");
   expect(app.texts()).toContain("Настройки");
-  expect(app.texts()).toContain("О приложении");
+  expect(app.texts()).not.toContain("О приложении");
   expect(app.texts()).toContain("Записей пока нет");
   expect(app.texts()).not.toContain("Входящие");
   expect(app.texts()).not.toContain("Эта неделя");
@@ -44,11 +44,10 @@ test("chooses the closest dated group for an empty calendar day", () => {
 
 test("opens the journal timeline and closes it from the titlebar control", async () => {
   const app = await open("./App.tsx", { width: 1100, clock: { time: new Date(2026, 9, 26) } });
-  await app.press("Календарь дневника");
-  expect(app.texts()).toContain("КАЛЕНДАРЬ");
+  await app.press("Показать календарь");
   expect(app.texts()).toContain("Окт 2026");
-  await app.press("Календарь дневника");
-  expect(app.texts()).not.toContain("КАЛЕНДАРЬ");
+  await app.press("Скрыть календарь");
+  expect(app.texts()).not.toContain("Окт 2026");
 });
 
 test("submits on Enter and accepts multiline text", async () => {
@@ -68,16 +67,9 @@ test("routes to the all-tasks screen", async () => {
 test("keeps appearance settings and configurable keyboard shortcuts", async () => {
   const app = await open("./App.tsx");
   await app.press("Настройки");
-  expect(app.texts()).toContain("Плотность интерфейса");
+  expect(app.texts()).toContain("Размер текста");
   expect(app.texts()).toContain("Светлая тема");
-  expect(app.texts()).toContain("Акцентный цвет");
+  expect(app.texts()).toContain("Акцент");
   await app.press("Изменить сочетание: Боковая панель — открыть/скрыть");
   await app.waitUntil(() => app.storage()["mundus.atlas.shortcuts.v1"]?.includes("mod+shift+b") === true);
-});
-
-test("opens About from the fixed footer navigation", async () => {
-  const app = await open("./App.tsx");
-  await app.press("О приложении");
-  expect(app.texts()).toContain("Atlas");
-  expect(app.texts()).toContain("Диагностика");
 });
