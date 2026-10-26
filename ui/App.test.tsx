@@ -93,3 +93,11 @@ test("keeps appearance settings and configurable keyboard shortcuts", async () =
   await app.press("Изменить сочетание: Боковая панель — открыть/скрыть");
   await app.waitUntil(() => app.storage()["mundus.atlas.shortcuts.v1"]?.includes("mod+shift+b") === true);
 });
+
+test("keeps appearance controls usable in a narrow window", async () => {
+  const app = await open("./App.tsx", { platform: "macos", width: 760, height: 700 });
+  await app.press("Настройки");
+  await app.press("Выбрать размер текста");
+  await app.press("14 px");
+  await app.waitUntil(() => app.texts().includes("14 px"));
+});

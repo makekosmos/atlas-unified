@@ -818,7 +818,7 @@ function AtlasAppearanceSettings(props) {
 	};
 	const heading = (label) => (() => {
 		const __nsh_hv0 = element("text");
-		prop(__nsh_hv0, "class", "mb-2 text-[12px]");
+		prop(__nsh_hv0, "class", "mb-2 px-2 text-[13px]");
 		bindProp(__nsh_hv0, "style", () => ({ color: colors().muted }));
 		insert(__nsh_hv0, label);
 		return __nsh_hv0;
@@ -949,7 +949,7 @@ function AtlasAppearanceSettings(props) {
 	};
 	const shortcutRow = (name, label) => (() => {
 		const __nsh_hv13 = element("view");
-		prop(__nsh_hv13, "class", "h-10 flex-row items-center border-b");
+		prop(__nsh_hv13, "class", "min-h-[52px] flex-row items-center gap-4 border-b py-3");
 		bindProp(__nsh_hv13, "style", () => ({ borderColor: colors().border }));
 		const __nsh_hv14 = element("text");
 		prop(__nsh_hv14, "class", "flex-1 text-[13px]");
@@ -1060,24 +1060,24 @@ function AtlasAppearanceSettings(props) {
 		const __nsh_hv33 = element("view");
 		prop(__nsh_hv33, "class", "mx-auto w-full max-w-[720px]");
 		const __nsh_hv34 = element("text");
-		prop(__nsh_hv34, "class", "mb-5 text-[22px] font-semibold");
+		prop(__nsh_hv34, "class", "mb-5 px-2 text-[22px] font-semibold");
 		bindProp(__nsh_hv34, "style", () => ({ color: colors().foreground }));
 		const __nsh_hv35 = text("Оформление");
 		append(__nsh_hv34, __nsh_hv35);
 		const __nsh_hv40 = element("view");
-		prop(__nsh_hv40, "class", "mb-6 flex-row gap-4");
+		prop(__nsh_hv40, "class", "mb-8 flex-row gap-4");
 		insert(__nsh_hv40, () => modePreviews.map(modeCard));
 		const __nsh_hv41 = element("view");
-		prop(__nsh_hv41, "class", "mb-6 gap-2 rounded-xl border p-3");
+		prop(__nsh_hv41, "class", "mb-8 rounded-xl border px-4");
 		bindProp(__nsh_hv41, "style", () => ({
 			backgroundColor: colors().card,
 			borderColor: colors().border
 		}));
 		const __nsh_hv42 = element("view");
-		prop(__nsh_hv42, "class", "h-10 flex-row items-center justify-between border-b");
+		prop(__nsh_hv42, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 border-b py-3");
 		bindProp(__nsh_hv42, "style", () => ({ borderColor: colors().border }));
 		const __nsh_hv43 = element("text");
-		prop(__nsh_hv43, "class", "text-[12px]");
+		prop(__nsh_hv43, "class", "min-w-[160px] flex-1 text-[13px]");
 		bindProp(__nsh_hv43, "style", () => ({ color: colors().foreground }));
 		const __nsh_hv44 = text("Светлая тема");
 		append(__nsh_hv43, __nsh_hv44);
@@ -1088,9 +1088,9 @@ function AtlasAppearanceSettings(props) {
 			preview: theme.light
 		})), (value) => patch({ light_theme: value }), 218, true, 260));
 		const __nsh_hv45 = element("view");
-		prop(__nsh_hv45, "class", "h-10 flex-row items-center justify-between");
+		prop(__nsh_hv45, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
 		const __nsh_hv46 = element("text");
-		prop(__nsh_hv46, "class", "text-[12px]");
+		prop(__nsh_hv46, "class", "min-w-[160px] flex-1 text-[13px]");
 		bindProp(__nsh_hv46, "style", () => ({ color: colors().foreground }));
 		const __nsh_hv47 = text("Тёмная тема");
 		append(__nsh_hv46, __nsh_hv47);
@@ -1103,14 +1103,21 @@ function AtlasAppearanceSettings(props) {
 		append(__nsh_hv41, __nsh_hv42);
 		append(__nsh_hv41, __nsh_hv45);
 		const __nsh_hv48 = element("view");
-		prop(__nsh_hv48, "class", "mb-6 rounded-xl border p-3");
+		prop(__nsh_hv48, "class", "mb-8 rounded-xl border px-4");
 		bindProp(__nsh_hv48, "style", () => ({
 			backgroundColor: colors().card,
 			borderColor: colors().border
 		}));
 		const __nsh_hv49 = element("view");
-		prop(__nsh_hv49, "class", "mb-3 flex-row gap-2");
-		insert(__nsh_hv49, [
+		prop(__nsh_hv49, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
+		const __nsh_hv50 = element("text");
+		prop(__nsh_hv50, "class", "min-w-[160px] flex-1 text-[13px]");
+		bindProp(__nsh_hv50, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv51 = text("Акцентный цвет");
+		append(__nsh_hv50, __nsh_hv51);
+		const __nsh_hv52 = element("view");
+		prop(__nsh_hv52, "class", "flex-row flex-wrap items-center gap-2");
+		insert(__nsh_hv52, [
 			() => card(current().accent_source === "theme", "Цвет темы", () => patch({
 				accent_source: "theme",
 				accent_color: null
@@ -1121,87 +1128,113 @@ function AtlasAppearanceSettings(props) {
 			})),
 			() => appearance()?.capabilities.wallpaper_accent && card(current().accent_source === "wallpaper", "Обои", () => patch({ accent_source: "wallpaper" }))
 		]);
-		const __nsh_hv50 = element("view");
-		prop(__nsh_hv50, "class", "flex-row gap-2");
-		insert(__nsh_hv50, () => accentChoices.map((accent) => (() => {
-			const __nsh_hv51 = element("view");
-			prop(__nsh_hv51, "onPress", () => patch({
+		append(__nsh_hv49, __nsh_hv50);
+		append(__nsh_hv49, __nsh_hv52);
+		const __nsh_hv53 = element("view");
+		prop(__nsh_hv53, "class", "flex-row flex-wrap items-center gap-2 border-t py-3");
+		bindProp(__nsh_hv53, "style", () => ({ borderColor: colors().border }));
+		insert(__nsh_hv53, () => accentChoices.map((accent) => (() => {
+			const __nsh_hv54 = element("view");
+			prop(__nsh_hv54, "onPress", () => patch({
 				accent_source: "custom",
 				accent_color: accent
 			}));
-			prop(__nsh_hv51, "role", "button");
-			prop(__nsh_hv51, "accessibilityLabel", `Акцент ${accent}`);
-			bindProp(__nsh_hv51, "accessibilityState", () => ({ selected: current().accent_source === "custom" && current().accent_color?.toLowerCase() === accent }));
-			prop(__nsh_hv51, "class", "h-7 w-7 items-center justify-center rounded-lg border");
-			bindProp(__nsh_hv51, "style", () => ({
+			prop(__nsh_hv54, "role", "button");
+			prop(__nsh_hv54, "accessibilityLabel", `Акцент ${accent}`);
+			bindProp(__nsh_hv54, "accessibilityState", () => ({ selected: current().accent_source === "custom" && current().accent_color?.toLowerCase() === accent }));
+			prop(__nsh_hv54, "class", "h-7 w-7 items-center justify-center rounded-lg border");
+			bindProp(__nsh_hv54, "style", () => ({
 				backgroundColor: accent,
 				borderColor: current().accent_color?.toLowerCase() === accent ? colors().foreground : colors().border
 			}));
-			insert(__nsh_hv51, () => current().accent_color?.toLowerCase() === accent && (() => {
-				const __nsh_hv52 = element("text");
-				prop(__nsh_hv52, "class", "text-[12px]");
-				prop(__nsh_hv52, "style", { color: "#ffffff" });
-				const __nsh_hv53 = text("✓");
-				append(__nsh_hv52, __nsh_hv53);
-				return __nsh_hv52;
+			insert(__nsh_hv54, () => current().accent_color?.toLowerCase() === accent && (() => {
+				const __nsh_hv55 = element("text");
+				prop(__nsh_hv55, "class", "text-[12px]");
+				prop(__nsh_hv55, "style", { color: "#ffffff" });
+				const __nsh_hv56 = text("✓");
+				append(__nsh_hv55, __nsh_hv56);
+				return __nsh_hv55;
 			})());
-			return __nsh_hv51;
+			return __nsh_hv54;
 		})()));
 		append(__nsh_hv48, __nsh_hv49);
-		append(__nsh_hv48, __nsh_hv50);
-		const __nsh_hv54 = element("view");
-		prop(__nsh_hv54, "class", "mb-6 flex-row gap-2");
-		insert(__nsh_hv54, () => (appearance()?.capabilities.materials ?? []).map((material) => selectLabel(material, materialLabels[material] ?? material, current().material, (next) => patch({ material: next }), colors(), canEdit())));
-		const __nsh_hv55 = element("view");
-		prop(__nsh_hv55, "class", "mb-6 flex-row items-center gap-3");
-		const __nsh_hv56 = element("text");
-		prop(__nsh_hv56, "class", "flex-1 text-[12px]");
-		bindProp(__nsh_hv56, "style", () => ({ color: colors().muted }));
-		const __nsh_hv57 = text("Размер интерфейсного текста");
-		append(__nsh_hv56, __nsh_hv57);
-		append(__nsh_hv55, __nsh_hv56);
-		insert(__nsh_hv55, () => select("fontSize", String(current().font_size), [.../* @__PURE__ */ new Set([...fontSizes, current().font_size])].sort((a, b) => a - b).map((size) => ({
-			value: String(size),
-			label: `${size} px`
-		})), (value) => patch({ font_size: Number(value) }), 128));
-		const __nsh_hv58 = element("view");
-		prop(__nsh_hv58, "class", "rounded-xl border px-4");
-		bindProp(__nsh_hv58, "style", () => ({
+		append(__nsh_hv48, __nsh_hv53);
+		const __nsh_hv57 = element("view");
+		prop(__nsh_hv57, "class", "mb-8 rounded-xl border px-4");
+		bindProp(__nsh_hv57, "style", () => ({
 			backgroundColor: colors().card,
 			borderColor: colors().border
 		}));
-		const __nsh_hv59 = element("view");
-		prop(__nsh_hv59, "class", "h-10 flex-row items-center");
-		const __nsh_hv60 = element("text");
-		prop(__nsh_hv60, "class", "flex-1 text-[13px]");
-		bindProp(__nsh_hv60, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv61 = text("Закрыть панель / поиск");
-		append(__nsh_hv60, __nsh_hv61);
-		const __nsh_hv62 = element("text");
-		prop(__nsh_hv62, "class", "text-[12px]");
-		bindProp(__nsh_hv62, "style", () => ({ color: colors().muted }));
-		const __nsh_hv63 = text("Esc");
-		append(__nsh_hv62, __nsh_hv63);
+		const __nsh_hv58 = element("view");
+		prop(__nsh_hv58, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
+		const __nsh_hv59 = element("text");
+		prop(__nsh_hv59, "class", "min-w-[160px] flex-1 text-[13px]");
+		bindProp(__nsh_hv59, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv60 = text("Материал окна");
 		append(__nsh_hv59, __nsh_hv60);
-		append(__nsh_hv59, __nsh_hv62);
+		const __nsh_hv61 = element("view");
+		prop(__nsh_hv61, "class", "flex-row flex-wrap items-center gap-2");
+		insert(__nsh_hv61, () => (appearance()?.capabilities.materials ?? []).map((material) => selectLabel(material, materialLabels[material] ?? material, current().material, (next) => patch({ material: next }), colors(), canEdit())));
 		append(__nsh_hv58, __nsh_hv59);
-		insert(__nsh_hv58, [
+		append(__nsh_hv58, __nsh_hv61);
+		append(__nsh_hv57, __nsh_hv58);
+		const __nsh_hv62 = element("view");
+		prop(__nsh_hv62, "class", "mb-8 rounded-xl border px-4");
+		bindProp(__nsh_hv62, "style", () => ({
+			backgroundColor: colors().card,
+			borderColor: colors().border
+		}));
+		const __nsh_hv63 = element("view");
+		prop(__nsh_hv63, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
+		const __nsh_hv64 = element("text");
+		prop(__nsh_hv64, "class", "min-w-[160px] flex-1 text-[13px]");
+		bindProp(__nsh_hv64, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv65 = text("Размер интерфейсного текста");
+		append(__nsh_hv64, __nsh_hv65);
+		append(__nsh_hv63, __nsh_hv64);
+		insert(__nsh_hv63, () => select("fontSize", String(current().font_size), [.../* @__PURE__ */ new Set([...fontSizes, current().font_size])].sort((a, b) => a - b).map((size) => ({
+			value: String(size),
+			label: `${size} px`
+		})), (value) => patch({ font_size: Number(value) }), 128));
+		append(__nsh_hv62, __nsh_hv63);
+		const __nsh_hv66 = element("view");
+		prop(__nsh_hv66, "class", "rounded-xl border px-4");
+		bindProp(__nsh_hv66, "style", () => ({
+			backgroundColor: colors().card,
+			borderColor: colors().border
+		}));
+		const __nsh_hv67 = element("view");
+		prop(__nsh_hv67, "class", "h-10 flex-row items-center");
+		const __nsh_hv68 = element("text");
+		prop(__nsh_hv68, "class", "flex-1 text-[13px]");
+		bindProp(__nsh_hv68, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv69 = text("Закрыть панель / поиск");
+		append(__nsh_hv68, __nsh_hv69);
+		const __nsh_hv70 = element("text");
+		prop(__nsh_hv70, "class", "text-[12px]");
+		bindProp(__nsh_hv70, "style", () => ({ color: colors().muted }));
+		const __nsh_hv71 = text("Esc");
+		append(__nsh_hv70, __nsh_hv71);
+		append(__nsh_hv67, __nsh_hv68);
+		append(__nsh_hv67, __nsh_hv70);
+		append(__nsh_hv66, __nsh_hv67);
+		insert(__nsh_hv66, [
 			() => shortcutRow("sidebar", "Боковая панель — открыть/скрыть"),
 			() => shortcutRow("create", "Новая задача — панель справа"),
 			() => shortcutRow("search", "Быстрый поиск"),
 			() => shortcutRow("reload", "Обновить данные из Engine")
-		], __nsh_hv59);
+		], __nsh_hv67);
 		append(__nsh_hv33, __nsh_hv34);
 		append(__nsh_hv33, __nsh_hv40);
 		append(__nsh_hv33, __nsh_hv41);
 		append(__nsh_hv33, __nsh_hv48);
-		append(__nsh_hv33, __nsh_hv54);
-		append(__nsh_hv33, __nsh_hv55);
-		append(__nsh_hv33, __nsh_hv58);
+		append(__nsh_hv33, __nsh_hv57);
+		append(__nsh_hv33, __nsh_hv62);
+		append(__nsh_hv33, __nsh_hv66);
 		insert(__nsh_hv33, [
 			() => appearance()?.policy.following && (() => {
 				const __nsh_hv36 = element("text");
-				prop(__nsh_hv36, "class", "mb-4 text-[12px]");
+				prop(__nsh_hv36, "class", "mb-4 px-2 text-[12px]");
 				bindProp(__nsh_hv36, "style", () => ({ color: colors().accent }));
 				const __nsh_hv37 = text("Общий стиль задаётся в Mundus Manager. Настройки доступны только для просмотра.");
 				append(__nsh_hv36, __nsh_hv37);
@@ -1209,7 +1242,7 @@ function AtlasAppearanceSettings(props) {
 			})(),
 			() => !props.editable() && !appearance()?.policy.following && (() => {
 				const __nsh_hv38 = element("text");
-				prop(__nsh_hv38, "class", "mb-4 text-[12px]");
+				prop(__nsh_hv38, "class", "mb-4 px-2 text-[12px]");
 				bindProp(__nsh_hv38, "style", () => ({ color: colors().muted }));
 				const __nsh_hv39 = text("Engine не подключён. Можно временно менять оформление; выбор действует только до закрытия Atlas.");
 				append(__nsh_hv38, __nsh_hv39);
@@ -1219,49 +1252,49 @@ function AtlasAppearanceSettings(props) {
 		], __nsh_hv40);
 		insert(__nsh_hv33, () => heading("Темы"), __nsh_hv41);
 		insert(__nsh_hv33, () => heading("Акцент"), __nsh_hv48);
-		insert(__nsh_hv33, () => heading("Стекло"), __nsh_hv54);
-		insert(__nsh_hv33, () => heading("Размер текста"), __nsh_hv55);
-		insert(__nsh_hv33, () => heading("Горячие клавиши"), __nsh_hv58);
+		insert(__nsh_hv33, () => heading("Стекло"), __nsh_hv57);
+		insert(__nsh_hv33, () => heading("Размер текста"), __nsh_hv62);
+		insert(__nsh_hv33, () => heading("Горячие клавиши"), __nsh_hv66);
 		append(__nsh_hv32, __nsh_hv33);
 		return __nsh_hv32;
 	})();
 }
 function selectLabel(material, label, selected, onPress, colors, editable) {
 	return (() => {
-		const __nsh_hv64 = element("view");
-		bindProp(__nsh_hv64, "onPress", () => editable ? () => onPress(material) : void 0);
-		prop(__nsh_hv64, "role", "button");
-		prop(__nsh_hv64, "accessibilityState", {
+		const __nsh_hv72 = element("view");
+		bindProp(__nsh_hv72, "onPress", () => editable ? () => onPress(material) : void 0);
+		prop(__nsh_hv72, "role", "button");
+		prop(__nsh_hv72, "accessibilityState", {
 			selected: selected === material,
 			disabled: !editable
 		});
-		prop(__nsh_hv64, "class", "rounded-lg border px-3 py-2");
-		bindProp(__nsh_hv64, "style", () => ({
+		prop(__nsh_hv72, "class", "rounded-lg border px-3 py-2");
+		bindProp(__nsh_hv72, "style", () => ({
 			backgroundColor: selected === material ? colors.card : colors.background,
 			borderColor: selected === material ? colors.accent : colors.border,
 			opacity: editable ? 1 : .65
 		}));
-		const __nsh_hv65 = element("text");
-		prop(__nsh_hv65, "class", "text-[12px]");
-		bindProp(__nsh_hv65, "style", () => ({ color: selected === material ? colors.foreground : colors.muted }));
-		insert(__nsh_hv65, label);
-		append(__nsh_hv64, __nsh_hv65);
-		return __nsh_hv64;
+		const __nsh_hv73 = element("text");
+		prop(__nsh_hv73, "class", "text-[12px]");
+		bindProp(__nsh_hv73, "style", () => ({ color: selected === material ? colors.foreground : colors.muted }));
+		insert(__nsh_hv73, label);
+		append(__nsh_hv72, __nsh_hv73);
+		return __nsh_hv72;
 	})();
 }
 function PaletteChip(props) {
 	return (() => {
-		const __nsh_hv66 = element("view");
-		prop(__nsh_hv66, "class", "h-4 w-5 overflow-hidden rounded border");
-		bindProp(__nsh_hv66, "style", () => ({
+		const __nsh_hv74 = element("view");
+		prop(__nsh_hv74, "class", "h-4 w-5 overflow-hidden rounded border");
+		bindProp(__nsh_hv74, "style", () => ({
 			backgroundColor: props.palette.background,
 			borderColor: props.border
 		}));
-		const __nsh_hv67 = element("view");
-		prop(__nsh_hv67, "class", "h-1 w-full");
-		bindProp(__nsh_hv67, "style", () => ({ backgroundColor: props.palette.accent }));
-		append(__nsh_hv66, __nsh_hv67);
-		return __nsh_hv66;
+		const __nsh_hv75 = element("view");
+		prop(__nsh_hv75, "class", "h-1 w-full");
+		bindProp(__nsh_hv75, "style", () => ({ backgroundColor: props.palette.accent }));
+		append(__nsh_hv74, __nsh_hv75);
+		return __nsh_hv74;
 	})();
 }
 
