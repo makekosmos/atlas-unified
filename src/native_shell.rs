@@ -123,8 +123,7 @@ pub(crate) fn run(rows: Vec<Row>, footer: Vec<Row>) -> ExitCode {
     imago_window_macos::run_with_sidebar_sections(
         "Atlas",
         (1440.0, 900.0),
-        rows,
-        footer,
+        imago_window_macos::SidebarSections { rows, footer },
         vec![imago_window_macos::TitlebarAction {
             id: "journal.calendar".into(),
             symbol: "sidebar.right".into(),
