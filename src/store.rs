@@ -4,6 +4,11 @@ pub mod mapping;
 mod mapping_tests;
 #[cfg(test)]
 mod payload_fixtures;
+mod journal;
+pub use journal::JournalEntry;
+#[cfg(test)]
+#[path = "journal_tests.rs"]
+mod journal_tests;
 mod projects;
 #[cfg(test)]
 mod restart_tests;
