@@ -6,15 +6,13 @@ import { Icon as SharedIcon, NavigationItem, Titlebar as SharedTitlebar, Appeara
 import type { Appearance, IconName } from "@makekosmos/imago-nsh";
 import navigation from "./navigation.json";
 import { fallback, isRoute, isSnapshot } from "./state";
-import type { JournalEntry, Route, Snapshot } from "./state";
+import type { Route, Snapshot } from "./state";
+import { JournalPage } from "./JournalPage";
 
 const initialValue: unknown = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__");
 const initial = isSnapshot(initialValue) ? initialValue : fallback;
 const snapshot = signal(initial);
 const route = signal<Route>(initial.route);
-const journalDraft = signal("");
-const editingJournalId = signal<string | null>(null);
-const editingJournalText = signal("");
 const addTaskOpen = signal(false);
 const newTaskTitle = signal("");
 const sidebarVisible = signal(true);
@@ -84,67 +82,6 @@ function cycleShortcut(name: ShortcutName) {
   const updated = { ...current, [name]: next };
   shortcuts.set(updated);
   void Storage.setItem("mundus.atlas.shortcuts.v1", JSON.stringify(updated));
-}
-
-function sendJournal(text: string) {
-  const value = text.trim();
-  if (!value) return;
-  commandRef?.("journal.create", { text: value });
-  journalDraft.set("");
-}
-
-function dayLabel(createdAt: string) {
-  const date = new Date(createdAt);
-  return Number.isNaN(date.valueOf()) ? createdAt : date.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
-}
-
-function timeLabel(createdAt: string) {
-  const date = new Date(createdAt);
-  return Number.isNaN(date.valueOf()) ? "" : date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-}
-
-function JournalPage() {
-  let feedRef: { scrollToEnd: (options?: { animated?: boolean }) => void } | undefined;
-  effect(() => {
-    const entries = snapshot().journalEntries;
-    if (entries.length) queueMicrotask(() => feedRef?.scrollToEnd({ animated: true }));
-  });
-  let previousDay = "";
-  return <View class="min-h-0 flex-1 items-center px-5">
-    <Scroll ref={(node) => { feedRef = node; }} class="min-h-0 w-full max-w-[620px] flex-1 py-6">
-      <Each of={snapshot().journalEntries}>{(entry) => {
-        const label = dayLabel(entry().createdAt);
-        const showDay = label !== previousDay;
-        previousDay = label;
-        return <View class="mb-4">
-          {showDay && <View class="mb-3 flex-row items-center justify-center"><View class="h-px flex-1" style={{ backgroundColor: snapshot().colors.border }} /><Text class="mx-3 text-[11px] capitalize" style={{ color: snapshot().colors.muted }}>{label}</Text><View class="h-px flex-1" style={{ backgroundColor: snapshot().colors.border }} /></View>}
-          <View class="self-end w-full max-w-[560px] rounded-2xl px-4 py-3" style={{ backgroundColor: snapshot().colors.card }}>
-            {editingJournalId() === entry().id
-              ? <View>
-                  <Input value={editingJournalText()} onChange={(value) => editingJournalText.set(value)} multiline={true} submitBehavior="newline" class="min-h-[56px] w-full rounded-lg px-2 py-1 text-[13px]" style={{ color: snapshot().colors.foreground, backgroundColor: snapshot().colors.background }} />
-                  <View class="mt-2 flex-row justify-end gap-2">
-                    <SharedButton label="Отмена" colors={snapshot().colors} onPress={() => editingJournalId.set(null)} />
-                    <SharedButton label="Сохранить" colors={snapshot().colors} selected onPress={() => { commandRef?.("journal.update", { id: entry().id, text: editingJournalText() }); editingJournalId.set(null); }} />
-                  </View>
-                </View>
-              : <View class="gap-0.5">{entry().text.split("\n").map((line) => <Text class="text-[14px] leading-6" style={{ color: snapshot().colors.foreground }}>{line || " "}</Text>)}</View>}
-            <View class="mt-2 flex-row items-center justify-end gap-3">
-              <Text class="text-[10px]" style={{ color: snapshot().colors.muted }}>{timeLabel(entry().createdAt)}</Text>
-              {editingJournalId() !== entry().id && <View class="flex-row gap-3">
-                <View onPress={() => { editingJournalId.set(entry().id); editingJournalText.set(entry().text); }} role="button" accessibilityLabel="Изменить запись"><Text class="text-[11px]" style={{ color: snapshot().colors.muted }}>Изменить</Text></View>
-                <View onPress={() => commandRef?.("journal.delete", { id: entry().id })} role="button" accessibilityLabel="Удалить запись"><Text class="text-[11px]" style={{ color: snapshot().colors.muted }}>Удалить</Text></View>
-              </View>}
-            </View>
-          </View>
-        </View>;
-      }}</Each>
-      {snapshot().journalEntries.length === 0 && <View class="flex-1 items-center justify-center py-12"><Text class="text-[13px]" style={{ color: snapshot().colors.muted }}>Записей пока нет</Text></View>}
-    </Scroll>
-    <View class="w-full max-w-[620px] flex-row items-end gap-2 border-t py-4" style={{ borderColor: snapshot().colors.border }}>
-      <Input value={journalDraft()} onChange={(value) => journalDraft.set(value)} onSubmit={(event) => sendJournal(event.text)} multiline={true} submitBehavior="submit" placeholder="Запись в дневник…" accessibilityLabel="Новая запись в дневник" class="max-h-[150px] min-h-[42px] flex-1 rounded-xl px-3 py-2 text-[13px]" style={{ backgroundColor: snapshot().colors.card, color: snapshot().colors.foreground }} />
-      <SharedButton label="Отправить" colors={snapshot().colors} selected onPress={() => sendJournal(journalDraft())} />
-    </View>
-  </View>;
 }
 
 function TaskPage() {
@@ -237,7 +174,13 @@ function App() {
         </View>
       </View>}
       <View class="relative min-w-0 flex-1">
-        {route() === "journal" && <JournalPage />}
+        {route() === "journal" && <JournalPage
+          entries={snapshot().journalEntries}
+          colors={snapshot().colors}
+          onCreate={(text) => commandRef?.("journal.create", { text })}
+          onUpdate={(id, text) => commandRef?.("journal.update", { id, text })}
+          onDelete={(id) => commandRef?.("journal.delete", { id })}
+        />}
         {route() === "tasks" && <View class="min-h-0 flex-1">
           <TaskPage />
           {snapshot().chrome === "tsx" && <View onPress={openNewTask} role="button" accessibilityLabel="Новая задача" class="absolute right-6 bottom-6 h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: snapshot().colors.foreground }}><SharedIcon name="plus" size={20} color={snapshot().colors.background} /></View>}

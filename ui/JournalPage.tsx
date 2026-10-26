@@ -1,0 +1,94 @@
+import { effect, Input, Scroll, signal, Text, View } from "nsh";
+import { LayoutAnimation } from "nsh/animated";
+import type { ThemeColors } from "@makekosmos/imago-nsh";
+import { Button as SharedButton } from "@makekosmos/imago-nsh";
+import { JournalCalendar, JournalCalendarIcon } from "./JournalCalendar";
+import { buildJournalDays, closestJournalDay, formatJournalDay } from "./journal-model";
+import type { JournalEntry } from "./state";
+
+const calendarOpen = signal(false);
+const calendarMonth = signal(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+const journalDraft = signal("");
+const editingJournalId = signal<string | null>(null);
+const editingJournalText = signal("");
+
+function timeLabel(createdAt: string) {
+  const date = new Date(createdAt);
+  return Number.isNaN(date.valueOf()) ? "" : date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+}
+
+export function JournalPage(props: {
+  entries: readonly JournalEntry[];
+  colors: ThemeColors;
+  onCreate(text: string): void;
+  onUpdate(id: string, text: string): void;
+  onDelete(id: string): void;
+}) {
+  let feedRef: { scrollTo: (options: { y?: number; animated?: boolean }) => void; scrollToEnd: (options?: { animated?: boolean }) => void } | undefined;
+  const dayOffsets = new Map<string, number>();
+  const groups = buildJournalDays(props.entries);
+  effect(() => {
+    const entries = props.entries;
+    if (entries.length) queueMicrotask(() => feedRef?.scrollToEnd({ animated: true }));
+  });
+  const send = (text: string) => {
+    const value = text.trim();
+    if (!value) return;
+    props.onCreate(value);
+    journalDraft.set("");
+  };
+  const toggleCalendar = () => {
+    LayoutAnimation.easeInEaseOut();
+    calendarOpen.update((open) => !open);
+  };
+  const jumpToDay = (key: string) => {
+    const target = closestJournalDay(groups, key);
+    calendarOpen.set(false);
+    if (target?.kind === "dated") {
+      const offset = dayOffsets.get(target.key);
+      if (offset !== undefined) feedRef?.scrollTo({ y: Math.max(0, offset - 12), animated: true });
+    }
+  };
+
+  return <View class="min-h-0 flex-1 flex-row">
+    <View class="min-w-0 flex-1 flex-col items-center px-5">
+      <View class="h-12 w-full max-w-[620px] flex-row items-center justify-end">
+        <View onPress={toggleCalendar} role="button" accessibilityLabel={calendarOpen() ? "Закрыть календарь" : "Открыть календарь"} accessibilityState={{ expanded: calendarOpen() }} class="flex-row items-center gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: calendarOpen() ? props.colors.card : "transparent" }}>
+          <JournalCalendarIcon color={props.colors.foreground} />
+          <Text class="text-[12px]" style={{ color: props.colors.foreground }}>Календарь</Text>
+        </View>
+      </View>
+      <Scroll ref={(node) => { feedRef = node; }} class="min-h-0 w-full max-w-[620px] flex-1 py-4">
+        {groups.map((group) => <View onLayout={(bounds) => { dayOffsets.set(group.key, bounds.origin.y); }} class="mb-5">
+          <View class="mb-3 flex-row items-center justify-center"><View class="h-px flex-1" style={{ backgroundColor: props.colors.border }} /><Text class="mx-3 text-[12px] capitalize" style={{ color: props.colors.muted }}>{formatJournalDay(group)}</Text><View class="h-px flex-1" style={{ backgroundColor: props.colors.border }} /></View>
+          {group.entries.map((entry) => <View class="mb-3 self-end w-full max-w-[560px] rounded-2xl px-4 py-3" style={{ backgroundColor: props.colors.card }}>
+            {editingJournalId() === entry.id
+              ? <View>
+                  <Input value={editingJournalText()} onChange={(value) => editingJournalText.set(value)} multiline={true} submitBehavior="newline" class="min-h-[56px] w-full rounded-lg px-2 py-1 text-[13px]" style={{ color: props.colors.foreground, backgroundColor: props.colors.background }} />
+                  <View class="mt-2 flex-row justify-end gap-2">
+                    <SharedButton label="Отмена" colors={props.colors} onPress={() => editingJournalId.set(null)} />
+                    <SharedButton label="Сохранить" colors={props.colors} onPress={() => { props.onUpdate(entry.id, editingJournalText()); editingJournalId.set(null); }} selected />
+                  </View>
+                </View>
+              : <View class="gap-0.5">{entry.text.split("\n").map((line) => <Text class="text-[14px] leading-6" style={{ color: props.colors.foreground }}>{line || " "}</Text>)}</View>}
+            <View class="mt-2 flex-row items-center justify-end gap-3">
+              <Text class="text-[10px]" style={{ color: props.colors.muted }}>{timeLabel(entry.createdAt)}</Text>
+              {editingJournalId() !== entry.id && <View class="flex-row gap-3">
+                <View onPress={() => { editingJournalId.set(entry.id); editingJournalText.set(entry.text); }} role="button" accessibilityLabel="Изменить запись"><Text class="text-[11px]" style={{ color: props.colors.muted }}>Изменить</Text></View>
+                <View onPress={() => props.onDelete(entry.id)} role="button" accessibilityLabel="Удалить запись"><Text class="text-[11px]" style={{ color: props.colors.muted }}>Удалить</Text></View>
+              </View>}
+            </View>
+          </View>)}
+        </View>)}
+        {groups.length === 0 && <View class="flex-1 items-center justify-center py-12"><Text class="text-[13px]" style={{ color: props.colors.muted }}>Записей пока нет</Text></View>}
+      </Scroll>
+      <View class="mb-4 w-full max-w-[620px] flex-row items-end gap-2 rounded-[22px] border px-3 py-2" style={{ backgroundColor: props.colors.card, borderColor: props.colors.border }}>
+        <Input value={journalDraft()} onChange={(value) => journalDraft.set(value)} onSubmit={(event) => send(event.text)} multiline={true} submitBehavior="submit" placeholder="Запись в дневник…" accessibilityLabel="Новая запись в дневник" class="max-h-[150px] min-h-[38px] flex-1 px-2 py-2 text-[14px]" style={{ backgroundColor: "transparent", color: props.colors.foreground }} />
+        <View onPress={() => send(journalDraft())} role="button" accessibilityLabel="Отправить запись" class="h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: props.colors.accent }}>
+          <Text class="text-[20px]" style={{ color: props.colors.background }}>↑</Text>
+        </View>
+      </View>
+    </View>
+    {calendarOpen() && <JournalCalendar month={calendarMonth()} groups={groups} colors={props.colors} onMonthChange={(month) => calendarMonth.set(month)} onSelect={jumpToDay} />}
+  </View>;
+}
