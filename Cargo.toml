@@ -13,7 +13,7 @@ members = ["crates/agenda-core"]
 gpui = { package = "gpui-kit", version = "=0.8.0", features = ["gpui-fast"] }
 gpui-component = { version = "=0.8.0", features = ["gpui-fast"] }
 # NSH screens run in the same GPUI Fast renderer as the host app.
-imago-nsh = { git = "https://github.com/makekosmos/imago.git", rev = "0dc83f181d0f091f7da074583079582278c407fd" }
+imago-nsh = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
@@ -35,9 +35,11 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("cargo-cli
 
 
 [target.'cfg(target_os = "macos")'.dependencies]
-# Menu Close must call NSWindow performClose:, not GPUI remove_window.
-objc = "0.2.7"
-objc_exception = "0.1.2"
+imago-native-sidebar = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
+imago-window-macos = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
+nsh-core = "=0.2.0"
+nsh-platform-macos = { version = "=0.2.0", default-features = false, features = ["js"] }
+objc2-foundation = "=0.3.2"
 
 # Dev builds: own code compiles fast (opt-level 1, line-table debuginfo);
 # dependencies stay fully optimized without debuginfo — unoptimized
@@ -85,5 +87,5 @@ gpui-fast-backend = { package = "gpui-fast", version = "=0.1.10", features = ["w
 # gpui-fast and its gpui-pre compatibility dependency are patched from the
 # same Imago revision as the shared Atlas components. Atlas uses gpui-kit's
 # gpui-fast feature and doesn't import gpui-pre itself.
-gpui-fast = { git = "https://github.com/makekosmos/imago.git", rev = "9b73a3f1e471291faf8e50ea484f99c6f55e9789" }
-gpui-pre = { git = "https://github.com/makekosmos/imago.git", rev = "9b73a3f1e471291faf8e50ea484f99c6f55e9789" }
+gpui-fast = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
+gpui-pre = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }

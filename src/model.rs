@@ -1,5 +1,7 @@
 // Port of src/dev/seed.ts + task lifecycle/filter logic to Rust.
-use chrono::{Datelike, Duration, Local, NaiveDate};
+#[cfg(any(not(target_os = "macos"), test))]
+use chrono::Duration;
+use chrono::{Datelike, Local, NaiveDate};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Copy, Serialize, Deserialize)]
@@ -49,6 +51,7 @@ pub struct Project {
 // Date helpers (mirror taskLifecycle localDateKey / taskDate)
 // ---------------------------------------------------------------------------
 
+#[cfg(test)]
 pub fn today_key() -> String {
     let d = Local::now().date_naive();
     format!("{:04}-{:02}-{:02}", d.year(), d.month(), d.day())
@@ -62,10 +65,12 @@ pub fn parse_key(key: &str) -> Option<NaiveDate> {
     NaiveDate::parse_from_str(key, "%Y-%m-%d").ok()
 }
 
+#[cfg(any(not(target_os = "macos"), test))]
 pub fn day_key(offset: i64) -> String {
     key_of(Local::now().date_naive() + Duration::days(offset))
 }
 
+#[cfg(any(not(target_os = "macos"), test))]
 fn iso_at(offset: i64, h: u32, m: u32) -> String {
     let d = Local::now().date_naive() + Duration::days(offset);
     format!(
@@ -107,6 +112,7 @@ pub fn date_only(value: &Option<String>) -> Option<String> {
 }
 
 /// Day the board uses: the scheduled day, if it parses.
+#[cfg(test)]
 pub fn task_date(t: &Todo) -> (Option<String>, bool) {
     (date_only(&t.scheduled_date), false)
 }
@@ -115,6 +121,7 @@ pub fn task_date(t: &Todo) -> (Option<String>, bool) {
 // Status / predicates (taskLifecycle.ts + todoFilterService.ts)
 // ---------------------------------------------------------------------------
 
+#[cfg(test)]
 pub fn task_status(t: &Todo) -> Status {
     if t.is_completed || t.status == Status::Done {
         Status::Done
@@ -123,14 +130,17 @@ pub fn task_status(t: &Todo) -> Status {
     }
 }
 
+#[cfg(test)]
 pub fn is_active(t: &Todo) -> bool {
     task_status(t) != Status::Done && !t.is_trashed
 }
 
+#[cfg(test)]
 pub fn is_inbox(t: &Todo) -> bool {
     task_status(t) == Status::Inbox && !t.is_trashed
 }
 
+#[cfg(test)]
 pub fn is_deferred(t: &Todo) -> bool {
     // The someday flag is only meaningful on a live task: `complete_todo`
     // leaves it set on the finished copy, and Engine data from other clients
@@ -139,6 +149,7 @@ pub fn is_deferred(t: &Todo) -> bool {
     is_active(t) && t.is_someday
 }
 
+#[cfg(test)]
 pub fn is_overdue(t: &Todo, today: &str) -> bool {
     if !is_active(t) || is_inbox(t) || is_deferred(t) {
         return false;
@@ -148,6 +159,7 @@ pub fn is_overdue(t: &Todo, today: &str) -> bool {
 }
 
 /// Next ISO week bounds (Monday..=Sunday) as day keys.
+#[cfg(test)]
 pub fn next_week_bounds(today: &str) -> Option<(String, String)> {
     let (mon, sun) = week_bounds(today)?;
     let mon = parse_key(&mon)? + Duration::days(7);
@@ -155,14 +167,8 @@ pub fn next_week_bounds(today: &str) -> Option<(String, String)> {
     Some((key_of(mon), key_of(sun)))
 }
 
-/// Monday of next week as a day key — «следующая неделя» as a real date.
-pub fn next_monday_key(today: &str) -> Option<String> {
-    let (mon, _) = week_bounds(today)?;
-    let mon = parse_key(&mon)? + Duration::days(7);
-    Some(key_of(mon))
-}
-
 /// Current ISO week bounds (Monday..=Sunday) as day keys.
+#[cfg(test)]
 pub fn week_bounds(today: &str) -> Option<(String, String)> {
     let d = parse_key(today)?;
     let mon = d - Duration::days(d.weekday().num_days_from_monday() as i64);
@@ -173,6 +179,7 @@ pub fn week_bounds(today: &str) -> Option<(String, String)> {
 /// the week when its date falls inside it or it carries the `is_today`
 /// ("this week") flag with no date at all.
 /// Active, non-deferred task whose date falls inside the given week bounds.
+#[cfg(test)]
 fn is_due_in_bounds(t: &Todo, week: &(String, String)) -> bool {
     let (date, _) = task_date(t);
     date.as_deref()
@@ -181,6 +188,7 @@ fn is_due_in_bounds(t: &Todo, week: &(String, String)) -> bool {
         && !is_deferred(t)
 }
 
+#[cfg(test)]
 pub fn is_due_this_week(t: &Todo, week: &(String, String)) -> bool {
     if !is_active(t) || is_inbox(t) || is_deferred(t) {
         return false;
@@ -195,10 +203,12 @@ pub fn is_due_this_week(t: &Todo, week: &(String, String)) -> bool {
 
 /// Week list body below the overdue block: a task dated earlier this week is
 /// already listed as overdue, so it must not appear a second time.
+#[cfg(test)]
 fn in_week_list(t: &Todo, week: &(String, String), today: &str) -> bool {
     (is_due_this_week(t, week) && !is_overdue(t, today)) || completed_in_week(t, week)
 }
 
+#[cfg(test)]
 pub fn completed_in_week(t: &Todo, week: &(String, String)) -> bool {
     task_status(t) == Status::Done
         && !t.is_trashed
@@ -209,6 +219,7 @@ pub fn completed_in_week(t: &Todo, week: &(String, String)) -> bool {
 
 /// The local day a task was completed, for statistics aggregation. Trashed
 /// tasks are excluded from every count.
+#[cfg(test)]
 pub fn completed_day(t: &Todo) -> Option<NaiveDate> {
     if task_status(t) != Status::Done || t.is_trashed {
         return None;
@@ -216,6 +227,7 @@ pub fn completed_day(t: &Todo) -> Option<NaiveDate> {
     date_only(&t.completed_at).and_then(|k| parse_key(&k))
 }
 
+#[cfg(test)]
 pub fn is_archived(t: &Todo, today: &str) -> bool {
     if task_status(t) != Status::Done || t.is_trashed {
         return false;
@@ -230,6 +242,7 @@ pub fn is_archived(t: &Todo, today: &str) -> bool {
 /// offsets differ ("+03:00" compares above "Z" although it marks an earlier
 /// instant), so Logbook/Trash order by the parsed instant; unparseable values
 /// sink to the bottom.
+#[cfg(any(not(target_os = "macos"), test))]
 fn instant_key(value: Option<&str>) -> i64 {
     value
         .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
@@ -242,11 +255,15 @@ mod tests;
 
 #[cfg(test)]
 mod capture;
+#[cfg(test)]
 mod lists;
 mod seed;
 #[cfg(test)]
 pub use capture::{parse_project_mention, parse_quick_entry_capture};
+#[cfg(test)]
 pub use lists::{filter_idx, SmartList};
+pub use seed::new_todo;
+#[cfg(not(target_os = "macos"))]
+pub use seed::seed_todos;
 #[cfg(test)]
 pub(crate) use seed::todo;
-pub use seed::{new_todo, seed_projects, seed_todos};

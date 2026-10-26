@@ -5,25 +5,13 @@ use crate::appearance::{AccentSource, Mode};
 use super::Run;
 
 pub(super) async fn run(run: &Run, cx: &mut AsyncApp) {
-    let demo_counts = run.read(cx, |agenda| (agenda.todos.len(), agenda.projects.len()));
+    let task_count = run.read(cx, |agenda| agenda.todos.len());
     run.check(
-        &format!(
-            "demo data loaded: {} tasks, {} projects",
-            demo_counts.0, demo_counts.1
-        ),
-        demo_counts.0 > 0 && demo_counts.1 == 2,
+        &format!("demo data loaded: {task_count} tasks"),
+        task_count > 0,
     );
-    run.shot(cx, "inbox").await;
-    for name in [
-        "week",
-        "next-week",
-        "someday",
-        "logbook",
-        "project",
-        "statistics",
-        "about",
-        "trash",
-    ] {
+    run.shot(cx, "journal").await;
+    for name in ["tasks", "about"] {
         run.navigate_nsh(cx, name).await;
         run.shot(cx, name).await;
         run.check(

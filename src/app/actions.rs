@@ -1,5 +1,5 @@
-use super::{Atlas, Route};
-use crate::model::{new_todo, next_monday_key, today_key, Status, Todo};
+use super::Atlas;
+use crate::model::{new_todo, Status, Todo};
 use crate::store::{Command, Mutation};
 
 impl Atlas {
@@ -29,25 +29,6 @@ impl Atlas {
         let mut todo = new_todo(uuid::Uuid::new_v4().to_string(), title);
         todo.sort_order = self.todos.len() as i32;
         todo.created_at = chrono::Utc::now().to_rfc3339();
-        match &self.route {
-            Route::Week => {
-                todo.status = Status::Todo;
-                todo.is_today = true;
-            }
-            Route::NextWeek => {
-                todo.status = Status::Todo;
-                todo.scheduled_date = next_monday_key(&today_key());
-            }
-            Route::Someday => {
-                todo.status = Status::Todo;
-                todo.is_someday = true;
-            }
-            Route::Project(id) => {
-                todo.status = Status::Todo;
-                todo.project_id = Some(id.clone());
-            }
-            _ => {}
-        }
         self.save_todo(None, todo);
     }
 

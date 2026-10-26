@@ -1,4 +1,4 @@
-use super::{Engine, ErrorKind};
+use super::Engine;
 use serde_json::{json, Value};
 use std::{
     collections::HashMap,
@@ -50,7 +50,8 @@ fn journal_filter_order_and_crud_use_expected_snapshots() {
         "Первая запись"
     );
     assert_eq!(stored["propsJson"]["extensions"]["entry_kind"], "journal");
-    assert_eq!(stored["propsJson"].as_object().unwrap().len(), 1);
+    assert_eq!(stored["propsJson"]["description"], "Первая запись");
+    assert_eq!(stored["propsJson"].as_object().unwrap().len(), 2);
 
     let mut with_extension = stored;
     with_extension["propsJson"]["extensions"]["foreign"] = json!({"keep":true});

@@ -1,13 +1,12 @@
 //! Engine is the only owner of task persistence. No database or local task mirror.
+mod journal;
 pub mod mapping;
 #[cfg(test)]
 mod mapping_tests;
 #[cfg(test)]
 mod payload_fixtures;
-mod journal;
 pub use journal::JournalEntry;
 #[cfg(test)]
-#[path = "journal_tests.rs"]
 mod journal_tests;
 mod projects;
 #[cfg(test)]
@@ -18,14 +17,25 @@ mod transport;
 #[cfg(test)]
 mod transport_tests;
 
+use crate::model::Project;
 use crate::model::Todo;
 pub use imago_nsh::mundus_gpui_kit::engine_error::{EngineError, ErrorKind};
 use serde_json::{json, Value};
 pub use transport::Engine;
+
+#[derive(Default)]
+pub struct Snapshot {
+    pub todos: Vec<Todo>,
+    pub projects: Vec<Project>,
+}
+
+#[cfg(not(target_os = "macos"))]
 mod worker;
-pub use worker::{Command, Mutation, Reply, Snapshot, Worker};
+#[cfg(not(target_os = "macos"))]
+pub use worker::{Command, Mutation, Reply, Worker};
 
 impl Engine {
+    #[cfg(any(not(target_os = "macos"), test))]
     fn save_with_next(
         &self,
         before: Option<&Todo>,

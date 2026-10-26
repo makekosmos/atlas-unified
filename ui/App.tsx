@@ -40,9 +40,9 @@ void Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
     shortcuts.set(Object.fromEntries(shortcutNames.map((name) => [name, shortcutOptions[name].includes(saved[name] ?? "") ? saved[name] : defaultShortcuts[name]])) as Shortcuts);
   } catch { /* A damaged preference falls back to the defaults. */ }
 });
-const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route } }>("atlas.bridge", {
+const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[] }>("atlas.bridge", {
   props: ["route"],
-  events: ["state", "navigate"],
+  events: ["state", "navigate", "journal"],
 });
 
 function isSnapshot(value: unknown): value is Snapshot {
@@ -256,9 +256,10 @@ function App() {
         route={route()}
         onState={(next) => {
           route.set(next.route);
-          snapshot.set(next);
+          snapshot.set({ ...next, journalEntries: snapshot().journalEntries });
           sidebarVisible.set(next.sidebarVisible);
         }}
+        onJournal={(entries) => snapshot.set({ ...snapshot(), journalEntries: entries })}
         onNavigate={(event) => changeRoute(event.route)}
       />
       {snapshot().chrome === "tsx" && <SharedTitlebar

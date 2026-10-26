@@ -24,6 +24,7 @@ pub(crate) fn todo(id: impl Into<String>, title: &str) -> Todo {
     }
 }
 
+#[cfg(not(target_os = "macos"))]
 pub fn seed_todos() -> Vec<Todo> {
     let mut v: Vec<Todo> = vec![
         todo("dev-inbox-1", "Перечитать бриф по лендингу"),
@@ -128,21 +129,4 @@ pub fn seed_todos() -> Vec<Todo> {
         t.sort_order = i as i32;
     }
     v
-}
-
-pub fn seed_projects() -> Vec<Project> {
-    vec![
-        Project {
-            id: "dev-proj-release".into(),
-            title: "Релиз Atlas 1.0".into(),
-            status: 0,
-            sort_order: 0,
-        },
-        Project {
-            id: "dev-proj-home".into(),
-            title: "Дом и быт".into(),
-            status: 0,
-            sort_order: 1,
-        },
-    ]
 }

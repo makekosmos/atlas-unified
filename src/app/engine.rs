@@ -107,7 +107,6 @@ impl Atlas {
 
     fn load_snapshot(&mut self, snapshot: Snapshot) {
         self.todos = snapshot.todos;
-        self.projects = snapshot.projects;
         self.storage_ready = true;
         self.storage_error = None;
     }

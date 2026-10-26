@@ -1,112 +1,71 @@
-use std::{cell::RefCell, rc::Rc};
+#[cfg(not(target_os = "macos"))]
+use std::{cell::RefCell, rc::Rc, sync::mpsc, thread};
 
+#[cfg(not(target_os = "macos"))]
 use gpui::{App, Entity, Subscription, Window};
+#[cfg(not(target_os = "macos"))]
 use imago_nsh::{ComponentContext, NativeComponent};
+#[cfg(not(target_os = "macos"))]
 use serde_json::{json, Value};
 
-use crate::app::{Atlas, Route};
-use crate::model::{filter_idx, SmartList};
+#[cfg(not(target_os = "macos"))]
+use crate::{
+    app::Atlas,
+    model::Todo,
+    store::{Engine, JournalEntry},
+};
 
+#[cfg(target_os = "macos")]
+pub(crate) mod macos;
+
+#[cfg(not(target_os = "macos"))]
 pub(crate) struct AtlasBridge {
     context: ComponentContext,
     agenda: Entity<Atlas>,
     route: Rc<RefCell<String>>,
-    project_id: Rc<RefCell<String>>,
+    journal_commands: mpsc::Sender<JournalRequest>,
     subscription: Option<Subscription>,
 }
 
+#[cfg(not(target_os = "macos"))]
 impl AtlasBridge {
     pub(crate) fn new(context: ComponentContext, agenda: Entity<Atlas>) -> Self {
+        let journal_commands = start_journal_bridge(context.clone());
         Self {
             context,
             agenda,
-            route: Rc::new(RefCell::new(String::new())),
-            project_id: Rc::new(RefCell::new("dev-proj-release".into())),
+            route: Rc::new(RefCell::new("journal".into())),
+            journal_commands,
             subscription: None,
         }
     }
 
     fn publish(&self, cx: &App) {
         let agenda = self.agenda.read(cx);
-        let route = route_key(&agenda.route);
+        let route = self.route.borrow().clone();
         self.context.emit("state", snapshot(agenda, &route));
     }
-
-    fn route(&self) -> Route {
-        match self.route.borrow().as_str() {
-            "week" => Route::Week,
-            "next-week" => Route::NextWeek,
-            "someday" => Route::Someday,
-            "logbook" => Route::Logbook,
-            "trash" => Route::Trash,
-            "statistics" => Route::Statistics,
-            "settings" => Route::Settings,
-            "about" => Route::About,
-            "project" => Route::Project(self.project_id.borrow().clone()),
-            _ => Route::Inbox,
-        }
-    }
 }
 
-fn route_key(route: &Route) -> String {
-    match route {
-        Route::Inbox => "inbox".into(),
-        Route::Week => "week".into(),
-        Route::NextWeek => "next-week".into(),
-        Route::Someday => "someday".into(),
-        Route::Logbook => "logbook".into(),
-        Route::Trash => "trash".into(),
-        Route::Settings => "settings".into(),
-        Route::Statistics => "statistics".into(),
-        Route::About => "about".into(),
-        Route::Project(_) => "project".into(),
-    }
-}
-
+#[cfg(not(target_os = "macos"))]
 pub(crate) fn initial_snapshot(agenda: &Atlas) -> Value {
-    snapshot(agenda, "inbox")
+    snapshot(agenda, "journal")
 }
 
+#[cfg(not(target_os = "macos"))]
 fn snapshot(agenda: &Atlas, route: &str) -> Value {
-    let list = match route {
-        "week" => Some(SmartList::Week),
-        "next-week" => Some(SmartList::NextWeek),
-        "someday" => Some(SmartList::Someday),
-        "logbook" => Some(SmartList::Logbook),
-        "trash" => Some(SmartList::Trash),
-        "statistics" | "settings" | "about" | "project" => None,
-        _ => Some(SmartList::Inbox),
-    };
-    let project_id = match &agenda.route {
-        Route::Project(id) => Some(id.as_str()),
-        _ => None,
-    };
-    let todos = if let Some(project_id) = project_id {
-        agenda
-            .todos
-            .iter()
-            .filter(|todo| {
-                todo.project_id.as_deref() == Some(project_id)
-                    && !todo.is_trashed
-                    && !todo.is_completed
-            })
-            .collect::<Vec<_>>()
+    let todos: Vec<&Todo> = if route == "tasks" {
+        agenda.todos.iter().collect()
     } else {
-        list.map(|list| {
-            filter_idx(list, &agenda.todos)
-                .into_iter()
-                .map(|index| &agenda.todos[index])
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default()
+        Vec::new()
     };
-    let project = project_id.and_then(|id| agenda.projects.iter().find(|project| project.id == id));
-    let archived = agenda
-        .todos
-        .iter()
-        .filter(|todo| todo.is_completed && !todo.is_trashed)
-        .count();
-    let trashed = agenda.todos.iter().filter(|todo| todo.is_trashed).count();
+    let title = match route {
+        "journal" => "Дневник",
+        "tasks" => "Задачи",
+        "settings" => "Настройки",
+        "about" => "О приложении",
+        _ => "Дневник",
+    };
     let theme_idx = agenda
         .appearance
         .as_ref()
@@ -128,15 +87,10 @@ fn snapshot(agenda: &Atlas, route: &str) -> Value {
         .unwrap_or(palette.accent);
     json!({
         "route": route,
-        "title": agenda.page_title().0.to_string(),
+        "title": title,
         "todos": todos,
-        "projects": &agenda.projects,
-        "project": project,
-        "archivedCount": archived,
-        "trashCount": trashed,
-        "todoCount": agenda.todos.len(),
+        "journalEntries": [],
         "version": env!("CARGO_PKG_VERSION"),
-        "activity": agenda.nsh_activity(),
         "appearance": agenda.appearance,
         "appearanceEditable": agenda.appearance_editable(),
         "themes": crate::palettes::THEMES.iter().map(|theme| json!({"key": theme.key, "name": theme.name})).collect::<Vec<_>>(),
@@ -149,17 +103,90 @@ fn snapshot(agenda: &Atlas, route: &str) -> Value {
             "card": color(palette.card),
         },
         "sidebarVisible": agenda.sidebar_visible,
+        "chrome": "tsx"
     })
 }
 
+#[cfg(not(target_os = "macos"))]
+enum JournalRequest {
+    Create(String),
+    Update(String, String),
+    Delete(String),
+    Reload,
+}
+
+#[cfg(not(target_os = "macos"))]
+fn start_journal_bridge(context: ComponentContext) -> mpsc::Sender<JournalRequest> {
+    let (sender, requests) = mpsc::channel();
+    thread::spawn(move || {
+        let engine = Engine::default();
+        let mut entries = engine.journal_list().unwrap_or_default();
+        emit_journal_entries(&context, &entries);
+        while let Ok(request) = requests.recv() {
+            match request {
+                JournalRequest::Create(text) => match engine.journal_create(&text) {
+                    Ok(entry) => {
+                        entries.push(entry);
+                        entries
+                            .sort_by(|a, b| a.created_at.cmp(&b.created_at).then(a.id.cmp(&b.id)));
+                    }
+                    Err(error) => eprintln!("[atlas-journal] create failed: {error}"),
+                },
+                JournalRequest::Update(id, text) => {
+                    match entries.iter().find(|entry| entry.id == id) {
+                        Some(before) => match engine.journal_update(before, &text) {
+                            Ok(updated) => replace_journal_entry(&mut entries, updated),
+                            Err(error) => eprintln!("[atlas-journal] update failed: {error}"),
+                        },
+                        None => {
+                            eprintln!("[atlas-journal] update failed: entry is no longer visible")
+                        }
+                    }
+                }
+                JournalRequest::Delete(id) => match entries.iter().find(|entry| entry.id == id) {
+                    Some(before) => match engine.journal_delete(before) {
+                        Ok(()) => entries.retain(|entry| entry.id != id),
+                        Err(error) => eprintln!("[atlas-journal] delete failed: {error}"),
+                    },
+                    None => {
+                        eprintln!("[atlas-journal] delete failed: entry is no longer visible")
+                    }
+                },
+                JournalRequest::Reload => entries = engine.journal_list().unwrap_or(entries),
+            }
+            emit_journal_entries(&context, &entries);
+        }
+    });
+    sender
+}
+
+#[cfg(not(target_os = "macos"))]
+fn replace_journal_entry(entries: &mut [JournalEntry], updated: JournalEntry) {
+    if let Some(entry) = entries.iter_mut().find(|entry| entry.id == updated.id) {
+        *entry = updated;
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn emit_journal_entries(context: &ComponentContext, entries: &[JournalEntry]) {
+    context.emit(
+        "journal",
+        json!(entries
+            .iter()
+            .map(|entry| json!({"id": entry.id, "text": entry.text, "createdAt": entry.created_at}))
+            .collect::<Vec<_>>()),
+    );
+}
+
+#[cfg(not(target_os = "macos"))]
 impl NativeComponent for AtlasBridge {
     fn render(&mut self, _window: &mut Window, cx: &mut App) -> Option<gpui::AnyElement> {
         if self.subscription.is_none() {
             let context = self.context.clone();
+            let route = self.route.clone();
             self.subscription = Some(cx.observe(&self.agenda, move |agenda, cx| {
                 let state = agenda.read(cx);
-                let route = route_key(&state.route);
-                context.emit("state", snapshot(state, &route));
+                context.emit("state", snapshot(state, &route.borrow()));
             }));
             self.publish(cx);
         }
@@ -167,22 +194,20 @@ impl NativeComponent for AtlasBridge {
     }
 
     fn set_prop(&mut self, name: &str, value: Option<&Value>, _window: &mut Window, cx: &mut App) {
-        if name == "projectId" {
-            *self.project_id.borrow_mut() =
-                value.and_then(Value::as_str).unwrap_or_default().to_owned();
-            return;
-        }
         if name != "route" {
             return;
         }
-        let route = value.and_then(Value::as_str).unwrap_or("inbox").to_owned();
+        let route = value
+            .and_then(Value::as_str)
+            .unwrap_or("journal")
+            .to_owned();
         if *self.route.borrow() == route {
             return;
         }
         *self.route.borrow_mut() = route;
-        let route = self.route();
+        let route = self.route.borrow().clone();
         self.agenda.update(cx, |agenda, cx| {
-            agenda.navigate(route);
+            agenda.current_route = route;
             cx.notify();
         });
         self.publish(cx);
@@ -190,6 +215,30 @@ impl NativeComponent for AtlasBridge {
 
     fn command(&mut self, name: &str, args: &Value, _window: &mut Window, cx: &mut App) {
         match name {
+            "journal.create" => {
+                if let Some(text) = args.get("text").and_then(Value::as_str) {
+                    let _ = self
+                        .journal_commands
+                        .send(JournalRequest::Create(text.to_owned()));
+                }
+            }
+            "journal.update" => {
+                if let (Some(id), Some(text)) = (
+                    args.get("id").and_then(Value::as_str),
+                    args.get("text").and_then(Value::as_str),
+                ) {
+                    let _ = self
+                        .journal_commands
+                        .send(JournalRequest::Update(id.to_owned(), text.to_owned()));
+                }
+            }
+            "journal.delete" => {
+                if let Some(id) = args.get("id").and_then(Value::as_str) {
+                    let _ = self
+                        .journal_commands
+                        .send(JournalRequest::Delete(id.to_owned()));
+                }
+            }
             "complete" => {
                 if let Some(id) = args.get("id").and_then(Value::as_str) {
                     let id = id.to_owned();
@@ -214,14 +263,13 @@ impl NativeComponent for AtlasBridge {
                     self.publish(cx);
                 }
             }
-            "toggle-sidebar" => {
-                self.agenda.update(cx, |agenda, cx| {
-                    agenda.toggle_sidebar();
-                    cx.notify();
-                });
-            }
+            "toggle-sidebar" => self.agenda.update(cx, |agenda, cx| {
+                agenda.toggle_sidebar();
+                cx.notify();
+            }),
             "reload" => {
                 self.agenda.update(cx, |agenda, _| agenda.reload_storage());
+                let _ = self.journal_commands.send(JournalRequest::Reload);
             }
             _ => {}
         }

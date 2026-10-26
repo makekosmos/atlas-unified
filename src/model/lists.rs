@@ -1,12 +1,10 @@
 use super::*;
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[allow(dead_code)]
 pub enum SmartList {
-    Inbox,
     Week,
     NextWeek,
-    Someday,
     Logbook,
-    Trash,
 }
 
 /// Index-based twin of [`filter_todos`]: returns positions into `todos`
@@ -53,19 +51,13 @@ pub fn filter_idx(list: SmartList, todos: &[Todo]) -> Vec<usize> {
         .enumerate()
         .filter(|(_, t)| match list {
             SmartList::Week | SmartList::NextWeek => unreachable!(),
-            SmartList::Inbox => is_inbox(t),
-            SmartList::Someday => is_deferred(t),
             SmartList::Logbook => is_archived(t, &today),
-            SmartList::Trash => t.is_trashed,
         })
         .map(|(i, _)| i)
         .collect();
     match list {
         SmartList::Logbook => v.sort_by_cached_key(|&i| {
             std::cmp::Reverse(instant_key(todos[i].completed_at.as_deref()))
-        }),
-        SmartList::Trash => v.sort_by_cached_key(|&i| {
-            std::cmp::Reverse(instant_key(Some(todos[i].created_at.as_str())))
         }),
         _ => v.sort_by_key(|&i| todos[i].sort_order),
     }

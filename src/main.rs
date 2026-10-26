@@ -1,32 +1,34 @@
-// Atlas GPUI — task data is owned by Mundus Engine.
 #![windows_subsystem = "windows"]
-#[cfg(target_os = "macos")]
-#[macro_use]
-extern crate objc;
+#[cfg(not(target_os = "macos"))]
 mod app;
 mod appearance;
+#[cfg(not(target_os = "macos"))]
 mod assets;
 mod brand;
-#[cfg(feature = "e2e")]
+#[cfg(all(feature = "e2e", not(target_os = "macos")))]
 mod e2e;
-#[cfg(target_os = "macos")]
-mod macos_close;
 mod model;
 #[cfg(target_os = "macos")]
-mod native_menu;
+mod native_shell;
+#[cfg(target_os = "macos")]
+mod navigation;
 mod nsh_bridge;
+#[cfg(not(target_os = "macos"))]
 mod nsh_host;
 mod palettes;
 mod store;
 
+#[cfg(not(target_os = "macos"))]
 use gpui::{px, size, App, AppContext, Bounds, Styled, WindowBounds, WindowOptions};
 #[cfg(target_os = "windows")]
 use gpui_fast_backend as _;
+#[cfg(not(target_os = "macos"))]
 use imago_nsh::{Bundle, NshApp};
 
 /// `ATLAS_OFFSCREEN=1` parks the window far outside the desktop so automated
 /// soak runs (FPS/scroll benchmarks) don't pop a window on the user's screen.
 /// DWM still composes it, so frame pacing stays representative.
+#[cfg(not(target_os = "macos"))]
 fn window_bounds(cx: &mut App) -> Bounds<gpui::Pixels> {
     if offscreen() {
         gpui::bounds(
@@ -38,6 +40,7 @@ fn window_bounds(cx: &mut App) -> Bounds<gpui::Pixels> {
     }
 }
 
+#[cfg(not(target_os = "macos"))]
 fn offscreen() -> bool {
     #[cfg(feature = "e2e")]
     if e2e::requested() {
@@ -46,11 +49,15 @@ fn offscreen() -> bool {
     std::env::var("ATLAS_OFFSCREEN").is_ok()
 }
 
+#[cfg(not(target_os = "macos"))]
 use app::Atlas;
+#[cfg(not(target_os = "macos"))]
 use assets::font_bytes;
 
+#[cfg(not(target_os = "macos"))]
 const WINDOW_TITLE: &str = "Atlas";
 
+#[cfg(not(target_os = "macos"))]
 fn atlas_window_options(cx: &mut App) -> WindowOptions {
     WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(window_bounds(cx))),
@@ -76,6 +83,7 @@ fn atlas_window_options(cx: &mut App) -> WindowOptions {
     }
 }
 
+#[cfg(not(target_os = "macos"))]
 fn open_atlas_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Atlas>) {
     let created = std::rc::Rc::new(std::cell::RefCell::new(None));
     let slot = created.clone();
@@ -129,9 +137,13 @@ fn open_atlas_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Atlas
     (window.into(), agenda)
 }
 
+#[cfg(target_os = "macos")]
+fn main() -> std::process::ExitCode {
+    native_shell::run(navigation::native_rows())
+}
+
+#[cfg(not(target_os = "macos"))]
 fn main() {
-    #[cfg(target_os = "macos")]
-    macos_close::install();
     gpui::application().run(|cx: &mut App| {
         gpui_component::init(cx);
         cx.text_system()
@@ -139,8 +151,6 @@ fn main() {
             .expect("failed to load embedded fonts");
 
         let (window, agenda) = open_atlas_window(cx);
-        #[cfg(target_os = "macos")]
-        native_menu::install(cx);
         #[cfg(feature = "e2e")]
         if e2e::requested() {
             e2e::run(window, agenda, cx);

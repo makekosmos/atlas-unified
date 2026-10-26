@@ -1,14 +1,9 @@
-//! Journal entries are individual Engine-owned `core.note` objects. The only
-//! Atlas-specific data is `propsJson.extensions.entry_kind = "journal"`.
 use super::{Engine, EngineError, ErrorKind};
 use serde_json::{json, Value};
 
 const NOTE_TYPE: &str = "core.note";
 const NOTE_VERSION: &str = "0.1.0";
 
-/// A journal note plus the Engine revision it was read from. Mutations use
-/// that exact revision as `expectedSnapshot`, so stale drafts cannot overwrite
-/// newer edits.
 #[derive(Clone, Debug, PartialEq)]
 pub struct JournalEntry {
     pub id: String,
@@ -19,9 +14,6 @@ pub struct JournalEntry {
 }
 
 impl Engine {
-    /// Lists only journal notes, ordered by their Engine creation time.
-    /// Each object is bracketed by matching write snapshots so the revision
-    /// travels with the exact content the caller sees.
     pub fn journal_list(&self) -> Result<Vec<JournalEntry>, EngineError> {
         let objects = self.rpc("list_objects_by_type", json!({"type_id": NOTE_TYPE}))?;
         let objects = objects
@@ -43,8 +35,6 @@ impl Engine {
         Ok(entries)
     }
 
-    /// Creates a distinct note object. Existing daily journal notes remain
-    /// readable but are never reused as the destination for a new entry.
     pub fn journal_create(&self, text: &str) -> Result<JournalEntry, EngineError> {
         if text.trim().is_empty() {
             return Err(invalid("journal entry is empty"));
@@ -63,7 +53,10 @@ impl Engine {
             "createdAt": now,
             "updatedAt": now,
             "contentJson": document(text),
-            "propsJson": {"extensions": {"entry_kind": "journal"}},
+            "propsJson": {
+                "description": text,
+                "extensions": {"entry_kind": "journal"}
+            },
             "deletedAt": null
         });
         self.upsert_journal(object, expected)?;
@@ -71,8 +64,6 @@ impl Engine {
             .ok_or_else(|| EngineError::local(ErrorKind::Malformed, "created journal note missing"))
     }
 
-    /// Updates an entry only if it still has the revision captured by the
-    /// caller's list/read. Other canonical and extension fields are preserved.
     pub fn journal_update(
         &self,
         before: &JournalEntry,
@@ -92,6 +83,7 @@ impl Engine {
         object["updatedAt"] =
             json!(chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true));
         let mut props = object["propsJson"].as_object().cloned().unwrap_or_default();
+        props.insert("description".into(), json!(text));
         let mut extensions = props
             .get("extensions")
             .and_then(Value::as_object)
@@ -105,7 +97,6 @@ impl Engine {
             .ok_or_else(|| EngineError::local(ErrorKind::Malformed, "updated journal note missing"))
     }
 
-    /// Deletes an entry with the revision that was visible to the caller.
     pub fn journal_delete(&self, entry: &JournalEntry) -> Result<(), EngineError> {
         let result = self.rpc(
             "delete_object",
@@ -168,7 +159,7 @@ fn is_journal(object: &Value) -> bool {
 }
 
 fn is_active_journal(object: &Value) -> bool {
-    is_journal(object) && object.get("deletedAt").map_or(true, Value::is_null)
+    is_journal(object) && object.get("deletedAt").is_none_or(Value::is_null)
 }
 
 fn document(text: &str) -> Value {

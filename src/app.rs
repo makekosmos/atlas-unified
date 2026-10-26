@@ -1,13 +1,9 @@
 mod actions;
-mod activity;
 mod appearance;
 mod engine;
-mod routes;
-
-pub(crate) use routes::Route;
 
 use crate::appearance::{Poller, Response, Writer};
-use crate::model::{Project, Todo};
+use crate::model::Todo;
 use crate::store::Worker;
 use gpui::Context;
 
@@ -18,8 +14,7 @@ pub(crate) struct Atlas {
     pub(crate) storage_busy: bool,
     pub(crate) storage_error: Option<String>,
     pub(crate) todos: Vec<Todo>,
-    pub(crate) projects: Vec<Project>,
-    pub(crate) route: Route,
+    pub(crate) current_route: String,
     pub(crate) sidebar_visible: bool,
     pub(crate) appearance: Option<Response>,
     pub(crate) appearance_poller: Option<Poller>,
@@ -48,12 +43,7 @@ impl Atlas {
             } else {
                 Vec::new()
             },
-            projects: if demo {
-                crate::model::seed_projects()
-            } else {
-                Vec::new()
-            },
-            route: initial_route(),
+            current_route: "journal".into(),
             sidebar_visible: true,
             appearance,
             appearance_poller: None,
@@ -64,20 +54,5 @@ impl Atlas {
         agenda.start_storage(cx);
         agenda.start_appearance(cx);
         agenda
-    }
-}
-
-fn initial_route() -> Route {
-    match std::env::var("ATLAS_ROUTE").ok().as_deref() {
-        Some("week") => Route::Week,
-        Some("next-week") => Route::NextWeek,
-        Some("someday") => Route::Someday,
-        Some("statistics") => Route::Statistics,
-        Some("logbook") => Route::Logbook,
-        Some("trash") => Route::Trash,
-        Some("settings") => Route::Settings,
-        Some("about") => Route::About,
-        Some(route) if route.starts_with("project/") => Route::Project(route[8..].to_owned()),
-        _ => Route::Inbox,
     }
 }

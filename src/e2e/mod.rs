@@ -31,7 +31,7 @@ pub fn run(window: AnyWindowHandle, agenda: Entity<Atlas>, cx: &mut App) {
         if std::env::var("ATLAS_E2E").as_deref() == Ok("nsh-stage3") {
             run.nsh_stage3(cx).await;
         } else {
-            run.shot(cx, "inbox").await;
+            run.shot(cx, "journal").await;
         }
         let failed = run.finish();
         cx.update(|cx| cx.quit());

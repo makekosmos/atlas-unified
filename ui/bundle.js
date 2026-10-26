@@ -5,7 +5,7 @@ import { keymap } from "nsh/keymap";
 import { Storage } from "nsh/storage";
 import { Window, titleBar } from "nsh/desktop";
 
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+0dc83f181d0f091f7da074583079582278c407fd/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/types.ts
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+b200b386c850663c51fcf86942a76bc1507f1a8d/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/types.ts
 const spacing = {
 	sidebarWidth: 240,
 	titlebarHeight: 40,
@@ -44,7 +44,7 @@ const densityChoices = [
 ];
 
 //#endregion
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+0dc83f181d0f091f7da074583079582278c407fd/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/AppearanceSettings.tsx
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+b200b386c850663c51fcf86942a76bc1507f1a8d/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/AppearanceSettings.tsx
 function AppearanceSettings(props) {
 	const appearance = () => props.appearance;
 	const settings = () => appearance()?.settings;
@@ -264,7 +264,7 @@ function AppearanceSettings(props) {
 }
 
 //#endregion
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+0dc83f181d0f091f7da074583079582278c407fd/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+b200b386c850663c51fcf86942a76bc1507f1a8d/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
 const icons = {
 	about: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
 	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
@@ -287,7 +287,7 @@ const icons = {
 };
 
 //#endregion
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+0dc83f181d0f091f7da074583079582278c407fd/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+b200b386c850663c51fcf86942a76bc1507f1a8d/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
 function Icon(props) {
 	return (() => {
 		const __nsh_hv0 = element("image");
@@ -622,7 +622,11 @@ Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
 });
 const Bridge = nativeComponent("atlas.bridge", {
 	props: ["route"],
-	events: ["state", "navigate"]
+	events: [
+		"state",
+		"navigate",
+		"journal"
+	]
 });
 function isSnapshot(value) {
 	if (typeof value !== "object" || value === null || !("route" in value) || !isRoute(value.route)) return false;
@@ -1189,9 +1193,16 @@ function App() {
 			},
 			onState: (next) => {
 				route.set(next.route);
-				snapshot.set(next);
+				snapshot.set({
+					...next,
+					journalEntries: snapshot().journalEntries
+				});
 				sidebarVisible.set(next.sidebarVisible);
 			},
+			onJournal: (entries) => snapshot.set({
+				...snapshot(),
+				journalEntries: entries
+			}),
 			onNavigate: (event) => changeRoute(event.route)
 		}), () => snapshot().chrome === "tsx" && component(Titlebar, {
 			get title() {
