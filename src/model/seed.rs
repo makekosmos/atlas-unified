@@ -24,7 +24,6 @@ pub(crate) fn todo(id: impl Into<String>, title: &str) -> Todo {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
 pub fn seed_todos() -> Vec<Todo> {
     let mut v: Vec<Todo> = vec![
         todo("dev-inbox-1", "Перечитать бриф по лендингу"),

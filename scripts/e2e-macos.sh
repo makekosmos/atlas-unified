@@ -45,9 +45,9 @@ cleanup() {
 trap cleanup EXIT
 
 # Own target dir: a `cargo watch` on the same checkout rebuilds
-# target/debug/atlas-gpui without the feature and would swap the binary.
+# target/debug/atlas without the feature and would swap the binary.
 (cd "$root" && cargo build --features e2e --quiet --target-dir "$root/target/e2e-build")
-agenda="$root/target/e2e-build/debug/atlas-gpui"
+agenda="$root/target/e2e-build/debug/atlas"
 
 run_scenario() {
 	local name="$1"

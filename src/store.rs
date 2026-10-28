@@ -29,13 +29,10 @@ pub struct Snapshot {
     pub projects: Vec<Project>,
 }
 
-#[cfg(not(target_os = "macos"))]
 mod worker;
-#[cfg(not(target_os = "macos"))]
 pub use worker::{Command, Mutation, Reply, Worker};
 
 impl Engine {
-    #[cfg(any(not(target_os = "macos"), test))]
     fn save_with_next(
         &self,
         before: Option<&Todo>,

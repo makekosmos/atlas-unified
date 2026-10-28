@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 watch=(--watch src --watch assets --watch Cargo.toml --watch Cargo.lock --watch build.rs)
-run="cargo run --bin atlas-gpui"
+run="cargo run --bin atlas"
 if [[ "${1:-}" == "--local-imago" ]]; then
     imago="$(cd ../imago && pwd)"
     mkdir -p .cargo
@@ -15,7 +15,7 @@ if [[ "${1:-}" == "--local-imago" ]]; then
     watch+=(--watch "$imago/crates/imago-gpui/src" --watch "$imago/crates/imago-gpui/assets"
         --watch "$imago/crates/imago-gpui/Cargo.toml" --watch "$imago/crates/mundus-gpui-kit/src"
         --watch "$imago/crates/mundus-gpui-kit/Cargo.toml")
-    run="cargo --config .cargo/imago-local.toml run --bin atlas-gpui"
+    run="cargo --config .cargo/imago-local.toml run --bin atlas"
 elif [[ $# -ne 0 ]]; then
     echo "Usage: $0 [--local-imago]" >&2
     exit 2

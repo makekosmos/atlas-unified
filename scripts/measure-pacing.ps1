@@ -14,7 +14,7 @@ param(
     [string]$VsyncSource = 'auto',
     [switch]$NoFrameLog,
     [switch]$Onscreen,
-    [string]$Executable = (Join-Path $PSScriptRoot '..\target\debug\atlas-gpui.exe'),
+    [string]$Executable = (Join-Path $PSScriptRoot '..\target\debug\atlas.exe'),
     [double]$MinAverage = 164.5,
     [double]$MaxAverage = 166,
     [double]$MinP99 = 160

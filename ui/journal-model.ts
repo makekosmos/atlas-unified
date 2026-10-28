@@ -6,6 +6,7 @@ export type JournalDayGroup =
 
 const monthNamesInDate = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
 const monthNamesShort = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+const weekdays = ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"];
 
 function localDayKey(date: Date) {
   const year = date.getFullYear();
@@ -30,13 +31,31 @@ export function buildJournalDays(entries: readonly JournalEntry[]): JournalDayGr
     if (group) group.entries.push(entry);
     else groups.set(key, { kind: "dated", key, date, entries: [entry] });
   }
-  return [...groups.values()];
+  for (const group of groups.values()) group.entries.sort((a, b) => entryTime(a) - entryTime(b));
+  return [...groups.values()].sort((a, b) => groupTime(a) - groupTime(b));
+}
+
+function entryTime(entry: JournalEntry) {
+  const time = new Date(entry.createdAt).valueOf();
+  return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
+}
+
+function groupTime(group: JournalDayGroup) {
+  return group.kind === "dated" ? group.date.valueOf() : Number.POSITIVE_INFINITY;
 }
 
 export function formatJournalDay(group: JournalDayGroup, now = new Date()) {
   if (group.kind === "invalid") return group.label;
   const year = group.date.getFullYear() === now.getFullYear() ? "" : ` ${group.date.getFullYear()}`;
-  return `${group.date.getDate()} ${monthNamesInDate[group.date.getMonth()]}${year}`;
+  return `${weekdays[group.date.getDay()]}, ${group.date.getDate()} ${monthNamesInDate[group.date.getMonth()]}${year}`;
+}
+
+export function formatJournalStamp(createdAt: string, _now = new Date()) {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.valueOf())) return "";
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
 }
 
 export type CalendarDay = { key: string; date: Date; count: number; period: string };

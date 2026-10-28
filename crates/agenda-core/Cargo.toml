@@ -2,7 +2,7 @@
 name = "agenda-core"
 version = "0.1.0"
 edition = "2021"
-description = "Pure task/calendar logic shared by desktop atlas-gpui and the Android app (KOS-370)"
+description = "Pure task/calendar logic shared by desktop atlas and the Android app (KOS-370)"
 
 [package.metadata.cargo-shear]
 # This nested module is explicitly declared and re-exported from src/seed.rs.

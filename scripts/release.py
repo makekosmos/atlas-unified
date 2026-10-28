@@ -95,8 +95,8 @@ def package(target):
     version_tuple(version)
     dist = Path("dist")
     dist.mkdir(exist_ok=True)
-    name = f"atlas-gpui-{version}-{target}"
-    binary = Path("target") / target / "release" / ("atlas-gpui.exe" if "windows" in target else "atlas-gpui")
+    name = f"atlas-{version}-{target}"
+    binary = Path("target") / target / "release" / ("atlas.exe" if "windows" in target else "atlas")
     if "windows" in target:
         with zipfile.ZipFile(dist / f"{name}.zip", "w", zipfile.ZIP_DEFLATED) as archive:
             archive.write(binary, binary.name)
@@ -104,7 +104,7 @@ def package(target):
         app = dist / "Atlas.app"
         contents = app / "Contents"
         (contents / "MacOS").mkdir(parents=True, exist_ok=True)
-        executable = contents / "MacOS" / "atlas-gpui"
+        executable = contents / "MacOS" / "atlas"
         shutil.copy2(binary, executable)
         executable.chmod(0o755)
         # CFBundleIconFile + Contents/Resources/atlas.icns — without them the
@@ -131,7 +131,7 @@ def package(target):
             plistlib.dump({
                 "CFBundleName": "Atlas", "CFBundleDisplayName": "Atlas",
                 "CFBundleIdentifier": "com.mundus.atlas",
-                "CFBundleExecutable": "atlas-gpui", "CFBundlePackageType": "APPL",
+                "CFBundleExecutable": "atlas", "CFBundlePackageType": "APPL",
                 "CFBundleIconFile": "atlas",
                 "CFBundleShortVersionString": version, "CFBundleVersion": version,
                 "NSHighResolutionCapable": True,

@@ -41,8 +41,8 @@ def test_release():
 
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
-        manifest = '[package]\nname = "atlas-gpui"\nversion = "0.1.0"\n\n[dependencies.example]\nversion = "0.1.0"\n'
-        lock = 'version = 4\n\n[[package]]\nname = "atlas-gpui"\nversion = "0.1.0"\n\n[[package]]\nname = "example"\nversion = "0.1.0"\n'
+        manifest = '[package]\nname = "atlas"\nversion = "0.1.0"\n\n[dependencies.example]\nversion = "0.1.0"\n'
+        lock = 'version = 4\n\n[[package]]\nname = "atlas"\nversion = "0.1.0"\n\n[[package]]\nname = "example"\nversion = "0.1.0"\n'
         (root / "Cargo.toml").write_text(manifest, encoding="utf-8")
         (root / "Cargo.lock").write_text(lock, encoding="utf-8")
         set_version("1.0.0", root)
@@ -160,20 +160,20 @@ def test_release():
 
             # Archives contain the right executable; the macOS bundle embeds the version.
             for target in ["x86_64-pc-windows-msvc", "x86_64-unknown-linux-gnu", "aarch64-apple-darwin"]:
-                filename = "atlas-gpui.exe" if "windows" in target else "atlas-gpui"
+                filename = "atlas.exe" if "windows" in target else "atlas"
                 binary = Path("target") / target / "release" / filename
                 binary.parent.mkdir(parents=True)
                 binary.write_bytes(b"test executable")
                 with patch.object(release.subprocess, "run") as signer:
                     release.package(target)
                     assert signer.called == ("apple" in target)
-                stem = f"dist/atlas-gpui-1.0.2-{target}"
+                stem = f"dist/atlas-1.0.2-{target}"
                 if "windows" in target:
                     with zipfile.ZipFile(stem + ".zip") as archive:
                         assert archive.read(filename) == b"test executable"
                 else:
                     with tarfile.open(stem + ".tar.gz") as archive:
-                        executable = "Atlas.app/Contents/MacOS/atlas-gpui" if "apple" in target else filename
+                        executable = "Atlas.app/Contents/MacOS/atlas" if "apple" in target else filename
                         assert archive.extractfile(executable).read() == b"test executable"
                         if "apple" in target:
                             plist = plistlib.load(archive.extractfile("Atlas.app/Contents/Info.plist"))

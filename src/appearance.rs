@@ -1,23 +1,15 @@
 //! Consumer of Engine's per-app appearance settings. All state lives in the
 //! Engine data dir — the app holds no local appearance file; `get`/`set` are
-//! scoped to `atlas-gpui` via `app_id`.
+//! scoped to the legacy `atlas-gpui` app id for Engine settings compatibility.
 use serde::{Deserialize, Serialize};
-#[cfg(any(not(target_os = "macos"), test))]
 use serde_json::json;
-#[cfg(any(not(target_os = "macos"), test))]
 use serde_json::Value;
-#[cfg(any(not(target_os = "macos"), test))]
 use std::sync::atomic::{AtomicBool, Ordering};
-#[cfg(not(target_os = "macos"))]
 use std::sync::mpsc::Sender;
-#[cfg(any(not(target_os = "macos"), test))]
 use std::sync::mpsc::{self, Receiver};
-#[cfg(any(not(target_os = "macos"), test))]
 use std::sync::Arc;
-#[cfg(any(not(target_os = "macos"), test))]
 use std::time::Duration;
 
-#[cfg(not(target_os = "macos"))]
 use crate::store::Engine;
 
 pub const APP_ID: &str = "atlas-gpui";
@@ -171,15 +163,12 @@ impl Response {
 /// The poller owns the authenticated transport and never runs on the UI thread.
 /// Replies carry the raw scoped `appearance.get` payload so the shared editor
 /// can ingest it unchanged.
-#[cfg(any(not(target_os = "macos"), test))]
 pub struct Poller {
     pub replies: Receiver<Value>,
     stop: Arc<AtomicBool>,
 }
 
-#[cfg(any(not(target_os = "macos"), test))]
 impl Poller {
-    #[cfg(not(target_os = "macos"))]
     pub fn start() -> Self {
         let engine = Engine::with_timeout(Duration::from_millis(700));
         Self::start_with(Duration::from_secs(2), move || {
@@ -211,7 +200,6 @@ impl Poller {
     }
 }
 
-#[cfg(any(not(target_os = "macos"), test))]
 impl Drop for Poller {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::Relaxed);
@@ -221,13 +209,11 @@ impl Drop for Poller {
 /// Coalescing scoped `appearance.set` writer: rapid edits fold into one
 /// merged patch per flush, mirroring the old local writer's debounce. Replies
 /// are ignored — the poller refreshes the authoritative snapshot.
-#[cfg(not(target_os = "macos"))]
 pub struct Writer {
     sender: Sender<Value>,
     stop: Arc<AtomicBool>,
 }
 
-#[cfg(not(target_os = "macos"))]
 impl Writer {
     pub fn start() -> Self {
         let (sender, receiver) = mpsc::channel::<Value>();
@@ -261,7 +247,6 @@ impl Writer {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
 impl Drop for Writer {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::Relaxed);

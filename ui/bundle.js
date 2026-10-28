@@ -1,43 +1,10 @@
 import { append, bindProp, component, each, element, insert, prop, setup, spread, text } from "nsh:rt";
-import { LayoutAnimation, PanResponder, Storage, effect, keymap, mount, nativeComponent, signal } from "nsh";
-import { Window, titleBar } from "nsh/desktop";
+import { Clipboard, Easing, LayoutAnimation, PanResponder, Storage, createMotion, effect, keymap, mount, nativeComponent, signal } from "nsh";
+import { Menu, Window, titleBar } from "nsh/desktop";
+import { platform } from "os";
 import { Popover } from "nsh/base";
 
-//#region ../../../../Users/user/kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/types.ts
-const spacing = {
-	sidebarWidth: 240,
-	titlebarHeight: 40,
-	rowHeight: 32,
-	compactRowHeight: 28,
-	pageGutter: 28
-};
-const typography = {
-	body: 13,
-	label: 12,
-	title: 24,
-	titlebar: 13
-};
-const defaultColors = {
-	background: "#0d0c10",
-	foreground: "#e7e5ea",
-	muted: "#8d8a94",
-	border: "#27262a",
-	accent: "#af94f9",
-	card: "#131216"
-};
-const accentChoices = [
-	"#8ec07c",
-	"#d79921",
-	"#b18aff",
-	"#83a598",
-	"#fb4934",
-	"#d3869b",
-	"#458588",
-	"#fabd2f"
-];
-
-//#endregion
-//#region ../../../../Users/user/kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
+//#region ../../../../../kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
 const icons = {
 	about: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
 	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
@@ -60,7 +27,7 @@ const icons = {
 };
 
 //#endregion
-//#region ../../../../Users/user/kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
+//#region ../../../../../kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
 function Icon(props) {
 	return (() => {
 		const __nsh_hv0 = element("image");
@@ -71,57 +38,6 @@ function Icon(props) {
 			tintColor: props.color
 		}));
 		return __nsh_hv0;
-	})();
-}
-function NavigationItem(props) {
-	return (() => {
-		const __nsh_hv1 = element("view");
-		bindProp(__nsh_hv1, "onPress", () => props.onPress);
-		prop(__nsh_hv1, "role", "button");
-		bindProp(__nsh_hv1, "accessibilityState", () => ({ selected: props.selected }));
-		prop(__nsh_hv1, "class", "flex-row items-center gap-2 rounded-lg px-2.5");
-		bindProp(__nsh_hv1, "style", () => ({
-			height: spacing.rowHeight,
-			backgroundColor: props.selected ? props.colors.card : "transparent"
-		}));
-		const __nsh_hv2 = element("text");
-		prop(__nsh_hv2, "class", "text-[13px]");
-		bindProp(__nsh_hv2, "style", () => ({ color: props.selected ? props.colors.foreground : props.colors.muted }));
-		insert(__nsh_hv2, () => props.label);
-		append(__nsh_hv1, __nsh_hv2);
-		insert(__nsh_hv1, component(Icon, {
-			get name() {
-				return props.icon;
-			},
-			get color() {
-				return props.colors.muted;
-			}
-		}), __nsh_hv2);
-		return __nsh_hv1;
-	})();
-}
-function Button(props) {
-	return (() => {
-		const __nsh_hv32 = element("view");
-		bindProp(__nsh_hv32, "onPress", () => props.disabled ? void 0 : props.onPress);
-		prop(__nsh_hv32, "role", "button");
-		bindProp(__nsh_hv32, "accessibilityState", () => ({
-			selected: !!props.selected,
-			disabled: !!props.disabled
-		}));
-		bindProp(__nsh_hv32, "class", () => `rounded-md border px-3 py-2 ${props.className ?? ""}`);
-		bindProp(__nsh_hv32, "style", () => ({
-			backgroundColor: props.selected ? props.colors.card : props.colors.background,
-			borderColor: props.selected ? props.colors.accent : props.colors.border,
-			opacity: props.disabled ? .5 : 1,
-			...props.style
-		}));
-		const __nsh_hv33 = element("text");
-		prop(__nsh_hv33, "class", "text-[13px]");
-		bindProp(__nsh_hv33, "style", () => ({ color: props.textColor ?? (props.selected ? props.colors.foreground : props.colors.muted) }));
-		insert(__nsh_hv33, () => props.label);
-		append(__nsh_hv32, __nsh_hv33);
-		return __nsh_hv32;
 	})();
 }
 function Dialog(props) {
@@ -169,6 +85,134 @@ var navigation_default = [
 ];
 
 //#endregion
+//#region themes.ts
+function colors(background, foreground, muted, border, accent, card) {
+	return {
+		background,
+		foreground,
+		muted,
+		border,
+		accent,
+		card
+	};
+}
+const BLUE_LIGHT = "#1e86fc";
+const BLUE_DARK = "#1784fc";
+const previewThemes = [{
+	key: "default",
+	name: "Default",
+	light: colors("#f8f7f9", "#222027", "#615f67", "#dedde0", BLUE_LIGHT, "#f3f2f4"),
+	dark: colors("#0d0c10", "#e7e5ea", "#8d8a94", "#27262a", BLUE_DARK, "#131216")
+}];
+const systemAccents = [
+	{
+		key: "mono",
+		name: "Чёрный",
+		darkName: "Белый",
+		light: "#000000",
+		dark: "#ffffff",
+		plate: "#d1d1d1",
+		legacy: []
+	},
+	{
+		key: "brown",
+		name: "Коричневый",
+		light: "#a16c39",
+		dark: "#a16c39",
+		plate: "#83582f",
+		legacy: ["#996e42"]
+	},
+	{
+		key: "red",
+		name: "Красный",
+		light: "#fb2c3f",
+		dark: "#fc2d3e",
+		plate: "#cf2633",
+		legacy: ["#e74347", "#e84447"]
+	},
+	{
+		key: "orange",
+		name: "Оранжевый",
+		light: "#fe6a10",
+		dark: "#fa6710",
+		plate: "#cc550f",
+		legacy: ["#ec7332", "#e87031"]
+	},
+	{
+		key: "yellow",
+		name: "Жёлтый",
+		light: "#f69312",
+		dark: "#f79411",
+		plate: "#ca7912",
+		legacy: ["#e8983a", "#e9993a"]
+	},
+	{
+		key: "green",
+		name: "Зелёный",
+		light: "#13c16f",
+		dark: "#13c370",
+		plate: "#169f5c",
+		legacy: ["#59be77", "#5ac078"]
+	},
+	{
+		key: "teal",
+		name: "Бирюзовый",
+		light: "#15b8a3",
+		dark: "#15b8a4",
+		plate: "#179686",
+		legacy: ["#55b5a3", "#55b5a4"]
+	},
+	{
+		key: "blue",
+		name: "Синий",
+		light: BLUE_LIGHT,
+		dark: BLUE_DARK,
+		plate: "#156dcf",
+		legacy: ["#4184f4", "#3e82f4"]
+	},
+	{
+		key: "purple",
+		name: "Фиолетовый",
+		light: "#905afa",
+		dark: "#915bfc",
+		plate: "#764ace",
+		legacy: ["#885cf1", "#895df3"]
+	},
+	{
+		key: "pink",
+		name: "Розовый",
+		light: "#f93498",
+		dark: "#fb3499",
+		plate: "#cd2b7e",
+		legacy: ["#e54896", "#e74897"]
+	},
+	{
+		key: "gray",
+		name: "Серый",
+		light: "#959595",
+		dark: "#777777",
+		plate: "#626262",
+		legacy: []
+	}
+];
+function systemAccent(stored, dark) {
+	if (!stored) return void 0;
+	const needle = stored.toLowerCase();
+	const match = systemAccents.find((accent) => accent.light === needle || accent.dark === needle || accent.legacy.includes(needle));
+	if (!match) return stored;
+	return dark ? match.dark : match.light;
+}
+function journalBubble(accent) {
+	const needle = accent.toLowerCase();
+	return systemAccents.find((item) => item.dark === needle && item.light !== item.dark)?.plate ?? accent;
+}
+function accentMark(hex) {
+	const n = Number.parseInt(hex.replace("#", ""), 16);
+	if (Number.isNaN(n)) return "#ffffff";
+	return ((n >> 16 & 255) * 299 + (n >> 8 & 255) * 587 + (n & 255) * 114) / 1e3 > 160 ? "#1d1d1f" : "#ffffff";
+}
+
+//#endregion
 //#region state.ts
 const fallback = {
 	route: "journal",
@@ -197,58 +241,373 @@ const fallback = {
 		}
 	},
 	appearanceEditable: false,
-	themes: [
-		{
-			key: "default",
-			name: "Default",
-			light: defaultColors,
-			dark: defaultColors
-		},
-		{
-			key: "claude",
-			name: "Claude",
-			light: defaultColors,
-			dark: defaultColors
-		},
-		{
-			key: "graphite",
-			name: "Graphite",
-			light: defaultColors,
-			dark: defaultColors
-		}
-	],
-	colors: defaultColors,
+	themes: previewThemes,
+	colors: previewThemes[0].dark,
 	sidebarVisible: true,
 	chrome: "tsx"
 };
 function resolveAppearanceColors(appearance, themes, fallbackColors) {
 	const settings = appearance.settings;
 	const dark = settings.mode !== "light";
-	const themeKey = dark ? settings.dark_theme : settings.light_theme;
-	const themeColors = themes.find((theme) => theme.key === themeKey)?.[dark ? "dark" : "light"] ?? fallbackColors;
+	const themeColors = (themes.find((item) => item.key === "default") ?? themes[0])?.[dark ? "dark" : "light"] ?? fallbackColors;
+	if (settings.accent_source === "wallpaper") return {
+		...themeColors,
+		accent: fallbackColors.accent
+	};
+	const custom = settings.accent_source === "custom" ? systemAccent(settings.accent_color, dark) : void 0;
 	return {
 		...themeColors,
-		accent: settings.accent_source === "custom" && settings.accent_color ? settings.accent_color : themeColors.accent
+		accent: custom ?? themeColors.accent
 	};
 }
 function isSnapshot(value) {
 	if (typeof value !== "object" || value === null || !("route" in value) || !isRoute(value.route)) return false;
 	if (!("title" in value) || typeof value.title !== "string" || !("todos" in value) || !Array.isArray(value.todos)) return false;
-	if (!value.todos.every(isTodo) || !("journalEntries" in value) || !Array.isArray(value.journalEntries) || !value.journalEntries.every(isJournalEntry)) return false;
+	if (!value.todos.every(isTodo$1) || !("journalEntries" in value) || !Array.isArray(value.journalEntries) || !value.journalEntries.every(isJournalEntry$1)) return false;
 	return "version" in value && typeof value.version === "string" && "appearanceEditable" in value && typeof value.appearanceEditable === "boolean" && "themes" in value && Array.isArray(value.themes) && "colors" in value && isColors(value.colors) && "sidebarVisible" in value && typeof value.sidebarVisible === "boolean" && "chrome" in value && (value.chrome === "native" || value.chrome === "tsx");
 }
 function isRoute(value) {
 	return value === "journal" || value === "tasks" || value === "settings";
 }
-function isTodo(value) {
+function isTodo$1(value) {
 	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "title" in value && typeof value.title === "string" && "is_completed" in value && typeof value.is_completed === "boolean";
 }
-function isJournalEntry(value) {
+function isJournalEntry$1(value) {
 	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "text" in value && typeof value.text === "string" && "createdAt" in value && typeof value.createdAt === "string";
 }
 function isColors(value) {
 	if (typeof value !== "object" || value === null) return false;
 	return "background" in value && typeof value.background === "string" && "foreground" in value && typeof value.foreground === "string" && "muted" in value && typeof value.muted === "string" && "border" in value && typeof value.border === "string" && "accent" in value && typeof value.accent === "string" && "card" in value && typeof value.card === "string";
+}
+
+//#endregion
+//#region chrome.tsx
+const TITLEBAR_HEIGHT = 38;
+const SIDEBAR_WIDTH = 256;
+const ROW_HEIGHT = 32;
+const CONTROL_RADIUS = 6;
+const ROW_RADIUS = 8;
+const CLUSTER_START_MACOS = 88;
+const CLUSTER_START = 10;
+const TRAILING_INSET = 6;
+const CAPTION_BUTTON_WIDTH = 36;
+const closeHovered = signal(false);
+function animatePanes() {
+	LayoutAnimation.configureNext({
+		duration: 200,
+		update: {
+			type: "easeOut",
+			duration: 200
+		}
+	});
+}
+const SIDEBAR_MOTION_MS = 200;
+const sidebarWidth = signal(256);
+let sidebarTween = null;
+let sidebarScheduled = false;
+function easeOut(t) {
+	const x2 = .58;
+	let u = t;
+	for (let i = 0; i < 6; i++) {
+		const x = 3 * (1 - u) * u * u * x2 + u * u * u;
+		const slope = 6 * (1 - u) * u * x2 + 3 * u * u * .42000000000000004;
+		if (Math.abs(slope) < 1e-6) break;
+		u = Math.min(1, Math.max(0, u - (x - t) / slope));
+	}
+	return 3 * (1 - u) * u * u + u * u * u;
+}
+function sidebarWidthAt(from, to, elapsed, duration = 200) {
+	const t = duration <= 0 ? 1 : Math.min(1, Math.max(0, elapsed / duration));
+	return from + (to - from) * easeOut(t);
+}
+function sidebarFrame(now) {
+	const tween = sidebarTween;
+	if (!tween) return sidebarWidth();
+	if (now - tween.started >= 200) {
+		sidebarTween = null;
+		sidebarWidth.set(tween.to);
+		return tween.to;
+	}
+	const value = sidebarWidthAt(tween.from, tween.to, now - tween.started);
+	sidebarWidth.set(value);
+	return value;
+}
+function scheduleSidebar() {
+	if (sidebarScheduled || !sidebarTween) return;
+	sidebarScheduled = true;
+	requestAnimationFrame(() => {
+		sidebarScheduled = false;
+		if (!sidebarTween) return;
+		sidebarFrame(Date.now());
+		scheduleSidebar();
+	});
+}
+function animateSidebar(open, now) {
+	const to = open ? 256 : 0;
+	const from = sidebarWidth();
+	if (from === to) {
+		sidebarTween = null;
+		return;
+	}
+	sidebarTween = {
+		from,
+		to,
+		started: now ?? Date.now()
+	};
+	if (now === void 0) scheduleSidebar();
+}
+function sidebarPaneWidth() {
+	return sidebarWidth();
+}
+function surfaceWash(dark, alpha = .05) {
+	return dark ? `rgba(235,235,235,${alpha})` : `rgba(26,26,26,${alpha})`;
+}
+function hoverWash(dark) {
+	return surfaceWash(dark, dark ? .11 : .06);
+}
+function titlebarControlTop(size) {
+	return 21 - size / 2;
+}
+function channel(hex, shift) {
+	const h = hex.trim().replace("#", "");
+	if (h.length !== 6) return null;
+	const n = Number.parseInt(h, 16);
+	if (Number.isNaN(n)) return null;
+	return n >> shift & 255;
+}
+function colorAlpha(hex, alpha) {
+	const r = channel(hex, 16);
+	const g = channel(hex, 8);
+	const b = channel(hex, 0);
+	if (r === null || g === null || b === null) return hex;
+	return `rgba(${r},${g},${b},${alpha})`;
+}
+function hostOs() {
+	const name = platform();
+	if (name === "darwin" || name === "macos") return "macos";
+	if (name === "win32" || name === "windows") return "windows";
+	return name;
+}
+function drawsCaptionButtons(os, reservedRight) {
+	return (os === "windows" || os === "linux") && reservedRight === 0;
+}
+function TitlebarOverlay(props) {
+	const controls = titleBar();
+	const os = hostOs();
+	const macos = os === "macos";
+	const drawCaptions = drawsCaptionButtons(os, controls.right);
+	const captionWidth = drawCaptions ? 108 : controls.right;
+	const sidebarLeft = macos ? Math.max(controls.left, CLUSTER_START_MACOS) : Math.max(controls.left, CLUSTER_START);
+	const calendarRight = captionWidth + TRAILING_INSET;
+	const wash = hoverWash(props.dark);
+	return (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "class", "absolute left-0 right-0 top-0 z-20");
+		bindProp(__nsh_hv0, "style", () => ({ height: controls.height || 38 }));
+		prop(__nsh_hv0, "desktop", { windowDrag: true });
+		const __nsh_hv1 = element("view");
+		bindProp(__nsh_hv1, "onPress", () => props.onToggleSidebar);
+		prop(__nsh_hv1, "role", "button");
+		prop(__nsh_hv1, "accessibilityLabel", "Боковая панель");
+		prop(__nsh_hv1, "class", "absolute items-center justify-center");
+		prop(__nsh_hv1, "desktop", { windowDrag: false });
+		prop(__nsh_hv1, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv1, "style", () => ({
+			top: titlebarControlTop(24),
+			left: sidebarLeft,
+			width: 24,
+			height: 24,
+			borderRadius: CONTROL_RADIUS,
+			cursor: "pointer"
+		}));
+		insert(__nsh_hv1, component(Icon, {
+			name: "sidebar",
+			size: 16,
+			get color() {
+				return props.colors.muted;
+			}
+		}));
+		append(__nsh_hv0, __nsh_hv1);
+		insert(__nsh_hv0, [() => props.showCalendarToggle && (() => {
+			const __nsh_hv2 = element("view");
+			bindProp(__nsh_hv2, "onPress", () => props.onToggleCalendar);
+			prop(__nsh_hv2, "role", "button");
+			bindProp(__nsh_hv2, "accessibilityLabel", () => props.calendarOpen ? "Скрыть календарь" : "Показать календарь");
+			bindProp(__nsh_hv2, "accessibilityState", () => ({ selected: props.calendarOpen }));
+			prop(__nsh_hv2, "class", "absolute items-center justify-center");
+			prop(__nsh_hv2, "desktop", { windowDrag: false });
+			bindProp(__nsh_hv2, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .11) }));
+			bindProp(__nsh_hv2, "style", () => ({
+				top: titlebarControlTop(28),
+				right: calendarRight,
+				width: 28,
+				height: 28,
+				borderRadius: CONTROL_RADIUS,
+				cursor: "pointer",
+				backgroundColor: props.calendarOpen ? surfaceWash(props.dark, .09) : "transparent"
+			}));
+			insert(__nsh_hv2, component(Icon, {
+				name: "sidebar",
+				size: 16,
+				get color() {
+					return props.calendarOpen ? props.colors.foreground : props.colors.muted;
+				}
+			}));
+			return __nsh_hv2;
+		})(), () => drawCaptions && (() => {
+			const __nsh_hv3 = element("view");
+			prop(__nsh_hv3, "class", "absolute right-0 top-0 flex-row");
+			prop(__nsh_hv3, "desktop", { windowDrag: false });
+			prop(__nsh_hv3, "style", { height: 38 });
+			const __nsh_hv4 = element("view");
+			prop(__nsh_hv4, "onPress", () => Window.minimize());
+			prop(__nsh_hv4, "role", "button");
+			prop(__nsh_hv4, "accessibilityLabel", "Свернуть окно");
+			prop(__nsh_hv4, "class", "items-center justify-center");
+			prop(__nsh_hv4, "desktop", { windowDrag: false });
+			prop(__nsh_hv4, "hoverStyle", { backgroundColor: wash });
+			prop(__nsh_hv4, "style", {
+				width: CAPTION_BUTTON_WIDTH,
+				height: 38,
+				cursor: "pointer"
+			});
+			insert(__nsh_hv4, component(Icon, {
+				name: "windowMin",
+				get color() {
+					return props.colors.foreground;
+				},
+				size: 12
+			}));
+			const __nsh_hv5 = element("view");
+			prop(__nsh_hv5, "onPress", () => Window.toggleMaximize());
+			prop(__nsh_hv5, "role", "button");
+			prop(__nsh_hv5, "accessibilityLabel", "Развернуть окно");
+			prop(__nsh_hv5, "class", "items-center justify-center");
+			prop(__nsh_hv5, "desktop", { windowDrag: false });
+			prop(__nsh_hv5, "hoverStyle", { backgroundColor: wash });
+			prop(__nsh_hv5, "style", {
+				width: CAPTION_BUTTON_WIDTH,
+				height: 38,
+				cursor: "pointer"
+			});
+			insert(__nsh_hv5, component(Icon, {
+				name: "windowMax",
+				get color() {
+					return props.colors.foreground;
+				},
+				size: 12
+			}));
+			const __nsh_hv6 = element("view");
+			prop(__nsh_hv6, "onPress", () => Window.close());
+			prop(__nsh_hv6, "onHoverIn", () => closeHovered.set(true));
+			prop(__nsh_hv6, "onHoverOut", () => closeHovered.set(false));
+			prop(__nsh_hv6, "role", "button");
+			prop(__nsh_hv6, "accessibilityLabel", "Закрыть окно");
+			prop(__nsh_hv6, "class", "items-center justify-center");
+			prop(__nsh_hv6, "desktop", { windowDrag: false });
+			prop(__nsh_hv6, "hoverStyle", { backgroundColor: "#e81123" });
+			prop(__nsh_hv6, "style", {
+				width: CAPTION_BUTTON_WIDTH,
+				height: 38,
+				cursor: "pointer"
+			});
+			insert(__nsh_hv6, component(Icon, {
+				name: "windowClose",
+				get color() {
+					return closeHovered() ? "#ffffff" : props.colors.foreground;
+				},
+				size: 12
+			}));
+			append(__nsh_hv3, __nsh_hv4);
+			append(__nsh_hv3, __nsh_hv5);
+			append(__nsh_hv3, __nsh_hv6);
+			return __nsh_hv3;
+		})()]);
+		return __nsh_hv0;
+	})();
+}
+function SidebarRow(props) {
+	const wash = hoverWash(props.dark);
+	return (() => {
+		const __nsh_hv7 = element("view");
+		bindProp(__nsh_hv7, "onPress", () => props.onPress);
+		prop(__nsh_hv7, "role", "button");
+		bindProp(__nsh_hv7, "accessibilityState", () => ({ selected: props.selected }));
+		prop(__nsh_hv7, "class", "flex-row items-center");
+		prop(__nsh_hv7, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv7, "style", () => ({
+			height: 32,
+			gap: 8,
+			paddingLeft: 8,
+			paddingRight: 8,
+			borderRadius: ROW_RADIUS,
+			backgroundColor: props.selected ? wash : "transparent",
+			cursor: "pointer"
+		}));
+		const __nsh_hv8 = element("text");
+		prop(__nsh_hv8, "class", "text-[13px]");
+		bindProp(__nsh_hv8, "style", () => ({ color: props.colors.foreground }));
+		insert(__nsh_hv8, () => props.label);
+		append(__nsh_hv7, __nsh_hv8);
+		insert(__nsh_hv7, component(Icon, {
+			get name() {
+				return props.icon;
+			},
+			size: 16,
+			get color() {
+				return props.colors.foreground;
+			}
+		}), __nsh_hv8);
+		return __nsh_hv7;
+	})();
+}
+function GhostButton(props) {
+	return (() => {
+		const __nsh_hv9 = element("view");
+		bindProp(__nsh_hv9, "onPress", () => props.onPress);
+		prop(__nsh_hv9, "role", "button");
+		bindProp(__nsh_hv9, "accessibilityLabel", () => props.label);
+		prop(__nsh_hv9, "class", "items-center justify-center");
+		bindProp(__nsh_hv9, "hoverStyle", () => ({ backgroundColor: props.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }));
+		prop(__nsh_hv9, "style", {
+			height: 32,
+			paddingLeft: 12,
+			paddingRight: 12,
+			borderRadius: ROW_RADIUS,
+			cursor: "pointer"
+		});
+		const __nsh_hv10 = element("text");
+		prop(__nsh_hv10, "class", "text-[13px]");
+		bindProp(__nsh_hv10, "hoverStyle", () => ({ color: props.colors.foreground }));
+		bindProp(__nsh_hv10, "style", () => ({ color: props.colors.muted }));
+		insert(__nsh_hv10, () => props.label);
+		append(__nsh_hv9, __nsh_hv10);
+		return __nsh_hv9;
+	})();
+}
+function SolidButton(props) {
+	return (() => {
+		const __nsh_hv11 = element("view");
+		bindProp(__nsh_hv11, "onPress", () => props.onPress);
+		prop(__nsh_hv11, "role", "button");
+		bindProp(__nsh_hv11, "accessibilityLabel", () => props.label);
+		prop(__nsh_hv11, "class", "items-center justify-center");
+		prop(__nsh_hv11, "hoverStyle", { opacity: .9 });
+		bindProp(__nsh_hv11, "style", () => ({
+			height: 32,
+			paddingLeft: 12,
+			paddingRight: 12,
+			borderRadius: ROW_RADIUS,
+			backgroundColor: props.background,
+			cursor: "pointer"
+		}));
+		const __nsh_hv12 = element("text");
+		prop(__nsh_hv12, "class", "text-[13px] font-medium");
+		bindProp(__nsh_hv12, "style", () => ({ color: props.foreground }));
+		insert(__nsh_hv12, () => props.label);
+		append(__nsh_hv11, __nsh_hv12);
+		return __nsh_hv11;
+	})();
 }
 
 //#endregion
@@ -281,6 +640,15 @@ const monthNamesShort = [
 	"ноя",
 	"дек"
 ];
+const weekdays$1 = [
+	"воскресенье",
+	"понедельник",
+	"вторник",
+	"среда",
+	"четверг",
+	"пятница",
+	"суббота"
+];
 function localDayKey(date) {
 	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
@@ -310,12 +678,25 @@ function buildJournalDays(entries) {
 			entries: [entry]
 		});
 	}
-	return [...groups.values()];
+	for (const group of groups.values()) group.entries.sort((a, b) => entryTime(a) - entryTime(b));
+	return [...groups.values()].sort((a, b) => groupTime(a) - groupTime(b));
+}
+function entryTime(entry) {
+	const time = new Date(entry.createdAt).valueOf();
+	return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
+}
+function groupTime(group) {
+	return group.kind === "dated" ? group.date.valueOf() : Number.POSITIVE_INFINITY;
 }
 function formatJournalDay(group, now = /* @__PURE__ */ new Date()) {
 	if (group.kind === "invalid") return group.label;
 	const year = group.date.getFullYear() === now.getFullYear() ? "" : ` ${group.date.getFullYear()}`;
-	return `${group.date.getDate()} ${monthNamesInDate[group.date.getMonth()]}${year}`;
+	return `${weekdays$1[group.date.getDay()]}, ${group.date.getDate()} ${monthNamesInDate[group.date.getMonth()]}${year}`;
+}
+function formatJournalStamp(createdAt, _now = /* @__PURE__ */ new Date()) {
+	const date = new Date(createdAt);
+	if (Number.isNaN(date.valueOf())) return "";
+	return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 function buildCalendarDays(groups, now = /* @__PURE__ */ new Date()) {
 	const counts = new Map(groups.flatMap((group) => group.kind === "dated" ? [[group.key, group.entries.length]] : []));
@@ -377,10 +758,10 @@ function JournalCalendar(props) {
 	const today = /* @__PURE__ */ new Date();
 	return (() => {
 		const __nsh_hv0 = element("view");
-		prop(__nsh_hv0, "class", "h-full border-l");
+		bindProp(__nsh_hv0, "class", () => props.framed ? "h-full border-l" : "h-full");
 		bindProp(__nsh_hv0, "style", () => ({
 			width: props.width,
-			backgroundColor: props.colors.card,
+			backgroundColor: props.framed ? props.colors.card : "transparent",
 			borderColor: props.resizeHovered ? props.colors.muted : props.colors.border,
 			transitionProperty: "borderColor",
 			transitionDuration: 150,
@@ -394,7 +775,15 @@ function JournalCalendar(props) {
 			prop(__nsh_hv4, "onPress", () => props.onSelect(day.key));
 			prop(__nsh_hv4, "role", "button");
 			bindProp(__nsh_hv4, "accessibilityLabel", () => `${day.date.getDate()} ${months[day.date.getMonth()]}, ${day.count} записей`);
-			prop(__nsh_hv4, "class", "h-[25px] flex-row items-center justify-end gap-1.5 rounded-md px-1");
+			prop(__nsh_hv4, "class", "flex-row items-center justify-end gap-2");
+			bindProp(__nsh_hv4, "hoverStyle", () => ({ backgroundColor: hoverWash(props.dark) }));
+			prop(__nsh_hv4, "style", {
+				height: 24,
+				paddingLeft: 8,
+				paddingRight: 8,
+				borderRadius: 8,
+				cursor: "pointer"
+			});
 			const __nsh_hv5 = element("view");
 			prop(__nsh_hv5, "class", "max-w-[86px] flex-row flex-wrap justify-end gap-[3px]");
 			insert(__nsh_hv5, () => Array.from({ length: Math.min(day.count, 24) }, () => (() => {
@@ -435,6 +824,70 @@ function JournalCalendar(props) {
 
 //#endregion
 //#region JournalPage.tsx
+const COMPOSER_RADIUS = 26;
+const COMPOSER_COMPACT_HEIGHT = 49;
+const COMPOSER_SEND = 30;
+const COMPOSER_LINE = 22;
+const COMPOSER_PAD_X = 16;
+const COMPOSER_PAD_Y = 12;
+const COMPOSER_MAX_CONTENT = 132;
+const COMPOSER_MAX_HEIGHT = 168;
+const CARET_WIDTH = 2;
+const CARET_BLINK_MS = 500;
+const COMPOSER_FADE = 20;
+const BUBBLE_RADIUS = 18;
+const FEED_PAD = 16;
+const THREAD_WIDTH = 690;
+const JOURNAL_DATE_DELAY_MS = 2e3;
+const feedBox = signal({
+	width: 0,
+	height: 0
+});
+const journalHoverId = signal(null);
+const journalDateShown = signal(null);
+let journalDateWarm = false;
+let journalDateTimer;
+function threadSpan() {
+	const width = feedBox().width;
+	return width > 0 ? Math.min(width, THREAD_WIDTH) : THREAD_WIDTH;
+}
+function clearJournalDateTimer() {
+	if (journalDateTimer !== void 0) {
+		clearTimeout(journalDateTimer);
+		journalDateTimer = void 0;
+	}
+}
+function journalDateDelay(warm) {
+	return warm ? 0 : JOURNAL_DATE_DELAY_MS;
+}
+function showJournalDate(id) {
+	journalHoverId.set(id);
+	clearJournalDateTimer();
+	const delay = journalDateDelay(journalDateWarm);
+	if (delay === 0) {
+		journalDateShown.set(id);
+		return;
+	}
+	journalDateShown.set(null);
+	journalDateTimer = setTimeout(() => {
+		journalDateTimer = void 0;
+		if (journalHoverId() !== id) return;
+		journalDateWarm = true;
+		journalDateShown.set(id);
+	}, delay);
+}
+function hideJournalDate(id) {
+	if (journalHoverId() !== id) return;
+	clearJournalDateTimer();
+	journalHoverId.set(null);
+	journalDateShown.set(null);
+}
+function leaveJournalDates() {
+	clearJournalDateTimer();
+	journalDateWarm = false;
+	journalHoverId.set(null);
+	journalDateShown.set(null);
+}
 const journalCalendarOpen = signal(false);
 const NativeCalendarToggle = nativeComponent("atlas.journalCalendarToggle", {
 	props: ["expanded", "label"],
@@ -442,26 +895,255 @@ const NativeCalendarToggle = nativeComponent("atlas.journalCalendarToggle", {
 });
 const journalCalendarWidth = signal(260);
 const journalDraft = signal("");
-const journalDraftContentHeight = signal(20);
-const journalDraftMinContentHeight = 20;
-const journalDraftMaxContentHeight = 100;
-const journalDraftExpandedHeight = journalDraftMinContentHeight * 1.5;
-const journalDraftVerticalPadding = 20;
+const journalDraftContentHeight = signal(COMPOSER_LINE);
+const journalFocused = signal(false);
+const journalSelection = signal({
+	start: 0,
+	end: 0
+});
+const journalCaret = signal({
+	x: COMPOSER_PAD_X,
+	y: COMPOSER_PAD_Y,
+	height: COMPOSER_LINE
+});
+const journalCaretOn = signal(true);
+const journalCaretTick = signal(0);
+const journalScrollY = signal(0);
 const journalCalendarMinWidth = 220;
 const journalCalendarMaxWidth = 420;
 const journalCalendarResizeHovered = signal(false);
 const journalCalendarResizeActive = signal(false);
 const editingJournalId = signal(null);
 const editingJournalText = signal("");
-function timeLabel(createdAt) {
-	const date = new Date(createdAt);
-	return Number.isNaN(date.valueOf()) ? "" : date.toLocaleTimeString("ru-RU", {
-		hour: "2-digit",
-		minute: "2-digit"
+const arrivingId = signal(null);
+let sendSeq = 0;
+let composerRef;
+let editFocus;
+function claimJournalComposer() {
+	if (editingJournalId()) return;
+	composerRef?.focus();
+}
+function animateComposer() {
+	LayoutAnimation.configureNext({
+		duration: 180,
+		update: {
+			type: "easeOut",
+			duration: 180
+		}
 	});
+}
+function clampDraftHeight(height) {
+	return Math.round(Math.max(COMPOSER_LINE, Math.min(COMPOSER_MAX_CONTENT, height)));
+}
+function composerContentHeight() {
+	return Math.max(COMPOSER_LINE, journalDraftContentHeight());
+}
+function composerInputHeight() {
+	return composerContentHeight() + 24;
+}
+function composerViewportHeight() {
+	return clampDraftHeight(composerContentHeight()) + 24;
+}
+function composerPillHeight() {
+	return Math.max(COMPOSER_COMPACT_HEIGHT, Math.min(COMPOSER_MAX_HEIGHT, composerViewportHeight()));
+}
+function composerFadeEdges(content, viewport, scroll) {
+	const max = Math.max(0, content - viewport);
+	if (max <= 1) return {
+		top: false,
+		bottom: false
+	};
+	return {
+		top: scroll > 1,
+		bottom: scroll < max - 1
+	};
+}
+function composerFadeTop() {
+	return composerFadeEdges(composerInputHeight(), composerViewportHeight(), journalScrollY()).top;
+}
+function composerFadeBottom() {
+	return composerFadeEdges(composerInputHeight(), composerViewportHeight(), journalScrollY()).bottom;
+}
+function composerExpanded() {
+	return journalDraftContentHeight() > 23;
+}
+function placeCaret(bounds) {
+	const height = bounds.size.height;
+	if (height <= 0) return;
+	journalCaret.set({
+		x: bounds.origin.x,
+		y: bounds.origin.y,
+		height
+	});
+	journalCaretOn.set(true);
+	journalCaretTick.update((n) => n + 1);
+}
+function composerSelecting() {
+	const range = journalSelection();
+	return range.start !== range.end;
+}
+function composerCaretShown() {
+	return journalFocused() && !composerSelecting() && journalCaretOn();
+}
+function animateSend() {
+	LayoutAnimation.configureNext({
+		duration: 280,
+		create: {
+			type: "easeOut",
+			property: "opacity",
+			duration: 220
+		},
+		update: {
+			type: "easeOut",
+			duration: 180
+		},
+		delete: {
+			type: "easeOut",
+			property: "opacity",
+			duration: 160
+		}
+	});
+}
+function nextEntryId() {
+	sendSeq += 1;
+	return `local-${Date.now()}-${sendSeq}`;
+}
+function JournalBubble(props) {
+	const sendMotion = props.arriving ? createMotion({ enter: {
+		keyframes: [{
+			opacity: 0,
+			translateY: 40,
+			scale: .96
+		}, {
+			opacity: 1,
+			translateY: 0,
+			scale: 1
+		}],
+		duration: 280,
+		easing: Easing.bezier(.16, 1, .3, 1)
+	} }) : null;
+	const openEntryMenu = (event) => {
+		if (editingJournalId() === props.entry.id) return;
+		Menu.popup([
+			{
+				label: "Копировать",
+				onSelect: () => void Clipboard.writeText(props.entry.text)
+			},
+			{
+				label: "Изменить",
+				onSelect: () => {
+					editingJournalId.set(props.entry.id);
+					editingJournalText.set(props.entry.text);
+				}
+			},
+			{
+				label: "Удалить",
+				onSelect: () => props.onDelete(props.entry.id)
+			}
+		], event.pagePosition);
+	};
+	return (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "onHoverIn", () => showJournalDate(props.entry.id));
+		prop(__nsh_hv0, "onHoverOut", () => hideJournalDate(props.entry.id));
+		prop(__nsh_hv0, "class", "mb-2 w-full flex-row items-center justify-end");
+		const __nsh_hv2 = element("view");
+		prop(__nsh_hv2, "onContextMenu", openEntryMenu);
+		prop(__nsh_hv2, "class", "max-w-[75%] px-3 py-2");
+		bindProp(__nsh_hv2, "style", () => ({
+			backgroundColor: editingJournalId() === props.entry.id ? props.colors.card : journalBubble(props.colors.accent),
+			borderRadius: BUBBLE_RADIUS,
+			transformOrigin: "bottom right",
+			...sendMotion?.style ?? {}
+		}));
+		insert(__nsh_hv2, () => editingJournalId() === props.entry.id ? (() => {
+			const __nsh_hv3 = element("view");
+			const __nsh_hv4 = element("input");
+			prop(__nsh_hv4, "ref", (node) => {
+				editFocus = node;
+			});
+			prop(__nsh_hv4, "autoFocus", true);
+			bindProp(__nsh_hv4, "value", () => editingJournalText());
+			prop(__nsh_hv4, "onChange", (value) => editingJournalText.set(value));
+			prop(__nsh_hv4, "multiline", true);
+			prop(__nsh_hv4, "submitBehavior", "newline");
+			prop(__nsh_hv4, "accessibilityLabel", "Текст записи");
+			prop(__nsh_hv4, "class", "min-h-[56px] w-full rounded-lg px-2 py-1 text-[15px]");
+			bindProp(__nsh_hv4, "style", () => ({
+				color: props.colors.foreground,
+				backgroundColor: props.colors.background
+			}));
+			const __nsh_hv5 = element("view");
+			prop(__nsh_hv5, "class", "mt-2 flex-row justify-end");
+			prop(__nsh_hv5, "style", { gap: 8 });
+			insert(__nsh_hv5, [component(GhostButton, {
+				label: "Отмена",
+				get colors() {
+					return props.colors;
+				},
+				get dark() {
+					return props.dark;
+				},
+				onPress: () => editingJournalId.set(null)
+			}), component(SolidButton, {
+				label: "Сохранить",
+				get background() {
+					return props.colors.accent;
+				},
+				get foreground() {
+					return props.colors.background;
+				},
+				onPress: () => {
+					props.onUpdate(props.entry.id, editingJournalText());
+					editingJournalId.set(null);
+				}
+			})]);
+			append(__nsh_hv3, __nsh_hv4);
+			append(__nsh_hv3, __nsh_hv5);
+			return __nsh_hv3;
+		})() : (() => {
+			const __nsh_hv6 = element("text");
+			prop(__nsh_hv6, "selectable", true);
+			prop(__nsh_hv6, "onContextMenu", openEntryMenu);
+			prop(__nsh_hv6, "class", "text-[15px] leading-5");
+			bindProp(__nsh_hv6, "style", () => ({
+				color: "#ffffff",
+				selectionColor: colorAlpha(props.colors.accent, props.dark ? .35 : .24)
+			}));
+			insert(__nsh_hv6, () => props.entry.text);
+			return __nsh_hv6;
+		})());
+		append(__nsh_hv0, __nsh_hv2);
+		insert(__nsh_hv0, () => journalDateShown() === props.entry.id && (() => {
+			const __nsh_hv1 = element("text");
+			prop(__nsh_hv1, "pointerEvents", "none");
+			prop(__nsh_hv1, "class", "mr-2 text-[11px]");
+			bindProp(__nsh_hv1, "style", () => ({ color: props.colors.muted }));
+			insert(__nsh_hv1, () => formatJournalStamp(props.entry.createdAt));
+			return __nsh_hv1;
+		})(), __nsh_hv2);
+		return __nsh_hv0;
+	})();
 }
 function JournalPage(props) {
 	let feedRef;
+	let composerScrollRef;
+	const revealComposer = (caret) => {
+		const viewport = composerViewportHeight();
+		const max = Math.max(0, composerInputHeight() - viewport);
+		const top = caret.y;
+		const bottom = top + Math.max(caret.height, COMPOSER_LINE);
+		let next = journalScrollY();
+		if (top < next) next = top;
+		else if (bottom > next + viewport) next = bottom - viewport;
+		next = Math.max(0, Math.min(max, next));
+		if (Math.abs(next - journalScrollY()) <= 1) return;
+		journalScrollY.set(next);
+		composerScrollRef?.scrollTo({
+			y: next,
+			animated: false
+		});
+	};
 	let pageWidth = 0;
 	let resizeStartWidth = journalCalendarWidth();
 	const resizeCalendar = PanResponder.create({
@@ -479,19 +1161,53 @@ function JournalPage(props) {
 		onPanResponderTerminationRequest: () => false
 	});
 	const dayOffsets = /* @__PURE__ */ new Map();
-	const groups = buildJournalDays(props.entries);
+	const groups = () => buildJournalDays(props.entries());
 	effect(() => {
-		if (props.entries.length) queueMicrotask(() => feedRef?.scrollToEnd({ animated: true }));
+		if (props.entries().length) queueMicrotask(() => feedRef?.scrollToEnd({ animated: true }));
+	});
+	effect(() => {
+		const editing = editingJournalId();
+		queueMicrotask(() => {
+			if (editing) editFocus?.focus();
+			else composerRef?.focus();
+		});
+		return () => journalFocused.set(false);
+	});
+	effect(() => {
+		if (!journalFocused()) return;
+		journalCaretTick();
+		journalCaretOn.set(true);
+		let timer = setTimeout(function tick() {
+			journalCaretOn.update((on) => !on);
+			timer = setTimeout(tick, CARET_BLINK_MS);
+		}, CARET_BLINK_MS);
+		return () => clearTimeout(timer);
 	});
 	const send = (text) => {
 		const value = text.trim();
 		if (!value) return;
-		props.onCreate(value);
+		const id = nextEntryId();
+		arrivingId.set(id);
+		animateSend();
+		props.onCreate(value, id);
 		journalDraft.set("");
-		journalDraftContentHeight.set(journalDraftMinContentHeight);
+		journalDraftContentHeight.set(COMPOSER_LINE);
+		journalScrollY.set(0);
+		composerScrollRef?.scrollTo({
+			y: 0,
+			animated: false
+		});
+		journalCaret.set({
+			x: COMPOSER_PAD_X,
+			y: COMPOSER_PAD_Y,
+			height: COMPOSER_LINE
+		});
+		journalCaretOn.set(true);
+		journalCaretTick.update((n) => n + 1);
+		composerRef?.focus();
 	};
 	const jumpToDay = (key) => {
-		const target = closestJournalDay(groups, key);
+		const target = closestJournalDay(groups(), key);
 		if (journalCalendarOpen()) toggleJournalCalendar();
 		if (target?.kind === "dated") {
 			const offset = dayOffsets.get(target.key);
@@ -502,206 +1218,225 @@ function JournalPage(props) {
 		}
 	};
 	return (() => {
-		const __nsh_hv0 = element("view");
-		prop(__nsh_hv0, "onLayout", (bounds) => {
+		const __nsh_hv7 = element("view");
+		prop(__nsh_hv7, "onLayout", (bounds) => {
 			pageWidth = bounds.size.width;
 		});
-		prop(__nsh_hv0, "class", "min-h-0 flex-1 flex-row overflow-hidden");
-		const __nsh_hv1 = element("view");
-		prop(__nsh_hv1, "class", "relative min-w-0 flex-1 flex-col items-center");
-		const __nsh_hv3 = element("view");
-		prop(__nsh_hv3, "class", "relative min-h-0 w-full flex-1");
-		const __nsh_hv4 = element("scroll");
-		prop(__nsh_hv4, "ref", (node) => {
+		prop(__nsh_hv7, "onPress", claimJournalComposer);
+		prop(__nsh_hv7, "class", "min-h-0 flex-1 flex-row overflow-hidden");
+		const __nsh_hv8 = element("view");
+		prop(__nsh_hv8, "class", "relative min-w-0 flex-1 flex-col items-center");
+		const __nsh_hv10 = element("view");
+		prop(__nsh_hv10, "class", "relative min-h-0 w-full flex-1");
+		const __nsh_hv11 = element("scroll");
+		prop(__nsh_hv11, "ref", (node) => {
 			feedRef = node;
 		});
-		prop(__nsh_hv4, "class", "min-h-0 w-full flex-1 py-4");
-		const __nsh_hv5 = element("view");
-		prop(__nsh_hv5, "class", "mx-auto w-full max-w-[690px] px-5");
-		insert(__nsh_hv5, [() => groups.map((group) => (() => {
-			const __nsh_hv6 = element("view");
-			prop(__nsh_hv6, "onLayout", (bounds) => {
-				dayOffsets.set(group.key, bounds.origin.y);
+		prop(__nsh_hv11, "onLayout", (bounds) => feedBox.set({
+			width: bounds.size.width,
+			height: bounds.size.height
+		}));
+		prop(__nsh_hv11, "contentStyle", { flexGrow: 1 });
+		prop(__nsh_hv11, "class", "min-h-0 w-full flex-1 pb-4");
+		const __nsh_hv12 = element("view");
+		prop(__nsh_hv12, "onHoverOut", leaveJournalDates);
+		prop(__nsh_hv12, "class", "mx-auto justify-end");
+		bindProp(__nsh_hv12, "style", () => ({
+			width: threadSpan(),
+			minHeight: feedBox().height,
+			paddingTop: props.titlebarInset + 16,
+			paddingLeft: FEED_PAD,
+			paddingRight: FEED_PAD
+		}));
+		insert(__nsh_hv12, [each(() => groups(), (group) => (() => {
+			const __nsh_hv13 = element("view");
+			prop(__nsh_hv13, "onLayout", (bounds) => {
+				dayOffsets.set(group().key, bounds.origin.y);
 			});
-			prop(__nsh_hv6, "class", "mb-5");
-			const __nsh_hv7 = element("view");
-			prop(__nsh_hv7, "class", "mb-3 flex-row items-center justify-center");
-			const __nsh_hv8 = element("view");
-			prop(__nsh_hv8, "class", "h-px flex-1");
-			bindProp(__nsh_hv8, "style", () => ({ backgroundColor: props.colors.border }));
-			const __nsh_hv9 = element("text");
-			prop(__nsh_hv9, "class", "mx-3 text-[12px] capitalize");
-			bindProp(__nsh_hv9, "style", () => ({ color: props.colors.muted }));
-			insert(__nsh_hv9, () => formatJournalDay(group));
-			const __nsh_hv10 = element("view");
-			prop(__nsh_hv10, "class", "h-px flex-1");
-			bindProp(__nsh_hv10, "style", () => ({ backgroundColor: props.colors.border }));
-			append(__nsh_hv7, __nsh_hv8);
-			append(__nsh_hv7, __nsh_hv9);
-			append(__nsh_hv7, __nsh_hv10);
-			append(__nsh_hv6, __nsh_hv7);
-			insert(__nsh_hv6, () => group.entries.map((entry) => (() => {
-				const __nsh_hv11 = element("view");
-				prop(__nsh_hv11, "class", "mb-3 self-end w-full max-w-[650px] rounded-2xl px-4 py-3");
-				bindProp(__nsh_hv11, "style", () => ({ backgroundColor: props.colors.card }));
-				const __nsh_hv16 = element("view");
-				prop(__nsh_hv16, "class", "mt-2 flex-row items-center justify-end gap-3");
-				const __nsh_hv17 = element("text");
-				prop(__nsh_hv17, "class", "text-[10px]");
-				bindProp(__nsh_hv17, "style", () => ({ color: props.colors.muted }));
-				insert(__nsh_hv17, () => timeLabel(entry.createdAt));
-				append(__nsh_hv16, __nsh_hv17);
-				insert(__nsh_hv16, () => editingJournalId() !== entry.id && (() => {
-					const __nsh_hv18 = element("view");
-					prop(__nsh_hv18, "class", "flex-row gap-3");
-					const __nsh_hv19 = element("view");
-					prop(__nsh_hv19, "onPress", () => {
-						editingJournalId.set(entry.id);
-						editingJournalText.set(entry.text);
-					});
-					prop(__nsh_hv19, "role", "button");
-					prop(__nsh_hv19, "accessibilityLabel", "Изменить запись");
-					const __nsh_hv20 = element("text");
-					prop(__nsh_hv20, "class", "text-[11px]");
-					bindProp(__nsh_hv20, "style", () => ({ color: props.colors.muted }));
-					const __nsh_hv21 = text("Изменить");
-					append(__nsh_hv20, __nsh_hv21);
-					append(__nsh_hv19, __nsh_hv20);
-					const __nsh_hv22 = element("view");
-					prop(__nsh_hv22, "onPress", () => props.onDelete(entry.id));
-					prop(__nsh_hv22, "role", "button");
-					prop(__nsh_hv22, "accessibilityLabel", "Удалить запись");
-					const __nsh_hv23 = element("text");
-					prop(__nsh_hv23, "class", "text-[11px]");
-					bindProp(__nsh_hv23, "style", () => ({ color: props.colors.muted }));
-					const __nsh_hv24 = text("Удалить");
-					append(__nsh_hv23, __nsh_hv24);
-					append(__nsh_hv22, __nsh_hv23);
-					append(__nsh_hv18, __nsh_hv19);
-					append(__nsh_hv18, __nsh_hv22);
-					return __nsh_hv18;
-				})());
-				append(__nsh_hv11, __nsh_hv16);
-				insert(__nsh_hv11, () => editingJournalId() === entry.id ? (() => {
-					const __nsh_hv12 = element("view");
-					const __nsh_hv13 = element("input");
-					bindProp(__nsh_hv13, "value", () => editingJournalText());
-					prop(__nsh_hv13, "onChange", (value) => editingJournalText.set(value));
-					prop(__nsh_hv13, "multiline", true);
-					prop(__nsh_hv13, "submitBehavior", "newline");
-					prop(__nsh_hv13, "class", "min-h-[56px] w-full rounded-lg px-2 py-1 text-[13px]");
-					bindProp(__nsh_hv13, "style", () => ({
-						color: props.colors.foreground,
-						backgroundColor: props.colors.background
-					}));
-					const __nsh_hv14 = element("view");
-					prop(__nsh_hv14, "class", "mt-2 flex-row justify-end gap-2");
-					insert(__nsh_hv14, [component(Button, {
-						label: "Отмена",
-						get colors() {
-							return props.colors;
-						},
-						onPress: () => editingJournalId.set(null)
-					}), component(Button, {
-						label: "Сохранить",
-						get colors() {
-							return props.colors;
-						},
-						onPress: () => {
-							props.onUpdate(entry.id, editingJournalText());
-							editingJournalId.set(null);
-						},
-						selected: true
-					})]);
-					append(__nsh_hv12, __nsh_hv13);
-					append(__nsh_hv12, __nsh_hv14);
-					return __nsh_hv12;
-				})() : (() => {
-					const __nsh_hv15 = element("text");
-					prop(__nsh_hv15, "selectable", true);
-					prop(__nsh_hv15, "class", "text-[14px] leading-6");
-					bindProp(__nsh_hv15, "style", () => ({
-						color: props.colors.foreground,
-						selectionColor: props.colors.accent
-					}));
-					insert(__nsh_hv15, () => entry.text);
-					return __nsh_hv15;
-				})(), __nsh_hv16);
-				return __nsh_hv11;
-			})()));
-			return __nsh_hv6;
-		})()), () => groups.length === 0 && (() => {
-			const __nsh_hv25 = element("view");
-			prop(__nsh_hv25, "class", "flex-1 items-center justify-center py-12");
-			const __nsh_hv26 = element("text");
-			prop(__nsh_hv26, "class", "text-[13px]");
-			bindProp(__nsh_hv26, "style", () => ({ color: props.colors.muted }));
-			const __nsh_hv27 = text("Записей пока нет");
-			append(__nsh_hv26, __nsh_hv27);
-			append(__nsh_hv25, __nsh_hv26);
-			return __nsh_hv25;
+			prop(__nsh_hv13, "class", "mb-4");
+			const __nsh_hv14 = element("text");
+			prop(__nsh_hv14, "class", "mb-3 text-center text-[12px]");
+			bindProp(__nsh_hv14, "style", () => ({ color: props.colors.muted }));
+			insert(__nsh_hv14, () => formatJournalDay(group()));
+			append(__nsh_hv13, __nsh_hv14);
+			insert(__nsh_hv13, each(() => group().entries, (entry) => component(JournalBubble, {
+				get entry() {
+					return entry();
+				},
+				get arriving() {
+					return arrivingId() === entry().id;
+				},
+				get colors() {
+					return props.colors;
+				},
+				get dark() {
+					return props.dark;
+				},
+				get onUpdate() {
+					return props.onUpdate;
+				},
+				get onDelete() {
+					return props.onDelete;
+				}
+			}), ((entry) => entry.id)));
+			return __nsh_hv13;
+		})(), ((group) => group.key)), () => groups().length === 0 && (() => {
+			const __nsh_hv15 = element("view");
+			prop(__nsh_hv15, "class", "flex-1 items-center justify-center py-12");
+			const __nsh_hv16 = element("text");
+			prop(__nsh_hv16, "class", "text-[13px]");
+			bindProp(__nsh_hv16, "style", () => ({ color: props.colors.muted }));
+			const __nsh_hv17 = text("Записей пока нет");
+			append(__nsh_hv16, __nsh_hv17);
+			append(__nsh_hv15, __nsh_hv16);
+			return __nsh_hv15;
 		})()]);
-		append(__nsh_hv4, __nsh_hv5);
-		const __nsh_hv28 = element("view");
-		prop(__nsh_hv28, "pointerEvents", "none");
-		prop(__nsh_hv28, "class", "absolute right-0 top-0 bottom-0 w-[8px]");
-		bindProp(__nsh_hv28, "style", () => ({
+		append(__nsh_hv11, __nsh_hv12);
+		const __nsh_hv18 = element("view");
+		prop(__nsh_hv18, "pointerEvents", "none");
+		prop(__nsh_hv18, "class", "absolute right-0 top-0 bottom-0 w-[8px]");
+		bindProp(__nsh_hv18, "style", () => ({
 			backgroundColor: props.colors.background,
 			opacity: .86
 		}));
-		append(__nsh_hv3, __nsh_hv4);
-		append(__nsh_hv3, __nsh_hv28);
-		const __nsh_hv29 = element("view");
-		prop(__nsh_hv29, "class", "mb-4 w-full px-5");
-		const __nsh_hv30 = element("view");
-		prop(__nsh_hv30, "class", "mx-auto w-full max-w-[650px] flex-row items-end gap-2 border pl-3 pr-1.5 py-1.5");
-		bindProp(__nsh_hv30, "style", () => ({
+		append(__nsh_hv10, __nsh_hv11);
+		append(__nsh_hv10, __nsh_hv18);
+		const __nsh_hv19 = element("view");
+		prop(__nsh_hv19, "class", "mb-4 mx-auto w-full");
+		prop(__nsh_hv19, "style", {
+			maxWidth: THREAD_WIDTH,
+			paddingLeft: FEED_PAD,
+			paddingRight: FEED_PAD
+		});
+		const __nsh_hv20 = element("view");
+		prop(__nsh_hv20, "class", "w-full flex-row border");
+		bindProp(__nsh_hv20, "style", () => ({
+			height: composerPillHeight(),
+			alignItems: composerExpanded() ? "flex-end" : "center",
 			backgroundColor: props.colors.card,
 			borderColor: props.colors.border,
-			borderRadius: journalDraftContentHeight() > journalDraftExpandedHeight ? 24 : 999,
-			transitionProperty: "borderRadius",
-			transitionDuration: 180,
-			transitionTimingFunction: "ease-out"
+			borderRadius: COMPOSER_RADIUS
 		}));
-		const __nsh_hv31 = element("input");
-		bindProp(__nsh_hv31, "value", () => journalDraft());
-		prop(__nsh_hv31, "onChange", (value) => journalDraft.set(value));
-		prop(__nsh_hv31, "onContentSizeChange", ({ height }) => journalDraftContentHeight.set(Math.max(journalDraftMinContentHeight, Math.min(journalDraftMaxContentHeight, height))));
-		prop(__nsh_hv31, "onSubmit", (event) => send(event.text));
-		prop(__nsh_hv31, "multiline", true);
-		prop(__nsh_hv31, "submitBehavior", "submit");
-		prop(__nsh_hv31, "placeholder", "Запись в дневник…");
-		prop(__nsh_hv31, "accessibilityLabel", "Новая запись в дневник");
-		prop(__nsh_hv31, "class", "max-h-[120px] flex-1 text-[15px]");
-		bindProp(__nsh_hv31, "style", () => ({
-			placeholderColor: props.colors.muted,
-			selectionColor: props.colors.accent,
-			height: journalDraftContentHeight() + journalDraftVerticalPadding,
+		const __nsh_hv21 = element("view");
+		prop(__nsh_hv21, "class", "relative min-w-0 flex-1 overflow-hidden");
+		bindProp(__nsh_hv21, "style", () => ({ height: composerViewportHeight() }));
+		const __nsh_hv22 = element("scroll");
+		prop(__nsh_hv22, "ref", (node) => {
+			composerScrollRef = node;
+		});
+		prop(__nsh_hv22, "scrollbar", false);
+		prop(__nsh_hv22, "onScroll", (event) => journalScrollY.set(event.offset.y));
+		prop(__nsh_hv22, "class", "w-full");
+		bindProp(__nsh_hv22, "style", () => ({ height: composerViewportHeight() }));
+		const __nsh_hv23 = element("view");
+		prop(__nsh_hv23, "class", "relative w-full");
+		bindProp(__nsh_hv23, "style", () => ({ height: composerInputHeight() }));
+		const __nsh_hv24 = element("input");
+		prop(__nsh_hv24, "ref", (node) => {
+			composerRef = node;
+		});
+		prop(__nsh_hv24, "autoFocus", true);
+		bindProp(__nsh_hv24, "value", () => journalDraft());
+		prop(__nsh_hv24, "onChange", (value) => journalDraft.set(value));
+		prop(__nsh_hv24, "onContentSizeChange", ({ height }) => {
+			const raw = Math.max(COMPOSER_LINE, Math.round(height));
+			if (raw === journalDraftContentHeight()) return;
+			if (clampDraftHeight(raw) !== clampDraftHeight(journalDraftContentHeight())) animateComposer();
+			journalDraftContentHeight.set(raw);
+			revealComposer(journalCaret());
+		});
+		prop(__nsh_hv24, "onCaretMove", (event) => {
+			placeCaret(event.bounds);
+			revealComposer(journalCaret());
+		});
+		prop(__nsh_hv24, "onSelectionChange", (range) => journalSelection.set(range));
+		prop(__nsh_hv24, "onFocus", () => journalFocused.set(true));
+		prop(__nsh_hv24, "onBlur", () => journalFocused.set(false));
+		prop(__nsh_hv24, "onSubmit", (event) => send(event.text));
+		prop(__nsh_hv24, "multiline", true);
+		prop(__nsh_hv24, "submitBehavior", "submit");
+		prop(__nsh_hv24, "caret", false);
+		prop(__nsh_hv24, "placeholder", "Запись в дневник…");
+		prop(__nsh_hv24, "accessibilityLabel", "Новая запись в дневник");
+		prop(__nsh_hv24, "class", "min-w-0 w-full text-[15px]");
+		bindProp(__nsh_hv24, "style", () => ({
+			height: composerInputHeight(),
 			fontSize: 15,
-			lineHeight: 20,
-			paddingHorizontal: 10,
-			paddingVertical: 10,
+			lineHeight: COMPOSER_LINE,
+			paddingLeft: COMPOSER_PAD_X,
+			paddingRight: 8,
+			paddingTop: COMPOSER_PAD_Y,
+			paddingBottom: COMPOSER_PAD_Y,
+			placeholderColor: props.colors.muted,
+			selectionColor: colorAlpha(props.colors.accent, props.dark ? .35 : .24),
 			backgroundColor: "transparent",
 			color: props.colors.foreground
 		}));
-		const __nsh_hv32 = element("view");
-		prop(__nsh_hv32, "onPress", () => send(journalDraft()));
-		prop(__nsh_hv32, "role", "button");
-		prop(__nsh_hv32, "accessibilityLabel", "Отправить запись");
-		prop(__nsh_hv32, "class", "h-10 w-10 shrink-0 items-center justify-center rounded-full");
-		bindProp(__nsh_hv32, "style", () => ({ backgroundColor: props.colors.accent }));
-		const __nsh_hv33 = element("text");
-		prop(__nsh_hv33, "class", "text-[20px] font-semibold");
-		bindProp(__nsh_hv33, "style", () => ({ color: props.colors.foreground }));
-		const __nsh_hv34 = text("↑");
-		append(__nsh_hv33, __nsh_hv34);
-		append(__nsh_hv32, __nsh_hv33);
-		append(__nsh_hv30, __nsh_hv31);
-		append(__nsh_hv30, __nsh_hv32);
+		const __nsh_hv25 = element("view");
+		prop(__nsh_hv25, "pointerEvents", "none");
+		prop(__nsh_hv25, "class", "absolute");
+		bindProp(__nsh_hv25, "style", () => ({
+			left: journalCaret().x,
+			top: journalCaret().y,
+			width: CARET_WIDTH,
+			height: journalCaret().height,
+			backgroundColor: props.colors.accent,
+			opacity: composerCaretShown() ? 1 : 0,
+			zIndex: 1
+		}));
+		append(__nsh_hv23, __nsh_hv24);
+		append(__nsh_hv23, __nsh_hv25);
+		append(__nsh_hv22, __nsh_hv23);
+		append(__nsh_hv21, __nsh_hv22);
+		insert(__nsh_hv21, [() => composerFadeTop() && (() => {
+			const __nsh_hv26 = element("view");
+			prop(__nsh_hv26, "pointerEvents", "none");
+			prop(__nsh_hv26, "class", "absolute left-0 right-0 top-0");
+			bindProp(__nsh_hv26, "style", () => ({
+				height: COMPOSER_FADE,
+				backgroundImage: `linear-gradient(to bottom, ${props.colors.card}, ${colorAlpha(props.colors.card, 0)})`,
+				zIndex: 2
+			}));
+			return __nsh_hv26;
+		})(), () => composerFadeBottom() && (() => {
+			const __nsh_hv27 = element("view");
+			prop(__nsh_hv27, "pointerEvents", "none");
+			prop(__nsh_hv27, "class", "absolute left-0 right-0 bottom-0");
+			bindProp(__nsh_hv27, "style", () => ({
+				height: COMPOSER_FADE,
+				backgroundImage: `linear-gradient(to bottom, ${colorAlpha(props.colors.card, 0)}, ${props.colors.card})`,
+				zIndex: 2
+			}));
+			return __nsh_hv27;
+		})()]);
+		const __nsh_hv28 = element("view");
+		prop(__nsh_hv28, "onPress", () => send(journalDraft()));
+		prop(__nsh_hv28, "role", "button");
+		prop(__nsh_hv28, "accessibilityLabel", "Отправить запись");
+		prop(__nsh_hv28, "class", "shrink-0 items-center justify-center rounded-full");
+		bindProp(__nsh_hv28, "hoverStyle", () => ({ opacity: journalDraft().trim() ? .85 : .35 }));
+		bindProp(__nsh_hv28, "activeStyle", () => ({ opacity: journalDraft().trim() ? .7 : .35 }));
+		bindProp(__nsh_hv28, "style", () => ({
+			width: COMPOSER_SEND,
+			height: COMPOSER_SEND,
+			marginRight: 8,
+			marginBottom: composerExpanded() ? 10 : 0,
+			backgroundColor: journalBubble(props.colors.accent),
+			opacity: journalDraft().trim() ? 1 : .35,
+			cursor: journalDraft().trim() ? "pointer" : "default"
+		}));
+		const __nsh_hv29 = element("text");
+		prop(__nsh_hv29, "class", "text-[14px] font-semibold");
+		bindProp(__nsh_hv29, "style", () => ({ color: accentMark(journalBubble(props.colors.accent)) }));
+		const __nsh_hv30 = text("↑");
 		append(__nsh_hv29, __nsh_hv30);
-		append(__nsh_hv1, __nsh_hv3);
-		append(__nsh_hv1, __nsh_hv29);
-		insert(__nsh_hv1, () => props.nativeCalendarButton ? component(NativeCalendarToggle, {
+		append(__nsh_hv28, __nsh_hv29);
+		append(__nsh_hv20, __nsh_hv21);
+		append(__nsh_hv20, __nsh_hv28);
+		append(__nsh_hv19, __nsh_hv20);
+		append(__nsh_hv8, __nsh_hv10);
+		append(__nsh_hv8, __nsh_hv19);
+		insert(__nsh_hv8, () => props.nativeCalendarButton ? component(NativeCalendarToggle, {
 			get expanded() {
 				return journalCalendarOpen();
 			},
@@ -712,69 +1447,89 @@ function JournalPage(props) {
 			get accessibilityLabel() {
 				return journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь";
 			},
-			class: "absolute right-4 top-4 z-10 h-8 w-8"
-		}) : (() => {
-			const __nsh_hv2 = element("view");
-			prop(__nsh_hv2, "onPress", toggleJournalCalendar);
-			prop(__nsh_hv2, "role", "button");
-			bindProp(__nsh_hv2, "accessibilityLabel", () => journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь");
-			bindProp(__nsh_hv2, "accessibilityState", () => ({ selected: journalCalendarOpen() }));
-			prop(__nsh_hv2, "class", "absolute right-4 top-4 z-10 h-8 w-8 items-center justify-center rounded-lg");
-			bindProp(__nsh_hv2, "style", () => ({ backgroundColor: journalCalendarOpen() ? props.colors.card : "transparent" }));
-			insert(__nsh_hv2, component(Icon, {
+			class: "absolute right-4 z-10 h-8 w-8",
+			get style() {
+				return { top: props.titlebarInset + 16 };
+			}
+		}) : props.titlebarInset === 0 && (() => {
+			const __nsh_hv9 = element("view");
+			prop(__nsh_hv9, "onPress", toggleJournalCalendar);
+			prop(__nsh_hv9, "role", "button");
+			bindProp(__nsh_hv9, "accessibilityLabel", () => journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь");
+			bindProp(__nsh_hv9, "accessibilityState", () => ({ selected: journalCalendarOpen() }));
+			prop(__nsh_hv9, "class", "absolute z-10 items-center justify-center");
+			bindProp(__nsh_hv9, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .11) }));
+			bindProp(__nsh_hv9, "style", () => ({
+				top: 16,
+				right: 16,
+				width: 28,
+				height: 28,
+				borderRadius: 6,
+				cursor: "pointer",
+				backgroundColor: journalCalendarOpen() ? surfaceWash(props.dark, .09) : "transparent"
+			}));
+			insert(__nsh_hv9, component(Icon, {
 				name: "sidebar",
+				size: 16,
 				get color() {
-					return journalCalendarOpen() ? props.colors.accent : props.colors.muted;
+					return journalCalendarOpen() ? props.colors.foreground : props.colors.muted;
 				}
 			}));
-			return __nsh_hv2;
-		})(), __nsh_hv3);
-		const __nsh_hv35 = element("view");
-		prop(__nsh_hv35, "class", "relative h-full shrink-0");
-		bindProp(__nsh_hv35, "style", () => ({ width: journalCalendarOpen() ? journalCalendarWidth() : 0 }));
-		const __nsh_hv36 = element("view");
-		prop(__nsh_hv36, "class", "h-full w-full overflow-hidden");
-		insert(__nsh_hv36, component(JournalCalendar, {
+			return __nsh_hv9;
+		})(), __nsh_hv10);
+		const __nsh_hv31 = element("view");
+		prop(__nsh_hv31, "class", "relative h-full shrink-0 overflow-hidden");
+		bindProp(__nsh_hv31, "style", () => ({ width: journalCalendarOpen() ? journalCalendarWidth() : 0 }));
+		const __nsh_hv32 = element("view");
+		prop(__nsh_hv32, "class", "h-full border-l");
+		bindProp(__nsh_hv32, "style", () => ({
+			width: journalCalendarWidth(),
+			paddingTop: props.titlebarInset,
+			backgroundColor: surfaceWash(props.dark),
+			borderColor: journalCalendarResizeHovered() || journalCalendarResizeActive() ? props.colors.muted : props.colors.border,
+			transitionProperty: "borderColor",
+			transitionDuration: 150,
+			transitionTimingFunction: "ease-out"
+		}));
+		insert(__nsh_hv32, component(JournalCalendar, {
 			get width() {
 				return journalCalendarWidth();
 			},
-			get resizeHovered() {
-				return journalCalendarResizeHovered() || journalCalendarResizeActive();
+			framed: false,
+			resizeHovered: false,
+			get groups() {
+				return groups();
 			},
-			groups,
 			get colors() {
 				return props.colors;
 			},
+			get dark() {
+				return props.dark;
+			},
 			onSelect: jumpToDay
 		}));
-		append(__nsh_hv35, __nsh_hv36);
-		insert(__nsh_hv35, () => journalCalendarOpen() && (() => {
-			const __nsh_hv37 = element("view");
-			spread(__nsh_hv37, resizeCalendar.panHandlers);
-			prop(__nsh_hv37, "role", "button");
-			prop(__nsh_hv37, "accessibilityLabel", "Изменить ширину календаря");
-			prop(__nsh_hv37, "onHoverIn", () => journalCalendarResizeHovered.set(true));
-			prop(__nsh_hv37, "onHoverOut", () => journalCalendarResizeHovered.set(false));
-			prop(__nsh_hv37, "class", "absolute top-0 bottom-0 z-10 w-5");
-			prop(__nsh_hv37, "style", {
+		append(__nsh_hv31, __nsh_hv32);
+		insert(__nsh_hv31, () => journalCalendarOpen() && (() => {
+			const __nsh_hv33 = element("view");
+			spread(__nsh_hv33, resizeCalendar.panHandlers);
+			prop(__nsh_hv33, "role", "button");
+			prop(__nsh_hv33, "accessibilityLabel", "Изменить ширину календаря");
+			prop(__nsh_hv33, "onHoverIn", () => journalCalendarResizeHovered.set(true));
+			prop(__nsh_hv33, "onHoverOut", () => journalCalendarResizeHovered.set(false));
+			prop(__nsh_hv33, "class", "absolute top-0 bottom-0 z-10 w-5");
+			prop(__nsh_hv33, "style", {
 				left: -10,
 				cursor: "col-resize"
 			});
-			return __nsh_hv37;
+			return __nsh_hv33;
 		})());
-		append(__nsh_hv0, __nsh_hv1);
-		append(__nsh_hv0, __nsh_hv35);
-		return __nsh_hv0;
+		append(__nsh_hv7, __nsh_hv8);
+		append(__nsh_hv7, __nsh_hv31);
+		return __nsh_hv7;
 	})();
 }
 function toggleJournalCalendar() {
-	LayoutAnimation.configureNext({
-		duration: 200,
-		update: {
-			type: "easeOut",
-			duration: 200
-		}
-	});
+	animatePanes();
 	journalCalendarOpen.update((open) => !open);
 }
 
@@ -816,6 +1571,8 @@ function AtlasAppearanceSettings(props) {
 	const patch = (values) => {
 		if (canEdit() && appearance()) props.onPatch(values);
 	};
+	const dark = appearance()?.settings.mode !== "light";
+	const wash = hoverWash(dark);
 	const heading = (label) => (() => {
 		const __nsh_hv0 = element("text");
 		prop(__nsh_hv0, "class", "mb-2 px-2 text-[13px]");
@@ -831,63 +1588,61 @@ function AtlasAppearanceSettings(props) {
 			selected,
 			disabled: !canEdit()
 		}));
-		prop(__nsh_hv1, "class", "rounded-lg border px-2.5 py-2");
+		prop(__nsh_hv1, "class", "items-center justify-center rounded-lg border");
+		prop(__nsh_hv1, "hoverStyle", { backgroundColor: wash });
 		bindProp(__nsh_hv1, "style", () => ({
+			height: 32,
+			paddingLeft: 12,
+			paddingRight: 12,
 			backgroundColor: selected ? colors().card : colors().background,
 			borderColor: selected ? colors().accent : colors().border,
-			opacity: canEdit() ? 1 : .65
+			opacity: canEdit() ? 1 : .65,
+			cursor: canEdit() ? "pointer" : "default"
 		}));
 		const __nsh_hv2 = element("text");
 		prop(__nsh_hv2, "class", "text-[12px]");
+		bindProp(__nsh_hv2, "hoverStyle", () => ({ color: colors().foreground }));
 		bindProp(__nsh_hv2, "style", () => ({ color: selected ? colors().foreground : colors().muted }));
 		insert(__nsh_hv2, label);
 		append(__nsh_hv1, __nsh_hv2);
 		return __nsh_hv1;
 	})();
-	const select = (id, value, options, onSelect, width, preview, menuWidth = width) => {
+	const select = (id, value, options, onSelect, width) => {
 		const expanded = openSelector() === id;
-		const label = id === "light" ? "Выбрать светлую тему" : id === "dark" ? "Выбрать тёмную тему" : "Выбрать размер текста";
 		const trigger = (() => {
 			const __nsh_hv3 = element("view");
 			prop(__nsh_hv3, "role", "button");
-			prop(__nsh_hv3, "accessibilityLabel", label);
+			prop(__nsh_hv3, "accessibilityLabel", "Выбрать размер текста");
 			bindProp(__nsh_hv3, "accessibilityState", () => ({
 				expanded,
 				disabled: !canEdit()
 			}));
-			prop(__nsh_hv3, "class", "h-8 flex-row items-center justify-between rounded-lg border px-2.5");
+			prop(__nsh_hv3, "class", "h-8 flex-row items-center justify-between rounded-lg border");
+			prop(__nsh_hv3, "hoverStyle", { backgroundColor: wash });
 			bindProp(__nsh_hv3, "style", () => ({
+				paddingLeft: 12,
+				paddingRight: 8,
 				backgroundColor: colors().card,
 				borderColor: expanded ? colors().accent : colors().border,
-				opacity: canEdit() ? 1 : .65
+				opacity: canEdit() ? 1 : .65,
+				cursor: canEdit() ? "pointer" : "default"
 			}));
-			const __nsh_hv4 = element("view");
-			prop(__nsh_hv4, "class", "min-w-0 flex-1 flex-row items-center gap-2");
+			const __nsh_hv4 = element("text");
+			prop(__nsh_hv4, "class", "text-[12px]");
+			bindProp(__nsh_hv4, "style", () => ({ color: colors().foreground }));
+			insert(__nsh_hv4, () => options.find((option) => option.value === value)?.label ?? value);
 			const __nsh_hv5 = element("text");
-			prop(__nsh_hv5, "class", "text-[12px]");
-			bindProp(__nsh_hv5, "style", () => ({ color: colors().foreground }));
-			insert(__nsh_hv5, () => options.find((option) => option.value === value)?.label ?? value);
-			append(__nsh_hv4, __nsh_hv5);
-			insert(__nsh_hv4, () => preview && component(PaletteChip, {
-				get palette() {
-					return options.find((option) => option.value === value)?.preview ?? colors();
-				},
-				get border() {
-					return colors().border;
-				}
-			}), __nsh_hv5);
-			const __nsh_hv6 = element("text");
-			prop(__nsh_hv6, "class", "text-[11px]");
-			bindProp(__nsh_hv6, "style", () => ({ color: colors().muted }));
-			insert(__nsh_hv6, expanded ? "⌃" : "⌄");
+			prop(__nsh_hv5, "class", "text-[11px]");
+			bindProp(__nsh_hv5, "style", () => ({ color: colors().muted }));
+			insert(__nsh_hv5, expanded ? "⌃" : "⌄");
 			append(__nsh_hv3, __nsh_hv4);
-			append(__nsh_hv3, __nsh_hv6);
+			append(__nsh_hv3, __nsh_hv5);
 			return __nsh_hv3;
 		})();
 		return (() => {
-			const __nsh_hv7 = element("view");
-			prop(__nsh_hv7, "style", { width });
-			insert(__nsh_hv7, () => canEdit() ? component(Popover, {
+			const __nsh_hv6 = element("view");
+			prop(__nsh_hv6, "style", { width });
+			insert(__nsh_hv6, () => canEdit() ? component(Popover, {
 				open: expanded,
 				onOpenChange: (next) => openSelector.set(next ? id : null),
 				placement: "bottom",
@@ -898,411 +1653,398 @@ function AtlasAppearanceSettings(props) {
 				popupClass: "rounded-xl border p-1",
 				get popupStyle() {
 					return {
-						width: menuWidth,
+						width,
 						backgroundColor: colors().card,
 						borderColor: colors().border
 					};
 				},
 				get children() {
 					return (() => {
-						const __nsh_hv8 = element("scroll");
-						prop(__nsh_hv8, "accessibilityLabel", "Варианты выбора");
-						bindProp(__nsh_hv8, "style", () => ({ height: Math.min(options.length * 32, 256) }));
-						insert(__nsh_hv8, () => options.map((option) => (() => {
-							const __nsh_hv9 = element("view");
-							prop(__nsh_hv9, "onPress", () => {
+						const __nsh_hv7 = element("scroll");
+						prop(__nsh_hv7, "accessibilityLabel", "Варианты выбора");
+						bindProp(__nsh_hv7, "style", () => ({ height: Math.min(options.length * 32, 256) }));
+						insert(__nsh_hv7, () => options.map((option) => (() => {
+							const __nsh_hv8 = element("view");
+							prop(__nsh_hv8, "onPress", () => {
 								onSelect(option.value);
 								openSelector.set(null);
 							});
-							prop(__nsh_hv9, "role", "button");
-							bindProp(__nsh_hv9, "accessibilityState", () => ({ selected: option.value === value }));
-							prop(__nsh_hv9, "class", "h-8 flex-row items-center gap-2 rounded-md px-2");
-							const __nsh_hv10 = element("text");
-							prop(__nsh_hv10, "class", "flex-1 text-[12px]");
-							bindProp(__nsh_hv10, "style", () => ({ color: colors().foreground }));
-							insert(__nsh_hv10, () => option.label);
-							append(__nsh_hv9, __nsh_hv10);
-							insert(__nsh_hv9, () => preview && component(PaletteChip, {
-								get palette() {
-									return option.preview ?? colors();
-								},
-								get border() {
-									return colors().border;
-								}
-							}), __nsh_hv10);
-							insert(__nsh_hv9, () => option.value === value && (() => {
-								const __nsh_hv11 = element("text");
-								prop(__nsh_hv11, "class", "text-[12px]");
-								bindProp(__nsh_hv11, "style", () => ({ color: colors().accent }));
-								const __nsh_hv12 = text("✓");
-								append(__nsh_hv11, __nsh_hv12);
-								return __nsh_hv11;
+							prop(__nsh_hv8, "role", "button");
+							bindProp(__nsh_hv8, "accessibilityState", () => ({ selected: option.value === value }));
+							prop(__nsh_hv8, "class", "h-8 flex-row items-center gap-2 rounded-lg px-2");
+							prop(__nsh_hv8, "hoverStyle", { backgroundColor: wash });
+							prop(__nsh_hv8, "style", { cursor: "pointer" });
+							const __nsh_hv9 = element("text");
+							prop(__nsh_hv9, "class", "flex-1 text-[12px]");
+							bindProp(__nsh_hv9, "style", () => ({ color: colors().foreground }));
+							insert(__nsh_hv9, () => option.label);
+							append(__nsh_hv8, __nsh_hv9);
+							insert(__nsh_hv8, () => option.value === value && (() => {
+								const __nsh_hv10 = element("text");
+								prop(__nsh_hv10, "class", "text-[12px]");
+								bindProp(__nsh_hv10, "style", () => ({ color: colors().accent }));
+								const __nsh_hv11 = text("✓");
+								append(__nsh_hv10, __nsh_hv11);
+								return __nsh_hv10;
 							})());
-							return __nsh_hv9;
+							return __nsh_hv8;
 						})()));
-						return __nsh_hv8;
+						return __nsh_hv7;
 					})();
 				}
 			}) : trigger);
-			return __nsh_hv7;
+			return __nsh_hv6;
 		})();
 	};
 	const shortcutRow = (name, label) => (() => {
-		const __nsh_hv13 = element("view");
-		prop(__nsh_hv13, "class", "min-h-[52px] flex-row items-center gap-4 border-b py-3");
-		bindProp(__nsh_hv13, "style", () => ({ borderColor: colors().border }));
-		const __nsh_hv14 = element("text");
-		prop(__nsh_hv14, "class", "flex-1 text-[13px]");
-		bindProp(__nsh_hv14, "style", () => ({ color: colors().foreground }));
-		insert(__nsh_hv14, label);
-		const __nsh_hv15 = element("view");
-		prop(__nsh_hv15, "onPress", () => props.onChangeShortcut(name));
-		prop(__nsh_hv15, "role", "button");
-		prop(__nsh_hv15, "accessibilityLabel", `Изменить сочетание: ${label}`);
-		prop(__nsh_hv15, "class", "rounded-md px-3 py-1");
-		bindProp(__nsh_hv15, "style", () => ({ backgroundColor: colors().background }));
-		const __nsh_hv16 = element("text");
-		prop(__nsh_hv16, "class", "text-[12px]");
-		bindProp(__nsh_hv16, "style", () => ({ color: colors().accent }));
-		insert(__nsh_hv16, () => keymap.label(props.shortcuts[name]));
-		append(__nsh_hv15, __nsh_hv16);
-		append(__nsh_hv13, __nsh_hv14);
-		append(__nsh_hv13, __nsh_hv15);
-		return __nsh_hv13;
+		const __nsh_hv12 = element("view");
+		prop(__nsh_hv12, "class", "min-h-[52px] flex-row items-center gap-4 border-b py-3");
+		bindProp(__nsh_hv12, "style", () => ({ borderColor: colors().border }));
+		const __nsh_hv13 = element("text");
+		prop(__nsh_hv13, "class", "flex-1 text-[13px]");
+		bindProp(__nsh_hv13, "style", () => ({ color: colors().foreground }));
+		insert(__nsh_hv13, label);
+		const __nsh_hv14 = element("view");
+		prop(__nsh_hv14, "onPress", () => props.onChangeShortcut(name));
+		prop(__nsh_hv14, "role", "button");
+		prop(__nsh_hv14, "accessibilityLabel", `Изменить сочетание: ${label}`);
+		prop(__nsh_hv14, "class", "items-center justify-center");
+		prop(__nsh_hv14, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv14, "style", () => ({
+			height: 32,
+			paddingLeft: 12,
+			paddingRight: 12,
+			borderRadius: 8,
+			backgroundColor: colors().background,
+			cursor: "pointer"
+		}));
+		const __nsh_hv15 = element("text");
+		prop(__nsh_hv15, "class", "text-[12px]");
+		bindProp(__nsh_hv15, "style", () => ({ color: colors().accent }));
+		insert(__nsh_hv15, () => keymap.label(props.shortcuts[name]));
+		append(__nsh_hv14, __nsh_hv15);
+		append(__nsh_hv12, __nsh_hv13);
+		append(__nsh_hv12, __nsh_hv14);
+		return __nsh_hv12;
 	})();
 	if (!settings() || !appearance()) return (() => {
-		const __nsh_hv17 = element("scroll");
-		prop(__nsh_hv17, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
-		const __nsh_hv18 = element("text");
-		prop(__nsh_hv18, "class", "text-[13px]");
-		bindProp(__nsh_hv18, "style", () => ({ color: colors().muted }));
-		const __nsh_hv19 = text("Загружаем настройки внешнего вида…");
-		append(__nsh_hv18, __nsh_hv19);
+		const __nsh_hv16 = element("scroll");
+		prop(__nsh_hv16, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
+		const __nsh_hv17 = element("text");
+		prop(__nsh_hv17, "class", "text-[13px]");
+		bindProp(__nsh_hv17, "style", () => ({ color: colors().muted }));
+		const __nsh_hv18 = text("Загружаем настройки внешнего вида…");
 		append(__nsh_hv17, __nsh_hv18);
-		return __nsh_hv17;
+		append(__nsh_hv16, __nsh_hv17);
+		return __nsh_hv16;
 	})();
 	const current = () => settings();
 	const modePalette = (mode) => {
 		if (mode === "system") return colors();
-		const themeKey = mode === "light" ? current().light_theme : current().dark_theme;
-		const theme = props.themes.find((item) => item.key === themeKey);
-		return (mode === "light" ? theme?.light : theme?.dark) ?? colors();
+		const darkMode = mode === "dark";
+		const theme = previewThemes[0];
+		const base = darkMode ? theme.dark : theme.light;
+		const custom = current().accent_source === "custom" ? systemAccent(current().accent_color, darkMode) : void 0;
+		return {
+			...base,
+			accent: custom ?? base.accent
+		};
 	};
 	const modeCard = (mode) => {
-		const palette = modePalette(mode.value);
+		const palette = () => modePalette(mode.value);
 		return (() => {
-			const __nsh_hv20 = element("view");
-			prop(__nsh_hv20, "onPress", () => patch({ mode: mode.value }));
-			prop(__nsh_hv20, "role", "button");
-			bindProp(__nsh_hv20, "accessibilityState", () => ({
+			const __nsh_hv19 = element("view");
+			prop(__nsh_hv19, "onPress", () => patch({ mode: mode.value }));
+			prop(__nsh_hv19, "role", "button");
+			bindProp(__nsh_hv19, "accessibilityState", () => ({
 				selected: current().mode === mode.value,
 				disabled: !canEdit()
 			}));
-			prop(__nsh_hv20, "class", "min-w-0 flex-1");
-			bindProp(__nsh_hv20, "style", () => ({ opacity: canEdit() ? 1 : .65 }));
+			prop(__nsh_hv19, "class", "min-w-0 flex-1");
+			bindProp(__nsh_hv19, "hoverStyle", () => ({ opacity: canEdit() ? .85 : .65 }));
+			bindProp(__nsh_hv19, "style", () => ({
+				opacity: canEdit() ? 1 : .65,
+				cursor: canEdit() ? "pointer" : "default"
+			}));
+			const __nsh_hv20 = element("view");
+			prop(__nsh_hv20, "class", "h-[148px] items-center justify-center overflow-hidden rounded-md border p-3");
+			bindProp(__nsh_hv20, "style", () => ({
+				borderColor: current().mode === mode.value ? colors().accent : palette().border,
+				backgroundColor: palette().background
+			}));
 			const __nsh_hv21 = element("view");
-			prop(__nsh_hv21, "class", "h-[148px] items-center justify-center overflow-hidden rounded-md border p-3");
+			prop(__nsh_hv21, "class", "h-full w-full flex-row overflow-hidden rounded-md border");
 			bindProp(__nsh_hv21, "style", () => ({
-				borderColor: current().mode === mode.value ? colors().accent : palette.border,
-				backgroundColor: palette.background
+				borderColor: palette().border,
+				backgroundColor: palette().card
 			}));
 			const __nsh_hv22 = element("view");
-			prop(__nsh_hv22, "class", "h-full w-full flex-row overflow-hidden rounded-md border");
-			bindProp(__nsh_hv22, "style", () => ({
-				borderColor: palette.border,
-				backgroundColor: palette.card
-			}));
+			prop(__nsh_hv22, "class", "w-1/3 gap-2 border-r p-2");
+			bindProp(__nsh_hv22, "style", () => ({ borderColor: palette().border }));
 			const __nsh_hv23 = element("view");
-			prop(__nsh_hv23, "class", "w-1/3 gap-2 border-r p-2");
-			bindProp(__nsh_hv23, "style", () => ({ borderColor: palette.border }));
+			prop(__nsh_hv23, "class", "h-2 rounded");
+			bindProp(__nsh_hv23, "style", () => ({ backgroundColor: palette().accent }));
 			const __nsh_hv24 = element("view");
-			prop(__nsh_hv24, "class", "h-2 rounded");
-			bindProp(__nsh_hv24, "style", () => ({ backgroundColor: palette.accent }));
+			prop(__nsh_hv24, "class", "h-1.5 rounded");
+			bindProp(__nsh_hv24, "style", () => ({ backgroundColor: palette().muted }));
 			const __nsh_hv25 = element("view");
 			prop(__nsh_hv25, "class", "h-1.5 rounded");
-			bindProp(__nsh_hv25, "style", () => ({ backgroundColor: palette.muted }));
-			const __nsh_hv26 = element("view");
-			prop(__nsh_hv26, "class", "h-1.5 rounded");
-			bindProp(__nsh_hv26, "style", () => ({ backgroundColor: palette.border }));
-			append(__nsh_hv23, __nsh_hv24);
-			append(__nsh_hv23, __nsh_hv25);
-			append(__nsh_hv23, __nsh_hv26);
-			const __nsh_hv27 = element("view");
-			prop(__nsh_hv27, "class", "flex-1 gap-2 p-2");
-			const __nsh_hv28 = element("view");
-			prop(__nsh_hv28, "class", "h-2 w-1/2 rounded");
-			bindProp(__nsh_hv28, "style", () => ({ backgroundColor: palette.muted }));
-			const __nsh_hv29 = element("view");
-			prop(__nsh_hv29, "class", "h-9 rounded");
-			bindProp(__nsh_hv29, "style", () => ({ backgroundColor: palette.background }));
-			const __nsh_hv30 = element("view");
-			prop(__nsh_hv30, "class", "h-1.5 w-2/3 rounded");
-			bindProp(__nsh_hv30, "style", () => ({ backgroundColor: palette.border }));
-			append(__nsh_hv27, __nsh_hv28);
-			append(__nsh_hv27, __nsh_hv29);
-			append(__nsh_hv27, __nsh_hv30);
+			bindProp(__nsh_hv25, "style", () => ({ backgroundColor: palette().border }));
 			append(__nsh_hv22, __nsh_hv23);
-			append(__nsh_hv22, __nsh_hv27);
+			append(__nsh_hv22, __nsh_hv24);
+			append(__nsh_hv22, __nsh_hv25);
+			const __nsh_hv26 = element("view");
+			prop(__nsh_hv26, "class", "flex-1 gap-2 p-2");
+			const __nsh_hv27 = element("view");
+			prop(__nsh_hv27, "class", "h-2 w-1/2 rounded");
+			bindProp(__nsh_hv27, "style", () => ({ backgroundColor: palette().muted }));
+			const __nsh_hv28 = element("view");
+			prop(__nsh_hv28, "class", "h-9 rounded");
+			bindProp(__nsh_hv28, "style", () => ({ backgroundColor: palette().background }));
+			const __nsh_hv29 = element("view");
+			prop(__nsh_hv29, "class", "h-1.5 w-2/3 rounded");
+			bindProp(__nsh_hv29, "style", () => ({ backgroundColor: palette().border }));
+			append(__nsh_hv26, __nsh_hv27);
+			append(__nsh_hv26, __nsh_hv28);
+			append(__nsh_hv26, __nsh_hv29);
 			append(__nsh_hv21, __nsh_hv22);
-			const __nsh_hv31 = element("text");
-			prop(__nsh_hv31, "class", "mt-2 text-center text-[12px]");
-			bindProp(__nsh_hv31, "style", () => ({ color: current().mode === mode.value ? colors().accent : colors().muted }));
-			insert(__nsh_hv31, () => mode.label);
+			append(__nsh_hv21, __nsh_hv26);
 			append(__nsh_hv20, __nsh_hv21);
-			append(__nsh_hv20, __nsh_hv31);
-			return __nsh_hv20;
+			const __nsh_hv30 = element("text");
+			prop(__nsh_hv30, "class", "mt-2 text-center text-[12px]");
+			bindProp(__nsh_hv30, "style", () => ({ color: current().mode === mode.value ? colors().accent : colors().muted }));
+			insert(__nsh_hv30, () => mode.label);
+			append(__nsh_hv19, __nsh_hv20);
+			append(__nsh_hv19, __nsh_hv30);
+			return __nsh_hv19;
 		})();
 	};
 	return (() => {
-		const __nsh_hv32 = element("scroll");
-		prop(__nsh_hv32, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
-		bindProp(__nsh_hv32, "style", () => ({ backgroundColor: colors().background }));
-		const __nsh_hv33 = element("view");
-		prop(__nsh_hv33, "class", "mx-auto w-full max-w-[720px]");
-		const __nsh_hv34 = element("text");
-		prop(__nsh_hv34, "class", "mb-5 px-2 text-[22px] font-semibold");
-		bindProp(__nsh_hv34, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv35 = text("Оформление");
-		append(__nsh_hv34, __nsh_hv35);
+		const __nsh_hv31 = element("scroll");
+		prop(__nsh_hv31, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
+		bindProp(__nsh_hv31, "style", () => ({ backgroundColor: colors().background }));
+		const __nsh_hv32 = element("view");
+		prop(__nsh_hv32, "class", "mx-auto w-full max-w-[720px]");
+		const __nsh_hv33 = element("text");
+		prop(__nsh_hv33, "class", "mb-5 px-2 text-[22px] font-semibold");
+		bindProp(__nsh_hv33, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv34 = text("Оформление");
+		append(__nsh_hv33, __nsh_hv34);
+		const __nsh_hv39 = element("view");
+		prop(__nsh_hv39, "class", "mb-8 flex-row gap-4");
+		insert(__nsh_hv39, () => modePreviews.map(modeCard));
 		const __nsh_hv40 = element("view");
-		prop(__nsh_hv40, "class", "mb-8 flex-row gap-4");
-		insert(__nsh_hv40, () => modePreviews.map(modeCard));
+		prop(__nsh_hv40, "class", "mb-8 rounded-xl border px-4");
+		bindProp(__nsh_hv40, "style", () => ({
+			backgroundColor: colors().card,
+			borderColor: colors().border
+		}));
 		const __nsh_hv41 = element("view");
-		prop(__nsh_hv41, "class", "mb-8 rounded-xl border px-4");
-		bindProp(__nsh_hv41, "style", () => ({
+		prop(__nsh_hv41, "class", "gap-2 py-3");
+		insert(__nsh_hv41, [() => [systemAccents.slice(0, 6), systemAccents.slice(6)].map((row) => (() => {
+			const __nsh_hv42 = element("view");
+			prop(__nsh_hv42, "class", "flex-row flex-wrap items-center gap-2");
+			insert(__nsh_hv42, () => row.map((accent) => {
+				const shown = () => appearance()?.settings.mode !== "light" ? accent.dark : accent.light;
+				const selected = () => {
+					const stored = current().accent_color?.toLowerCase();
+					return current().accent_source === "custom" ? stored === accent.light || stored === accent.dark || accent.legacy.includes(stored ?? "") : current().accent_source !== "wallpaper" && accent.key === "blue";
+				};
+				const label = () => appearance()?.settings.mode !== "light" && accent.darkName ? accent.darkName : accent.name;
+				return (() => {
+					const __nsh_hv43 = element("view");
+					prop(__nsh_hv43, "onPress", () => patch({
+						accent_source: "custom",
+						accent_color: accent.light
+					}));
+					prop(__nsh_hv43, "role", "button");
+					bindProp(__nsh_hv43, "accessibilityLabel", () => `Акцент ${label()}`);
+					bindProp(__nsh_hv43, "accessibilityState", () => ({ selected: selected() }));
+					prop(__nsh_hv43, "class", "h-7 w-7 items-center justify-center rounded-full border");
+					prop(__nsh_hv43, "hoverStyle", { opacity: .85 });
+					bindProp(__nsh_hv43, "style", () => ({
+						backgroundColor: shown(),
+						borderColor: selected() ? accentMark(shown()) : "transparent",
+						cursor: "pointer"
+					}));
+					insert(__nsh_hv43, () => selected() && (() => {
+						const __nsh_hv44 = element("text");
+						prop(__nsh_hv44, "class", "text-[12px]");
+						bindProp(__nsh_hv44, "style", () => ({ color: accentMark(shown()) }));
+						const __nsh_hv45 = text("✓");
+						append(__nsh_hv44, __nsh_hv45);
+						return __nsh_hv44;
+					})());
+					return __nsh_hv43;
+				})();
+			}));
+			return __nsh_hv42;
+		})()), () => appearance()?.capabilities.wallpaper_accent && card(current().accent_source === "wallpaper", "Обои", () => patch({ accent_source: "wallpaper" }))]);
+		append(__nsh_hv40, __nsh_hv41);
+		const __nsh_hv46 = element("view");
+		prop(__nsh_hv46, "class", "mb-8 rounded-xl border px-4");
+		bindProp(__nsh_hv46, "style", () => ({
 			backgroundColor: colors().card,
 			borderColor: colors().border
 		}));
-		const __nsh_hv42 = element("view");
-		prop(__nsh_hv42, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 border-b py-3");
-		bindProp(__nsh_hv42, "style", () => ({ borderColor: colors().border }));
-		const __nsh_hv43 = element("text");
-		prop(__nsh_hv43, "class", "min-w-[160px] flex-1 text-[13px]");
-		bindProp(__nsh_hv43, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv44 = text("Светлая тема");
-		append(__nsh_hv43, __nsh_hv44);
-		append(__nsh_hv42, __nsh_hv43);
-		insert(__nsh_hv42, () => select("light", current().light_theme, props.themes.map((theme) => ({
-			value: theme.key,
-			label: theme.name,
-			preview: theme.light
-		})), (value) => patch({ light_theme: value }), 218, true, 260));
-		const __nsh_hv45 = element("view");
-		prop(__nsh_hv45, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
-		const __nsh_hv46 = element("text");
-		prop(__nsh_hv46, "class", "min-w-[160px] flex-1 text-[13px]");
-		bindProp(__nsh_hv46, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv47 = text("Тёмная тема");
-		append(__nsh_hv46, __nsh_hv47);
-		append(__nsh_hv45, __nsh_hv46);
-		insert(__nsh_hv45, () => select("dark", current().dark_theme, props.themes.map((theme) => ({
-			value: theme.key,
-			label: theme.name,
-			preview: theme.dark
-		})), (value) => patch({ dark_theme: value }), 218, true, 260));
-		append(__nsh_hv41, __nsh_hv42);
-		append(__nsh_hv41, __nsh_hv45);
-		const __nsh_hv48 = element("view");
-		prop(__nsh_hv48, "class", "mb-8 rounded-xl border px-4");
-		bindProp(__nsh_hv48, "style", () => ({
-			backgroundColor: colors().card,
-			borderColor: colors().border
-		}));
-		const __nsh_hv49 = element("view");
-		prop(__nsh_hv49, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
-		const __nsh_hv50 = element("text");
-		prop(__nsh_hv50, "class", "min-w-[160px] flex-1 text-[13px]");
-		bindProp(__nsh_hv50, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv51 = text("Акцентный цвет");
-		append(__nsh_hv50, __nsh_hv51);
-		const __nsh_hv52 = element("view");
-		prop(__nsh_hv52, "class", "flex-row flex-wrap items-center gap-2");
-		insert(__nsh_hv52, [
-			() => card(current().accent_source === "theme", "Цвет темы", () => patch({
-				accent_source: "theme",
-				accent_color: null
-			})),
-			() => card(current().accent_source === "custom", "Свой цвет", () => patch({
-				accent_source: "custom",
-				accent_color: current().accent_color ?? accentChoices[0]
-			})),
-			() => appearance()?.capabilities.wallpaper_accent && card(current().accent_source === "wallpaper", "Обои", () => patch({ accent_source: "wallpaper" }))
-		]);
-		append(__nsh_hv49, __nsh_hv50);
-		append(__nsh_hv49, __nsh_hv52);
-		const __nsh_hv53 = element("view");
-		prop(__nsh_hv53, "class", "flex-row flex-wrap items-center gap-2 border-t py-3");
-		bindProp(__nsh_hv53, "style", () => ({ borderColor: colors().border }));
-		insert(__nsh_hv53, () => accentChoices.map((accent) => (() => {
-			const __nsh_hv54 = element("view");
-			prop(__nsh_hv54, "onPress", () => patch({
-				accent_source: "custom",
-				accent_color: accent
-			}));
-			prop(__nsh_hv54, "role", "button");
-			prop(__nsh_hv54, "accessibilityLabel", `Акцент ${accent}`);
-			bindProp(__nsh_hv54, "accessibilityState", () => ({ selected: current().accent_source === "custom" && current().accent_color?.toLowerCase() === accent }));
-			prop(__nsh_hv54, "class", "h-7 w-7 items-center justify-center rounded-lg border");
-			bindProp(__nsh_hv54, "style", () => ({
-				backgroundColor: accent,
-				borderColor: current().accent_color?.toLowerCase() === accent ? colors().foreground : colors().border
-			}));
-			insert(__nsh_hv54, () => current().accent_color?.toLowerCase() === accent && (() => {
-				const __nsh_hv55 = element("text");
-				prop(__nsh_hv55, "class", "text-[12px]");
-				prop(__nsh_hv55, "style", { color: "#ffffff" });
-				const __nsh_hv56 = text("✓");
-				append(__nsh_hv55, __nsh_hv56);
-				return __nsh_hv55;
-			})());
-			return __nsh_hv54;
-		})()));
+		const __nsh_hv47 = element("view");
+		prop(__nsh_hv47, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
+		const __nsh_hv48 = element("text");
+		prop(__nsh_hv48, "class", "min-w-[160px] flex-1 text-[13px]");
+		bindProp(__nsh_hv48, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv49 = text("Материал окна");
 		append(__nsh_hv48, __nsh_hv49);
-		append(__nsh_hv48, __nsh_hv53);
-		const __nsh_hv57 = element("view");
-		prop(__nsh_hv57, "class", "mb-8 rounded-xl border px-4");
-		bindProp(__nsh_hv57, "style", () => ({
+		const __nsh_hv50 = element("view");
+		prop(__nsh_hv50, "class", "flex-row flex-wrap items-center gap-2");
+		insert(__nsh_hv50, () => (appearance()?.capabilities.materials ?? []).map((material) => selectLabel(material, materialLabels[material] ?? material, current().material, (next) => patch({ material: next }), colors(), canEdit(), dark)));
+		append(__nsh_hv47, __nsh_hv48);
+		append(__nsh_hv47, __nsh_hv50);
+		append(__nsh_hv46, __nsh_hv47);
+		const __nsh_hv51 = element("view");
+		prop(__nsh_hv51, "class", "mb-8 rounded-xl border px-4");
+		bindProp(__nsh_hv51, "style", () => ({
 			backgroundColor: colors().card,
 			borderColor: colors().border
 		}));
-		const __nsh_hv58 = element("view");
-		prop(__nsh_hv58, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
-		const __nsh_hv59 = element("text");
-		prop(__nsh_hv59, "class", "min-w-[160px] flex-1 text-[13px]");
-		bindProp(__nsh_hv59, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv60 = text("Материал окна");
-		append(__nsh_hv59, __nsh_hv60);
-		const __nsh_hv61 = element("view");
-		prop(__nsh_hv61, "class", "flex-row flex-wrap items-center gap-2");
-		insert(__nsh_hv61, () => (appearance()?.capabilities.materials ?? []).map((material) => selectLabel(material, materialLabels[material] ?? material, current().material, (next) => patch({ material: next }), colors(), canEdit())));
-		append(__nsh_hv58, __nsh_hv59);
-		append(__nsh_hv58, __nsh_hv61);
-		append(__nsh_hv57, __nsh_hv58);
-		const __nsh_hv62 = element("view");
-		prop(__nsh_hv62, "class", "mb-8 rounded-xl border px-4");
-		bindProp(__nsh_hv62, "style", () => ({
-			backgroundColor: colors().card,
-			borderColor: colors().border
-		}));
-		const __nsh_hv63 = element("view");
-		prop(__nsh_hv63, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
-		const __nsh_hv64 = element("text");
-		prop(__nsh_hv64, "class", "min-w-[160px] flex-1 text-[13px]");
-		bindProp(__nsh_hv64, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv65 = text("Размер интерфейсного текста");
-		append(__nsh_hv64, __nsh_hv65);
-		append(__nsh_hv63, __nsh_hv64);
-		insert(__nsh_hv63, () => select("fontSize", String(current().font_size), [.../* @__PURE__ */ new Set([...fontSizes, current().font_size])].sort((a, b) => a - b).map((size) => ({
+		const __nsh_hv52 = element("view");
+		prop(__nsh_hv52, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
+		const __nsh_hv53 = element("text");
+		prop(__nsh_hv53, "class", "min-w-[160px] flex-1 text-[13px]");
+		bindProp(__nsh_hv53, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv54 = text("Размер интерфейсного текста");
+		append(__nsh_hv53, __nsh_hv54);
+		append(__nsh_hv52, __nsh_hv53);
+		insert(__nsh_hv52, () => select("fontSize", String(current().font_size), [.../* @__PURE__ */ new Set([...fontSizes, current().font_size])].sort((a, b) => a - b).map((size) => ({
 			value: String(size),
 			label: `${size} px`
 		})), (value) => patch({ font_size: Number(value) }), 128));
-		append(__nsh_hv62, __nsh_hv63);
-		const __nsh_hv66 = element("view");
-		prop(__nsh_hv66, "class", "rounded-xl border px-4");
-		bindProp(__nsh_hv66, "style", () => ({
+		append(__nsh_hv51, __nsh_hv52);
+		const __nsh_hv55 = element("view");
+		prop(__nsh_hv55, "class", "rounded-xl border px-4");
+		bindProp(__nsh_hv55, "style", () => ({
 			backgroundColor: colors().card,
 			borderColor: colors().border
 		}));
-		const __nsh_hv67 = element("view");
-		prop(__nsh_hv67, "class", "h-10 flex-row items-center");
-		const __nsh_hv68 = element("text");
-		prop(__nsh_hv68, "class", "flex-1 text-[13px]");
-		bindProp(__nsh_hv68, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv69 = text("Закрыть панель / поиск");
-		append(__nsh_hv68, __nsh_hv69);
-		const __nsh_hv70 = element("text");
-		prop(__nsh_hv70, "class", "text-[12px]");
-		bindProp(__nsh_hv70, "style", () => ({ color: colors().muted }));
-		const __nsh_hv71 = text("Esc");
-		append(__nsh_hv70, __nsh_hv71);
-		append(__nsh_hv67, __nsh_hv68);
-		append(__nsh_hv67, __nsh_hv70);
-		append(__nsh_hv66, __nsh_hv67);
-		insert(__nsh_hv66, [
+		const __nsh_hv56 = element("view");
+		prop(__nsh_hv56, "class", "h-10 flex-row items-center");
+		const __nsh_hv57 = element("text");
+		prop(__nsh_hv57, "class", "flex-1 text-[13px]");
+		bindProp(__nsh_hv57, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv58 = text("Закрыть панель / поиск");
+		append(__nsh_hv57, __nsh_hv58);
+		const __nsh_hv59 = element("text");
+		prop(__nsh_hv59, "class", "text-[12px]");
+		bindProp(__nsh_hv59, "style", () => ({ color: colors().muted }));
+		const __nsh_hv60 = text("Esc");
+		append(__nsh_hv59, __nsh_hv60);
+		append(__nsh_hv56, __nsh_hv57);
+		append(__nsh_hv56, __nsh_hv59);
+		append(__nsh_hv55, __nsh_hv56);
+		insert(__nsh_hv55, [
 			() => shortcutRow("sidebar", "Боковая панель — открыть/скрыть"),
 			() => shortcutRow("create", "Новая задача — панель справа"),
 			() => shortcutRow("search", "Быстрый поиск"),
 			() => shortcutRow("reload", "Обновить данные из Engine")
-		], __nsh_hv67);
-		append(__nsh_hv33, __nsh_hv34);
-		append(__nsh_hv33, __nsh_hv40);
-		append(__nsh_hv33, __nsh_hv41);
-		append(__nsh_hv33, __nsh_hv48);
-		append(__nsh_hv33, __nsh_hv57);
-		append(__nsh_hv33, __nsh_hv62);
-		append(__nsh_hv33, __nsh_hv66);
-		insert(__nsh_hv33, [
+		], __nsh_hv56);
+		append(__nsh_hv32, __nsh_hv33);
+		append(__nsh_hv32, __nsh_hv39);
+		append(__nsh_hv32, __nsh_hv40);
+		append(__nsh_hv32, __nsh_hv46);
+		append(__nsh_hv32, __nsh_hv51);
+		append(__nsh_hv32, __nsh_hv55);
+		insert(__nsh_hv32, [
 			() => appearance()?.policy.following && (() => {
-				const __nsh_hv36 = element("text");
-				prop(__nsh_hv36, "class", "mb-4 px-2 text-[12px]");
-				bindProp(__nsh_hv36, "style", () => ({ color: colors().accent }));
-				const __nsh_hv37 = text("Общий стиль задаётся в Mundus Manager. Настройки доступны только для просмотра.");
-				append(__nsh_hv36, __nsh_hv37);
-				return __nsh_hv36;
+				const __nsh_hv35 = element("text");
+				prop(__nsh_hv35, "class", "mb-4 px-2 text-[12px]");
+				bindProp(__nsh_hv35, "style", () => ({ color: colors().accent }));
+				const __nsh_hv36 = text("Общий стиль задаётся в Mundus Manager. Настройки доступны только для просмотра.");
+				append(__nsh_hv35, __nsh_hv36);
+				return __nsh_hv35;
 			})(),
 			() => !props.editable() && !appearance()?.policy.following && (() => {
-				const __nsh_hv38 = element("text");
-				prop(__nsh_hv38, "class", "mb-4 px-2 text-[12px]");
-				bindProp(__nsh_hv38, "style", () => ({ color: colors().muted }));
-				const __nsh_hv39 = text("Engine не подключён. Можно временно менять оформление; выбор действует только до закрытия Atlas.");
-				append(__nsh_hv38, __nsh_hv39);
-				return __nsh_hv38;
+				const __nsh_hv37 = element("text");
+				prop(__nsh_hv37, "class", "mb-4 px-2 text-[12px]");
+				bindProp(__nsh_hv37, "style", () => ({ color: colors().muted }));
+				const __nsh_hv38 = text("Engine не подключён. Можно временно менять оформление; выбор действует только до закрытия Atlas.");
+				append(__nsh_hv37, __nsh_hv38);
+				return __nsh_hv37;
 			})(),
 			() => heading("Режим")
-		], __nsh_hv40);
-		insert(__nsh_hv33, () => heading("Темы"), __nsh_hv41);
-		insert(__nsh_hv33, () => heading("Акцент"), __nsh_hv48);
-		insert(__nsh_hv33, () => heading("Стекло"), __nsh_hv57);
-		insert(__nsh_hv33, () => heading("Размер текста"), __nsh_hv62);
-		insert(__nsh_hv33, () => heading("Горячие клавиши"), __nsh_hv66);
-		append(__nsh_hv32, __nsh_hv33);
-		return __nsh_hv32;
+		], __nsh_hv39);
+		insert(__nsh_hv32, () => heading("Акцент"), __nsh_hv40);
+		insert(__nsh_hv32, () => heading("Стекло"), __nsh_hv46);
+		insert(__nsh_hv32, () => heading("Размер текста"), __nsh_hv51);
+		insert(__nsh_hv32, () => heading("Горячие клавиши"), __nsh_hv55);
+		append(__nsh_hv31, __nsh_hv32);
+		return __nsh_hv31;
 	})();
 }
-function selectLabel(material, label, selected, onPress, colors, editable) {
+function selectLabel(material, label, selected, onPress, colors, editable, dark) {
 	return (() => {
-		const __nsh_hv72 = element("view");
-		bindProp(__nsh_hv72, "onPress", () => editable ? () => onPress(material) : void 0);
-		prop(__nsh_hv72, "role", "button");
-		prop(__nsh_hv72, "accessibilityState", {
+		const __nsh_hv61 = element("view");
+		bindProp(__nsh_hv61, "onPress", () => editable ? () => onPress(material) : void 0);
+		prop(__nsh_hv61, "role", "button");
+		prop(__nsh_hv61, "accessibilityState", {
 			selected: selected === material,
 			disabled: !editable
 		});
-		prop(__nsh_hv72, "class", "rounded-lg border px-3 py-2");
-		bindProp(__nsh_hv72, "style", () => ({
+		prop(__nsh_hv61, "class", "items-center justify-center rounded-lg border");
+		bindProp(__nsh_hv61, "hoverStyle", () => ({ backgroundColor: hoverWash(dark) }));
+		bindProp(__nsh_hv61, "style", () => ({
+			height: 32,
+			paddingLeft: 12,
+			paddingRight: 12,
 			backgroundColor: selected === material ? colors.card : colors.background,
 			borderColor: selected === material ? colors.accent : colors.border,
-			opacity: editable ? 1 : .65
+			opacity: editable ? 1 : .65,
+			cursor: editable ? "pointer" : "default"
 		}));
-		const __nsh_hv73 = element("text");
-		prop(__nsh_hv73, "class", "text-[12px]");
-		bindProp(__nsh_hv73, "style", () => ({ color: selected === material ? colors.foreground : colors.muted }));
-		insert(__nsh_hv73, label);
-		append(__nsh_hv72, __nsh_hv73);
-		return __nsh_hv72;
+		const __nsh_hv62 = element("text");
+		prop(__nsh_hv62, "class", "text-[12px]");
+		bindProp(__nsh_hv62, "hoverStyle", () => ({ color: colors.foreground }));
+		bindProp(__nsh_hv62, "style", () => ({ color: selected === material ? colors.foreground : colors.muted }));
+		insert(__nsh_hv62, label);
+		append(__nsh_hv61, __nsh_hv62);
+		return __nsh_hv61;
 	})();
 }
-function PaletteChip(props) {
-	return (() => {
-		const __nsh_hv74 = element("view");
-		prop(__nsh_hv74, "class", "h-4 w-5 overflow-hidden rounded border");
-		bindProp(__nsh_hv74, "style", () => ({
-			backgroundColor: props.palette.background,
-			borderColor: props.border
-		}));
-		const __nsh_hv75 = element("view");
-		prop(__nsh_hv75, "class", "h-1 w-full");
-		bindProp(__nsh_hv75, "style", () => ({ backgroundColor: props.palette.accent }));
-		append(__nsh_hv74, __nsh_hv75);
-		return __nsh_hv74;
-	})();
+
+//#endregion
+//#region preview.ts
+const PREVIEW_STORAGE_KEY = "mundus.atlas.preview.v1";
+function persistPreview(store) {
+	Storage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(store));
+}
+function loadPreview() {
+	return Storage.getItem(PREVIEW_STORAGE_KEY).then((value) => {
+		if (!value) return null;
+		try {
+			const parsed = JSON.parse(value);
+			return isPreviewStore(parsed) ? parsed : null;
+		} catch {
+			return null;
+		}
+	});
+}
+function isPreviewStore(value) {
+	if (typeof value !== "object" || value === null) return false;
+	if (!("journalEntries" in value) || !Array.isArray(value.journalEntries)) return false;
+	if (!("todos" in value) || !Array.isArray(value.todos)) return false;
+	return value.journalEntries.every(isJournalEntry) && value.todos.every(isTodo);
+}
+function isJournalEntry(value) {
+	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "text" in value && typeof value.text === "string" && "createdAt" in value && typeof value.createdAt === "string";
+}
+function isTodo(value) {
+	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "title" in value && typeof value.title === "string" && "is_completed" in value && typeof value.is_completed === "boolean";
 }
 
 //#endregion
 //#region App.tsx
 setup(null, "{\n  \"cssVars\": {\n    \"theme\": {\n      \"font-sans\": \"Inter, sans-serif\",\n      \"radius\": \"0.625rem\",\n      \"radius-control\": \"0.5rem\",\n      \"spacing-sidebar\": \"240px\",\n      \"spacing-titlebar\": \"40px\",\n      \"spacing-row\": \"32px\",\n      \"font-size-body\": \"13px\",\n      \"font-size-label\": \"12px\"\n    },\n    \"light\": {\n      \"background\": \"#faf9fb\",\n      \"foreground\": \"#26242a\",\n      \"card\": \"#f2f0f4\",\n      \"card-foreground\": \"#26242a\",\n      \"muted\": \"#ece9ef\",\n      \"muted-foreground\": \"#77727e\",\n      \"primary\": \"#7152bf\",\n      \"primary-foreground\": \"#ffffff\",\n      \"border\": \"#dedbe2\",\n      \"input\": \"#dedbe2\",\n      \"ring\": \"#b18aff\"\n    },\n    \"dark\": {\n      \"background\": \"#0d0c10\",\n      \"foreground\": \"#e7e5ea\",\n      \"card\": \"#131216\",\n      \"card-foreground\": \"#e7e5ea\",\n      \"muted\": \"#27262a\",\n      \"muted-foreground\": \"#8d8a94\",\n      \"primary\": \"#af94f9\",\n      \"primary-foreground\": \"#0d0c10\",\n      \"border\": \"#27262a\",\n      \"input\": \"#27262a\",\n      \"ring\": \"#af94f9\"\n    }\n  }\n}\n", null, null);
 const initialValue = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__");
-const initial = isSnapshot(initialValue) ? initialValue : fallback;
+const hosted = isSnapshot(initialValue);
+const initial = hosted ? initialValue : fallback;
 const snapshot = signal(initial);
 const route = signal(initial.route);
 const addTaskOpen = signal(false);
@@ -1334,6 +2076,21 @@ Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
 		shortcuts.set(Object.fromEntries(shortcutNames.map((name) => [name, shortcutOptions[name].includes(saved[name] ?? "") ? saved[name] : defaultShortcuts[name]])));
 	} catch {}
 });
+if (!hosted) loadPreview().then((saved) => {
+	if (!saved) return;
+	snapshot.set({
+		...snapshot(),
+		journalEntries: saved.journalEntries,
+		todos: saved.todos
+	});
+});
+function persistPreviewSnapshot() {
+	if (hosted) return;
+	persistPreview({
+		journalEntries: snapshot().journalEntries,
+		todos: snapshot().todos
+	});
+}
 const Bridge = nativeComponent("atlas.bridge", {
 	props: ["route"],
 	events: [
@@ -1349,162 +2106,41 @@ function iconForNavigation(id) {
 		default: return "settings";
 	}
 }
-function AtlasTitlebar(props) {
-	effect(() => Window.setTitleBar("hidden", spacing.titlebarHeight));
-	const controls = titleBar();
-	const customControls = controls.left === 0 && controls.right === 0;
-	return (() => {
-		const __nsh_hv0 = element("view");
-		prop(__nsh_hv0, "class", "w-full flex-row items-center");
-		bindProp(__nsh_hv0, "style", () => ({ height: controls.height || spacing.titlebarHeight }));
-		prop(__nsh_hv0, "desktop", { windowDrag: true });
-		const __nsh_hv1 = element("view");
-		prop(__nsh_hv1, "class", "flex-row items-center");
-		bindProp(__nsh_hv1, "style", () => ({
-			width: (props.sidebarVisible ? spacing.sidebarWidth : 40) + controls.left,
-			height: spacing.titlebarHeight
-		}));
-		const __nsh_hv2 = element("view");
-		bindProp(__nsh_hv2, "style", () => ({ width: controls.left }));
-		const __nsh_hv3 = element("view");
-		bindProp(__nsh_hv3, "onPress", () => props.onToggleSidebar);
-		prop(__nsh_hv3, "role", "button");
-		prop(__nsh_hv3, "accessibilityLabel", "Боковая панель");
-		prop(__nsh_hv3, "class", "w-10 items-center justify-center");
-		bindProp(__nsh_hv3, "style", () => ({ height: spacing.titlebarHeight }));
-		insert(__nsh_hv3, component(Icon, {
-			name: "sidebar",
-			get color() {
-				return props.colors.muted;
-			}
-		}));
-		const __nsh_hv4 = element("view");
-		prop(__nsh_hv4, "class", "flex-1");
-		prop(__nsh_hv4, "desktop", { windowDrag: true });
-		append(__nsh_hv1, __nsh_hv2);
-		append(__nsh_hv1, __nsh_hv3);
-		append(__nsh_hv1, __nsh_hv4);
-		append(__nsh_hv0, __nsh_hv1);
-		insert(__nsh_hv0, [() => props.showPageIdentity ? (() => {
-			const __nsh_hv5 = element("view");
-			prop(__nsh_hv5, "class", "flex-1 flex-row items-center gap-1.5");
-			prop(__nsh_hv5, "desktop", { windowDrag: true });
-			const __nsh_hv6 = element("text");
-			prop(__nsh_hv6, "class", "font-medium");
-			bindProp(__nsh_hv6, "style", () => ({
-				fontSize: typography.titlebar,
-				color: props.colors.foreground
-			}));
-			insert(__nsh_hv6, () => props.title);
-			append(__nsh_hv5, __nsh_hv6);
-			insert(__nsh_hv5, component(Icon, {
-				get name() {
-					return props.icon;
-				},
-				size: 15,
-				get color() {
-					return props.colors.muted;
-				}
-			}), __nsh_hv6);
-			return __nsh_hv5;
-		})() : (() => {
-			const __nsh_hv7 = element("view");
-			prop(__nsh_hv7, "class", "flex-1");
-			prop(__nsh_hv7, "desktop", { windowDrag: true });
-			return __nsh_hv7;
-		})(), () => customControls ? (() => {
-			const __nsh_hv8 = element("view");
-			prop(__nsh_hv8, "class", "flex-row");
-			bindProp(__nsh_hv8, "style", () => ({
-				width: 138,
-				height: spacing.titlebarHeight
-			}));
-			const __nsh_hv9 = element("view");
-			prop(__nsh_hv9, "onPress", () => Window.minimize());
-			prop(__nsh_hv9, "role", "button");
-			prop(__nsh_hv9, "accessibilityLabel", "Свернуть окно");
-			prop(__nsh_hv9, "class", "w-[46px] items-center justify-center");
-			bindProp(__nsh_hv9, "style", () => ({ height: spacing.titlebarHeight }));
-			insert(__nsh_hv9, component(Icon, {
-				name: "windowMin",
-				get color() {
-					return props.colors.foreground;
-				},
-				size: 14
-			}));
-			const __nsh_hv10 = element("view");
-			prop(__nsh_hv10, "onPress", () => Window.toggleMaximize());
-			prop(__nsh_hv10, "role", "button");
-			prop(__nsh_hv10, "accessibilityLabel", "Развернуть окно");
-			prop(__nsh_hv10, "class", "w-[46px] items-center justify-center");
-			bindProp(__nsh_hv10, "style", () => ({ height: spacing.titlebarHeight }));
-			insert(__nsh_hv10, component(Icon, {
-				name: "windowMax",
-				get color() {
-					return props.colors.foreground;
-				},
-				size: 14
-			}));
-			const __nsh_hv11 = element("view");
-			prop(__nsh_hv11, "onPress", () => Window.close());
-			prop(__nsh_hv11, "role", "button");
-			prop(__nsh_hv11, "accessibilityLabel", "Закрыть окно");
-			prop(__nsh_hv11, "class", "w-[46px] items-center justify-center");
-			bindProp(__nsh_hv11, "style", () => ({ height: spacing.titlebarHeight }));
-			insert(__nsh_hv11, component(Icon, {
-				name: "windowClose",
-				get color() {
-					return props.colors.foreground;
-				},
-				size: 14
-			}));
-			append(__nsh_hv8, __nsh_hv9);
-			append(__nsh_hv8, __nsh_hv10);
-			append(__nsh_hv8, __nsh_hv11);
-			return __nsh_hv8;
-		})() : (() => {
-			const __nsh_hv12 = element("view");
-			bindProp(__nsh_hv12, "style", () => ({ width: controls.right }));
-			return __nsh_hv12;
-		})()]);
-		return __nsh_hv0;
-	})();
-}
 function TaskRows() {
 	return each(() => snapshot().todos, (todo) => (() => {
-		const __nsh_hv13 = element("view");
-		prop(__nsh_hv13, "class", "flex-row items-center border-b px-3");
-		bindProp(__nsh_hv13, "style", () => ({
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "class", "flex-row items-center border-b px-3");
+		bindProp(__nsh_hv0, "style", () => ({
 			height: 37 * (snapshot().appearance?.settings.font_size ?? 13) / 13,
 			borderColor: snapshot().colors.border
 		}));
-		const __nsh_hv14 = element("view");
-		prop(__nsh_hv14, "onPress", () => commandRef?.("complete", { id: todo().id }));
-		prop(__nsh_hv14, "role", "checkbox");
-		bindProp(__nsh_hv14, "accessibilityLabel", () => todo().title);
-		bindProp(__nsh_hv14, "accessibilityState", () => ({ checked: todo().is_completed }));
-		prop(__nsh_hv14, "class", "mr-3 h-[14px] w-[14px] items-center justify-center rounded-full border");
-		bindProp(__nsh_hv14, "style", () => ({
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "onPress", () => completeTodo(todo().id));
+		prop(__nsh_hv1, "role", "checkbox");
+		bindProp(__nsh_hv1, "accessibilityLabel", () => todo().title);
+		bindProp(__nsh_hv1, "accessibilityState", () => ({ checked: todo().is_completed }));
+		prop(__nsh_hv1, "class", "mr-3 h-[14px] w-[14px] items-center justify-center rounded-full border");
+		bindProp(__nsh_hv1, "style", () => ({
 			borderColor: todo().is_completed ? snapshot().colors.accent : snapshot().colors.muted,
 			backgroundColor: todo().is_completed ? snapshot().colors.accent : "transparent"
 		}));
-		insert(__nsh_hv14, () => todo().is_completed && component(Icon, {
+		insert(__nsh_hv1, () => todo().is_completed && component(Icon, {
 			name: "check",
 			size: 10,
 			get color() {
 				return snapshot().colors.background;
 			}
 		}));
-		const __nsh_hv15 = element("text");
-		bindProp(__nsh_hv15, "class", () => todo().is_completed ? "line-through" : "");
-		bindProp(__nsh_hv15, "style", () => ({
+		const __nsh_hv2 = element("text");
+		bindProp(__nsh_hv2, "class", () => todo().is_completed ? "line-through" : "");
+		bindProp(__nsh_hv2, "style", () => ({
 			fontSize: snapshot().appearance?.settings.font_size ?? 13,
 			color: todo().is_completed ? snapshot().colors.muted : snapshot().colors.foreground
 		}));
-		insert(__nsh_hv15, () => todo().title);
-		append(__nsh_hv13, __nsh_hv14);
-		append(__nsh_hv13, __nsh_hv15);
-		return __nsh_hv13;
+		insert(__nsh_hv2, () => todo().title);
+		append(__nsh_hv0, __nsh_hv1);
+		append(__nsh_hv0, __nsh_hv2);
+		return __nsh_hv0;
 	})());
 }
 let commandRef;
@@ -1539,29 +2175,100 @@ function cycleShortcut(name) {
 }
 function TaskPage() {
 	return (() => {
-		const __nsh_hv16 = element("scroll");
-		prop(__nsh_hv16, "class", "min-h-0 flex-1 px-7 py-5");
-		const __nsh_hv17 = element("view");
-		prop(__nsh_hv17, "class", "mx-auto w-full max-w-[640px]");
-		insert(__nsh_hv17, () => snapshot().todos.length === 0 ? (() => {
-			const __nsh_hv18 = element("view");
-			prop(__nsh_hv18, "class", "items-center py-12");
-			const __nsh_hv19 = element("text");
-			prop(__nsh_hv19, "class", "text-[13px]");
-			bindProp(__nsh_hv19, "style", () => ({ color: snapshot().colors.muted }));
-			const __nsh_hv20 = text("Задач пока нет");
-			append(__nsh_hv19, __nsh_hv20);
-			append(__nsh_hv18, __nsh_hv19);
-			return __nsh_hv18;
+		const __nsh_hv3 = element("scroll");
+		prop(__nsh_hv3, "class", "min-h-0 flex-1 px-7 pb-5");
+		prop(__nsh_hv3, "style", { paddingTop: 38 + 20 });
+		const __nsh_hv4 = element("view");
+		prop(__nsh_hv4, "class", "mx-auto w-full max-w-[640px]");
+		insert(__nsh_hv4, () => snapshot().todos.length === 0 ? (() => {
+			const __nsh_hv5 = element("view");
+			prop(__nsh_hv5, "class", "items-center py-12");
+			const __nsh_hv6 = element("text");
+			prop(__nsh_hv6, "class", "text-[13px]");
+			bindProp(__nsh_hv6, "style", () => ({ color: snapshot().colors.muted }));
+			const __nsh_hv7 = text("Задач пока нет");
+			append(__nsh_hv6, __nsh_hv7);
+			append(__nsh_hv5, __nsh_hv6);
+			return __nsh_hv5;
 		})() : component(TaskRows, {}));
-		append(__nsh_hv16, __nsh_hv17);
-		return __nsh_hv16;
+		append(__nsh_hv3, __nsh_hv4);
+		return __nsh_hv3;
 	})();
+}
+function toggleSidebar() {
+	const open = !sidebarVisible();
+	sidebarVisible.set(open);
+	animateSidebar(open);
+	askEngine("toggle-sidebar");
+}
+function askEngine(name, args) {
+	try {
+		commandRef?.(name, args);
+	} catch {}
+}
+function createJournal(text, id) {
+	askEngine("journal.create", { text });
+	snapshot.set({
+		...snapshot(),
+		journalEntries: [...snapshot().journalEntries, {
+			id,
+			text,
+			createdAt: (/* @__PURE__ */ new Date()).toISOString()
+		}]
+	});
+	persistPreviewSnapshot();
+}
+function updateJournal(id, text) {
+	askEngine("journal.update", {
+		id,
+		text
+	});
+	snapshot.set({
+		...snapshot(),
+		journalEntries: snapshot().journalEntries.map((entry) => entry.id === id ? {
+			...entry,
+			text
+		} : entry)
+	});
+	persistPreviewSnapshot();
+}
+function deleteJournal(id) {
+	askEngine("journal.delete", { id });
+	snapshot.set({
+		...snapshot(),
+		journalEntries: snapshot().journalEntries.filter((entry) => entry.id !== id)
+	});
+	persistPreviewSnapshot();
+}
+function createTodo(title) {
+	const value = title.trim();
+	if (!value) return;
+	askEngine("create", { title: value });
+	snapshot.set({
+		...snapshot(),
+		todos: [...snapshot().todos, {
+			id: `local-${Date.now()}`,
+			title: value,
+			is_completed: false
+		}]
+	});
+	persistPreviewSnapshot();
+}
+function completeTodo(id) {
+	askEngine("complete", { id });
+	snapshot.set({
+		...snapshot(),
+		todos: snapshot().todos.map((todo) => todo.id === id ? {
+			...todo,
+			is_completed: true
+		} : todo)
+	});
+	persistPreviewSnapshot();
 }
 effect(() => {
 	const active = shortcuts();
 	const unbind = [
-		keymap.bind(active.sidebar, () => commandRef?.("toggle-sidebar"), { when: "notEditing" }),
+		keymap.bind(active.sidebar, () => toggleSidebar(), { repeat: true }),
 		keymap.bind(active.create, () => {
 			newTaskTitle.set("");
 			addTaskOpen.set(true);
@@ -1574,9 +2281,6 @@ function SettingsPage() {
 	return component(AtlasAppearanceSettings, {
 		appearance: () => snapshot().appearance,
 		editable: () => snapshot().appearanceEditable,
-		get themes() {
-			return snapshot().themes;
-		},
 		colors: () => snapshot().colors,
 		get shortcuts() {
 			return shortcuts();
@@ -1586,65 +2290,79 @@ function SettingsPage() {
 	});
 }
 function App() {
+	effect(() => Window.setTitleBar("hidden", 38));
 	const primaryNavigation = navigation_default.filter((item) => !item.footer);
 	const footerNavigation = navigation_default.filter((item) => item.footer);
 	const openNewTask = () => {
 		newTaskTitle.set("");
 		addTaskOpen.set(true);
 	};
+	const shell = snapshot().chrome === "tsx";
+	const dark = snapshot().appearance?.settings.mode !== "light";
 	const changeRoute = (target) => {
 		if (!isRoute(target)) return;
 		if (target !== "journal" && journalCalendarOpen()) toggleJournalCalendar();
 		route.set(target);
 	};
 	return (() => {
-		const __nsh_hv21 = element("view");
-		prop(__nsh_hv21, "class", "relative h-full w-full flex-col");
-		bindProp(__nsh_hv21, "style", () => ({ backgroundColor: snapshot().colors.background }));
-		const __nsh_hv22 = element("view");
-		prop(__nsh_hv22, "class", "min-h-0 flex-1 flex-row");
-		const __nsh_hv26 = element("view");
-		prop(__nsh_hv26, "class", "relative min-w-0 flex-1");
-		insert(__nsh_hv26, [
+		const __nsh_hv8 = element("view");
+		prop(__nsh_hv8, "class", "relative h-full w-full");
+		bindProp(__nsh_hv8, "style", () => ({ backgroundColor: snapshot().colors.background }));
+		const __nsh_hv9 = element("view");
+		prop(__nsh_hv9, "class", "h-full w-full flex-row");
+		const __nsh_hv14 = element("view");
+		prop(__nsh_hv14, "class", "relative min-h-0 min-w-0 flex-1");
+		insert(__nsh_hv14, [
 			() => route() === "journal" && component(JournalPage, {
-				get entries() {
-					return snapshot().journalEntries;
-				},
+				entries: () => snapshot().journalEntries,
 				get colors() {
 					return snapshot().colors;
 				},
-				onCreate: (text) => commandRef?.("journal.create", { text }),
-				onUpdate: (id, text) => commandRef?.("journal.update", {
-					id,
-					text
-				}),
-				onDelete: (id) => commandRef?.("journal.delete", { id }),
+				onCreate: createJournal,
+				onUpdate: updateJournal,
+				onDelete: deleteJournal,
 				get nativeCalendarButton() {
 					return snapshot().chrome === "native";
-				}
+				},
+				titlebarInset: shell ? 38 : 0,
+				dark
 			}),
 			() => route() === "tasks" && (() => {
-				const __nsh_hv27 = element("view");
-				prop(__nsh_hv27, "class", "min-h-0 flex-1");
-				insert(__nsh_hv27, [component(TaskPage, {}), () => snapshot().chrome === "tsx" && (() => {
-					const __nsh_hv28 = element("view");
-					prop(__nsh_hv28, "onPress", openNewTask);
-					prop(__nsh_hv28, "role", "button");
-					prop(__nsh_hv28, "accessibilityLabel", "Новая задача");
-					prop(__nsh_hv28, "class", "absolute right-6 bottom-6 h-11 w-11 items-center justify-center rounded-full");
-					bindProp(__nsh_hv28, "style", () => ({ backgroundColor: snapshot().colors.foreground }));
-					insert(__nsh_hv28, component(Icon, {
+				const __nsh_hv15 = element("view");
+				prop(__nsh_hv15, "class", "min-h-0 flex-1");
+				insert(__nsh_hv15, [component(TaskPage, {}), () => shell && (() => {
+					const __nsh_hv16 = element("view");
+					prop(__nsh_hv16, "onPress", openNewTask);
+					prop(__nsh_hv16, "role", "button");
+					prop(__nsh_hv16, "accessibilityLabel", "Новая задача");
+					prop(__nsh_hv16, "class", "absolute items-center justify-center rounded-full");
+					prop(__nsh_hv16, "hoverStyle", { opacity: .85 });
+					bindProp(__nsh_hv16, "style", () => ({
+						right: 16,
+						bottom: 16,
+						width: 32,
+						height: 32,
+						backgroundColor: snapshot().colors.foreground,
+						cursor: "pointer"
+					}));
+					insert(__nsh_hv16, component(Icon, {
 						name: "plus",
-						size: 20,
+						size: 16,
 						get color() {
 							return snapshot().colors.background;
 						}
 					}));
-					return __nsh_hv28;
+					return __nsh_hv16;
 				})()]);
-				return __nsh_hv27;
+				return __nsh_hv15;
 			})(),
-			() => route() === "settings" && component(SettingsPage, {}),
+			() => route() === "settings" && (() => {
+				const __nsh_hv17 = element("view");
+				prop(__nsh_hv17, "class", "min-h-0 flex-1");
+				prop(__nsh_hv17, "style", { paddingTop: shell ? 38 : 0 });
+				insert(__nsh_hv17, component(SettingsPage, {}));
+				return __nsh_hv17;
+			})(),
 			() => addTaskOpen() && component(Dialog, {
 				title: "Новая задача",
 				get colors() {
@@ -1652,71 +2370,66 @@ function App() {
 				},
 				get children() {
 					return [(() => {
-						const __nsh_hv29 = element("input");
-						bindProp(__nsh_hv29, "value", () => newTaskTitle());
-						prop(__nsh_hv29, "onChange", (value) => newTaskTitle.set(value));
-						prop(__nsh_hv29, "onSubmit", (event) => {
-							commandRef?.("create", { title: event.text });
+						const __nsh_hv18 = element("input");
+						bindProp(__nsh_hv18, "value", () => newTaskTitle());
+						prop(__nsh_hv18, "onChange", (value) => newTaskTitle.set(value));
+						prop(__nsh_hv18, "onSubmit", (event) => {
+							createTodo(event.text);
 							addTaskOpen.set(false);
 						});
-						prop(__nsh_hv29, "placeholder", "Название задачи");
-						prop(__nsh_hv29, "class", "h-10 rounded-lg px-3 text-[13px]");
-						bindProp(__nsh_hv29, "style", () => ({
+						prop(__nsh_hv18, "placeholder", "Название задачи");
+						prop(__nsh_hv18, "accessibilityLabel", "Название задачи");
+						prop(__nsh_hv18, "class", "h-10 rounded-lg px-3 text-[13px]");
+						bindProp(__nsh_hv18, "style", () => ({
 							backgroundColor: snapshot().colors.background,
 							color: snapshot().colors.foreground
 						}));
-						return __nsh_hv29;
+						return __nsh_hv18;
 					})(), (() => {
-						const __nsh_hv30 = element("view");
-						prop(__nsh_hv30, "class", "mt-3 flex-row justify-end gap-2");
-						insert(__nsh_hv30, [component(Button, {
+						const __nsh_hv19 = element("view");
+						prop(__nsh_hv19, "class", "mt-3 flex-row justify-end");
+						prop(__nsh_hv19, "style", { gap: 8 });
+						insert(__nsh_hv19, [component(GhostButton, {
 							label: "Отмена",
 							get colors() {
 								return snapshot().colors;
 							},
-							onPress: () => addTaskOpen.set(false),
-							className: "border-0 px-0 py-0",
-							style: {
-								backgroundColor: "transparent",
-								borderColor: "transparent"
-							}
-						}), component(Button, {
+							dark,
+							onPress: () => addTaskOpen.set(false)
+						}), component(SolidButton, {
 							label: "Добавить",
-							get colors() {
-								return snapshot().colors;
+							get background() {
+								return snapshot().colors.accent;
+							},
+							get foreground() {
+								return snapshot().colors.background;
 							},
 							onPress: () => {
-								commandRef?.("create", { title: newTaskTitle() });
+								createTodo(newTaskTitle());
 								addTaskOpen.set(false);
-							},
-							selected: true,
-							className: "h-9 w-[90px] items-center justify-center px-0 py-0",
-							get style() {
-								return {
-									backgroundColor: snapshot().colors.accent,
-									borderColor: "transparent"
-								};
-							},
-							get textColor() {
-								return snapshot().colors.background;
 							}
 						})]);
-						return __nsh_hv30;
+						return __nsh_hv19;
 					})()];
 				}
 			})
 		]);
-		append(__nsh_hv22, __nsh_hv26);
-		insert(__nsh_hv22, () => snapshot().chrome === "tsx" && (() => {
-			const __nsh_hv23 = element("view");
-			prop(__nsh_hv23, "class", "w-[240px] shrink-0 border-r px-2 pt-1");
-			bindProp(__nsh_hv23, "style", () => ({
-				borderColor: snapshot().colors.border,
-				display: sidebarVisible() ? "flex" : "none"
+		append(__nsh_hv9, __nsh_hv14);
+		insert(__nsh_hv9, () => shell && (() => {
+			const __nsh_hv10 = element("view");
+			prop(__nsh_hv10, "class", "h-full shrink-0 overflow-hidden");
+			bindProp(__nsh_hv10, "style", () => ({ width: sidebarPaneWidth() }));
+			const __nsh_hv11 = element("view");
+			prop(__nsh_hv11, "class", "h-full border-r px-2");
+			bindProp(__nsh_hv11, "style", () => ({
+				width: 256,
+				paddingTop: 38 + 4,
+				backgroundColor: surfaceWash(dark),
+				borderColor: snapshot().colors.border
 			}));
-			const __nsh_hv24 = element("view");
-			prop(__nsh_hv24, "class", "gap-0.5");
-			insert(__nsh_hv24, () => primaryNavigation.map((item) => component(NavigationItem, {
+			const __nsh_hv12 = element("view");
+			prop(__nsh_hv12, "style", { gap: 2 });
+			insert(__nsh_hv12, () => primaryNavigation.map((item) => component(SidebarRow, {
 				get label() {
 					return item.label;
 				},
@@ -1726,14 +2439,16 @@ function App() {
 				get selected() {
 					return route() === item.id;
 				},
+				dark,
 				get colors() {
 					return snapshot().colors;
 				},
 				onPress: () => changeRoute(item.id)
 			})));
-			const __nsh_hv25 = element("view");
-			prop(__nsh_hv25, "class", "mt-auto mb-2 gap-0.5");
-			insert(__nsh_hv25, () => footerNavigation.map((item) => component(NavigationItem, {
+			const __nsh_hv13 = element("view");
+			prop(__nsh_hv13, "class", "mt-auto mb-2");
+			prop(__nsh_hv13, "style", { gap: 2 });
+			insert(__nsh_hv13, () => footerNavigation.map((item) => component(SidebarRow, {
 				get label() {
 					return item.label;
 				},
@@ -1743,17 +2458,19 @@ function App() {
 				get selected() {
 					return route() === item.id;
 				},
+				dark,
 				get colors() {
 					return snapshot().colors;
 				},
 				onPress: () => changeRoute(item.id)
 			})));
-			append(__nsh_hv23, __nsh_hv24);
-			append(__nsh_hv23, __nsh_hv25);
-			return __nsh_hv23;
-		})(), __nsh_hv26);
-		append(__nsh_hv21, __nsh_hv22);
-		insert(__nsh_hv21, [component(Bridge, {
+			append(__nsh_hv11, __nsh_hv12);
+			append(__nsh_hv11, __nsh_hv13);
+			append(__nsh_hv10, __nsh_hv11);
+			return __nsh_hv10;
+		})(), __nsh_hv14);
+		append(__nsh_hv8, __nsh_hv9);
+		insert(__nsh_hv8, component(Bridge, {
 			class: "absolute left-0 top-0 h-px w-px",
 			ref: (node) => {
 				commandRef = (name, args) => node.command(name, args);
@@ -1763,36 +2480,36 @@ function App() {
 			},
 			onState: (next) => {
 				route.set(next.route);
+				const appearance = next.appearance ?? snapshot().appearance;
 				snapshot.set({
 					...next,
-					journalEntries: snapshot().journalEntries
+					themes: previewThemes,
+					journalEntries: snapshot().journalEntries,
+					sidebarVisible: sidebarVisible(),
+					colors: appearance ? resolveAppearanceColors(appearance, previewThemes, next.colors) : next.colors
 				});
-				sidebarVisible.set(next.sidebarVisible);
 			},
 			onJournal: (entries) => snapshot.set({
 				...snapshot(),
 				journalEntries: entries
 			}),
 			onNavigate: (event) => changeRoute(event.route)
-		}), () => snapshot().chrome === "tsx" && component(AtlasTitlebar, {
-			get title() {
-				return snapshot().title;
-			},
-			get icon() {
-				return iconForNavigation(route());
-			},
+		}), __nsh_hv9);
+		insert(__nsh_hv8, () => shell && component(TitlebarOverlay, {
 			get colors() {
 				return snapshot().colors;
 			},
-			onToggleSidebar: () => commandRef?.("toggle-sidebar"),
-			get sidebarVisible() {
-				return sidebarVisible();
+			dark,
+			get showCalendarToggle() {
+				return route() === "journal";
 			},
-			get showPageIdentity() {
-				return route() !== "settings";
-			}
-		})], __nsh_hv22);
-		return __nsh_hv21;
+			get calendarOpen() {
+				return journalCalendarOpen();
+			},
+			onToggleSidebar: toggleSidebar,
+			onToggleCalendar: toggleJournalCalendar
+		}));
+		return __nsh_hv8;
 	})();
 }
 mount(App);

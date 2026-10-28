@@ -61,8 +61,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-24.04
-            target: x86_64-unknown-linux-gnu
           - os: windows-2022
             target: x86_64-pc-windows-msvc
           # SDK 26+ enables Tahoe's native window controls, matching Cortex.
@@ -124,7 +122,7 @@ jobs:
         if: runner.os == 'Windows'
         run: cargo run --locked --release --bin check-source-size --target "$BUILD_TARGET"
       - name: Release build
-        run: cargo build --locked --release --bin atlas-gpui --target "$BUILD_TARGET"
+        run: cargo build --locked --release --bin atlas --target "$BUILD_TARGET"
       - name: Package
         run: python scripts/release.py package "$BUILD_TARGET"
       - uses: actions/upload-artifact@v7
@@ -138,7 +136,7 @@ jobs:
 
   publish:
     needs: [prepare, build]
-    if: false # Atlas publishing stays disabled until the release flow is approved.
+    if: needs.prepare.outputs.release == 'true'
     runs-on: ubuntu-24.04
     permissions:
       contents: write

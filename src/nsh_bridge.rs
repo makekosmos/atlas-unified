@@ -1,24 +1,15 @@
-#[cfg(not(target_os = "macos"))]
 use std::{cell::RefCell, rc::Rc, sync::mpsc, thread};
 
-#[cfg(not(target_os = "macos"))]
 use gpui::{App, Entity, Subscription, Window};
-#[cfg(not(target_os = "macos"))]
 use imago_nsh::{ComponentContext, NativeComponent};
-#[cfg(not(target_os = "macos"))]
 use serde_json::{json, Value};
 
-#[cfg(not(target_os = "macos"))]
 use crate::{
     app::Atlas,
     model::Todo,
     store::{Engine, JournalEntry},
 };
 
-#[cfg(target_os = "macos")]
-pub(crate) mod macos;
-
-#[cfg(not(target_os = "macos"))]
 pub(crate) struct AtlasBridge {
     context: ComponentContext,
     agenda: Entity<Atlas>,
@@ -27,7 +18,6 @@ pub(crate) struct AtlasBridge {
     subscription: Option<Subscription>,
 }
 
-#[cfg(not(target_os = "macos"))]
 impl AtlasBridge {
     pub(crate) fn new(context: ComponentContext, agenda: Entity<Atlas>) -> Self {
         let journal_commands = start_journal_bridge(context.clone());
@@ -47,12 +37,10 @@ impl AtlasBridge {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
 pub(crate) fn initial_snapshot(agenda: &Atlas) -> Value {
     snapshot(agenda, "journal")
 }
 
-#[cfg(not(target_os = "macos"))]
 fn snapshot(agenda: &Atlas, route: &str) -> Value {
     let todos: Vec<&Todo> = if route == "tasks" {
         agenda.todos.iter().collect()
@@ -106,7 +94,6 @@ fn snapshot(agenda: &Atlas, route: &str) -> Value {
     })
 }
 
-#[cfg(not(target_os = "macos"))]
 enum JournalRequest {
     Create(String),
     Update(String, String),
@@ -114,7 +101,6 @@ enum JournalRequest {
     Reload,
 }
 
-#[cfg(not(target_os = "macos"))]
 fn start_journal_bridge(context: ComponentContext) -> mpsc::Sender<JournalRequest> {
     let (sender, requests) = mpsc::channel();
     thread::spawn(move || {
@@ -159,14 +145,12 @@ fn start_journal_bridge(context: ComponentContext) -> mpsc::Sender<JournalReques
     sender
 }
 
-#[cfg(not(target_os = "macos"))]
 fn replace_journal_entry(entries: &mut [JournalEntry], updated: JournalEntry) {
     if let Some(entry) = entries.iter_mut().find(|entry| entry.id == updated.id) {
         *entry = updated;
     }
 }
 
-#[cfg(not(target_os = "macos"))]
 fn emit_journal_entries(context: &ComponentContext, entries: &[JournalEntry]) {
     context.emit(
         "journal",
@@ -177,7 +161,6 @@ fn emit_journal_entries(context: &ComponentContext, entries: &[JournalEntry]) {
     );
 }
 
-#[cfg(not(target_os = "macos"))]
 impl NativeComponent for AtlasBridge {
     fn render(&mut self, _window: &mut Window, cx: &mut App) -> Option<gpui::AnyElement> {
         if self.subscription.is_none() {
@@ -262,10 +245,11 @@ impl NativeComponent for AtlasBridge {
                     self.publish(cx);
                 }
             }
-            "toggle-sidebar" => self.agenda.update(cx, |agenda, cx| {
-                agenda.toggle_sidebar();
-                cx.notify();
-            }),
+            // The shell already painted the new width. Notifying here would
+            // emit a snapshot and start that motion over.
+            "toggle-sidebar" => {
+                self.agenda.update(cx, |agenda, _| agenda.toggle_sidebar());
+            }
             "reload" => {
                 self.agenda.update(cx, |agenda, _| agenda.reload_storage());
                 let _ = self.journal_commands.send(JournalRequest::Reload);

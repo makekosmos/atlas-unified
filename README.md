@@ -1,6 +1,6 @@
 # Atlas
 
-Репозиторий называется `agenda-unified`; приложение и бинарный файл называются `atlas-gpui`.
+Репозиторий называется `atlas-unified`; приложение и бинарный файл называются `atlas`.
 
 Native GPUI-приложение Atlas для Mundus. Правила для агентов: [AGENTS.md](AGENTS.md).
 
@@ -38,10 +38,10 @@ Build and release → Run workflow на основной ветке.
   повтори неудачный job до добавления новых коммитов; готовый черновик можно
   дозагрузить повторным запуском, опубликованные релизы не перезаписываются.
 
-Платформы: **Windows x86_64** (ZIP с EXE), **Linux x86_64** (tar.gz,
-сборка на Ubuntu 24.04) и **macOS Apple Silicon** (tar.gz с `Atlas.app`).
-Linux-архив не включает системные библиотеки. macOS-приложение имеет локальную
-ad-hoc подпись, без Apple notarization; Windows EXE также без издательской подписи.
+Платформы релиза: **Windows x86_64** (ZIP с EXE) и **macOS Apple Silicon**
+(tar.gz с `Atlas.app`). Linux-сборку workflow пока не выпускает.
+macOS-приложение имеет локальную ad-hoc подпись, без Apple notarization;
+Windows EXE также без издательской подписи.
 
 Workflow использует стандартный `GITHUB_TOKEN`, отдельный PAT не нужен.
 Правила основной ветки должны разрешать release-job писать версию и теги;
@@ -77,7 +77,7 @@ Linear в описании PR. Для прямых коммитов указыв
 `<config>/Kosmos` — первый путь с `engine.lock.json` побеждает.
 Приложение не открывает SQLite и не хранит собственную копию задач на диске.
 
-### Runbook: Engine → atlas-gpui (одна папка данных)
+### Runbook: Engine → atlas (одна папка данных)
 
 Engine живёт в `makekosmos/cortex` (крейт `engine` в `runtime/`, бинарь
 `mundus-engine`); ARK работает внутри его процесса, отдельного sidecar нет.
@@ -88,7 +88,7 @@ pnpm run dev -- --engine-only --data-dir /path/to/data   # Engine
 cat /path/to/data/engine.lock.json                       # http_port + auth_token
 ```
 
-Затем atlas-gpui на той же папке: `MUNDUS_DATA_DIR=/path/to/data cargo run`.
+Затем atlas на той же папке: `MUNDUS_DATA_DIR=/path/to/data cargo run`.
 Подробности: `AGENTS.md` и `cortex/docs/linux-dev.md`.
 
 Если Engine остановлен или lock-файла нет, приложение показывает баннер
@@ -108,13 +108,13 @@ seed-карточки при этом не рисуются.
 подключения, а не seed-карточки. Генератор задач доступен только в демо.
 
 Проверка сохранения между отдельными процессами клиента:
-`cargo test --bin atlas-gpui store::tests`. Тест использует локальный HTTP
+`cargo test --bin atlas store::tests`. Тест использует локальный HTTP
 стенд контракта Engine с записью на диск. Для ручной проверки на реальном Engine: создать → закрыть/открыть →
 переименовать → закрыть/открыть → завершить → закрыть/открыть.
 
 ```bash
-git clone git@github.com:makekosmos/agenda-unified.git
-cd agenda-unified
+git clone git@github.com:makekosmos/atlas-unified.git
+cd atlas-unified
 cargo run
 cargo run --release
 ```

@@ -501,21 +501,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "atlas-gpui"
-version = "0.3.8"
+name = "atlas"
+version = "0.0.1"
 dependencies = [
  "chrono",
  "embed-resource",
  "gpui-component",
  "gpui-fast",
  "gpui-kit",
- "imago-native-sidebar",
  "imago-nsh",
- "imago-window-macos",
- "nsh-core",
- "nsh-platform-macos",
- "objc2-app-kit 0.3.2",
- "objc2-foundation 0.3.2",
  "serde",
  "serde_json",
  "ureq 2.12.1",
@@ -1833,7 +1827,6 @@ checksum = "1e0e367e4e7da84520dedcac1901e4da967309406d1e51017ae1abfb97adbd38"
 dependencies = [
  "bitflags 2.13.2",
  "block2 0.6.2",
- "libc",
  "objc2 0.6.5",
 ]
 
@@ -4251,17 +4244,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "imago-native-sidebar"
-version = "0.1.0"
-source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#d9186fab4dda30bd528fd5d6dbda843424b0ed78"
-dependencies = [
- "nsh-core",
- "nsh-platform-macos",
- "objc2-app-kit 0.3.2",
- "serde_json",
-]
-
-[[package]]
 name = "imago-nsh"
 version = "0.1.0"
 source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#d9186fab4dda30bd528fd5d6dbda843424b0ed78"
@@ -4271,19 +4253,6 @@ dependencies = [
  "mundus-gpui-kit",
  "nsh-base",
  "nsh-platform-gpui",
-]
-
-[[package]]
-name = "imago-window-macos"
-version = "0.1.0"
-source = "git+https://github.com/makekosmos/imago.git?branch=feat%2Fnative-sidebar#d9186fab4dda30bd528fd5d6dbda843424b0ed78"
-dependencies = [
- "imago-native-sidebar",
- "nsh-core",
- "nsh-platform-macos",
- "objc2 0.6.5",
- "objc2-app-kit 0.3.2",
- "objc2-foundation 0.3.2",
 ]
 
 [[package]]
@@ -5336,33 +5305,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nsh-platform-macos"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5d8c32b2c6ca9c4661571287bbc19afa027155b2cc8a99cafdbe3f6b9e387bd"
-dependencies = [
- "block2 0.6.2",
- "crossbeam-channel",
- "dispatch2",
- "libc",
- "log",
- "nsh-base",
- "nsh-core",
- "nsh-engine",
- "objc2 0.6.5",
- "objc2-app-kit 0.3.2",
- "objc2-core-foundation",
- "objc2-core-graphics",
- "objc2-core-text",
- "objc2-foundation 0.3.2",
- "objc2-image-io",
- "objc2-io-kit",
- "objc2-quartz-core 0.3.2",
- "rustc-hash 2.1.3",
- "serde_json",
-]
-
-[[package]]
 name = "ntapi"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5708,26 +5650,6 @@ dependencies = [
  "block2 0.6.2",
  "libc",
  "objc2 0.6.5",
- "objc2-core-foundation",
-]
-
-[[package]]
-name = "objc2-image-io"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32b0446e98cf4a784cc7a0177715ff317eeaa8463841c616cfc78aa4f953c4ea"
-dependencies = [
- "objc2-core-foundation",
- "objc2-core-graphics",
-]
-
-[[package]]
-name = "objc2-io-kit"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33fafba39597d6dc1fb709123dfa8289d39406734be322956a69f0931c73bb15"
-dependencies = [
- "libc",
  "objc2-core-foundation",
 ]
 

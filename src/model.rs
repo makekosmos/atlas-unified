@@ -1,5 +1,4 @@
 // Port of src/dev/seed.ts + task lifecycle/filter logic to Rust.
-#[cfg(any(not(target_os = "macos"), test))]
 use chrono::Duration;
 use chrono::{Datelike, Local, NaiveDate};
 use serde::{Deserialize, Serialize};
@@ -65,12 +64,10 @@ pub fn parse_key(key: &str) -> Option<NaiveDate> {
     NaiveDate::parse_from_str(key, "%Y-%m-%d").ok()
 }
 
-#[cfg(any(not(target_os = "macos"), test))]
 pub fn day_key(offset: i64) -> String {
     key_of(Local::now().date_naive() + Duration::days(offset))
 }
 
-#[cfg(any(not(target_os = "macos"), test))]
 fn iso_at(offset: i64, h: u32, m: u32) -> String {
     let d = Local::now().date_naive() + Duration::days(offset);
     format!(
@@ -259,7 +256,6 @@ pub use capture::{parse_project_mention, parse_quick_entry_capture};
 #[cfg(test)]
 pub use lists::{filter_idx, SmartList};
 pub use seed::new_todo;
-#[cfg(not(target_os = "macos"))]
 pub use seed::seed_todos;
 #[cfg(test)]
 pub(crate) use seed::todo;
