@@ -1,9 +1,13 @@
 import { append, bindProp, component, each, element, insert, prop, setup, spread, text } from "nsh:rt";
-import { LayoutAnimation, PanResponder, Storage, effect, keymap, mount, nativeComponent, signal } from "nsh";
+import * as NSH from "nsh";
+import { effect, mount, signal } from "nsh";
+import { keymap } from "nsh/keymap";
+import { nativeComponent } from "nsh/native";
 import { Window, titleBar } from "nsh/desktop";
+import { PanResponder } from "nsh/gesture";
 import { Popover } from "nsh/base";
 
-//#region ../../../../Users/user/kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/types.ts
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/types.ts
 const spacing = {
 	sidebarWidth: 240,
 	titlebarHeight: 40,
@@ -37,7 +41,7 @@ const accentChoices = [
 ];
 
 //#endregion
-//#region ../../../../Users/user/kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
 const icons = {
 	about: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
 	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
@@ -60,7 +64,7 @@ const icons = {
 };
 
 //#endregion
-//#region ../../../../Users/user/kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
 function Icon(props) {
 	return (() => {
 		const __nsh_hv0 = element("image");
@@ -158,7 +162,8 @@ var navigation_default = [
 		"id": "tasks",
 		"label": "Задачи",
 		"icon": "checklist",
-		"footer": false
+		"footer": false,
+		"devOnly": true
 	},
 	{
 		"id": "settings",
@@ -219,6 +224,7 @@ const fallback = {
 	],
 	colors: defaultColors,
 	sidebarVisible: true,
+	devFeatures: true,
 	chrome: "tsx"
 };
 function resolveAppearanceColors(appearance, themes, fallbackColors) {
@@ -235,7 +241,10 @@ function isSnapshot(value) {
 	if (typeof value !== "object" || value === null || !("route" in value) || !isRoute(value.route)) return false;
 	if (!("title" in value) || typeof value.title !== "string" || !("todos" in value) || !Array.isArray(value.todos)) return false;
 	if (!value.todos.every(isTodo) || !("journalEntries" in value) || !Array.isArray(value.journalEntries) || !value.journalEntries.every(isJournalEntry)) return false;
-	return "version" in value && typeof value.version === "string" && "appearanceEditable" in value && typeof value.appearanceEditable === "boolean" && "themes" in value && Array.isArray(value.themes) && "colors" in value && isColors(value.colors) && "sidebarVisible" in value && typeof value.sidebarVisible === "boolean" && "chrome" in value && (value.chrome === "native" || value.chrome === "tsx");
+	return "version" in value && typeof value.version === "string" && "appearanceEditable" in value && typeof value.appearanceEditable === "boolean" && "themes" in value && Array.isArray(value.themes) && "colors" in value && isColors(value.colors) && "sidebarVisible" in value && typeof value.sidebarVisible === "boolean" && "devFeatures" in value && typeof value.devFeatures === "boolean" && (value.route !== "tasks" || value.devFeatures) && "chrome" in value && (value.chrome === "native" || value.chrome === "tsx" || value.chrome === "mobile");
+}
+function canNavigateToRoute(route, devFeatures) {
+	return route !== "tasks" || devFeatures;
 }
 function isRoute(value) {
 	return value === "journal" || value === "tasks" || value === "settings";
@@ -447,10 +456,6 @@ const journalDraftMinContentHeight = 20;
 const journalDraftMaxContentHeight = 100;
 const journalDraftExpandedHeight = journalDraftMinContentHeight * 1.5;
 const journalDraftVerticalPadding = 20;
-const journalCalendarMinWidth = 220;
-const journalCalendarMaxWidth = 420;
-const journalCalendarResizeHovered = signal(false);
-const journalCalendarResizeActive = signal(false);
 const editingJournalId = signal(null);
 const editingJournalText = signal("");
 function timeLabel(createdAt) {
@@ -468,18 +473,18 @@ function JournalPage(props) {
 		onStartShouldSetPanResponder: () => true,
 		onPanResponderGrant: () => {
 			resizeStartWidth = journalCalendarWidth();
-			journalCalendarResizeActive.set(true);
 		},
 		onPanResponderMove: (_, gesture) => {
-			const maxWidth = pageWidth > 0 ? Math.max(journalCalendarMinWidth, Math.min(journalCalendarMaxWidth, pageWidth * .42)) : journalCalendarMaxWidth;
-			journalCalendarWidth.set(Math.max(journalCalendarMinWidth, Math.min(maxWidth, resizeStartWidth - gesture.dx)));
+			const minWidth = 220;
+			const maxWidth = pageWidth > 0 ? Math.max(minWidth, Math.min(420, pageWidth * .42)) : 420;
+			journalCalendarWidth.set(Math.max(minWidth, Math.min(maxWidth, resizeStartWidth - gesture.dx)));
 		},
-		onPanResponderRelease: () => journalCalendarResizeActive.set(false),
-		onPanResponderTerminate: () => journalCalendarResizeActive.set(false),
+		onPanResponderRelease: () => {},
+		onPanResponderTerminate: () => {},
 		onPanResponderTerminationRequest: () => false
 	});
 	const dayOffsets = /* @__PURE__ */ new Map();
-	const groups = buildJournalDays(props.entries);
+	const groups = () => buildJournalDays(props.entries);
 	effect(() => {
 		if (props.entries.length) queueMicrotask(() => feedRef?.scrollToEnd({ animated: true }));
 	});
@@ -491,7 +496,7 @@ function JournalPage(props) {
 		journalDraftContentHeight.set(journalDraftMinContentHeight);
 	};
 	const jumpToDay = (key) => {
-		const target = closestJournalDay(groups, key);
+		const target = closestJournalDay(groups(), key);
 		if (journalCalendarOpen()) toggleJournalCalendar();
 		if (target?.kind === "dated") {
 			const offset = dayOffsets.get(target.key);
@@ -518,7 +523,7 @@ function JournalPage(props) {
 		prop(__nsh_hv4, "class", "min-h-0 w-full flex-1 py-4");
 		const __nsh_hv5 = element("view");
 		prop(__nsh_hv5, "class", "mx-auto w-full max-w-[690px] px-5");
-		insert(__nsh_hv5, [() => groups.map((group) => (() => {
+		insert(__nsh_hv5, [() => groups().map((group) => (() => {
 			const __nsh_hv6 = element("view");
 			prop(__nsh_hv6, "onLayout", (bounds) => {
 				dayOffsets.set(group.key, bounds.origin.y);
@@ -630,7 +635,7 @@ function JournalPage(props) {
 				return __nsh_hv11;
 			})()));
 			return __nsh_hv6;
-		})()), () => groups.length === 0 && (() => {
+		})()), () => groups().length === 0 && (() => {
 			const __nsh_hv25 = element("view");
 			prop(__nsh_hv25, "class", "flex-1 items-center justify-center py-12");
 			const __nsh_hv26 = element("text");
@@ -731,30 +736,35 @@ function JournalPage(props) {
 		})(), __nsh_hv3);
 		const __nsh_hv35 = element("view");
 		prop(__nsh_hv35, "class", "relative h-full shrink-0");
-		bindProp(__nsh_hv35, "style", () => ({ width: journalCalendarOpen() ? journalCalendarWidth() : 0 }));
+		bindProp(__nsh_hv35, "style", () => ({
+			width: journalCalendarOpen() ? journalCalendarWidth() : 0,
+			position: props.mobile ? "absolute" : void 0,
+			right: props.mobile ? 0 : void 0,
+			top: props.mobile ? 0 : void 0,
+			bottom: props.mobile ? 0 : void 0,
+			zIndex: props.mobile ? 20 : void 0
+		}));
 		const __nsh_hv36 = element("view");
 		prop(__nsh_hv36, "class", "h-full w-full overflow-hidden");
 		insert(__nsh_hv36, component(JournalCalendar, {
 			get width() {
 				return journalCalendarWidth();
 			},
-			get resizeHovered() {
-				return journalCalendarResizeHovered() || journalCalendarResizeActive();
+			resizeHovered: false,
+			get groups() {
+				return groups();
 			},
-			groups,
 			get colors() {
 				return props.colors;
 			},
 			onSelect: jumpToDay
 		}));
 		append(__nsh_hv35, __nsh_hv36);
-		insert(__nsh_hv35, () => journalCalendarOpen() && (() => {
+		insert(__nsh_hv35, () => journalCalendarOpen() && resizeCalendar && (() => {
 			const __nsh_hv37 = element("view");
 			spread(__nsh_hv37, resizeCalendar.panHandlers);
 			prop(__nsh_hv37, "role", "button");
 			prop(__nsh_hv37, "accessibilityLabel", "Изменить ширину календаря");
-			prop(__nsh_hv37, "onHoverIn", () => journalCalendarResizeHovered.set(true));
-			prop(__nsh_hv37, "onHoverOut", () => journalCalendarResizeHovered.set(false));
 			prop(__nsh_hv37, "class", "absolute top-0 bottom-0 z-10 w-5");
 			prop(__nsh_hv37, "style", {
 				left: -10,
@@ -768,13 +778,6 @@ function JournalPage(props) {
 	})();
 }
 function toggleJournalCalendar() {
-	LayoutAnimation.configureNext({
-		duration: 200,
-		update: {
-			type: "easeOut",
-			duration: 200
-		}
-	});
 	journalCalendarOpen.update((open) => !open);
 }
 
@@ -1327,7 +1330,8 @@ const shortcutOptions = {
 	reload: ["mod+r", "mod+shift+r"]
 };
 const shortcuts = signal(defaultShortcuts);
-Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
+const storage = Reflect.get(NSH, "Storage");
+storage?.getItem("mundus.atlas.shortcuts.v1").then((value) => {
 	if (!value) return;
 	try {
 		const saved = JSON.parse(value);
@@ -1508,6 +1512,7 @@ function TaskRows() {
 	})());
 }
 let commandRef;
+let mobileJournalRequested = false;
 function setAppearance(patch) {
 	const current = snapshot();
 	if (current.appearance && !current.appearance.policy.following) {
@@ -1535,7 +1540,7 @@ function cycleShortcut(name) {
 		[name]: next
 	};
 	shortcuts.set(updated);
-	Storage.setItem("mundus.atlas.shortcuts.v1", JSON.stringify(updated));
+	storage?.setItem("mundus.atlas.shortcuts.v1", JSON.stringify(updated));
 }
 function TaskPage() {
 	return (() => {
@@ -1593,7 +1598,7 @@ function App() {
 		addTaskOpen.set(true);
 	};
 	const changeRoute = (target) => {
-		if (!isRoute(target)) return;
+		if (!isRoute(target) || !canNavigateToRoute(target, snapshot().devFeatures)) return;
 		if (target !== "journal" && journalCalendarOpen()) toggleJournalCalendar();
 		route.set(target);
 	};
@@ -1621,6 +1626,9 @@ function App() {
 				onDelete: (id) => commandRef?.("journal.delete", { id }),
 				get nativeCalendarButton() {
 					return snapshot().chrome === "native";
+				},
+				get mobile() {
+					return snapshot().chrome === "mobile";
 				}
 			}),
 			() => route() === "tasks" && (() => {
@@ -1716,7 +1724,7 @@ function App() {
 			}));
 			const __nsh_hv24 = element("view");
 			prop(__nsh_hv24, "class", "gap-0.5");
-			insert(__nsh_hv24, () => primaryNavigation.map((item) => component(NavigationItem, {
+			insert(__nsh_hv24, () => primaryNavigation.map((item) => (!item.devOnly || snapshot().devFeatures) && component(NavigationItem, {
 				get label() {
 					return item.label;
 				},
@@ -1733,7 +1741,7 @@ function App() {
 			})));
 			const __nsh_hv25 = element("view");
 			prop(__nsh_hv25, "class", "mt-auto mb-2 gap-0.5");
-			insert(__nsh_hv25, () => footerNavigation.map((item) => component(NavigationItem, {
+			insert(__nsh_hv25, () => footerNavigation.map((item) => (!item.devOnly || snapshot().devFeatures) && component(NavigationItem, {
 				get label() {
 					return item.label;
 				},
@@ -1765,9 +1773,13 @@ function App() {
 				route.set(next.route);
 				snapshot.set({
 					...next,
-					journalEntries: snapshot().journalEntries
+					journalEntries: next.chrome === "mobile" ? next.journalEntries : snapshot().journalEntries
 				});
 				sidebarVisible.set(next.sidebarVisible);
+				if (next.chrome === "mobile" && !mobileJournalRequested) {
+					mobileJournalRequested = true;
+					commandRef?.("reload");
+				}
 			},
 			onJournal: (entries) => snapshot.set({
 				...snapshot(),
@@ -1792,6 +1804,38 @@ function App() {
 				return route() !== "settings";
 			}
 		})], __nsh_hv22);
+		insert(__nsh_hv21, () => snapshot().chrome === "mobile" && (() => {
+			const __nsh_hv31 = element("view");
+			prop(__nsh_hv31, "class", "h-14 w-full flex-row border-t");
+			bindProp(__nsh_hv31, "style", () => ({
+				backgroundColor: snapshot().colors.background,
+				borderColor: snapshot().colors.border
+			}));
+			insert(__nsh_hv31, () => navigation_default.map((item) => (!item.devOnly || snapshot().devFeatures) && (() => {
+				const __nsh_hv32 = element("view");
+				prop(__nsh_hv32, "onPress", () => changeRoute(item.id));
+				prop(__nsh_hv32, "role", "button");
+				bindProp(__nsh_hv32, "accessibilityLabel", () => item.label);
+				bindProp(__nsh_hv32, "accessibilityState", () => ({ selected: route() === item.id }));
+				prop(__nsh_hv32, "class", "flex-1 items-center justify-center gap-0.5");
+				const __nsh_hv33 = element("text");
+				prop(__nsh_hv33, "class", "text-[10px]");
+				bindProp(__nsh_hv33, "style", () => ({ color: route() === item.id ? snapshot().colors.accent : snapshot().colors.muted }));
+				insert(__nsh_hv33, () => item.label);
+				append(__nsh_hv32, __nsh_hv33);
+				insert(__nsh_hv32, component(Icon, {
+					get name() {
+						return iconForNavigation(item.id);
+					},
+					size: 18,
+					get color() {
+						return route() === item.id ? snapshot().colors.accent : snapshot().colors.muted;
+					}
+				}), __nsh_hv33);
+				return __nsh_hv32;
+			})()));
+			return __nsh_hv31;
+		})());
 		return __nsh_hv21;
 	})();
 }

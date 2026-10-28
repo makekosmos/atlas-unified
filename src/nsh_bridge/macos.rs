@@ -51,6 +51,7 @@ pub(crate) fn initial_snapshot() -> Value {
             "card": color(palette.card),
         },
         "sidebarVisible": true,
+        "devFeatures": cfg!(debug_assertions),
         "chrome": "native"
     })
 }
@@ -124,7 +125,9 @@ impl AtlasBridge {
                     Err(mpsc::RecvTimeoutError::Timeout) => {}
                 }
                 for picked in imago_window_macos::sidebar_presses() {
-                    if matches!(picked.as_str(), "journal" | "tasks" | "settings") {
+                    if matches!(picked.as_str(), "journal" | "settings")
+                        || (picked == "tasks" && cfg!(debug_assertions))
+                    {
                         route = picked.clone();
                         context.emit("navigate", json!({"route": picked}));
                         refresh = true;
@@ -161,6 +164,9 @@ impl NativeComponent for AtlasBridge {
     fn set_prop(&mut self, name: &str, value: Option<&Value>) {
         if name == "route" {
             let route = value.and_then(Value::as_str).unwrap_or("journal");
+            if route == "tasks" && !cfg!(debug_assertions) {
+                return;
+            }
             if route != self.route {
                 self.route = route.to_owned();
                 let _ = self.requests.send(Request::Route(self.route.clone()));

@@ -1,4 +1,5 @@
-import { Scroll, Text, View, signal, keymap } from "nsh";
+import { Scroll, Text, View, signal } from "nsh";
+import { keymap } from "nsh/keymap";
 import { Popover } from "nsh/base";
 import { accentChoices } from "@makekosmos/imago-nsh";
 import type { Appearance, ThemeColors } from "@makekosmos/imago-nsh";

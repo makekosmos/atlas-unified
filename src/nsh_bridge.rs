@@ -102,6 +102,7 @@ fn snapshot(agenda: &Atlas, route: &str) -> Value {
             "card": color(palette.card),
         },
         "sidebarVisible": agenda.sidebar_visible,
+        "devFeatures": cfg!(debug_assertions),
         "chrome": "tsx"
     })
 }
@@ -200,6 +201,9 @@ impl NativeComponent for AtlasBridge {
             .and_then(Value::as_str)
             .unwrap_or("journal")
             .to_owned();
+        if route == "tasks" && !cfg!(debug_assertions) {
+            return;
+        }
         if *self.route.borrow() == route {
             return;
         }

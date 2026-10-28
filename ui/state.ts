@@ -5,13 +5,13 @@ export type Route = "journal" | "tasks" | "settings";
 export type Todo = { id: string; title: string; is_completed: boolean; scheduled_date?: string; notes?: string };
 export type JournalEntry = { id: string; text: string; createdAt: string };
 export type AtlasTheme = { key: string; name: string; light: ThemeColors; dark: ThemeColors };
-export type Snapshot = { route: Route; title: string; todos: Todo[]; journalEntries: JournalEntry[]; version: string; appearance?: Appearance; appearanceEditable: boolean; themes: AtlasTheme[]; colors: ThemeColors; sidebarVisible: boolean; chrome: "native" | "tsx" };
+export type Snapshot = { route: Route; title: string; todos: Todo[]; journalEntries: JournalEntry[]; version: string; appearance?: Appearance; appearanceEditable: boolean; themes: AtlasTheme[]; colors: ThemeColors; sidebarVisible: boolean; devFeatures: boolean; chrome: "native" | "tsx" | "mobile" };
 
 export const fallback: Snapshot = { route: "journal", title: "Дневник", todos: [], journalEntries: [], version: "", appearance: { settings: { mode: "dark", light_theme: "default", dark_theme: "default", accent_source: "theme", material: "default", font_size: 13, font_family: "Inter" }, policy: { following: false }, capabilities: { materials: ["default", "frosted", "mica"], wallpaper_accent: false } }, appearanceEditable: false, themes: [
   { key: "default", name: "Default", light: defaultColors, dark: defaultColors },
   { key: "claude", name: "Claude", light: defaultColors, dark: defaultColors },
   { key: "graphite", name: "Graphite", light: defaultColors, dark: defaultColors },
-], colors: defaultColors, sidebarVisible: true, chrome: "tsx" };
+], colors: defaultColors, sidebarVisible: true, devFeatures: true, chrome: "tsx" };
 
 export function resolveAppearanceColors(appearance: Appearance, themes: AtlasTheme[], fallbackColors: ThemeColors): ThemeColors {
   const settings = appearance.settings;
@@ -33,7 +33,13 @@ export function isSnapshot(value: unknown): value is Snapshot {
     && "themes" in value && Array.isArray(value.themes)
     && "colors" in value && isColors(value.colors)
     && "sidebarVisible" in value && typeof value.sidebarVisible === "boolean"
-    && "chrome" in value && (value.chrome === "native" || value.chrome === "tsx");
+    && "devFeatures" in value && typeof value.devFeatures === "boolean"
+    && (value.route !== "tasks" || value.devFeatures)
+    && "chrome" in value && (value.chrome === "native" || value.chrome === "tsx" || value.chrome === "mobile");
+}
+
+export function canNavigateToRoute(route: Route, devFeatures: boolean): boolean {
+  return route !== "tasks" || devFeatures;
 }
 
 export function isRoute(value: unknown): value is Route {

@@ -1,10 +1,12 @@
-import { effect, mount, Scroll, signal, Text, View, nativeComponent, keymap, Storage } from "nsh";
-import { Input } from "nsh/base";
+import { effect, Input, mount, Scroll, signal, Text, View } from "nsh";
+import { keymap } from "nsh/keymap";
+import { nativeComponent } from "nsh/native";
+import * as NSH from "nsh";
 import { Window as DesktopWindow, titleBar } from "nsh/desktop";
 import { Icon as SharedIcon, NavigationItem, Button as SharedButton, Dialog as SharedDialog, spacing, typography } from "@makekosmos/imago-nsh";
 import type { Appearance, IconName } from "@makekosmos/imago-nsh";
 import navigation from "./navigation.json";
-import { fallback, isRoute, isSnapshot, resolveAppearanceColors } from "./state";
+import { canNavigateToRoute, fallback, isRoute, isSnapshot, resolveAppearanceColors } from "./state";
 import type { JournalEntry, Route, Snapshot } from "./state";
 import { JournalPage, journalCalendarOpen, toggleJournalCalendar } from "./JournalPage";
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
@@ -27,7 +29,8 @@ const shortcutOptions: Record<ShortcutName, string[]> = {
   reload: ["mod+r", "mod+shift+r"],
 };
 const shortcuts = signal<Shortcuts>(defaultShortcuts);
-void Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
+const storage = Reflect.get(NSH, "Storage") as { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void> } | undefined;
+void storage?.getItem("mundus.atlas.shortcuts.v1").then((value) => {
   if (!value) return;
   try {
     const saved = JSON.parse(value) as Partial<Shortcuts>;
@@ -94,6 +97,7 @@ function TaskRows() {
 }
 
 let commandRef: ((name: string, args?: unknown) => void) | undefined;
+let mobileJournalRequested = false;
 
 function setAppearance(patch: Record<string, unknown>) {
   const current = snapshot();
@@ -117,7 +121,7 @@ function cycleShortcut(name: ShortcutName) {
   const next = choices[(choices.indexOf(current[name]) + 1) % choices.length];
   const updated = { ...current, [name]: next };
   shortcuts.set(updated);
-  void Storage.setItem("mundus.atlas.shortcuts.v1", JSON.stringify(updated));
+  void storage?.setItem("mundus.atlas.shortcuts.v1", JSON.stringify(updated));
 }
 
 function TaskPage() {
@@ -157,7 +161,7 @@ function App() {
   const footerNavigation = navigation.filter((item) => item.footer);
   const openNewTask = () => { newTaskTitle.set(""); addTaskOpen.set(true); };
   const changeRoute = (target: string) => {
-    if (!isRoute(target)) return;
+    if (!isRoute(target) || !canNavigateToRoute(target, snapshot().devFeatures)) return;
     if (target !== "journal" && journalCalendarOpen()) toggleJournalCalendar();
     route.set(target);
   };
@@ -171,8 +175,12 @@ function App() {
         route={route()}
         onState={(next) => {
           route.set(next.route);
-          snapshot.set({ ...next, journalEntries: snapshot().journalEntries });
+          snapshot.set({ ...next, journalEntries: next.chrome === "mobile" ? next.journalEntries : snapshot().journalEntries });
           sidebarVisible.set(next.sidebarVisible);
+          if (next.chrome === "mobile" && !mobileJournalRequested) {
+            mobileJournalRequested = true;
+            commandRef?.("reload");
+          }
         }}
         onJournal={(entries) => snapshot.set({ ...snapshot(), journalEntries: entries })}
         onNavigate={(event) => changeRoute(event.route)}
@@ -188,10 +196,10 @@ function App() {
       <View class="min-h-0 flex-1 flex-row">
       {snapshot().chrome === "tsx" && <View class="w-[240px] shrink-0 border-r px-2 pt-1" style={{ borderColor: snapshot().colors.border, display: sidebarVisible() ? "flex" : "none" }}>
         <View class="gap-0.5">
-          {primaryNavigation.map((item) => <NavigationItem label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
+          {primaryNavigation.map((item) => (!item.devOnly || snapshot().devFeatures) && <NavigationItem label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
         </View>
         <View class="mt-auto mb-2 gap-0.5">
-          {footerNavigation.map((item) => <NavigationItem label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
+          {footerNavigation.map((item) => (!item.devOnly || snapshot().devFeatures) && <NavigationItem label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
         </View>
       </View>}
       <View class="relative min-w-0 flex-1">
@@ -202,6 +210,7 @@ function App() {
           onUpdate={(id, text) => commandRef?.("journal.update", { id, text })}
           onDelete={(id) => commandRef?.("journal.delete", { id })}
           nativeCalendarButton={snapshot().chrome === "native"}
+          mobile={snapshot().chrome === "mobile"}
         />}
         {route() === "tasks" && <View class="min-h-0 flex-1">
           <TaskPage />
@@ -217,6 +226,12 @@ function App() {
         </SharedDialog>}
       </View>
       </View>
+      {snapshot().chrome === "mobile" && <View class="h-14 w-full flex-row border-t" style={{ backgroundColor: snapshot().colors.background, borderColor: snapshot().colors.border }}>
+        {navigation.map((item) => (!item.devOnly || snapshot().devFeatures) && <View onPress={() => changeRoute(item.id)} role="button" accessibilityLabel={item.label} accessibilityState={{ selected: route() === item.id }} class="flex-1 items-center justify-center gap-0.5">
+          <SharedIcon name={iconForNavigation(item.id)} size={18} color={route() === item.id ? snapshot().colors.accent : snapshot().colors.muted} />
+          <Text class="text-[10px]" style={{ color: route() === item.id ? snapshot().colors.accent : snapshot().colors.muted }}>{item.label}</Text>
+        </View>)}
+      </View>}
     </View>
   );
 }
