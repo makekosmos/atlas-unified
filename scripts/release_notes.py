@@ -62,6 +62,25 @@ def shipped_changes(previous, head):
     return changes
 
 
+def shipped_commits(previous, head):
+    revision = f"{previous}..{head}" if previous else head
+    shas = run("git", "rev-list", "--reverse", revision).splitlines()
+    commits = []
+    for sha in shas:
+        commit = github(f"commits/{sha}")
+        title = commit["commit"]["message"].splitlines()[0]
+        if re.fullmatch(r"chore: release v[0-9]+\.[0-9]+\.[0-9]+", title):
+            continue
+        author = commit.get("author")
+        commits.append({
+            "title": title,
+            "author": "@" + author["login"] if author else commit["commit"]["author"]["name"],
+            "sha": sha[:7],
+            "url": commit["html_url"],
+        })
+    return commits
+
+
 def linear_titles(identifiers):
     key = os.environ.get("LINEAR_API_KEY")
     if not key:
@@ -106,7 +125,7 @@ def reference(change):
     return link
 
 
-def render(changes, titles, previous, head, repository):
+def render(changes, titles, previous, head, repository, commits=()):
     tasks = {}
     other = []
     for change in changes:
@@ -127,6 +146,13 @@ def render(changes, titles, previous, head, repository):
         lines += ["", "## Другие изменения", ""]
         for change in other:
             lines.append(f"- {markdown(change['title'])} {author_text(change['author'])} — {reference(change)}")
+    if commits:
+        lines += ["", "## Коммиты", ""]
+        for commit in commits:
+            lines.append(
+                f"- [{commit['sha']}]({commit['url']}) {markdown(commit['title'])} — "
+                f"{author_text(commit['author'])}"
+            )
     path = f"compare/{previous}...{head}" if previous else f"commits/{head}"
     lines += ["", f"[Все изменения](https://github.com/{repository}/{path})", ""]
     return "\n".join(lines)
@@ -139,6 +165,8 @@ if __name__ == "__main__":
     parser.add_argument("--output", default="release-notes.md")
     args = parser.parse_args()
     changes = shipped_changes(args.previous, args.head)
+    commits = shipped_commits(args.previous, args.head)
     identifiers = {identifier for change in changes for identifier in change["ids"]}
-    notes = render(changes, linear_titles(identifiers), args.previous, args.head, os.environ["GITHUB_REPOSITORY"])
+    notes = render(changes, linear_titles(identifiers), args.previous, args.head,
+                   os.environ["GITHUB_REPOSITORY"], commits)
     Path(args.output).write_text(notes, encoding="utf-8", newline="\n")

@@ -46,6 +46,7 @@ function groupTime(group: JournalDayGroup) {
 
 export function formatJournalDay(group: JournalDayGroup, now = new Date()) {
   if (group.kind === "invalid") return group.label;
+  if (localDayKey(group.date) === localDayKey(now)) return "Сегодня";
   const year = group.date.getFullYear() === now.getFullYear() ? "" : ` ${group.date.getFullYear()}`;
   return `${weekdays[group.date.getDay()]}, ${group.date.getDate()} ${monthNamesInDate[group.date.getMonth()]}${year}`;
 }

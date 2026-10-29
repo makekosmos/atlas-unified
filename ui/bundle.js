@@ -1,10 +1,9 @@
-import { append, bindProp, component, each, element, insert, prop, setup, spread, text } from "nsh:rt";
+import { append, bindProp, component, each, element, font, insert, prop, setup, spread, text } from "nsh:rt";
 import { Clipboard, Easing, LayoutAnimation, PanResponder, Storage, createMotion, effect, keymap, mount, nativeComponent, signal } from "nsh";
 import { Menu, Window, titleBar } from "nsh/desktop";
 import { platform } from "os";
-import { Popover } from "nsh/base";
 
-//#region ../../../../../kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
 const icons = {
 	about: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
 	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
@@ -27,7 +26,7 @@ const icons = {
 };
 
 //#endregion
-//#region ../../../../../kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
 function Icon(props) {
 	return (() => {
 		const __nsh_hv0 = element("image");
@@ -38,6 +37,30 @@ function Icon(props) {
 			tintColor: props.color
 		}));
 		return __nsh_hv0;
+	})();
+}
+function Button(props) {
+	return (() => {
+		const __nsh_hv32 = element("view");
+		bindProp(__nsh_hv32, "onPress", () => props.disabled ? void 0 : props.onPress);
+		prop(__nsh_hv32, "role", "button");
+		bindProp(__nsh_hv32, "accessibilityState", () => ({
+			selected: !!props.selected,
+			disabled: !!props.disabled
+		}));
+		bindProp(__nsh_hv32, "class", () => `rounded-md border px-3 py-2 ${props.className ?? ""}`);
+		bindProp(__nsh_hv32, "style", () => ({
+			backgroundColor: props.selected ? props.colors.card : props.colors.background,
+			borderColor: props.selected ? props.colors.accent : props.colors.border,
+			opacity: props.disabled ? .5 : 1,
+			...props.style
+		}));
+		const __nsh_hv33 = element("text");
+		prop(__nsh_hv33, "class", "text-[13px]");
+		bindProp(__nsh_hv33, "style", () => ({ color: props.textColor ?? (props.selected ? props.colors.foreground : props.colors.muted) }));
+		insert(__nsh_hv33, () => props.label);
+		append(__nsh_hv32, __nsh_hv33);
+		return __nsh_hv32;
 	})();
 }
 function Dialog(props) {
@@ -74,7 +97,8 @@ var navigation_default = [
 		"id": "tasks",
 		"label": "Задачи",
 		"icon": "checklist",
-		"footer": false
+		"footer": false,
+		"devOnly": true
 	},
 	{
 		"id": "settings",
@@ -244,6 +268,7 @@ const fallback = {
 	themes: previewThemes,
 	colors: previewThemes[0].dark,
 	sidebarVisible: true,
+	devFeatures: true,
 	chrome: "tsx"
 };
 function resolveAppearanceColors(appearance, themes, fallbackColors) {
@@ -264,10 +289,13 @@ function isSnapshot(value) {
 	if (typeof value !== "object" || value === null || !("route" in value) || !isRoute(value.route)) return false;
 	if (!("title" in value) || typeof value.title !== "string" || !("todos" in value) || !Array.isArray(value.todos)) return false;
 	if (!value.todos.every(isTodo$1) || !("journalEntries" in value) || !Array.isArray(value.journalEntries) || !value.journalEntries.every(isJournalEntry$1)) return false;
-	return "version" in value && typeof value.version === "string" && "appearanceEditable" in value && typeof value.appearanceEditable === "boolean" && "themes" in value && Array.isArray(value.themes) && "colors" in value && isColors(value.colors) && "sidebarVisible" in value && typeof value.sidebarVisible === "boolean" && "chrome" in value && (value.chrome === "native" || value.chrome === "tsx");
+	return "version" in value && typeof value.version === "string" && "appearanceEditable" in value && typeof value.appearanceEditable === "boolean" && "themes" in value && Array.isArray(value.themes) && "colors" in value && isColors(value.colors) && "sidebarVisible" in value && typeof value.sidebarVisible === "boolean" && "devFeatures" in value && typeof value.devFeatures === "boolean" && (value.route !== "tasks" || value.devFeatures) && "chrome" in value && (value.chrome === "native" || value.chrome === "tsx" || value.chrome === "mobile");
+}
+function canNavigateToRoute(route, devFeatures) {
+	return route !== "tasks" || devFeatures;
 }
 function isRoute(value) {
-	return value === "journal" || value === "tasks" || value === "settings";
+	return value === "home" || value === "journal" || value === "tasks" || value === "settings" || value === "connection";
 }
 function isTodo$1(value) {
 	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "title" in value && typeof value.title === "string" && "is_completed" in value && typeof value.is_completed === "boolean";
@@ -578,7 +606,6 @@ function GhostButton(props) {
 		});
 		const __nsh_hv10 = element("text");
 		prop(__nsh_hv10, "class", "text-[13px]");
-		bindProp(__nsh_hv10, "hoverStyle", () => ({ color: props.colors.foreground }));
 		bindProp(__nsh_hv10, "style", () => ({ color: props.colors.muted }));
 		insert(__nsh_hv10, () => props.label);
 		append(__nsh_hv9, __nsh_hv10);
@@ -690,6 +717,7 @@ function groupTime(group) {
 }
 function formatJournalDay(group, now = /* @__PURE__ */ new Date()) {
 	if (group.kind === "invalid") return group.label;
+	if (localDayKey(group.date) === localDayKey(now)) return "Сегодня";
 	const year = group.date.getFullYear() === now.getFullYear() ? "" : ` ${group.date.getFullYear()}`;
 	return `${weekdays$1[group.date.getDay()]}, ${group.date.getDate()} ${monthNamesInDate[group.date.getMonth()]}${year}`;
 }
@@ -888,14 +916,14 @@ function leaveJournalDates() {
 	journalHoverId.set(null);
 	journalDateShown.set(null);
 }
-const journalCalendarOpen = signal(false);
-const NativeCalendarToggle = nativeComponent("atlas.journalCalendarToggle", {
+const journalCalendarOpen$1 = signal(false);
+const NativeCalendarToggle$1 = nativeComponent("atlas.journalCalendarToggle", {
 	props: ["expanded", "label"],
 	events: ["press"]
 });
-const journalCalendarWidth = signal(260);
-const journalDraft = signal("");
-const journalDraftContentHeight = signal(COMPOSER_LINE);
+const journalCalendarWidth$1 = signal(260);
+const journalDraft$1 = signal("");
+const journalDraftContentHeight$1 = signal(COMPOSER_LINE);
 const journalFocused = signal(false);
 const journalSelection = signal({
 	start: 0,
@@ -913,14 +941,14 @@ const journalCalendarMinWidth = 220;
 const journalCalendarMaxWidth = 420;
 const journalCalendarResizeHovered = signal(false);
 const journalCalendarResizeActive = signal(false);
-const editingJournalId = signal(null);
-const editingJournalText = signal("");
+const editingJournalId$1 = signal(null);
+const editingJournalText$1 = signal("");
 const arrivingId = signal(null);
 let sendSeq = 0;
 let composerRef;
 let editFocus;
 function claimJournalComposer() {
-	if (editingJournalId()) return;
+	if (editingJournalId$1()) return;
 	composerRef?.focus();
 }
 function animateComposer() {
@@ -936,7 +964,7 @@ function clampDraftHeight(height) {
 	return Math.round(Math.max(COMPOSER_LINE, Math.min(COMPOSER_MAX_CONTENT, height)));
 }
 function composerContentHeight() {
-	return Math.max(COMPOSER_LINE, journalDraftContentHeight());
+	return Math.max(COMPOSER_LINE, journalDraftContentHeight$1());
 }
 function composerInputHeight() {
 	return composerContentHeight() + 24;
@@ -965,7 +993,7 @@ function composerFadeBottom() {
 	return composerFadeEdges(composerInputHeight(), composerViewportHeight(), journalScrollY()).bottom;
 }
 function composerExpanded() {
-	return journalDraftContentHeight() > 23;
+	return journalDraftContentHeight$1() > 23;
 }
 function placeCaret(bounds) {
 	const height = bounds.size.height;
@@ -1023,7 +1051,7 @@ function JournalBubble(props) {
 		easing: Easing.bezier(.16, 1, .3, 1)
 	} }) : null;
 	const openEntryMenu = (event) => {
-		if (editingJournalId() === props.entry.id) return;
+		if (editingJournalId$1() === props.entry.id) return;
 		Menu.popup([
 			{
 				label: "Копировать",
@@ -1032,8 +1060,8 @@ function JournalBubble(props) {
 			{
 				label: "Изменить",
 				onSelect: () => {
-					editingJournalId.set(props.entry.id);
-					editingJournalText.set(props.entry.text);
+					editingJournalId$1.set(props.entry.id);
+					editingJournalText$1.set(props.entry.text);
 				}
 			},
 			{
@@ -1051,20 +1079,20 @@ function JournalBubble(props) {
 		prop(__nsh_hv2, "onContextMenu", openEntryMenu);
 		prop(__nsh_hv2, "class", "max-w-[75%] px-3 py-2");
 		bindProp(__nsh_hv2, "style", () => ({
-			backgroundColor: editingJournalId() === props.entry.id ? props.colors.card : journalBubble(props.colors.accent),
+			backgroundColor: editingJournalId$1() === props.entry.id ? props.colors.card : journalBubble(props.colors.accent),
 			borderRadius: BUBBLE_RADIUS,
 			transformOrigin: "bottom right",
 			...sendMotion?.style ?? {}
 		}));
-		insert(__nsh_hv2, () => editingJournalId() === props.entry.id ? (() => {
+		insert(__nsh_hv2, () => editingJournalId$1() === props.entry.id ? (() => {
 			const __nsh_hv3 = element("view");
 			const __nsh_hv4 = element("input");
 			prop(__nsh_hv4, "ref", (node) => {
 				editFocus = node;
 			});
 			prop(__nsh_hv4, "autoFocus", true);
-			bindProp(__nsh_hv4, "value", () => editingJournalText());
-			prop(__nsh_hv4, "onChange", (value) => editingJournalText.set(value));
+			bindProp(__nsh_hv4, "value", () => editingJournalText$1());
+			prop(__nsh_hv4, "onChange", (value) => editingJournalText$1.set(value));
 			prop(__nsh_hv4, "multiline", true);
 			prop(__nsh_hv4, "submitBehavior", "newline");
 			prop(__nsh_hv4, "accessibilityLabel", "Текст записи");
@@ -1084,7 +1112,7 @@ function JournalBubble(props) {
 				get dark() {
 					return props.dark;
 				},
-				onPress: () => editingJournalId.set(null)
+				onPress: () => editingJournalId$1.set(null)
 			}), component(SolidButton, {
 				label: "Сохранить",
 				get background() {
@@ -1094,8 +1122,8 @@ function JournalBubble(props) {
 					return props.colors.background;
 				},
 				onPress: () => {
-					props.onUpdate(props.entry.id, editingJournalText());
-					editingJournalId.set(null);
+					props.onUpdate(props.entry.id, editingJournalText$1());
+					editingJournalId$1.set(null);
 				}
 			})]);
 			append(__nsh_hv3, __nsh_hv4);
@@ -1145,16 +1173,16 @@ function JournalPage(props) {
 		});
 	};
 	let pageWidth = 0;
-	let resizeStartWidth = journalCalendarWidth();
+	let resizeStartWidth = journalCalendarWidth$1();
 	const resizeCalendar = PanResponder.create({
 		onStartShouldSetPanResponder: () => true,
 		onPanResponderGrant: () => {
-			resizeStartWidth = journalCalendarWidth();
+			resizeStartWidth = journalCalendarWidth$1();
 			journalCalendarResizeActive.set(true);
 		},
 		onPanResponderMove: (_, gesture) => {
 			const maxWidth = pageWidth > 0 ? Math.max(journalCalendarMinWidth, Math.min(journalCalendarMaxWidth, pageWidth * .42)) : journalCalendarMaxWidth;
-			journalCalendarWidth.set(Math.max(journalCalendarMinWidth, Math.min(maxWidth, resizeStartWidth - gesture.dx)));
+			journalCalendarWidth$1.set(Math.max(journalCalendarMinWidth, Math.min(maxWidth, resizeStartWidth - gesture.dx)));
 		},
 		onPanResponderRelease: () => journalCalendarResizeActive.set(false),
 		onPanResponderTerminate: () => journalCalendarResizeActive.set(false),
@@ -1166,7 +1194,7 @@ function JournalPage(props) {
 		if (props.entries().length) queueMicrotask(() => feedRef?.scrollToEnd({ animated: true }));
 	});
 	effect(() => {
-		const editing = editingJournalId();
+		const editing = editingJournalId$1();
 		queueMicrotask(() => {
 			if (editing) editFocus?.focus();
 			else composerRef?.focus();
@@ -1190,8 +1218,8 @@ function JournalPage(props) {
 		arrivingId.set(id);
 		animateSend();
 		props.onCreate(value, id);
-		journalDraft.set("");
-		journalDraftContentHeight.set(COMPOSER_LINE);
+		journalDraft$1.set("");
+		journalDraftContentHeight$1.set(COMPOSER_LINE);
 		journalScrollY.set(0);
 		composerScrollRef?.scrollTo({
 			y: 0,
@@ -1208,7 +1236,7 @@ function JournalPage(props) {
 	};
 	const jumpToDay = (key) => {
 		const target = closestJournalDay(groups(), key);
-		if (journalCalendarOpen()) toggleJournalCalendar();
+		if (journalCalendarOpen$1()) toggleJournalCalendar$1();
 		if (target?.kind === "dated") {
 			const offset = dayOffsets.get(target.key);
 			if (offset !== void 0) feedRef?.scrollTo({
@@ -1336,13 +1364,13 @@ function JournalPage(props) {
 			composerRef = node;
 		});
 		prop(__nsh_hv24, "autoFocus", true);
-		bindProp(__nsh_hv24, "value", () => journalDraft());
-		prop(__nsh_hv24, "onChange", (value) => journalDraft.set(value));
+		bindProp(__nsh_hv24, "value", () => journalDraft$1());
+		prop(__nsh_hv24, "onChange", (value) => journalDraft$1.set(value));
 		prop(__nsh_hv24, "onContentSizeChange", ({ height }) => {
 			const raw = Math.max(COMPOSER_LINE, Math.round(height));
-			if (raw === journalDraftContentHeight()) return;
-			if (clampDraftHeight(raw) !== clampDraftHeight(journalDraftContentHeight())) animateComposer();
-			journalDraftContentHeight.set(raw);
+			if (raw === journalDraftContentHeight$1()) return;
+			if (clampDraftHeight(raw) !== clampDraftHeight(journalDraftContentHeight$1())) animateComposer();
+			journalDraftContentHeight$1.set(raw);
 			revealComposer(journalCaret());
 		});
 		prop(__nsh_hv24, "onCaretMove", (event) => {
@@ -1410,20 +1438,20 @@ function JournalPage(props) {
 			return __nsh_hv27;
 		})()]);
 		const __nsh_hv28 = element("view");
-		prop(__nsh_hv28, "onPress", () => send(journalDraft()));
+		prop(__nsh_hv28, "onPress", () => send(journalDraft$1()));
 		prop(__nsh_hv28, "role", "button");
 		prop(__nsh_hv28, "accessibilityLabel", "Отправить запись");
 		prop(__nsh_hv28, "class", "shrink-0 items-center justify-center rounded-full");
-		bindProp(__nsh_hv28, "hoverStyle", () => ({ opacity: journalDraft().trim() ? .85 : .35 }));
-		bindProp(__nsh_hv28, "activeStyle", () => ({ opacity: journalDraft().trim() ? .7 : .35 }));
+		bindProp(__nsh_hv28, "hoverStyle", () => ({ opacity: journalDraft$1().trim() ? .85 : .35 }));
+		bindProp(__nsh_hv28, "activeStyle", () => ({ opacity: journalDraft$1().trim() ? .7 : .35 }));
 		bindProp(__nsh_hv28, "style", () => ({
 			width: COMPOSER_SEND,
 			height: COMPOSER_SEND,
 			marginRight: 8,
 			marginBottom: composerExpanded() ? 10 : 0,
 			backgroundColor: journalBubble(props.colors.accent),
-			opacity: journalDraft().trim() ? 1 : .35,
-			cursor: journalDraft().trim() ? "pointer" : "default"
+			opacity: journalDraft$1().trim() ? 1 : .35,
+			cursor: journalDraft$1().trim() ? "pointer" : "default"
 		}));
 		const __nsh_hv29 = element("text");
 		prop(__nsh_hv29, "class", "text-[14px] font-semibold");
@@ -1436,16 +1464,16 @@ function JournalPage(props) {
 		append(__nsh_hv19, __nsh_hv20);
 		append(__nsh_hv8, __nsh_hv10);
 		append(__nsh_hv8, __nsh_hv19);
-		insert(__nsh_hv8, () => props.nativeCalendarButton ? component(NativeCalendarToggle, {
+		insert(__nsh_hv8, () => props.nativeCalendarButton ? component(NativeCalendarToggle$1, {
 			get expanded() {
-				return journalCalendarOpen();
+				return journalCalendarOpen$1();
 			},
 			get label() {
-				return journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь";
+				return journalCalendarOpen$1() ? "Скрыть календарь" : "Показать календарь";
 			},
-			onPress: toggleJournalCalendar,
+			onPress: toggleJournalCalendar$1,
 			get accessibilityLabel() {
-				return journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь";
+				return journalCalendarOpen$1() ? "Скрыть календарь" : "Показать календарь";
 			},
 			class: "absolute right-4 z-10 h-8 w-8",
 			get style() {
@@ -1453,10 +1481,10 @@ function JournalPage(props) {
 			}
 		}) : props.titlebarInset === 0 && (() => {
 			const __nsh_hv9 = element("view");
-			prop(__nsh_hv9, "onPress", toggleJournalCalendar);
+			prop(__nsh_hv9, "onPress", toggleJournalCalendar$1);
 			prop(__nsh_hv9, "role", "button");
-			bindProp(__nsh_hv9, "accessibilityLabel", () => journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь");
-			bindProp(__nsh_hv9, "accessibilityState", () => ({ selected: journalCalendarOpen() }));
+			bindProp(__nsh_hv9, "accessibilityLabel", () => journalCalendarOpen$1() ? "Скрыть календарь" : "Показать календарь");
+			bindProp(__nsh_hv9, "accessibilityState", () => ({ selected: journalCalendarOpen$1() }));
 			prop(__nsh_hv9, "class", "absolute z-10 items-center justify-center");
 			bindProp(__nsh_hv9, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .11) }));
 			bindProp(__nsh_hv9, "style", () => ({
@@ -1466,24 +1494,24 @@ function JournalPage(props) {
 				height: 28,
 				borderRadius: 6,
 				cursor: "pointer",
-				backgroundColor: journalCalendarOpen() ? surfaceWash(props.dark, .09) : "transparent"
+				backgroundColor: journalCalendarOpen$1() ? surfaceWash(props.dark, .09) : "transparent"
 			}));
 			insert(__nsh_hv9, component(Icon, {
 				name: "sidebar",
 				size: 16,
 				get color() {
-					return journalCalendarOpen() ? props.colors.foreground : props.colors.muted;
+					return journalCalendarOpen$1() ? props.colors.foreground : props.colors.muted;
 				}
 			}));
 			return __nsh_hv9;
 		})(), __nsh_hv10);
 		const __nsh_hv31 = element("view");
 		prop(__nsh_hv31, "class", "relative h-full shrink-0 overflow-hidden");
-		bindProp(__nsh_hv31, "style", () => ({ width: journalCalendarOpen() ? journalCalendarWidth() : 0 }));
+		bindProp(__nsh_hv31, "style", () => ({ width: journalCalendarOpen$1() ? journalCalendarWidth$1() : 0 }));
 		const __nsh_hv32 = element("view");
 		prop(__nsh_hv32, "class", "h-full border-l");
 		bindProp(__nsh_hv32, "style", () => ({
-			width: journalCalendarWidth(),
+			width: journalCalendarWidth$1(),
 			paddingTop: props.titlebarInset,
 			backgroundColor: surfaceWash(props.dark),
 			borderColor: journalCalendarResizeHovered() || journalCalendarResizeActive() ? props.colors.muted : props.colors.border,
@@ -1493,7 +1521,7 @@ function JournalPage(props) {
 		}));
 		insert(__nsh_hv32, component(JournalCalendar, {
 			get width() {
-				return journalCalendarWidth();
+				return journalCalendarWidth$1();
 			},
 			framed: false,
 			resizeHovered: false,
@@ -1509,7 +1537,7 @@ function JournalPage(props) {
 			onSelect: jumpToDay
 		}));
 		append(__nsh_hv31, __nsh_hv32);
-		insert(__nsh_hv31, () => journalCalendarOpen() && (() => {
+		insert(__nsh_hv31, () => journalCalendarOpen$1() && (() => {
 			const __nsh_hv33 = element("view");
 			spread(__nsh_hv33, resizeCalendar.panHandlers);
 			prop(__nsh_hv33, "role", "button");
@@ -1528,28 +1556,724 @@ function JournalPage(props) {
 		return __nsh_hv7;
 	})();
 }
-function toggleJournalCalendar() {
+function toggleJournalCalendar$1() {
 	animatePanes();
+	journalCalendarOpen$1.update((open) => !open);
+}
+
+//#endregion
+//#region MobileJournalPage.tsx
+const journalCalendarOpen = signal(false);
+const NativeCalendarToggle = nativeComponent("atlas.journalCalendarToggle", {
+	props: ["expanded", "label"],
+	events: ["press"]
+});
+const journalCalendarWidth = signal(260);
+const journalDraft = signal("");
+const journalDraftContentHeight = signal(20);
+const journalDraftMinContentHeight = 20;
+const journalDraftMaxContentHeight = 240;
+const journalDraftExpandedHeight = journalDraftMinContentHeight * 1.5;
+const journalDraftVerticalPadding = 20;
+const editingJournalId = signal(null);
+const editingJournalText = signal("");
+const activeJournalEntry = signal(null);
+const journalSelectionEntryId = signal(null);
+const journalActionsClosing = signal(false);
+const mobileJournalEditorOpen = signal(false);
+const mobileJournalEditorDragY = signal(0);
+const mobileJournalEditorClosing = signal(false);
+const mobileJournalDiscardPrompt = signal(false);
+let mobileJournalEditorTimer;
+let journalActionsTimer;
+function openJournalActions(entry) {
+	journalSelectionEntryId.set(null);
+	activeJournalEntry.set(entry);
+	journalActionsClosing.set(true);
+	if (journalActionsTimer !== void 0) clearTimeout(journalActionsTimer);
+	journalActionsTimer = setTimeout(() => {
+		journalActionsClosing.set(false);
+		journalActionsTimer = void 0;
+	}, 16);
+}
+function closeJournalActions() {
+	journalActionsClosing.set(true);
+	if (journalActionsTimer !== void 0) clearTimeout(journalActionsTimer);
+	journalActionsTimer = setTimeout(() => {
+		activeJournalEntry.set(null);
+		journalActionsClosing.set(false);
+		journalActionsTimer = void 0;
+	}, 130);
+}
+function closeMobileJournalEditor(discard) {
+	mobileJournalDiscardPrompt.set(false);
+	mobileJournalEditorClosing.set(true);
+	if (mobileJournalEditorTimer !== void 0) clearTimeout(mobileJournalEditorTimer);
+	mobileJournalEditorTimer = setTimeout(() => {
+		if (discard) {
+			journalDraft.set("");
+			journalDraftContentHeight.set(journalDraftMinContentHeight);
+		}
+		mobileJournalEditorOpen.set(false);
+		mobileJournalEditorClosing.set(false);
+		mobileJournalEditorTimer = void 0;
+	}, 180);
+}
+function openMobileJournalEditor() {
+	mobileJournalEditorClosing.set(false);
+	mobileJournalEditorDragY.set(0);
+	mobileJournalEditorOpen.set(true);
+}
+function requestMobileJournalBack() {
+	if (!mobileJournalEditorOpen()) return;
+	if (mobileJournalDiscardPrompt()) {
+		mobileJournalDiscardPrompt.set(false);
+		return;
+	}
+	if (journalDraft().trim()) mobileJournalDiscardPrompt.set(true);
+	else closeMobileJournalEditor(false);
+}
+function timeLabel(createdAt) {
+	const date = new Date(createdAt);
+	return Number.isNaN(date.valueOf()) ? "" : date.toLocaleTimeString("ru-RU", {
+		hour: "2-digit",
+		minute: "2-digit"
+	});
+}
+function MobileJournalPage(props) {
+	let feedRef;
+	let pageWidth = 0;
+	let resizeStartWidth = journalCalendarWidth();
+	const resizeCalendar = PanResponder.create({
+		onStartShouldSetPanResponder: () => true,
+		onPanResponderGrant: () => {
+			resizeStartWidth = journalCalendarWidth();
+		},
+		onPanResponderMove: (_event, gesture) => {
+			const minWidth = 220;
+			const maxWidth = pageWidth > 0 ? Math.max(minWidth, Math.min(420, pageWidth * .42)) : 420;
+			journalCalendarWidth.set(Math.max(minWidth, Math.min(maxWidth, resizeStartWidth - gesture.dx)));
+		},
+		onPanResponderRelease: () => {},
+		onPanResponderTerminate: () => {},
+		onPanResponderTerminationRequest: () => false
+	});
+	const dismissJournalEditor = PanResponder.create({
+		onStartShouldSetPanResponder: () => false,
+		onMoveShouldSetPanResponder: (_event, gesture) => gesture.dy > 8 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
+		onPanResponderMove: (_event, gesture) => mobileJournalEditorDragY.set(Math.max(0, gesture.dy)),
+		onPanResponderRelease: (_event, gesture) => {
+			if (gesture.dy > 96 || gesture.vy > 1.5) closeMobileJournalEditor(false);
+			else mobileJournalEditorDragY.set(0);
+		},
+		onPanResponderTerminate: () => mobileJournalEditorDragY.set(0)
+	});
+	const dayOffsets = /* @__PURE__ */ new Map();
+	const groups = () => buildJournalDays(props.entries);
+	const mobileDraftNeedsExpand = () => journalDraftContentHeight() > 60;
+	effect(() => {
+		if (props.entries.length) queueMicrotask(() => feedRef?.scrollToEnd({ animated: true }));
+	});
+	const send = (text) => {
+		const value = text.trim();
+		if (!value) return;
+		props.onCreate(value);
+		journalDraft.set("");
+		journalDraftContentHeight.set(journalDraftMinContentHeight);
+	};
+	const jumpToDay = (key) => {
+		const target = closestJournalDay(groups(), key);
+		if (journalCalendarOpen()) toggleJournalCalendar();
+		if (target?.kind === "dated") {
+			const offset = dayOffsets.get(target.key);
+			if (offset !== void 0) feedRef?.scrollTo({
+				y: Math.max(0, offset - 12),
+				animated: true
+			});
+		}
+	};
+	return (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "onLayout", (bounds) => {
+			pageWidth = bounds.size.width;
+		});
+		prop(__nsh_hv0, "class", "min-h-0 flex-1 flex-row overflow-hidden");
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "class", "relative min-w-0 flex-1 flex-col items-center");
+		const __nsh_hv3 = element("view");
+		prop(__nsh_hv3, "class", "relative min-h-0 w-full flex-1");
+		const __nsh_hv4 = element("scroll");
+		prop(__nsh_hv4, "ref", (node) => {
+			feedRef = node;
+		});
+		prop(__nsh_hv4, "class", "min-h-0 w-full flex-1 py-4");
+		const __nsh_hv5 = element("view");
+		bindProp(__nsh_hv5, "class", () => `mx-auto w-full max-w-[690px] ${props.mobile ? "px-3" : "px-5"}`);
+		insert(__nsh_hv5, [() => groups().map((group) => (() => {
+			const __nsh_hv6 = element("view");
+			prop(__nsh_hv6, "onLayout", (bounds) => {
+				dayOffsets.set(group.key, bounds.origin.y);
+			});
+			prop(__nsh_hv6, "class", "mb-5");
+			const __nsh_hv7 = element("text");
+			prop(__nsh_hv7, "class", "mb-3 text-center text-[14px]");
+			bindProp(__nsh_hv7, "style", () => ({ color: props.colors.muted }));
+			insert(__nsh_hv7, () => formatJournalDay(group));
+			append(__nsh_hv6, __nsh_hv7);
+			insert(__nsh_hv6, () => group.entries.map((entry) => (() => {
+				const __nsh_hv8 = element("view");
+				bindProp(__nsh_hv8, "onLongPress", () => props.mobile ? () => openJournalActions(entry) : void 0);
+				bindProp(__nsh_hv8, "onContextMenu", () => props.mobile ? () => openJournalActions(entry) : void 0);
+				bindProp(__nsh_hv8, "role", () => props.mobile ? "button" : void 0);
+				bindProp(__nsh_hv8, "accessibilityLabel", () => props.mobile ? "Действия с записью" : void 0);
+				prop(__nsh_hv8, "delayLongPress", 430);
+				bindProp(__nsh_hv8, "class", () => `mb-3 self-end ${props.mobile ? "w-auto max-w-full" : "w-full max-w-[650px]"} rounded-2xl px-4 py-3`);
+				bindProp(__nsh_hv8, "style", () => ({
+					backgroundColor: editingJournalId() === entry.id || !props.mobile ? props.colors.card : props.colors.background === "#0d0c10" ? "#1b191f" : "#f7f6f8",
+					width: props.mobile ? "auto" : "100%",
+					maxWidth: props.mobile ? "100%" : 650
+				}));
+				insert(__nsh_hv8, [() => editingJournalId() === entry.id ? (() => {
+					const __nsh_hv9 = element("view");
+					const __nsh_hv10 = element("input");
+					bindProp(__nsh_hv10, "value", () => editingJournalText());
+					prop(__nsh_hv10, "onChange", (value) => editingJournalText.set(value));
+					prop(__nsh_hv10, "multiline", true);
+					prop(__nsh_hv10, "submitBehavior", "newline");
+					bindProp(__nsh_hv10, "class", () => `min-h-[56px] w-full px-1 py-1 ${props.mobile ? "text-[18px]" : "text-[13px]"}`);
+					bindProp(__nsh_hv10, "style", () => ({
+						color: props.colors.foreground,
+						backgroundColor: "transparent",
+						fontSize: props.mobile ? 18 : 13,
+						lineHeight: props.mobile ? 27 : 20,
+						selectionColor: props.colors.accent
+					}));
+					const __nsh_hv11 = element("view");
+					prop(__nsh_hv11, "class", "mt-2 flex-row justify-end gap-2");
+					insert(__nsh_hv11, [component(Button, {
+						label: "Отмена",
+						get colors() {
+							return props.colors;
+						},
+						onPress: () => editingJournalId.set(null)
+					}), component(Button, {
+						label: "Сохранить",
+						get colors() {
+							return props.colors;
+						},
+						onPress: () => {
+							props.onUpdate(entry.id, editingJournalText());
+							editingJournalId.set(null);
+						},
+						selected: true
+					})]);
+					append(__nsh_hv9, __nsh_hv10);
+					append(__nsh_hv9, __nsh_hv11);
+					return __nsh_hv9;
+				})() : (() => {
+					const __nsh_hv12 = element("text");
+					bindProp(__nsh_hv12, "onLongPress", () => props.mobile ? () => openJournalActions(entry) : void 0);
+					bindProp(__nsh_hv12, "onContextMenu", () => props.mobile ? () => openJournalActions(entry) : void 0);
+					prop(__nsh_hv12, "delayLongPress", 430);
+					bindProp(__nsh_hv12, "selectable", () => props.mobile ? journalSelectionEntryId() === entry.id : true);
+					bindProp(__nsh_hv12, "class", () => props.mobile ? "text-[18px] leading-7" : "text-[14px] leading-6");
+					bindProp(__nsh_hv12, "style", () => ({
+						color: props.colors.foreground,
+						fontSize: props.mobile ? 18 : 14,
+						lineHeight: props.mobile ? 27 : 24,
+						selectionColor: props.colors.accent
+					}));
+					insert(__nsh_hv12, () => entry.text);
+					return __nsh_hv12;
+				})(), () => !props.mobile && (() => {
+					const __nsh_hv13 = element("view");
+					prop(__nsh_hv13, "class", "mt-2 flex-row items-center justify-end gap-3");
+					const __nsh_hv14 = element("text");
+					prop(__nsh_hv14, "class", "text-[10px]");
+					bindProp(__nsh_hv14, "style", () => ({ color: props.colors.muted }));
+					insert(__nsh_hv14, () => timeLabel(entry.createdAt));
+					append(__nsh_hv13, __nsh_hv14);
+					insert(__nsh_hv13, () => editingJournalId() !== entry.id && (() => {
+						const __nsh_hv15 = element("view");
+						prop(__nsh_hv15, "class", "flex-row gap-3");
+						const __nsh_hv16 = element("view");
+						prop(__nsh_hv16, "onPress", () => {
+							editingJournalId.set(entry.id);
+							editingJournalText.set(entry.text);
+						});
+						prop(__nsh_hv16, "role", "button");
+						prop(__nsh_hv16, "accessibilityLabel", "Изменить запись");
+						const __nsh_hv17 = element("text");
+						prop(__nsh_hv17, "class", "text-[11px]");
+						bindProp(__nsh_hv17, "style", () => ({ color: props.colors.muted }));
+						const __nsh_hv18 = text("Изменить");
+						append(__nsh_hv17, __nsh_hv18);
+						append(__nsh_hv16, __nsh_hv17);
+						const __nsh_hv19 = element("view");
+						prop(__nsh_hv19, "onPress", () => props.onDelete(entry.id));
+						prop(__nsh_hv19, "role", "button");
+						prop(__nsh_hv19, "accessibilityLabel", "Удалить запись");
+						const __nsh_hv20 = element("text");
+						prop(__nsh_hv20, "class", "text-[11px]");
+						bindProp(__nsh_hv20, "style", () => ({ color: props.colors.muted }));
+						const __nsh_hv21 = text("Удалить");
+						append(__nsh_hv20, __nsh_hv21);
+						append(__nsh_hv19, __nsh_hv20);
+						append(__nsh_hv15, __nsh_hv16);
+						append(__nsh_hv15, __nsh_hv19);
+						return __nsh_hv15;
+					})());
+					return __nsh_hv13;
+				})()]);
+				return __nsh_hv8;
+			})()));
+			return __nsh_hv6;
+		})()), () => groups().length === 0 && (() => {
+			const __nsh_hv22 = element("view");
+			prop(__nsh_hv22, "class", "flex-1 items-center justify-center py-12");
+			const __nsh_hv23 = element("text");
+			prop(__nsh_hv23, "class", "text-[13px]");
+			bindProp(__nsh_hv23, "style", () => ({ color: props.colors.muted }));
+			const __nsh_hv24 = text("Записей пока нет");
+			append(__nsh_hv23, __nsh_hv24);
+			append(__nsh_hv22, __nsh_hv23);
+			return __nsh_hv22;
+		})()]);
+		append(__nsh_hv4, __nsh_hv5);
+		append(__nsh_hv3, __nsh_hv4);
+		append(__nsh_hv1, __nsh_hv3);
+		insert(__nsh_hv1, () => !props.mobile && (props.nativeCalendarButton ? component(NativeCalendarToggle, {
+			get expanded() {
+				return journalCalendarOpen();
+			},
+			get label() {
+				return journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь";
+			},
+			onPress: toggleJournalCalendar,
+			get accessibilityLabel() {
+				return journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь";
+			},
+			class: "absolute right-4 top-4 z-10 h-8 w-8"
+		}) : (() => {
+			const __nsh_hv2 = element("view");
+			prop(__nsh_hv2, "onPress", toggleJournalCalendar);
+			prop(__nsh_hv2, "role", "button");
+			bindProp(__nsh_hv2, "accessibilityLabel", () => journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь");
+			bindProp(__nsh_hv2, "accessibilityState", () => ({ selected: journalCalendarOpen() }));
+			prop(__nsh_hv2, "class", "absolute right-4 top-4 z-10 h-8 w-8 items-center justify-center rounded-lg");
+			bindProp(__nsh_hv2, "style", () => ({ backgroundColor: journalCalendarOpen() ? props.colors.card : "transparent" }));
+			insert(__nsh_hv2, component(Icon, {
+				name: "sidebar",
+				get color() {
+					return journalCalendarOpen() ? props.colors.accent : props.colors.muted;
+				}
+			}));
+			return __nsh_hv2;
+		})()), __nsh_hv3);
+		insert(__nsh_hv1, () => props.mobile ? (() => {
+			const __nsh_hv25 = element("view");
+			prop(__nsh_hv25, "class", "relative mb-4 w-full px-3");
+			const __nsh_hv29 = element("view");
+			prop(__nsh_hv29, "class", "w-full flex-row gap-2 rounded-[24px] border px-2 py-1.5");
+			bindProp(__nsh_hv29, "style", () => ({
+				alignItems: mobileDraftNeedsExpand() ? "flex-end" : "center",
+				backgroundColor: props.colors.card,
+				borderColor: props.colors.border
+			}));
+			const __nsh_hv30 = element("input");
+			bindProp(__nsh_hv30, "value", () => journalDraft());
+			prop(__nsh_hv30, "onChange", (value) => journalDraft.set(value));
+			prop(__nsh_hv30, "onContentSizeChange", ({ height }) => journalDraftContentHeight.set(Math.max(journalDraftMinContentHeight, Math.min(journalDraftMaxContentHeight, height))));
+			prop(__nsh_hv30, "onSubmit", (event) => send(event.text));
+			prop(__nsh_hv30, "multiline", true);
+			prop(__nsh_hv30, "submitBehavior", "newline");
+			prop(__nsh_hv30, "placeholder", "Запись в дневник…");
+			prop(__nsh_hv30, "accessibilityLabel", "Новая запись в дневник");
+			prop(__nsh_hv30, "class", "min-w-0 flex-1 px-2 py-1 text-[18px]");
+			bindProp(__nsh_hv30, "style", () => ({
+				placeholderColor: props.colors.muted,
+				selectionColor: props.colors.accent,
+				height: Math.max(44, Math.min(260, journalDraftContentHeight() + 20)),
+				fontSize: 18,
+				lineHeight: 24,
+				paddingHorizontal: 8,
+				paddingVertical: 10,
+				backgroundColor: "transparent",
+				color: props.colors.foreground,
+				transitionProperty: "height",
+				transitionDuration: 120,
+				transitionTimingFunction: "ease-out"
+			}));
+			const __nsh_hv31 = element("view");
+			bindProp(__nsh_hv31, "onPress", () => journalDraft().trim() ? () => send(journalDraft()) : void 0);
+			prop(__nsh_hv31, "role", "button");
+			prop(__nsh_hv31, "accessibilityLabel", "Отправить запись");
+			bindProp(__nsh_hv31, "accessibilityState", () => ({ disabled: !journalDraft().trim() }));
+			prop(__nsh_hv31, "class", "h-11 w-11 shrink-0 items-center justify-center rounded-full");
+			bindProp(__nsh_hv31, "style", () => ({
+				backgroundColor: journalDraft().trim() ? props.colors.accent : props.colors.border,
+				opacity: journalDraft().trim() ? 1 : .55
+			}));
+			const __nsh_hv32 = element("text");
+			prop(__nsh_hv32, "class", "text-[22px] font-semibold");
+			prop(__nsh_hv32, "style", { color: "#ffffff" });
+			const __nsh_hv33 = text("↑");
+			append(__nsh_hv32, __nsh_hv33);
+			append(__nsh_hv31, __nsh_hv32);
+			append(__nsh_hv29, __nsh_hv30);
+			append(__nsh_hv29, __nsh_hv31);
+			append(__nsh_hv25, __nsh_hv29);
+			insert(__nsh_hv25, () => mobileDraftNeedsExpand() && (() => {
+				const __nsh_hv26 = element("view");
+				prop(__nsh_hv26, "onPress", openMobileJournalEditor);
+				prop(__nsh_hv26, "role", "button");
+				prop(__nsh_hv26, "accessibilityLabel", "Развернуть на весь экран");
+				prop(__nsh_hv26, "class", "absolute right-5 -top-11 z-10 h-9 w-9 items-center justify-center rounded-full border");
+				bindProp(__nsh_hv26, "style", () => ({
+					backgroundColor: props.colors.card,
+					borderColor: props.colors.border
+				}));
+				const __nsh_hv27 = element("text");
+				prop(__nsh_hv27, "class", "text-[20px] font-medium");
+				bindProp(__nsh_hv27, "style", () => ({ color: props.colors.foreground }));
+				const __nsh_hv28 = text("⛶");
+				append(__nsh_hv27, __nsh_hv28);
+				append(__nsh_hv26, __nsh_hv27);
+				return __nsh_hv26;
+			})(), __nsh_hv29);
+			return __nsh_hv25;
+		})() : (() => {
+			const __nsh_hv34 = element("view");
+			prop(__nsh_hv34, "class", "mb-4 w-full px-5");
+			const __nsh_hv35 = element("view");
+			prop(__nsh_hv35, "class", "mx-auto w-full max-w-[650px] flex-row gap-2 border pl-3 pr-1.5 py-1.5");
+			bindProp(__nsh_hv35, "style", () => ({
+				alignItems: journalDraftContentHeight() > journalDraftExpandedHeight ? "flex-end" : "center",
+				backgroundColor: props.colors.card,
+				borderColor: props.colors.border,
+				borderRadius: 24
+			}));
+			const __nsh_hv36 = element("input");
+			bindProp(__nsh_hv36, "value", () => journalDraft());
+			prop(__nsh_hv36, "onChange", (value) => journalDraft.set(value));
+			prop(__nsh_hv36, "onContentSizeChange", ({ height }) => journalDraftContentHeight.set(Math.max(journalDraftMinContentHeight, Math.min(journalDraftMaxContentHeight, height))));
+			prop(__nsh_hv36, "onSubmit", (event) => send(event.text));
+			prop(__nsh_hv36, "multiline", true);
+			prop(__nsh_hv36, "submitBehavior", "submit");
+			prop(__nsh_hv36, "placeholder", "Запись в дневник…");
+			prop(__nsh_hv36, "accessibilityLabel", "Новая запись в дневник");
+			prop(__nsh_hv36, "class", "max-h-[120px] flex-1 text-[15px]");
+			bindProp(__nsh_hv36, "style", () => ({
+				placeholderColor: props.colors.muted,
+				selectionColor: props.colors.accent,
+				height: journalDraftContentHeight() + journalDraftVerticalPadding,
+				fontSize: 15,
+				lineHeight: 20,
+				paddingHorizontal: 10,
+				paddingVertical: 10,
+				backgroundColor: "transparent",
+				color: props.colors.foreground
+			}));
+			const __nsh_hv37 = element("view");
+			prop(__nsh_hv37, "onPress", () => send(journalDraft()));
+			prop(__nsh_hv37, "role", "button");
+			prop(__nsh_hv37, "accessibilityLabel", "Отправить запись");
+			prop(__nsh_hv37, "class", "h-10 w-10 shrink-0 items-center justify-center rounded-full");
+			bindProp(__nsh_hv37, "style", () => ({ backgroundColor: props.colors.accent }));
+			const __nsh_hv38 = element("text");
+			prop(__nsh_hv38, "class", "text-[20px] font-semibold");
+			bindProp(__nsh_hv38, "style", () => ({ color: props.colors.foreground }));
+			const __nsh_hv39 = text("↑");
+			append(__nsh_hv38, __nsh_hv39);
+			append(__nsh_hv37, __nsh_hv38);
+			append(__nsh_hv35, __nsh_hv36);
+			append(__nsh_hv35, __nsh_hv37);
+			append(__nsh_hv34, __nsh_hv35);
+			return __nsh_hv34;
+		})());
+		append(__nsh_hv0, __nsh_hv1);
+		insert(__nsh_hv0, [
+			() => !props.mobile && (() => {
+				const __nsh_hv40 = element("view");
+				prop(__nsh_hv40, "class", "relative h-full shrink-0");
+				bindProp(__nsh_hv40, "style", () => ({ width: journalCalendarOpen() ? journalCalendarWidth() : 0 }));
+				const __nsh_hv41 = element("view");
+				prop(__nsh_hv41, "class", "h-full w-full overflow-hidden");
+				insert(__nsh_hv41, component(JournalCalendar, {
+					get width() {
+						return journalCalendarWidth();
+					},
+					resizeHovered: false,
+					framed: false,
+					get dark() {
+						return props.colors.background === "#0d0c10";
+					},
+					get groups() {
+						return groups();
+					},
+					get colors() {
+						return props.colors;
+					},
+					onSelect: jumpToDay
+				}));
+				append(__nsh_hv40, __nsh_hv41);
+				insert(__nsh_hv40, () => journalCalendarOpen() && resizeCalendar && (() => {
+					const __nsh_hv42 = element("view");
+					spread(__nsh_hv42, resizeCalendar.panHandlers);
+					prop(__nsh_hv42, "role", "button");
+					prop(__nsh_hv42, "accessibilityLabel", "Изменить ширину календаря");
+					prop(__nsh_hv42, "class", "absolute top-0 bottom-0 z-10 w-5");
+					prop(__nsh_hv42, "style", {
+						left: -10,
+						cursor: "col-resize"
+					});
+					return __nsh_hv42;
+				})());
+				return __nsh_hv40;
+			})(),
+			() => props.mobile && mobileJournalEditorOpen() && (() => {
+				const __nsh_hv43 = element("view");
+				spread(__nsh_hv43, dismissJournalEditor.panHandlers);
+				bindProp(__nsh_hv43, "class", () => `absolute inset-0 z-30 ${mobileJournalEditorClosing() ? "translate-y-6 opacity-0" : "translate-y-0 opacity-100"}`);
+				bindProp(__nsh_hv43, "style", () => ({
+					backgroundColor: props.colors.background,
+					transform: [{ translateY: mobileJournalEditorDragY() }],
+					transitionProperty: "opacity, transform",
+					transitionDuration: mobileJournalEditorDragY() ? 0 : 180,
+					transitionTimingFunction: "ease-out"
+				}));
+				const __nsh_hv44 = element("view");
+				prop(__nsh_hv44, "class", "absolute right-4 top-3 z-20");
+				const __nsh_hv45 = element("view");
+				prop(__nsh_hv45, "onPress", () => closeMobileJournalEditor(false));
+				prop(__nsh_hv45, "role", "button");
+				prop(__nsh_hv45, "accessibilityLabel", "Свернуть редактор");
+				prop(__nsh_hv45, "class", "h-10 w-10 items-center justify-center rounded-full border");
+				bindProp(__nsh_hv45, "style", () => ({
+					backgroundColor: props.colors.card,
+					borderColor: props.colors.border
+				}));
+				const __nsh_hv46 = element("text");
+				prop(__nsh_hv46, "class", "text-[24px]");
+				bindProp(__nsh_hv46, "style", () => ({
+					color: props.colors.foreground,
+					transform: [{ rotate: "-90deg" }]
+				}));
+				const __nsh_hv47 = text("‹");
+				append(__nsh_hv46, __nsh_hv47);
+				append(__nsh_hv45, __nsh_hv46);
+				append(__nsh_hv44, __nsh_hv45);
+				const __nsh_hv48 = element("view");
+				prop(__nsh_hv48, "class", "absolute left-5 right-5 top-20 bottom-20");
+				const __nsh_hv49 = element("input");
+				bindProp(__nsh_hv49, "value", () => journalDraft());
+				prop(__nsh_hv49, "onChange", (value) => journalDraft.set(value));
+				prop(__nsh_hv49, "multiline", true);
+				prop(__nsh_hv49, "submitBehavior", "newline");
+				prop(__nsh_hv49, "autoFocus", true);
+				prop(__nsh_hv49, "placeholder", "О чём вы думаете?");
+				prop(__nsh_hv49, "accessibilityLabel", "Текст новой заметки");
+				prop(__nsh_hv49, "class", "h-full w-full text-[32px]");
+				bindProp(__nsh_hv49, "style", () => ({
+					fontSize: 32,
+					lineHeight: 40,
+					placeholderColor: props.colors.muted,
+					selectionColor: props.colors.accent,
+					backgroundColor: "transparent",
+					color: props.colors.foreground
+				}));
+				append(__nsh_hv48, __nsh_hv49);
+				const __nsh_hv50 = element("view");
+				prop(__nsh_hv50, "class", "absolute right-4 bottom-4 z-20");
+				const __nsh_hv51 = element("view");
+				prop(__nsh_hv51, "onPress", () => {
+					send(journalDraft());
+					closeMobileJournalEditor(false);
+				});
+				prop(__nsh_hv51, "role", "button");
+				prop(__nsh_hv51, "accessibilityLabel", "Готово, отправить запись");
+				prop(__nsh_hv51, "class", "h-12 items-center justify-center rounded-full px-6");
+				bindProp(__nsh_hv51, "style", () => ({ backgroundColor: props.colors.accent }));
+				const __nsh_hv52 = element("text");
+				prop(__nsh_hv52, "class", "text-[16px] font-semibold");
+				prop(__nsh_hv52, "style", { color: "#ffffff" });
+				const __nsh_hv53 = text("Готово");
+				append(__nsh_hv52, __nsh_hv53);
+				append(__nsh_hv51, __nsh_hv52);
+				append(__nsh_hv50, __nsh_hv51);
+				append(__nsh_hv43, __nsh_hv44);
+				append(__nsh_hv43, __nsh_hv48);
+				append(__nsh_hv43, __nsh_hv50);
+				return __nsh_hv43;
+			})(),
+			() => props.mobile && mobileJournalDiscardPrompt() && component(Dialog, {
+				title: "Удалить черновик?",
+				get colors() {
+					return props.colors;
+				},
+				get children() {
+					return [(() => {
+						const __nsh_hv54 = element("text");
+						prop(__nsh_hv54, "class", "mb-4 text-[13px]");
+						bindProp(__nsh_hv54, "style", () => ({ color: props.colors.muted }));
+						const __nsh_hv55 = text("Текст заметки ещё не добавлен в дневник.");
+						append(__nsh_hv54, __nsh_hv55);
+						return __nsh_hv54;
+					})(), (() => {
+						const __nsh_hv56 = element("view");
+						prop(__nsh_hv56, "class", "flex-row justify-end gap-2");
+						insert(__nsh_hv56, [component(Button, {
+							label: "Продолжить",
+							get colors() {
+								return props.colors;
+							},
+							onPress: () => mobileJournalDiscardPrompt.set(false)
+						}), component(Button, {
+							label: "Удалить",
+							get colors() {
+								return props.colors;
+							},
+							onPress: () => closeMobileJournalEditor(true),
+							selected: true,
+							get style() {
+								return {
+									backgroundColor: props.colors.accent,
+									borderColor: "transparent"
+								};
+							},
+							get textColor() {
+								return props.colors.background;
+							}
+						})]);
+						return __nsh_hv56;
+					})()];
+				}
+			}),
+			() => props.mobile && activeJournalEntry() && (() => {
+				const __nsh_hv57 = element("view");
+				prop(__nsh_hv57, "class", "absolute inset-0 z-40 justify-end");
+				bindProp(__nsh_hv57, "style", () => ({
+					backgroundColor: "#00000066",
+					opacity: journalActionsClosing() ? 0 : 1,
+					transitionProperty: "opacity",
+					transitionDuration: 130,
+					transitionTimingFunction: "ease-out"
+				}));
+				const __nsh_hv58 = element("view");
+				prop(__nsh_hv58, "onPress", closeJournalActions);
+				prop(__nsh_hv58, "class", "absolute inset-0");
+				prop(__nsh_hv58, "accessibilityLabel", "Закрыть меню записи");
+				const __nsh_hv59 = element("view");
+				bindProp(__nsh_hv59, "class", () => `w-full rounded-t-[26px] border px-5 pt-3 pb-8 ${journalActionsClosing() ? "translate-y-6" : "translate-y-0"}`);
+				bindProp(__nsh_hv59, "style", () => ({
+					backgroundColor: props.colors.card,
+					borderColor: props.colors.border,
+					opacity: journalActionsClosing() ? 0 : 1,
+					transitionProperty: "opacity, transform",
+					transitionDuration: 130,
+					transitionTimingFunction: "ease-out"
+				}));
+				const __nsh_hv60 = element("view");
+				prop(__nsh_hv60, "class", "mx-auto mb-4 h-1 w-10 rounded-full");
+				bindProp(__nsh_hv60, "style", () => ({ backgroundColor: props.colors.border }));
+				const __nsh_hv61 = element("text");
+				prop(__nsh_hv61, "numberOfLines", 2);
+				prop(__nsh_hv61, "class", "mb-3 text-[15px] font-medium");
+				bindProp(__nsh_hv61, "style", () => ({ color: props.colors.foreground }));
+				insert(__nsh_hv61, () => activeJournalEntry()?.text);
+				const __nsh_hv62 = element("view");
+				prop(__nsh_hv62, "onPress", () => {
+					const entry = activeJournalEntry();
+					if (entry) props.onCopy?.(entry.text);
+					closeJournalActions();
+				});
+				prop(__nsh_hv62, "role", "button");
+				prop(__nsh_hv62, "class", "h-12 justify-center border-b");
+				bindProp(__nsh_hv62, "style", () => ({ borderColor: props.colors.border }));
+				const __nsh_hv63 = element("text");
+				prop(__nsh_hv63, "class", "text-[16px]");
+				bindProp(__nsh_hv63, "style", () => ({ color: props.colors.foreground }));
+				const __nsh_hv64 = text("Копировать текст");
+				append(__nsh_hv63, __nsh_hv64);
+				append(__nsh_hv62, __nsh_hv63);
+				const __nsh_hv65 = element("view");
+				prop(__nsh_hv65, "onPress", () => {
+					const entry = activeJournalEntry();
+					journalSelectionEntryId.set(entry?.id ?? null);
+					closeJournalActions();
+				});
+				prop(__nsh_hv65, "role", "button");
+				prop(__nsh_hv65, "class", "h-12 justify-center border-b");
+				bindProp(__nsh_hv65, "style", () => ({ borderColor: props.colors.border }));
+				const __nsh_hv66 = element("text");
+				prop(__nsh_hv66, "class", "text-[16px]");
+				bindProp(__nsh_hv66, "style", () => ({ color: props.colors.foreground }));
+				const __nsh_hv67 = text("Выбрать фрагмент");
+				append(__nsh_hv66, __nsh_hv67);
+				append(__nsh_hv65, __nsh_hv66);
+				const __nsh_hv68 = element("view");
+				prop(__nsh_hv68, "onPress", () => {
+					const entry = activeJournalEntry();
+					if (entry) {
+						editingJournalId.set(entry.id);
+						editingJournalText.set(entry.text);
+					}
+					closeJournalActions();
+				});
+				prop(__nsh_hv68, "role", "button");
+				prop(__nsh_hv68, "class", "h-12 justify-center border-b");
+				bindProp(__nsh_hv68, "style", () => ({ borderColor: props.colors.border }));
+				const __nsh_hv69 = element("text");
+				prop(__nsh_hv69, "class", "text-[16px]");
+				bindProp(__nsh_hv69, "style", () => ({ color: props.colors.foreground }));
+				const __nsh_hv70 = text("Изменить");
+				append(__nsh_hv69, __nsh_hv70);
+				append(__nsh_hv68, __nsh_hv69);
+				const __nsh_hv71 = element("view");
+				prop(__nsh_hv71, "onPress", () => {
+					const entry = activeJournalEntry();
+					if (entry) props.onDelete(entry.id);
+					closeJournalActions();
+				});
+				prop(__nsh_hv71, "role", "button");
+				prop(__nsh_hv71, "class", "h-12 justify-center");
+				const __nsh_hv72 = element("text");
+				prop(__nsh_hv72, "class", "text-[16px]");
+				prop(__nsh_hv72, "style", { color: "#ef4444" });
+				const __nsh_hv73 = text("Удалить");
+				append(__nsh_hv72, __nsh_hv73);
+				append(__nsh_hv71, __nsh_hv72);
+				append(__nsh_hv59, __nsh_hv60);
+				append(__nsh_hv59, __nsh_hv61);
+				append(__nsh_hv59, __nsh_hv62);
+				append(__nsh_hv59, __nsh_hv65);
+				append(__nsh_hv59, __nsh_hv68);
+				append(__nsh_hv59, __nsh_hv71);
+				append(__nsh_hv57, __nsh_hv58);
+				append(__nsh_hv57, __nsh_hv59);
+				return __nsh_hv57;
+			})()
+		]);
+		return __nsh_hv0;
+	})();
+}
+function toggleJournalCalendar() {
 	journalCalendarOpen.update((open) => !open);
 }
 
 //#endregion
 //#region AtlasAppearanceSettings.tsx
 const openSelector = signal(null);
-const modePreviews = [
-	{
-		value: "system",
-		label: "Система"
-	},
-	{
-		value: "light",
-		label: "Светлая"
-	},
-	{
-		value: "dark",
-		label: "Тёмная"
-	}
-];
+const modePreviews = [{
+	value: "light",
+	label: "Светлая"
+}, {
+	value: "dark",
+	label: "Тёмная"
+}];
+const modePickerOpen = signal(false);
+const modePickerClosing = signal(false);
+let modePickerTimer;
 const materialLabels = {
 	default: "Сплошной",
 	frosted: "Стекло",
@@ -1563,6 +2287,20 @@ const fontSizes = [
 	16,
 	18
 ];
+function showModePicker() {
+	modePickerClosing.set(false);
+	if (modePickerTimer !== void 0) clearTimeout(modePickerTimer);
+	modePickerOpen.set(true);
+}
+function hideModePicker() {
+	modePickerClosing.set(true);
+	if (modePickerTimer !== void 0) clearTimeout(modePickerTimer);
+	modePickerTimer = setTimeout(() => {
+		modePickerOpen.set(false);
+		modePickerClosing.set(false);
+		modePickerTimer = void 0;
+	}, 160);
+}
 function AtlasAppearanceSettings(props) {
 	const appearance = () => props.appearance();
 	const settings = () => appearance()?.settings;
@@ -1571,8 +2309,6 @@ function AtlasAppearanceSettings(props) {
 	const patch = (values) => {
 		if (canEdit() && appearance()) props.onPatch(values);
 	};
-	const dark = appearance()?.settings.mode !== "light";
-	const wash = hoverWash(dark);
 	const heading = (label) => (() => {
 		const __nsh_hv0 = element("text");
 		prop(__nsh_hv0, "class", "mb-2 px-2 text-[13px]");
@@ -1580,432 +2316,488 @@ function AtlasAppearanceSettings(props) {
 		insert(__nsh_hv0, label);
 		return __nsh_hv0;
 	})();
-	const card = (selected, label, onPress) => (() => {
-		const __nsh_hv1 = element("view");
-		bindProp(__nsh_hv1, "onPress", () => canEdit() ? onPress : void 0);
-		prop(__nsh_hv1, "role", "button");
-		bindProp(__nsh_hv1, "accessibilityState", () => ({
-			selected,
-			disabled: !canEdit()
-		}));
-		prop(__nsh_hv1, "class", "items-center justify-center rounded-lg border");
-		prop(__nsh_hv1, "hoverStyle", { backgroundColor: wash });
-		bindProp(__nsh_hv1, "style", () => ({
-			height: 32,
-			paddingLeft: 12,
-			paddingRight: 12,
-			backgroundColor: selected ? colors().card : colors().background,
-			borderColor: selected ? colors().accent : colors().border,
-			opacity: canEdit() ? 1 : .65,
-			cursor: canEdit() ? "pointer" : "default"
-		}));
-		const __nsh_hv2 = element("text");
-		prop(__nsh_hv2, "class", "text-[12px]");
-		bindProp(__nsh_hv2, "hoverStyle", () => ({ color: colors().foreground }));
-		bindProp(__nsh_hv2, "style", () => ({ color: selected ? colors().foreground : colors().muted }));
-		insert(__nsh_hv2, label);
-		append(__nsh_hv1, __nsh_hv2);
-		return __nsh_hv1;
-	})();
 	const select = (id, value, options, onSelect, width) => {
 		const expanded = openSelector() === id;
-		const trigger = (() => {
-			const __nsh_hv3 = element("view");
-			prop(__nsh_hv3, "role", "button");
-			prop(__nsh_hv3, "accessibilityLabel", "Выбрать размер текста");
-			bindProp(__nsh_hv3, "accessibilityState", () => ({
+		return (() => {
+			const __nsh_hv1 = element("view");
+			prop(__nsh_hv1, "style", { width });
+			const __nsh_hv2 = element("view");
+			prop(__nsh_hv2, "onPress", () => canEdit() && openSelector.set(expanded ? null : id));
+			prop(__nsh_hv2, "role", "button");
+			prop(__nsh_hv2, "accessibilityLabel", "Выбрать размер текста");
+			bindProp(__nsh_hv2, "accessibilityState", () => ({
 				expanded,
 				disabled: !canEdit()
 			}));
-			prop(__nsh_hv3, "class", "h-8 flex-row items-center justify-between rounded-lg border");
-			prop(__nsh_hv3, "hoverStyle", { backgroundColor: wash });
-			bindProp(__nsh_hv3, "style", () => ({
-				paddingLeft: 12,
-				paddingRight: 8,
+			prop(__nsh_hv2, "class", "h-9 flex-row items-center justify-between rounded-lg border px-3");
+			bindProp(__nsh_hv2, "style", () => ({
 				backgroundColor: colors().card,
 				borderColor: expanded ? colors().accent : colors().border,
-				opacity: canEdit() ? 1 : .65,
-				cursor: canEdit() ? "pointer" : "default"
+				opacity: canEdit() ? 1 : .65
 			}));
+			const __nsh_hv3 = element("text");
+			prop(__nsh_hv3, "class", "text-[12px]");
+			bindProp(__nsh_hv3, "style", () => ({ color: colors().foreground }));
+			insert(__nsh_hv3, () => options.find((option) => option.value === value)?.label ?? value);
 			const __nsh_hv4 = element("text");
-			prop(__nsh_hv4, "class", "text-[12px]");
-			bindProp(__nsh_hv4, "style", () => ({ color: colors().foreground }));
-			insert(__nsh_hv4, () => options.find((option) => option.value === value)?.label ?? value);
-			const __nsh_hv5 = element("text");
-			prop(__nsh_hv5, "class", "text-[11px]");
-			bindProp(__nsh_hv5, "style", () => ({ color: colors().muted }));
-			insert(__nsh_hv5, expanded ? "⌃" : "⌄");
-			append(__nsh_hv3, __nsh_hv4);
-			append(__nsh_hv3, __nsh_hv5);
-			return __nsh_hv3;
-		})();
-		return (() => {
-			const __nsh_hv6 = element("view");
-			prop(__nsh_hv6, "style", { width });
-			insert(__nsh_hv6, () => canEdit() ? component(Popover, {
-				open: expanded,
-				onOpenChange: (next) => openSelector.set(next ? id : null),
-				placement: "bottom",
-				align: "end",
-				offset: 4,
-				margin: 8,
-				trigger,
-				popupClass: "rounded-xl border p-1",
-				get popupStyle() {
-					return {
-						width,
-						backgroundColor: colors().card,
-						borderColor: colors().border
-					};
-				},
-				get children() {
-					return (() => {
-						const __nsh_hv7 = element("scroll");
-						prop(__nsh_hv7, "accessibilityLabel", "Варианты выбора");
-						bindProp(__nsh_hv7, "style", () => ({ height: Math.min(options.length * 32, 256) }));
-						insert(__nsh_hv7, () => options.map((option) => (() => {
-							const __nsh_hv8 = element("view");
-							prop(__nsh_hv8, "onPress", () => {
-								onSelect(option.value);
-								openSelector.set(null);
-							});
-							prop(__nsh_hv8, "role", "button");
-							bindProp(__nsh_hv8, "accessibilityState", () => ({ selected: option.value === value }));
-							prop(__nsh_hv8, "class", "h-8 flex-row items-center gap-2 rounded-lg px-2");
-							prop(__nsh_hv8, "hoverStyle", { backgroundColor: wash });
-							prop(__nsh_hv8, "style", { cursor: "pointer" });
-							const __nsh_hv9 = element("text");
-							prop(__nsh_hv9, "class", "flex-1 text-[12px]");
-							bindProp(__nsh_hv9, "style", () => ({ color: colors().foreground }));
-							insert(__nsh_hv9, () => option.label);
-							append(__nsh_hv8, __nsh_hv9);
-							insert(__nsh_hv8, () => option.value === value && (() => {
-								const __nsh_hv10 = element("text");
-								prop(__nsh_hv10, "class", "text-[12px]");
-								bindProp(__nsh_hv10, "style", () => ({ color: colors().accent }));
-								const __nsh_hv11 = text("✓");
-								append(__nsh_hv10, __nsh_hv11);
-								return __nsh_hv10;
-							})());
-							return __nsh_hv8;
-						})()));
-						return __nsh_hv7;
-					})();
-				}
-			}) : trigger);
-			return __nsh_hv6;
+			prop(__nsh_hv4, "class", "text-[11px]");
+			bindProp(__nsh_hv4, "style", () => ({ color: colors().muted }));
+			insert(__nsh_hv4, expanded ? "⌃" : "⌄");
+			append(__nsh_hv2, __nsh_hv3);
+			append(__nsh_hv2, __nsh_hv4);
+			append(__nsh_hv1, __nsh_hv2);
+			insert(__nsh_hv1, () => expanded && (() => {
+				const __nsh_hv5 = element("view");
+				prop(__nsh_hv5, "class", "mt-1 rounded-xl border p-1");
+				bindProp(__nsh_hv5, "style", () => ({
+					backgroundColor: colors().card,
+					borderColor: colors().border
+				}));
+				insert(__nsh_hv5, () => options.map((option) => (() => {
+					const __nsh_hv6 = element("view");
+					prop(__nsh_hv6, "onPress", () => {
+						onSelect(option.value);
+						openSelector.set(null);
+					});
+					prop(__nsh_hv6, "role", "button");
+					bindProp(__nsh_hv6, "accessibilityState", () => ({ selected: option.value === value }));
+					prop(__nsh_hv6, "class", "h-9 flex-row items-center gap-2 rounded-md px-2");
+					const __nsh_hv7 = element("text");
+					prop(__nsh_hv7, "class", "flex-1 text-[12px]");
+					bindProp(__nsh_hv7, "style", () => ({ color: colors().foreground }));
+					insert(__nsh_hv7, () => option.label);
+					append(__nsh_hv6, __nsh_hv7);
+					insert(__nsh_hv6, () => option.value === value && (() => {
+						const __nsh_hv8 = element("text");
+						prop(__nsh_hv8, "class", "text-[12px]");
+						bindProp(__nsh_hv8, "style", () => ({ color: colors().accent }));
+						const __nsh_hv9 = text("✓");
+						append(__nsh_hv8, __nsh_hv9);
+						return __nsh_hv8;
+					})());
+					return __nsh_hv6;
+				})()));
+				return __nsh_hv5;
+			})());
+			return __nsh_hv1;
 		})();
 	};
 	const shortcutRow = (name, label) => (() => {
+		const __nsh_hv10 = element("view");
+		prop(__nsh_hv10, "class", "min-h-[52px] flex-row items-center gap-4 border-b py-3");
+		bindProp(__nsh_hv10, "style", () => ({ borderColor: colors().border }));
+		const __nsh_hv11 = element("text");
+		prop(__nsh_hv11, "class", "flex-1 text-[13px]");
+		bindProp(__nsh_hv11, "style", () => ({ color: colors().foreground }));
+		insert(__nsh_hv11, label);
 		const __nsh_hv12 = element("view");
-		prop(__nsh_hv12, "class", "min-h-[52px] flex-row items-center gap-4 border-b py-3");
-		bindProp(__nsh_hv12, "style", () => ({ borderColor: colors().border }));
+		prop(__nsh_hv12, "onPress", () => props.onChangeShortcut(name));
+		prop(__nsh_hv12, "role", "button");
+		prop(__nsh_hv12, "accessibilityLabel", `Изменить сочетание: ${label}`);
+		prop(__nsh_hv12, "class", "rounded-md px-3 py-1");
+		bindProp(__nsh_hv12, "style", () => ({ backgroundColor: colors().background }));
 		const __nsh_hv13 = element("text");
-		prop(__nsh_hv13, "class", "flex-1 text-[13px]");
-		bindProp(__nsh_hv13, "style", () => ({ color: colors().foreground }));
-		insert(__nsh_hv13, label);
-		const __nsh_hv14 = element("view");
-		prop(__nsh_hv14, "onPress", () => props.onChangeShortcut(name));
-		prop(__nsh_hv14, "role", "button");
-		prop(__nsh_hv14, "accessibilityLabel", `Изменить сочетание: ${label}`);
-		prop(__nsh_hv14, "class", "items-center justify-center");
-		prop(__nsh_hv14, "hoverStyle", { backgroundColor: wash });
-		bindProp(__nsh_hv14, "style", () => ({
-			height: 32,
-			paddingLeft: 12,
-			paddingRight: 12,
-			borderRadius: 8,
-			backgroundColor: colors().background,
-			cursor: "pointer"
-		}));
-		const __nsh_hv15 = element("text");
-		prop(__nsh_hv15, "class", "text-[12px]");
-		bindProp(__nsh_hv15, "style", () => ({ color: colors().accent }));
-		insert(__nsh_hv15, () => keymap.label(props.shortcuts[name]));
-		append(__nsh_hv14, __nsh_hv15);
+		prop(__nsh_hv13, "class", "text-[12px]");
+		bindProp(__nsh_hv13, "style", () => ({ color: colors().accent }));
+		insert(__nsh_hv13, () => keymap.label(props.shortcuts[name]));
 		append(__nsh_hv12, __nsh_hv13);
-		append(__nsh_hv12, __nsh_hv14);
-		return __nsh_hv12;
+		append(__nsh_hv10, __nsh_hv11);
+		append(__nsh_hv10, __nsh_hv12);
+		return __nsh_hv10;
 	})();
 	if (!settings() || !appearance()) return (() => {
-		const __nsh_hv16 = element("scroll");
-		prop(__nsh_hv16, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
-		const __nsh_hv17 = element("text");
-		prop(__nsh_hv17, "class", "text-[13px]");
-		bindProp(__nsh_hv17, "style", () => ({ color: colors().muted }));
-		const __nsh_hv18 = text("Загружаем настройки внешнего вида…");
-		append(__nsh_hv17, __nsh_hv18);
-		append(__nsh_hv16, __nsh_hv17);
-		return __nsh_hv16;
+		const __nsh_hv14 = element("scroll");
+		bindProp(__nsh_hv14, "class", () => `min-h-0 flex-1 ${props.mobile ? "px-4" : "px-7"} pt-4 pb-8`);
+		const __nsh_hv15 = element("text");
+		prop(__nsh_hv15, "class", "text-[13px]");
+		bindProp(__nsh_hv15, "style", () => ({ color: colors().muted }));
+		const __nsh_hv16 = text("Загружаем настройки внешнего вида…");
+		append(__nsh_hv15, __nsh_hv16);
+		append(__nsh_hv14, __nsh_hv15);
+		return __nsh_hv14;
 	})();
 	const current = () => settings();
+	if (props.mobile) {
+		const selectedMode = () => current().mode === "light" ? "light" : "dark";
+		const selectedLabel = () => selectedMode() === "light" ? "Светлая" : "Тёмная";
+		return (() => {
+			const __nsh_hv17 = element("view");
+			prop(__nsh_hv17, "class", "relative min-h-0 flex-1");
+			bindProp(__nsh_hv17, "style", () => ({ backgroundColor: colors().background }));
+			const __nsh_hv18 = element("scroll");
+			prop(__nsh_hv18, "class", "min-h-0 flex-1 px-3 pt-2 pb-8");
+			bindProp(__nsh_hv18, "style", () => ({ backgroundColor: colors().background }));
+			const __nsh_hv19 = element("text");
+			prop(__nsh_hv19, "class", "mb-2 px-3 text-[13px]");
+			bindProp(__nsh_hv19, "style", () => ({ color: colors().muted }));
+			const __nsh_hv20 = text("Синхронизация");
+			append(__nsh_hv19, __nsh_hv20);
+			const __nsh_hv21 = element("view");
+			bindProp(__nsh_hv21, "onPress", () => props.onConnections);
+			prop(__nsh_hv21, "role", "button");
+			prop(__nsh_hv21, "accessibilityLabel", "Открыть подключения");
+			prop(__nsh_hv21, "class", "mb-5 min-h-[62px] flex-row items-center gap-3 rounded-xl border px-4");
+			bindProp(__nsh_hv21, "style", () => ({
+				backgroundColor: colors().card,
+				borderColor: colors().border
+			}));
+			const __nsh_hv22 = element("view");
+			prop(__nsh_hv22, "class", "h-2 w-2 rounded-full");
+			bindProp(__nsh_hv22, "style", () => ({ backgroundColor: props.connection?.peers.some((peer) => peer.status === "online") ? "#22c55e" : props.connection?.running ? "#facc15" : "#ef4444" }));
+			const __nsh_hv23 = element("view");
+			prop(__nsh_hv23, "class", "flex-1");
+			const __nsh_hv24 = element("text");
+			prop(__nsh_hv24, "class", "text-[14px]");
+			bindProp(__nsh_hv24, "style", () => ({ color: colors().foreground }));
+			const __nsh_hv25 = text("Устройства и подключение");
+			append(__nsh_hv24, __nsh_hv25);
+			const __nsh_hv26 = element("text");
+			prop(__nsh_hv26, "class", "text-[12px]");
+			bindProp(__nsh_hv26, "style", () => ({ color: colors().muted }));
+			insert(__nsh_hv26, () => !props.connection ? "Проверяем подключение…" : props.connection.peers.some((peer) => peer.status === "online") ? "Устройство в сети" : props.connection.running ? "Ожидает подключения" : "Синхронизация остановлена");
+			append(__nsh_hv23, __nsh_hv24);
+			append(__nsh_hv23, __nsh_hv26);
+			const __nsh_hv27 = element("text");
+			prop(__nsh_hv27, "class", "text-[18px]");
+			bindProp(__nsh_hv27, "style", () => ({ color: colors().muted }));
+			const __nsh_hv28 = text("›");
+			append(__nsh_hv27, __nsh_hv28);
+			append(__nsh_hv21, __nsh_hv22);
+			append(__nsh_hv21, __nsh_hv23);
+			append(__nsh_hv21, __nsh_hv27);
+			const __nsh_hv29 = element("text");
+			prop(__nsh_hv29, "class", "mb-2 px-3 text-[13px]");
+			bindProp(__nsh_hv29, "style", () => ({ color: colors().muted }));
+			const __nsh_hv30 = text("Отображение");
+			append(__nsh_hv29, __nsh_hv30);
+			const __nsh_hv31 = element("view");
+			prop(__nsh_hv31, "class", "mb-5 rounded-xl border px-4");
+			bindProp(__nsh_hv31, "style", () => ({
+				backgroundColor: colors().card,
+				borderColor: colors().border
+			}));
+			const __nsh_hv32 = element("view");
+			prop(__nsh_hv32, "onPress", () => canEdit() && showModePicker());
+			prop(__nsh_hv32, "role", "button");
+			prop(__nsh_hv32, "accessibilityLabel", "Выбрать тему оформления");
+			prop(__nsh_hv32, "class", "min-h-[58px] flex-row items-center gap-3");
+			const __nsh_hv33 = element("text");
+			prop(__nsh_hv33, "class", "flex-1 text-[14px]");
+			bindProp(__nsh_hv33, "style", () => ({ color: colors().foreground }));
+			const __nsh_hv34 = text("Тема");
+			append(__nsh_hv33, __nsh_hv34);
+			const __nsh_hv35 = element("text");
+			prop(__nsh_hv35, "class", "text-[13px]");
+			bindProp(__nsh_hv35, "style", () => ({ color: colors().muted }));
+			insert(__nsh_hv35, () => selectedLabel());
+			const __nsh_hv36 = element("text");
+			prop(__nsh_hv36, "class", "text-[18px]");
+			bindProp(__nsh_hv36, "style", () => ({ color: colors().muted }));
+			const __nsh_hv37 = text("›");
+			append(__nsh_hv36, __nsh_hv37);
+			append(__nsh_hv32, __nsh_hv33);
+			append(__nsh_hv32, __nsh_hv35);
+			append(__nsh_hv32, __nsh_hv36);
+			append(__nsh_hv31, __nsh_hv32);
+			const __nsh_hv38 = element("view");
+			prop(__nsh_hv38, "class", "mb-5 rounded-xl border px-4 py-2");
+			bindProp(__nsh_hv38, "style", () => ({
+				backgroundColor: colors().card,
+				borderColor: colors().border
+			}));
+			const __nsh_hv39 = element("view");
+			prop(__nsh_hv39, "class", "min-h-[50px] flex-row items-center gap-3");
+			const __nsh_hv40 = element("text");
+			prop(__nsh_hv40, "class", "flex-1 text-[14px]");
+			bindProp(__nsh_hv40, "style", () => ({ color: colors().foreground }));
+			const __nsh_hv41 = text("Размер интерфейсного текста");
+			append(__nsh_hv40, __nsh_hv41);
+			append(__nsh_hv39, __nsh_hv40);
+			insert(__nsh_hv39, () => select("fontSize", String(current().font_size), [.../* @__PURE__ */ new Set([...fontSizes, current().font_size])].sort((a, b) => a - b).map((size) => ({
+				value: String(size),
+				label: `${size} px`
+			})), (value) => patch({ font_size: Number(value) }), 92));
+			append(__nsh_hv38, __nsh_hv39);
+			append(__nsh_hv18, __nsh_hv19);
+			append(__nsh_hv18, __nsh_hv21);
+			append(__nsh_hv18, __nsh_hv29);
+			append(__nsh_hv18, __nsh_hv31);
+			append(__nsh_hv18, __nsh_hv38);
+			insert(__nsh_hv18, () => heading("Размер текста"), __nsh_hv38);
+			append(__nsh_hv17, __nsh_hv18);
+			insert(__nsh_hv17, () => modePickerOpen() && (() => {
+				const __nsh_hv42 = element("view");
+				prop(__nsh_hv42, "class", "absolute inset-0 items-center justify-center px-7");
+				bindProp(__nsh_hv42, "style", () => ({
+					backgroundColor: "rgba(0,0,0,0.42)",
+					opacity: modePickerClosing() ? 0 : 1,
+					transitionProperty: "opacity",
+					transitionDuration: 160
+				}));
+				const __nsh_hv43 = element("view");
+				prop(__nsh_hv43, "onPress", hideModePicker);
+				prop(__nsh_hv43, "class", "absolute inset-0");
+				prop(__nsh_hv43, "accessibilityLabel", "Закрыть выбор темы");
+				const __nsh_hv44 = element("view");
+				prop(__nsh_hv44, "class", "z-10 w-full max-w-[340px] rounded-2xl border p-2");
+				bindProp(__nsh_hv44, "style", () => ({
+					backgroundColor: colors().card,
+					borderColor: colors().border,
+					opacity: modePickerClosing() ? 0 : 1,
+					transform: [{ translateY: modePickerClosing() ? 12 : 0 }, { scale: modePickerClosing() ? .96 : 1 }],
+					transitionProperty: "opacity, transform",
+					transitionDuration: 180,
+					transitionTimingFunction: "ease-out"
+				}));
+				const __nsh_hv45 = element("text");
+				prop(__nsh_hv45, "class", "px-3 pt-2 pb-1 text-[14px] font-semibold");
+				bindProp(__nsh_hv45, "style", () => ({ color: colors().foreground }));
+				const __nsh_hv46 = text("Тема оформления");
+				append(__nsh_hv45, __nsh_hv46);
+				append(__nsh_hv44, __nsh_hv45);
+				insert(__nsh_hv44, () => modePreviews.map((mode, index) => (() => {
+					const __nsh_hv47 = element("view");
+					prop(__nsh_hv47, "onPress", () => {
+						patch({ mode: mode.value });
+						hideModePicker();
+					});
+					prop(__nsh_hv47, "role", "radio");
+					bindProp(__nsh_hv47, "accessibilityState", () => ({
+						selected: selectedMode() === mode.value,
+						disabled: !canEdit()
+					}));
+					prop(__nsh_hv47, "class", `min-h-[52px] flex-row items-center gap-3 rounded-xl px-3 ${index ? "mt-1" : ""}`);
+					bindProp(__nsh_hv47, "style", () => ({
+						backgroundColor: selectedMode() === mode.value ? colors().background : "transparent",
+						opacity: canEdit() ? 1 : .65
+					}));
+					const __nsh_hv48 = element("view");
+					prop(__nsh_hv48, "class", "h-5 w-5 items-center justify-center rounded-full border-2");
+					bindProp(__nsh_hv48, "style", () => ({ borderColor: selectedMode() === mode.value ? colors().accent : colors().muted }));
+					insert(__nsh_hv48, () => selectedMode() === mode.value && (() => {
+						const __nsh_hv49 = element("view");
+						prop(__nsh_hv49, "class", "h-2.5 w-2.5 rounded-full");
+						bindProp(__nsh_hv49, "style", () => ({ backgroundColor: colors().accent }));
+						return __nsh_hv49;
+					})());
+					const __nsh_hv50 = element("text");
+					prop(__nsh_hv50, "class", "flex-1 text-[14px]");
+					bindProp(__nsh_hv50, "style", () => ({ color: colors().foreground }));
+					insert(__nsh_hv50, () => mode.label);
+					append(__nsh_hv47, __nsh_hv48);
+					append(__nsh_hv47, __nsh_hv50);
+					return __nsh_hv47;
+				})()));
+				append(__nsh_hv42, __nsh_hv43);
+				append(__nsh_hv42, __nsh_hv44);
+				return __nsh_hv42;
+			})());
+			return __nsh_hv17;
+		})();
+	}
 	const modePalette = (mode) => {
 		if (mode === "system") return colors();
-		const darkMode = mode === "dark";
-		const theme = previewThemes[0];
-		const base = darkMode ? theme.dark : theme.light;
-		const custom = current().accent_source === "custom" ? systemAccent(current().accent_color, darkMode) : void 0;
-		return {
-			...base,
-			accent: custom ?? base.accent
-		};
+		const themeKey = mode === "light" ? current().light_theme : current().dark_theme;
+		const theme = props.themes.find((item) => item.key === themeKey);
+		return (mode === "light" ? theme?.light : theme?.dark) ?? colors();
 	};
 	const modeCard = (mode) => {
-		const palette = () => modePalette(mode.value);
+		const palette = modePalette(mode.value);
 		return (() => {
-			const __nsh_hv19 = element("view");
-			prop(__nsh_hv19, "onPress", () => patch({ mode: mode.value }));
-			prop(__nsh_hv19, "role", "button");
-			bindProp(__nsh_hv19, "accessibilityState", () => ({
+			const __nsh_hv51 = element("view");
+			prop(__nsh_hv51, "onPress", () => patch({ mode: mode.value }));
+			prop(__nsh_hv51, "role", "button");
+			bindProp(__nsh_hv51, "accessibilityState", () => ({
 				selected: current().mode === mode.value,
 				disabled: !canEdit()
 			}));
-			prop(__nsh_hv19, "class", "min-w-0 flex-1");
-			bindProp(__nsh_hv19, "hoverStyle", () => ({ opacity: canEdit() ? .85 : .65 }));
-			bindProp(__nsh_hv19, "style", () => ({
-				opacity: canEdit() ? 1 : .65,
-				cursor: canEdit() ? "pointer" : "default"
+			prop(__nsh_hv51, "class", "min-w-0 flex-1");
+			bindProp(__nsh_hv51, "style", () => ({ opacity: canEdit() ? 1 : .65 }));
+			const __nsh_hv52 = element("view");
+			bindProp(__nsh_hv52, "class", () => `${props.mobile ? "h-[104px] p-2" : "h-[148px] p-3"} items-center justify-center overflow-hidden rounded-md border`);
+			bindProp(__nsh_hv52, "style", () => ({
+				borderColor: current().mode === mode.value ? colors().accent : palette.border,
+				backgroundColor: palette.background
 			}));
-			const __nsh_hv20 = element("view");
-			prop(__nsh_hv20, "class", "h-[148px] items-center justify-center overflow-hidden rounded-md border p-3");
-			bindProp(__nsh_hv20, "style", () => ({
-				borderColor: current().mode === mode.value ? colors().accent : palette().border,
-				backgroundColor: palette().background
+			const __nsh_hv53 = element("view");
+			prop(__nsh_hv53, "class", "h-full w-full flex-row overflow-hidden rounded-md border");
+			bindProp(__nsh_hv53, "style", () => ({
+				borderColor: palette.border,
+				backgroundColor: palette.card
 			}));
-			const __nsh_hv21 = element("view");
-			prop(__nsh_hv21, "class", "h-full w-full flex-row overflow-hidden rounded-md border");
-			bindProp(__nsh_hv21, "style", () => ({
-				borderColor: palette().border,
-				backgroundColor: palette().card
-			}));
-			const __nsh_hv22 = element("view");
-			prop(__nsh_hv22, "class", "w-1/3 gap-2 border-r p-2");
-			bindProp(__nsh_hv22, "style", () => ({ borderColor: palette().border }));
-			const __nsh_hv23 = element("view");
-			prop(__nsh_hv23, "class", "h-2 rounded");
-			bindProp(__nsh_hv23, "style", () => ({ backgroundColor: palette().accent }));
-			const __nsh_hv24 = element("view");
-			prop(__nsh_hv24, "class", "h-1.5 rounded");
-			bindProp(__nsh_hv24, "style", () => ({ backgroundColor: palette().muted }));
-			const __nsh_hv25 = element("view");
-			prop(__nsh_hv25, "class", "h-1.5 rounded");
-			bindProp(__nsh_hv25, "style", () => ({ backgroundColor: palette().border }));
-			append(__nsh_hv22, __nsh_hv23);
-			append(__nsh_hv22, __nsh_hv24);
-			append(__nsh_hv22, __nsh_hv25);
-			const __nsh_hv26 = element("view");
-			prop(__nsh_hv26, "class", "flex-1 gap-2 p-2");
-			const __nsh_hv27 = element("view");
-			prop(__nsh_hv27, "class", "h-2 w-1/2 rounded");
-			bindProp(__nsh_hv27, "style", () => ({ backgroundColor: palette().muted }));
-			const __nsh_hv28 = element("view");
-			prop(__nsh_hv28, "class", "h-9 rounded");
-			bindProp(__nsh_hv28, "style", () => ({ backgroundColor: palette().background }));
-			const __nsh_hv29 = element("view");
-			prop(__nsh_hv29, "class", "h-1.5 w-2/3 rounded");
-			bindProp(__nsh_hv29, "style", () => ({ backgroundColor: palette().border }));
-			append(__nsh_hv26, __nsh_hv27);
-			append(__nsh_hv26, __nsh_hv28);
-			append(__nsh_hv26, __nsh_hv29);
-			append(__nsh_hv21, __nsh_hv22);
-			append(__nsh_hv21, __nsh_hv26);
-			append(__nsh_hv20, __nsh_hv21);
-			const __nsh_hv30 = element("text");
-			prop(__nsh_hv30, "class", "mt-2 text-center text-[12px]");
-			bindProp(__nsh_hv30, "style", () => ({ color: current().mode === mode.value ? colors().accent : colors().muted }));
-			insert(__nsh_hv30, () => mode.label);
-			append(__nsh_hv19, __nsh_hv20);
-			append(__nsh_hv19, __nsh_hv30);
-			return __nsh_hv19;
+			const __nsh_hv54 = element("view");
+			prop(__nsh_hv54, "class", "w-1/3 gap-2 border-r p-2");
+			bindProp(__nsh_hv54, "style", () => ({ borderColor: palette.border }));
+			const __nsh_hv55 = element("view");
+			prop(__nsh_hv55, "class", "h-2 rounded");
+			bindProp(__nsh_hv55, "style", () => ({ backgroundColor: palette.accent }));
+			const __nsh_hv56 = element("view");
+			prop(__nsh_hv56, "class", "h-1.5 rounded");
+			bindProp(__nsh_hv56, "style", () => ({ backgroundColor: palette.muted }));
+			const __nsh_hv57 = element("view");
+			prop(__nsh_hv57, "class", "h-1.5 rounded");
+			bindProp(__nsh_hv57, "style", () => ({ backgroundColor: palette.border }));
+			append(__nsh_hv54, __nsh_hv55);
+			append(__nsh_hv54, __nsh_hv56);
+			append(__nsh_hv54, __nsh_hv57);
+			const __nsh_hv58 = element("view");
+			prop(__nsh_hv58, "class", "flex-1 gap-2 p-2");
+			const __nsh_hv59 = element("view");
+			prop(__nsh_hv59, "class", "h-2 w-1/2 rounded");
+			bindProp(__nsh_hv59, "style", () => ({ backgroundColor: palette.muted }));
+			const __nsh_hv60 = element("view");
+			prop(__nsh_hv60, "class", "h-9 rounded");
+			bindProp(__nsh_hv60, "style", () => ({ backgroundColor: palette.background }));
+			const __nsh_hv61 = element("view");
+			prop(__nsh_hv61, "class", "h-1.5 w-2/3 rounded");
+			bindProp(__nsh_hv61, "style", () => ({ backgroundColor: palette.border }));
+			append(__nsh_hv58, __nsh_hv59);
+			append(__nsh_hv58, __nsh_hv60);
+			append(__nsh_hv58, __nsh_hv61);
+			append(__nsh_hv53, __nsh_hv54);
+			append(__nsh_hv53, __nsh_hv58);
+			append(__nsh_hv52, __nsh_hv53);
+			const __nsh_hv62 = element("text");
+			prop(__nsh_hv62, "class", "mt-2 text-center text-[12px]");
+			bindProp(__nsh_hv62, "style", () => ({ color: current().mode === mode.value ? colors().accent : colors().muted }));
+			insert(__nsh_hv62, () => mode.label);
+			append(__nsh_hv51, __nsh_hv52);
+			append(__nsh_hv51, __nsh_hv62);
+			return __nsh_hv51;
 		})();
 	};
 	return (() => {
-		const __nsh_hv31 = element("scroll");
-		prop(__nsh_hv31, "class", "min-h-0 flex-1 px-7 pt-4 pb-8");
-		bindProp(__nsh_hv31, "style", () => ({ backgroundColor: colors().background }));
-		const __nsh_hv32 = element("view");
-		prop(__nsh_hv32, "class", "mx-auto w-full max-w-[720px]");
-		const __nsh_hv33 = element("text");
-		prop(__nsh_hv33, "class", "mb-5 px-2 text-[22px] font-semibold");
-		bindProp(__nsh_hv33, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv34 = text("Оформление");
-		append(__nsh_hv33, __nsh_hv34);
-		const __nsh_hv39 = element("view");
-		prop(__nsh_hv39, "class", "mb-8 flex-row gap-4");
-		insert(__nsh_hv39, () => modePreviews.map(modeCard));
-		const __nsh_hv40 = element("view");
-		prop(__nsh_hv40, "class", "mb-8 rounded-xl border px-4");
-		bindProp(__nsh_hv40, "style", () => ({
+		const __nsh_hv63 = element("scroll");
+		bindProp(__nsh_hv63, "class", () => `min-h-0 flex-1 ${props.mobile ? "px-4" : "px-7"} pt-4 pb-8`);
+		bindProp(__nsh_hv63, "style", () => ({ backgroundColor: colors().background }));
+		const __nsh_hv64 = element("view");
+		prop(__nsh_hv64, "class", "mx-auto w-full max-w-[720px]");
+		const __nsh_hv65 = element("text");
+		prop(__nsh_hv65, "class", "mb-5 px-2 text-[22px] font-semibold");
+		bindProp(__nsh_hv65, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv66 = text("Оформление");
+		append(__nsh_hv65, __nsh_hv66);
+		const __nsh_hv71 = element("view");
+		prop(__nsh_hv71, "class", "mb-8 flex-row gap-4");
+		insert(__nsh_hv71, () => modePreviews.map(modeCard));
+		const __nsh_hv72 = element("view");
+		prop(__nsh_hv72, "class", "mb-8 rounded-xl border px-4");
+		bindProp(__nsh_hv72, "style", () => ({
 			backgroundColor: colors().card,
 			borderColor: colors().border
 		}));
-		const __nsh_hv41 = element("view");
-		prop(__nsh_hv41, "class", "gap-2 py-3");
-		insert(__nsh_hv41, [() => [systemAccents.slice(0, 6), systemAccents.slice(6)].map((row) => (() => {
-			const __nsh_hv42 = element("view");
-			prop(__nsh_hv42, "class", "flex-row flex-wrap items-center gap-2");
-			insert(__nsh_hv42, () => row.map((accent) => {
-				const shown = () => appearance()?.settings.mode !== "light" ? accent.dark : accent.light;
-				const selected = () => {
-					const stored = current().accent_color?.toLowerCase();
-					return current().accent_source === "custom" ? stored === accent.light || stored === accent.dark || accent.legacy.includes(stored ?? "") : current().accent_source !== "wallpaper" && accent.key === "blue";
-				};
-				const label = () => appearance()?.settings.mode !== "light" && accent.darkName ? accent.darkName : accent.name;
-				return (() => {
-					const __nsh_hv43 = element("view");
-					prop(__nsh_hv43, "onPress", () => patch({
-						accent_source: "custom",
-						accent_color: accent.light
-					}));
-					prop(__nsh_hv43, "role", "button");
-					bindProp(__nsh_hv43, "accessibilityLabel", () => `Акцент ${label()}`);
-					bindProp(__nsh_hv43, "accessibilityState", () => ({ selected: selected() }));
-					prop(__nsh_hv43, "class", "h-7 w-7 items-center justify-center rounded-full border");
-					prop(__nsh_hv43, "hoverStyle", { opacity: .85 });
-					bindProp(__nsh_hv43, "style", () => ({
-						backgroundColor: shown(),
-						borderColor: selected() ? accentMark(shown()) : "transparent",
-						cursor: "pointer"
-					}));
-					insert(__nsh_hv43, () => selected() && (() => {
-						const __nsh_hv44 = element("text");
-						prop(__nsh_hv44, "class", "text-[12px]");
-						bindProp(__nsh_hv44, "style", () => ({ color: accentMark(shown()) }));
-						const __nsh_hv45 = text("✓");
-						append(__nsh_hv44, __nsh_hv45);
-						return __nsh_hv44;
-					})());
-					return __nsh_hv43;
-				})();
-			}));
-			return __nsh_hv42;
-		})()), () => appearance()?.capabilities.wallpaper_accent && card(current().accent_source === "wallpaper", "Обои", () => patch({ accent_source: "wallpaper" }))]);
-		append(__nsh_hv40, __nsh_hv41);
-		const __nsh_hv46 = element("view");
-		prop(__nsh_hv46, "class", "mb-8 rounded-xl border px-4");
-		bindProp(__nsh_hv46, "style", () => ({
+		const __nsh_hv73 = element("view");
+		prop(__nsh_hv73, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
+		const __nsh_hv74 = element("text");
+		prop(__nsh_hv74, "class", "min-w-[160px] flex-1 text-[13px]");
+		bindProp(__nsh_hv74, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv75 = text("Материал окна");
+		append(__nsh_hv74, __nsh_hv75);
+		const __nsh_hv76 = element("view");
+		prop(__nsh_hv76, "class", "flex-row flex-wrap items-center gap-2");
+		insert(__nsh_hv76, () => (appearance()?.capabilities.materials ?? []).map((material) => selectLabel(material, materialLabels[material] ?? material, current().material, (next) => patch({ material: next }), colors(), canEdit())));
+		append(__nsh_hv73, __nsh_hv74);
+		append(__nsh_hv73, __nsh_hv76);
+		append(__nsh_hv72, __nsh_hv73);
+		const __nsh_hv77 = element("view");
+		prop(__nsh_hv77, "class", "mb-8 rounded-xl border px-4");
+		bindProp(__nsh_hv77, "style", () => ({
 			backgroundColor: colors().card,
 			borderColor: colors().border
 		}));
-		const __nsh_hv47 = element("view");
-		prop(__nsh_hv47, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
-		const __nsh_hv48 = element("text");
-		prop(__nsh_hv48, "class", "min-w-[160px] flex-1 text-[13px]");
-		bindProp(__nsh_hv48, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv49 = text("Материал окна");
-		append(__nsh_hv48, __nsh_hv49);
-		const __nsh_hv50 = element("view");
-		prop(__nsh_hv50, "class", "flex-row flex-wrap items-center gap-2");
-		insert(__nsh_hv50, () => (appearance()?.capabilities.materials ?? []).map((material) => selectLabel(material, materialLabels[material] ?? material, current().material, (next) => patch({ material: next }), colors(), canEdit(), dark)));
-		append(__nsh_hv47, __nsh_hv48);
-		append(__nsh_hv47, __nsh_hv50);
-		append(__nsh_hv46, __nsh_hv47);
-		const __nsh_hv51 = element("view");
-		prop(__nsh_hv51, "class", "mb-8 rounded-xl border px-4");
-		bindProp(__nsh_hv51, "style", () => ({
-			backgroundColor: colors().card,
-			borderColor: colors().border
-		}));
-		const __nsh_hv52 = element("view");
-		prop(__nsh_hv52, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
-		const __nsh_hv53 = element("text");
-		prop(__nsh_hv53, "class", "min-w-[160px] flex-1 text-[13px]");
-		bindProp(__nsh_hv53, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv54 = text("Размер интерфейсного текста");
-		append(__nsh_hv53, __nsh_hv54);
-		append(__nsh_hv52, __nsh_hv53);
-		insert(__nsh_hv52, () => select("fontSize", String(current().font_size), [.../* @__PURE__ */ new Set([...fontSizes, current().font_size])].sort((a, b) => a - b).map((size) => ({
+		const __nsh_hv78 = element("view");
+		prop(__nsh_hv78, "class", "min-h-[60px] flex-row flex-wrap items-center gap-4 py-3");
+		const __nsh_hv79 = element("text");
+		prop(__nsh_hv79, "class", "min-w-[160px] flex-1 text-[13px]");
+		bindProp(__nsh_hv79, "style", () => ({ color: colors().foreground }));
+		const __nsh_hv80 = text("Размер интерфейсного текста");
+		append(__nsh_hv79, __nsh_hv80);
+		append(__nsh_hv78, __nsh_hv79);
+		insert(__nsh_hv78, () => select("fontSize", String(current().font_size), [.../* @__PURE__ */ new Set([...fontSizes, current().font_size])].sort((a, b) => a - b).map((size) => ({
 			value: String(size),
 			label: `${size} px`
 		})), (value) => patch({ font_size: Number(value) }), 128));
-		append(__nsh_hv51, __nsh_hv52);
-		const __nsh_hv55 = element("view");
-		prop(__nsh_hv55, "class", "rounded-xl border px-4");
-		bindProp(__nsh_hv55, "style", () => ({
-			backgroundColor: colors().card,
-			borderColor: colors().border
-		}));
-		const __nsh_hv56 = element("view");
-		prop(__nsh_hv56, "class", "h-10 flex-row items-center");
-		const __nsh_hv57 = element("text");
-		prop(__nsh_hv57, "class", "flex-1 text-[13px]");
-		bindProp(__nsh_hv57, "style", () => ({ color: colors().foreground }));
-		const __nsh_hv58 = text("Закрыть панель / поиск");
-		append(__nsh_hv57, __nsh_hv58);
-		const __nsh_hv59 = element("text");
-		prop(__nsh_hv59, "class", "text-[12px]");
-		bindProp(__nsh_hv59, "style", () => ({ color: colors().muted }));
-		const __nsh_hv60 = text("Esc");
-		append(__nsh_hv59, __nsh_hv60);
-		append(__nsh_hv56, __nsh_hv57);
-		append(__nsh_hv56, __nsh_hv59);
-		append(__nsh_hv55, __nsh_hv56);
-		insert(__nsh_hv55, [
-			() => shortcutRow("sidebar", "Боковая панель — открыть/скрыть"),
-			() => shortcutRow("create", "Новая задача — панель справа"),
-			() => shortcutRow("search", "Быстрый поиск"),
-			() => shortcutRow("reload", "Обновить данные из Engine")
-		], __nsh_hv56);
-		append(__nsh_hv32, __nsh_hv33);
-		append(__nsh_hv32, __nsh_hv39);
-		append(__nsh_hv32, __nsh_hv40);
-		append(__nsh_hv32, __nsh_hv46);
-		append(__nsh_hv32, __nsh_hv51);
-		append(__nsh_hv32, __nsh_hv55);
-		insert(__nsh_hv32, [
+		append(__nsh_hv77, __nsh_hv78);
+		append(__nsh_hv64, __nsh_hv65);
+		append(__nsh_hv64, __nsh_hv71);
+		append(__nsh_hv64, __nsh_hv72);
+		append(__nsh_hv64, __nsh_hv77);
+		insert(__nsh_hv64, [
 			() => appearance()?.policy.following && (() => {
-				const __nsh_hv35 = element("text");
-				prop(__nsh_hv35, "class", "mb-4 px-2 text-[12px]");
-				bindProp(__nsh_hv35, "style", () => ({ color: colors().accent }));
-				const __nsh_hv36 = text("Общий стиль задаётся в Mundus Manager. Настройки доступны только для просмотра.");
-				append(__nsh_hv35, __nsh_hv36);
-				return __nsh_hv35;
+				const __nsh_hv67 = element("text");
+				prop(__nsh_hv67, "class", "mb-4 px-2 text-[12px]");
+				bindProp(__nsh_hv67, "style", () => ({ color: colors().accent }));
+				const __nsh_hv68 = text("Общий стиль задаётся в Mundus Manager. Настройки доступны только для просмотра.");
+				append(__nsh_hv67, __nsh_hv68);
+				return __nsh_hv67;
 			})(),
 			() => !props.editable() && !appearance()?.policy.following && (() => {
-				const __nsh_hv37 = element("text");
-				prop(__nsh_hv37, "class", "mb-4 px-2 text-[12px]");
-				bindProp(__nsh_hv37, "style", () => ({ color: colors().muted }));
-				const __nsh_hv38 = text("Engine не подключён. Можно временно менять оформление; выбор действует только до закрытия Atlas.");
-				append(__nsh_hv37, __nsh_hv38);
-				return __nsh_hv37;
+				const __nsh_hv69 = element("text");
+				prop(__nsh_hv69, "class", "mb-4 px-2 text-[12px]");
+				bindProp(__nsh_hv69, "style", () => ({ color: colors().muted }));
+				const __nsh_hv70 = text("Engine не подключён. Можно временно менять оформление; выбор действует только до закрытия Atlas.");
+				append(__nsh_hv69, __nsh_hv70);
+				return __nsh_hv69;
 			})(),
 			() => heading("Режим")
-		], __nsh_hv39);
-		insert(__nsh_hv32, () => heading("Акцент"), __nsh_hv40);
-		insert(__nsh_hv32, () => heading("Стекло"), __nsh_hv46);
-		insert(__nsh_hv32, () => heading("Размер текста"), __nsh_hv51);
-		insert(__nsh_hv32, () => heading("Горячие клавиши"), __nsh_hv55);
-		append(__nsh_hv31, __nsh_hv32);
-		return __nsh_hv31;
+		], __nsh_hv71);
+		insert(__nsh_hv64, () => heading("Стекло"), __nsh_hv72);
+		insert(__nsh_hv64, () => heading("Размер текста"), __nsh_hv77);
+		insert(__nsh_hv64, [() => !props.mobile && heading("Горячие клавиши"), () => !props.mobile && (() => {
+			const __nsh_hv81 = element("view");
+			prop(__nsh_hv81, "class", "rounded-xl border px-4");
+			bindProp(__nsh_hv81, "style", () => ({
+				backgroundColor: colors().card,
+				borderColor: colors().border
+			}));
+			const __nsh_hv82 = element("view");
+			prop(__nsh_hv82, "class", "h-10 flex-row items-center");
+			const __nsh_hv83 = element("text");
+			prop(__nsh_hv83, "class", "flex-1 text-[13px]");
+			bindProp(__nsh_hv83, "style", () => ({ color: colors().foreground }));
+			const __nsh_hv84 = text("Закрыть панель / поиск");
+			append(__nsh_hv83, __nsh_hv84);
+			const __nsh_hv85 = element("text");
+			prop(__nsh_hv85, "class", "text-[12px]");
+			bindProp(__nsh_hv85, "style", () => ({ color: colors().muted }));
+			const __nsh_hv86 = text("Esc");
+			append(__nsh_hv85, __nsh_hv86);
+			append(__nsh_hv82, __nsh_hv83);
+			append(__nsh_hv82, __nsh_hv85);
+			append(__nsh_hv81, __nsh_hv82);
+			insert(__nsh_hv81, [
+				() => shortcutRow("sidebar", "Боковая панель — открыть/скрыть"),
+				() => shortcutRow("create", "Новая задача — панель справа"),
+				() => shortcutRow("search", "Быстрый поиск"),
+				() => shortcutRow("reload", "Обновить данные из Engine")
+			], __nsh_hv82);
+			return __nsh_hv81;
+		})()]);
+		append(__nsh_hv63, __nsh_hv64);
+		return __nsh_hv63;
 	})();
 }
-function selectLabel(material, label, selected, onPress, colors, editable, dark) {
+function selectLabel(material, label, selected, onPress, colors, editable) {
 	return (() => {
-		const __nsh_hv61 = element("view");
-		bindProp(__nsh_hv61, "onPress", () => editable ? () => onPress(material) : void 0);
-		prop(__nsh_hv61, "role", "button");
-		prop(__nsh_hv61, "accessibilityState", {
+		const __nsh_hv87 = element("view");
+		bindProp(__nsh_hv87, "onPress", () => editable ? () => onPress(material) : void 0);
+		prop(__nsh_hv87, "role", "button");
+		prop(__nsh_hv87, "accessibilityState", {
 			selected: selected === material,
 			disabled: !editable
 		});
-		prop(__nsh_hv61, "class", "items-center justify-center rounded-lg border");
-		bindProp(__nsh_hv61, "hoverStyle", () => ({ backgroundColor: hoverWash(dark) }));
-		bindProp(__nsh_hv61, "style", () => ({
-			height: 32,
-			paddingLeft: 12,
-			paddingRight: 12,
+		prop(__nsh_hv87, "class", "rounded-lg border px-3 py-2");
+		bindProp(__nsh_hv87, "style", () => ({
 			backgroundColor: selected === material ? colors.card : colors.background,
 			borderColor: selected === material ? colors.accent : colors.border,
-			opacity: editable ? 1 : .65,
-			cursor: editable ? "pointer" : "default"
+			opacity: editable ? 1 : .65
 		}));
-		const __nsh_hv62 = element("text");
-		prop(__nsh_hv62, "class", "text-[12px]");
-		bindProp(__nsh_hv62, "hoverStyle", () => ({ color: colors.foreground }));
-		bindProp(__nsh_hv62, "style", () => ({ color: selected === material ? colors.foreground : colors.muted }));
-		insert(__nsh_hv62, label);
-		append(__nsh_hv61, __nsh_hv62);
-		return __nsh_hv61;
+		const __nsh_hv88 = element("text");
+		prop(__nsh_hv88, "class", "text-[12px]");
+		bindProp(__nsh_hv88, "style", () => ({ color: selected === material ? colors.foreground : colors.muted }));
+		insert(__nsh_hv88, label);
+		append(__nsh_hv87, __nsh_hv88);
+		return __nsh_hv87;
 	})();
 }
 
@@ -2040,6 +2832,410 @@ function isTodo(value) {
 }
 
 //#endregion
+//#region MobileHome.tsx
+function MobileHome(props) {
+	const mode = () => props.mode();
+	const hidden = () => mode() === "hidden";
+	const inactive = () => hidden() || mode() === "fadeInStart" || mode() === "fadeIn";
+	const diaryColor = () => props.colors.background === "#0d0c10" ? "rgba(251, 146, 60, 0.7)" : "rgba(194, 65, 12, 0.7)";
+	const transitioning = () => mode() !== "home";
+	return (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "class", "h-full w-full");
+		bindProp(__nsh_hv0, "pointerEvents", () => inactive() ? "none" : void 0);
+		bindProp(__nsh_hv0, "style", () => ({
+			display: hidden() ? "none" : "flex",
+			position: transitioning() ? "absolute" : void 0,
+			left: transitioning() ? 0 : void 0,
+			top: transitioning() ? 0 : void 0,
+			right: transitioning() ? 0 : void 0,
+			bottom: transitioning() ? 0 : void 0,
+			zIndex: transitioning() ? 100 : void 0,
+			backgroundColor: props.colors.background,
+			opacity: mode() === "fadeOut" || mode() === "fadeInStart" ? 0 : 1,
+			transitionProperty: "opacity",
+			transitionDuration: 65,
+			transitionTimingFunction: "ease-in-out"
+		}));
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "class", "h-14 flex-row items-center justify-between px-3");
+		const __nsh_hv2 = element("text");
+		prop(__nsh_hv2, "class", "min-w-0 flex-1 text-[20px] font-semibold");
+		bindProp(__nsh_hv2, "style", () => ({ color: props.colors.foreground }));
+		const __nsh_hv3 = text("Атлас");
+		append(__nsh_hv2, __nsh_hv3);
+		const __nsh_hv4 = element("view");
+		bindProp(__nsh_hv4, "onPress", () => props.onOpenSettings);
+		prop(__nsh_hv4, "role", "button");
+		prop(__nsh_hv4, "accessibilityLabel", "Настройки");
+		prop(__nsh_hv4, "class", "h-10 w-10 items-center justify-center rounded-full border");
+		bindProp(__nsh_hv4, "style", () => ({
+			borderColor: props.colors.border,
+			backgroundColor: props.colors.card
+		}));
+		const __nsh_hv5 = element("text");
+		prop(__nsh_hv5, "class", "text-[20px]");
+		bindProp(__nsh_hv5, "style", () => ({ color: props.colors.foreground }));
+		const __nsh_hv6 = text("⚙");
+		append(__nsh_hv5, __nsh_hv6);
+		append(__nsh_hv4, __nsh_hv5);
+		append(__nsh_hv1, __nsh_hv2);
+		append(__nsh_hv1, __nsh_hv4);
+		const __nsh_hv7 = element("view");
+		prop(__nsh_hv7, "class", "min-h-0 flex-1 items-stretch justify-start px-3 pt-3");
+		const __nsh_hv8 = element("view");
+		bindProp(__nsh_hv8, "onPress", () => props.onOpenJournal);
+		prop(__nsh_hv8, "role", "button");
+		prop(__nsh_hv8, "accessibilityLabel", "Открыть дневник");
+		prop(__nsh_hv8, "class", "w-full max-w-[460px] flex-row items-center gap-4 rounded-xl border p-5");
+		bindProp(__nsh_hv8, "style", () => ({
+			borderColor: diaryColor(),
+			backgroundColor: diaryColor()
+		}));
+		const __nsh_hv9 = element("text");
+		prop(__nsh_hv9, "class", "text-[28px]");
+		prop(__nsh_hv9, "style", { color: "#ffffff" });
+		const __nsh_hv10 = text("▤");
+		append(__nsh_hv9, __nsh_hv10);
+		const __nsh_hv11 = element("view");
+		prop(__nsh_hv11, "class", "min-w-0 flex-1");
+		const __nsh_hv12 = element("text");
+		prop(__nsh_hv12, "class", "text-[17px] font-medium");
+		prop(__nsh_hv12, "style", { color: "#ffffff" });
+		const __nsh_hv13 = text("Дневник");
+		append(__nsh_hv12, __nsh_hv13);
+		append(__nsh_hv11, __nsh_hv12);
+		append(__nsh_hv8, __nsh_hv9);
+		append(__nsh_hv8, __nsh_hv11);
+		append(__nsh_hv7, __nsh_hv8);
+		append(__nsh_hv0, __nsh_hv1);
+		append(__nsh_hv0, __nsh_hv7);
+		return __nsh_hv0;
+	})();
+}
+
+//#endregion
+//#region mobile-themes.ts
+const mobileThemes = [{
+	key: "default",
+	name: "Mundus",
+	light: {
+		background: "#f8f7f9",
+		foreground: "#222027",
+		muted: "#615f67",
+		border: "#dedde0",
+		accent: "#2563eb",
+		card: "#f3f2f4"
+	},
+	dark: {
+		background: "#0d0c10",
+		foreground: "#e7e5ea",
+		muted: "#8d8a94",
+		border: "#27262a",
+		accent: "#60a5fa",
+		card: "#131216"
+	}
+}];
+
+//#endregion
+//#region ConnectionPage.tsx
+const ticketVisible = signal(false);
+const selectedPeer = signal(null);
+function peerStatus(status) {
+	return status === "online" ? "В сети" : status === "offline" ? "Не в сети" : "Статус неизвестен";
+}
+function deviceName(peer) {
+	return peer.device_name?.trim() || "Устройство";
+}
+function ConnectionPage(props) {
+	const c = () => props.colors;
+	const sync = () => props.sync;
+	const incoming = () => sync()?.incoming_pairing_requests[0];
+	const onlineCount = () => sync()?.peers.filter((peer) => peer.status === "online").length ?? 0;
+	const statusText = () => !sync() ? "Проверяем подключение…" : onlineCount() ? `В сети: ${onlineCount()}` : sync().running ? "Ожидает подключения устройства" : "Синхронизация остановлена";
+	const statusColor = () => onlineCount() ? "#22c55e" : sync()?.running ? "#eab308" : "#ef4444";
+	const button = (label, onPress, primary = false, destructive = false) => (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "onPress", onPress);
+		prop(__nsh_hv0, "role", "button");
+		prop(__nsh_hv0, "class", "min-h-11 items-center justify-center rounded-lg border px-4 py-2");
+		bindProp(__nsh_hv0, "style", () => ({
+			backgroundColor: primary ? c().accent : c().card,
+			borderColor: destructive ? "#ef4444" : primary ? c().accent : c().border
+		}));
+		const __nsh_hv1 = element("text");
+		prop(__nsh_hv1, "class", "text-[14px] font-medium");
+		bindProp(__nsh_hv1, "style", () => ({ color: primary ? c().background : destructive ? "#ef4444" : c().foreground }));
+		insert(__nsh_hv1, label);
+		append(__nsh_hv0, __nsh_hv1);
+		return __nsh_hv0;
+	})();
+	const group = (children) => (() => {
+		const __nsh_hv2 = element("view");
+		prop(__nsh_hv2, "class", "mb-5 rounded-xl border px-4 py-1");
+		bindProp(__nsh_hv2, "style", () => ({
+			backgroundColor: c().card,
+			borderColor: c().border
+		}));
+		insert(__nsh_hv2, children);
+		return __nsh_hv2;
+	})();
+	return (() => {
+		const __nsh_hv3 = element("view");
+		prop(__nsh_hv3, "class", "h-full min-h-0 flex-col");
+		bindProp(__nsh_hv3, "style", () => ({ backgroundColor: c().background }));
+		const __nsh_hv4 = element("view");
+		prop(__nsh_hv4, "class", "h-14 shrink-0 flex-row items-center gap-2 px-3");
+		const __nsh_hv5 = element("view");
+		bindProp(__nsh_hv5, "onPress", () => props.onBack);
+		prop(__nsh_hv5, "role", "button");
+		prop(__nsh_hv5, "accessibilityLabel", "Назад");
+		prop(__nsh_hv5, "class", "h-10 w-10 items-center justify-center rounded-full border");
+		bindProp(__nsh_hv5, "style", () => ({
+			borderColor: c().border,
+			backgroundColor: c().card
+		}));
+		const __nsh_hv6 = element("text");
+		prop(__nsh_hv6, "class", "text-[25px]");
+		bindProp(__nsh_hv6, "style", () => ({ color: c().foreground }));
+		const __nsh_hv7 = text("‹");
+		append(__nsh_hv6, __nsh_hv7);
+		append(__nsh_hv5, __nsh_hv6);
+		const __nsh_hv8 = element("text");
+		prop(__nsh_hv8, "class", "text-[16px] font-medium");
+		bindProp(__nsh_hv8, "style", () => ({ color: c().foreground }));
+		const __nsh_hv9 = text("Подключения");
+		append(__nsh_hv8, __nsh_hv9);
+		append(__nsh_hv4, __nsh_hv5);
+		append(__nsh_hv4, __nsh_hv8);
+		const __nsh_hv10 = element("scroll");
+		prop(__nsh_hv10, "class", "min-h-0 flex-1 px-4 pb-8");
+		const __nsh_hv11 = element("text");
+		prop(__nsh_hv11, "class", "mb-2 px-1 text-[13px]");
+		bindProp(__nsh_hv11, "style", () => ({ color: c().muted }));
+		const __nsh_hv12 = text("Это устройство");
+		append(__nsh_hv11, __nsh_hv12);
+		const __nsh_hv20 = element("text");
+		prop(__nsh_hv20, "class", "mb-2 px-1 text-[13px]");
+		bindProp(__nsh_hv20, "style", () => ({ color: c().muted }));
+		const __nsh_hv21 = text("Устройства");
+		append(__nsh_hv20, __nsh_hv21);
+		const __nsh_hv39 = element("text");
+		prop(__nsh_hv39, "class", "mb-2 px-1 text-[13px]");
+		bindProp(__nsh_hv39, "style", () => ({ color: c().muted }));
+		const __nsh_hv40 = text("Подключить устройство");
+		append(__nsh_hv39, __nsh_hv40);
+		append(__nsh_hv10, __nsh_hv11);
+		append(__nsh_hv10, __nsh_hv20);
+		append(__nsh_hv10, __nsh_hv39);
+		insert(__nsh_hv10, () => group((() => {
+			const __nsh_hv13 = element("view");
+			prop(__nsh_hv13, "class", "min-h-[62px] flex-row items-center gap-3");
+			const __nsh_hv14 = element("view");
+			prop(__nsh_hv14, "class", "h-2.5 w-2.5 rounded-full");
+			bindProp(__nsh_hv14, "style", () => ({ backgroundColor: statusColor() }));
+			const __nsh_hv15 = element("view");
+			prop(__nsh_hv15, "class", "min-w-0 flex-1");
+			const __nsh_hv16 = element("text");
+			prop(__nsh_hv16, "class", "text-[15px]");
+			bindProp(__nsh_hv16, "style", () => ({ color: c().foreground }));
+			insert(__nsh_hv16, () => sync()?.local_device?.device_name || "Это устройство");
+			const __nsh_hv17 = element("text");
+			prop(__nsh_hv17, "class", "mt-0.5 text-[12px]");
+			bindProp(__nsh_hv17, "style", () => ({ color: c().muted }));
+			insert(__nsh_hv17, () => statusText());
+			append(__nsh_hv15, __nsh_hv16);
+			append(__nsh_hv15, __nsh_hv17);
+			const __nsh_hv18 = element("text");
+			prop(__nsh_hv18, "class", "text-[11px]");
+			bindProp(__nsh_hv18, "style", () => ({ color: c().muted }));
+			const __nsh_hv19 = text("Atlas ");
+			append(__nsh_hv18, __nsh_hv19);
+			insert(__nsh_hv18, () => props.version);
+			append(__nsh_hv13, __nsh_hv14);
+			append(__nsh_hv13, __nsh_hv15);
+			append(__nsh_hv13, __nsh_hv18);
+			return __nsh_hv13;
+		})()), __nsh_hv20);
+		insert(__nsh_hv10, [() => group(sync()?.peers.length ? sync().peers.map((peer, index) => (() => {
+			const __nsh_hv22 = element("view");
+			prop(__nsh_hv22, "class", `min-h-[58px] flex-row items-center gap-3 ${index ? "border-t" : ""}`);
+			bindProp(__nsh_hv22, "style", () => ({ borderColor: c().border }));
+			const __nsh_hv23 = element("view");
+			prop(__nsh_hv23, "class", "h-8 w-8 items-center justify-center rounded-full");
+			bindProp(__nsh_hv23, "style", () => ({ backgroundColor: c().background }));
+			const __nsh_hv24 = element("text");
+			prop(__nsh_hv24, "class", "text-[15px]");
+			bindProp(__nsh_hv24, "style", () => ({ color: c().accent }));
+			insert(__nsh_hv24, () => (deviceName(peer)[0] ?? "У").toUpperCase());
+			append(__nsh_hv23, __nsh_hv24);
+			const __nsh_hv25 = element("view");
+			prop(__nsh_hv25, "class", "min-w-0 flex-1");
+			const __nsh_hv26 = element("text");
+			prop(__nsh_hv26, "numberOfLines", 1);
+			prop(__nsh_hv26, "class", "text-[14px]");
+			bindProp(__nsh_hv26, "style", () => ({ color: c().foreground }));
+			insert(__nsh_hv26, () => deviceName(peer));
+			const __nsh_hv27 = element("text");
+			prop(__nsh_hv27, "class", "text-[12px]");
+			bindProp(__nsh_hv27, "style", () => ({ color: peer.status === "online" ? "#22c55e" : c().muted }));
+			insert(__nsh_hv27, () => peerStatus(peer.status));
+			append(__nsh_hv25, __nsh_hv26);
+			append(__nsh_hv25, __nsh_hv27);
+			const __nsh_hv28 = element("view");
+			prop(__nsh_hv28, "onPress", () => selectedPeer.set(peer));
+			prop(__nsh_hv28, "role", "button");
+			bindProp(__nsh_hv28, "accessibilityLabel", () => `Настройки устройства ${deviceName(peer)}`);
+			prop(__nsh_hv28, "class", "px-2 py-2");
+			const __nsh_hv29 = element("text");
+			prop(__nsh_hv29, "class", "text-[20px]");
+			bindProp(__nsh_hv29, "style", () => ({ color: c().muted }));
+			const __nsh_hv30 = text("⋯");
+			append(__nsh_hv29, __nsh_hv30);
+			append(__nsh_hv28, __nsh_hv29);
+			append(__nsh_hv22, __nsh_hv23);
+			append(__nsh_hv22, __nsh_hv25);
+			append(__nsh_hv22, __nsh_hv28);
+			return __nsh_hv22;
+		})()) : (() => {
+			const __nsh_hv31 = element("view");
+			prop(__nsh_hv31, "class", "min-h-[54px] justify-center");
+			const __nsh_hv32 = element("text");
+			prop(__nsh_hv32, "class", "text-[13px]");
+			bindProp(__nsh_hv32, "style", () => ({ color: c().muted }));
+			const __nsh_hv33 = text("Другие устройства пока не подключены");
+			append(__nsh_hv32, __nsh_hv33);
+			append(__nsh_hv31, __nsh_hv32);
+			return __nsh_hv31;
+		})()), () => incoming() && group((() => {
+			const __nsh_hv34 = element("view");
+			prop(__nsh_hv34, "class", "py-3");
+			const __nsh_hv35 = element("text");
+			prop(__nsh_hv35, "class", "mb-1 text-[15px] font-medium");
+			bindProp(__nsh_hv35, "style", () => ({ color: c().foreground }));
+			insert(__nsh_hv35, () => incoming()?.device_name?.trim() || "Новое устройство");
+			const __nsh_hv36 = element("text");
+			prop(__nsh_hv36, "class", "mb-3 text-[12px]");
+			bindProp(__nsh_hv36, "style", () => ({ color: c().muted }));
+			const __nsh_hv37 = text("Запрашивает подключение к этому Atlas. После подтверждения устройства начнут синхронизироваться.");
+			append(__nsh_hv36, __nsh_hv37);
+			const __nsh_hv38 = element("view");
+			prop(__nsh_hv38, "class", "flex-row justify-end gap-2");
+			insert(__nsh_hv38, [() => button("Отклонить", () => props.onDecline(incoming().device_id)), () => button("Подключить", () => props.onAccept(incoming().device_id), true)]);
+			append(__nsh_hv34, __nsh_hv35);
+			append(__nsh_hv34, __nsh_hv36);
+			append(__nsh_hv34, __nsh_hv38);
+			return __nsh_hv34;
+		})())], __nsh_hv39);
+		insert(__nsh_hv10, [
+			() => group((() => {
+				const __nsh_hv41 = element("view");
+				prop(__nsh_hv41, "class", "gap-3 py-3");
+				const __nsh_hv42 = element("text");
+				prop(__nsh_hv42, "class", "text-[12px] leading-5");
+				bindProp(__nsh_hv42, "style", () => ({ color: c().muted }));
+				const __nsh_hv43 = text("На втором устройстве откройте его код подключения и скопируйте его. Atlas прочитает код из буфера обмена.");
+				append(__nsh_hv42, __nsh_hv43);
+				append(__nsh_hv41, __nsh_hv42);
+				insert(__nsh_hv41, [
+					() => button("Вставить код из буфера", props.onConnectClipboard, true),
+					() => button(ticketVisible() ? "Обновить мой код" : "Показать мой код", () => {
+						ticketVisible.set(true);
+						props.onShowCode();
+					}),
+					() => sync()?.own_iroh_ticket && (() => {
+						const __nsh_hv44 = element("view");
+						prop(__nsh_hv44, "class", "rounded-lg border p-3");
+						bindProp(__nsh_hv44, "style", () => ({
+							backgroundColor: c().background,
+							borderColor: c().border
+						}));
+						const __nsh_hv45 = element("text");
+						prop(__nsh_hv45, "class", "mb-2 text-[12px] leading-5");
+						bindProp(__nsh_hv45, "style", () => ({ color: c().foreground }));
+						insert(__nsh_hv45, () => sync()?.own_iroh_ticket);
+						append(__nsh_hv44, __nsh_hv45);
+						insert(__nsh_hv44, () => button("Скопировать мой код", () => props.onCopy(sync().own_iroh_ticket)));
+						return __nsh_hv44;
+					})()
+				]);
+				return __nsh_hv41;
+			})()),
+			() => sync()?.outgoing_pairing && (() => {
+				const __nsh_hv46 = element("view");
+				prop(__nsh_hv46, "class", "mb-5 rounded-xl border p-4");
+				bindProp(__nsh_hv46, "style", () => ({
+					backgroundColor: c().card,
+					borderColor: c().border
+				}));
+				const __nsh_hv47 = element("text");
+				prop(__nsh_hv47, "class", "mb-3 text-[14px]");
+				bindProp(__nsh_hv47, "style", () => ({ color: c().foreground }));
+				insert(__nsh_hv47, () => sync()?.outgoing_pairing?.status === "pending" ? "Ожидание подтверждения…" : sync()?.outgoing_pairing?.status === "connected" ? "Подключено" : "Запрос на подключение");
+				append(__nsh_hv46, __nsh_hv47);
+				insert(__nsh_hv46, () => sync()?.outgoing_pairing?.status === "pending" && button("Отменить запрос", props.onCancelPairing));
+				return __nsh_hv46;
+			})(),
+			() => sync()?.error && (() => {
+				const __nsh_hv48 = element("text");
+				prop(__nsh_hv48, "class", "mb-3 px-1 text-[13px]");
+				prop(__nsh_hv48, "style", { color: "#ef4444" });
+				insert(__nsh_hv48, () => sync()?.error);
+				return __nsh_hv48;
+			})(),
+			() => button("Синхронизировать сейчас", props.onRestart, true)
+		]);
+		append(__nsh_hv3, __nsh_hv4);
+		append(__nsh_hv3, __nsh_hv10);
+		insert(__nsh_hv3, () => selectedPeer() && (() => {
+			const __nsh_hv49 = element("view");
+			prop(__nsh_hv49, "class", "absolute inset-0 z-40 justify-end");
+			prop(__nsh_hv49, "style", { backgroundColor: "#00000066" });
+			const __nsh_hv50 = element("view");
+			prop(__nsh_hv50, "onPress", () => selectedPeer.set(null));
+			prop(__nsh_hv50, "class", "absolute inset-0");
+			prop(__nsh_hv50, "accessibilityLabel", "Закрыть сведения об устройстве");
+			const __nsh_hv51 = element("view");
+			prop(__nsh_hv51, "class", "w-full rounded-t-[24px] border px-5 pt-5 pb-8");
+			bindProp(__nsh_hv51, "style", () => ({
+				backgroundColor: c().card,
+				borderColor: c().border
+			}));
+			const __nsh_hv52 = element("text");
+			prop(__nsh_hv52, "class", "mb-1 text-[17px] font-medium");
+			bindProp(__nsh_hv52, "style", () => ({ color: c().foreground }));
+			insert(__nsh_hv52, () => deviceName(selectedPeer()));
+			const __nsh_hv53 = element("text");
+			prop(__nsh_hv53, "class", "mb-5 text-[13px]");
+			bindProp(__nsh_hv53, "style", () => ({ color: c().muted }));
+			const __nsh_hv54 = text(" · ");
+			append(__nsh_hv53, __nsh_hv54);
+			insert(__nsh_hv53, () => peerStatus(selectedPeer()?.status), __nsh_hv54);
+			insert(__nsh_hv53, () => selectedPeer()?.platform || "Платформа неизвестна");
+			const __nsh_hv55 = element("view");
+			prop(__nsh_hv55, "class", "h-2");
+			append(__nsh_hv51, __nsh_hv52);
+			append(__nsh_hv51, __nsh_hv53);
+			append(__nsh_hv51, __nsh_hv55);
+			insert(__nsh_hv51, () => button("Отключить устройство", () => {
+				const peer = selectedPeer();
+				selectedPeer.set(null);
+				if (peer) props.onDisconnect(peer.device_id);
+			}, false, true), __nsh_hv55);
+			insert(__nsh_hv51, () => button("Закрыть", () => selectedPeer.set(null)));
+			append(__nsh_hv49, __nsh_hv50);
+			append(__nsh_hv49, __nsh_hv51);
+			return __nsh_hv49;
+		})());
+		return __nsh_hv3;
+	})();
+}
+
+//#endregion
+//#region ../assets/fonts/Inter.ttf
+var Inter_default = font("asset://Users/user/Documents/projects/mundus-rs/atlas-unified/assets/fonts/Inter.ttf", "Inter");
+
+//#endregion
 //#region App.tsx
 setup(null, "{\n  \"cssVars\": {\n    \"theme\": {\n      \"font-sans\": \"Inter, sans-serif\",\n      \"radius\": \"0.625rem\",\n      \"radius-control\": \"0.5rem\",\n      \"spacing-sidebar\": \"240px\",\n      \"spacing-titlebar\": \"40px\",\n      \"spacing-row\": \"32px\",\n      \"font-size-body\": \"13px\",\n      \"font-size-label\": \"12px\"\n    },\n    \"light\": {\n      \"background\": \"#faf9fb\",\n      \"foreground\": \"#26242a\",\n      \"card\": \"#f2f0f4\",\n      \"card-foreground\": \"#26242a\",\n      \"muted\": \"#ece9ef\",\n      \"muted-foreground\": \"#77727e\",\n      \"primary\": \"#7152bf\",\n      \"primary-foreground\": \"#ffffff\",\n      \"border\": \"#dedbe2\",\n      \"input\": \"#dedbe2\",\n      \"ring\": \"#b18aff\"\n    },\n    \"dark\": {\n      \"background\": \"#0d0c10\",\n      \"foreground\": \"#e7e5ea\",\n      \"card\": \"#131216\",\n      \"card-foreground\": \"#e7e5ea\",\n      \"muted\": \"#27262a\",\n      \"muted-foreground\": \"#8d8a94\",\n      \"primary\": \"#af94f9\",\n      \"primary-foreground\": \"#0d0c10\",\n      \"border\": \"#27262a\",\n      \"input\": \"#27262a\",\n      \"ring\": \"#af94f9\"\n    }\n  }\n}\n", null, null);
 const initialValue = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__");
@@ -2050,6 +3246,8 @@ const route = signal(initial.route);
 const addTaskOpen = signal(false);
 const newTaskTitle = signal("");
 const sidebarVisible = signal(true);
+const mobileRouteStack = signal([]);
+const journalTransition = signal({ kind: "idle" });
 const shortcutNames = [
 	"sidebar",
 	"create",
@@ -2069,6 +3267,41 @@ const shortcutOptions = {
 	reload: ["mod+r", "mod+shift+r"]
 };
 const shortcuts = signal(defaultShortcuts);
+const mobileAppearanceKey = "mundus.atlas.mobile-appearance.v1";
+const mobileAppearanceOverride = signal(void 0);
+function isAppearanceSettings(value) {
+	if (typeof value !== "object" || value === null) return false;
+	return "mode" in value && (value.mode === "system" || value.mode === "light" || value.mode === "dark") && "light_theme" in value && typeof value.light_theme === "string" && "dark_theme" in value && typeof value.dark_theme === "string" && "accent_source" in value && (value.accent_source === "theme" || value.accent_source === "custom" || value.accent_source === "wallpaper") && "material" in value && typeof value.material === "string" && "font_size" in value && typeof value.font_size === "number" && Number.isFinite(value.font_size) && "font_family" in value && typeof value.font_family === "string" && (!("accent_color" in value) || value.accent_color === void 0 || typeof value.accent_color === "string");
+}
+Storage.getItem(mobileAppearanceKey).then((value) => {
+	if (!value) return;
+	try {
+		const saved = JSON.parse(value);
+		if (!isAppearanceSettings(saved)) return;
+		const mobileSettings = {
+			...saved,
+			light_theme: "default",
+			dark_theme: "default"
+		};
+		mobileAppearanceOverride.set(mobileSettings);
+		const current = snapshot();
+		if (current.chrome === "mobile" && current.appearance) {
+			const appearance = {
+				...current.appearance,
+				settings: mobileSettings,
+				policy: {
+					...current.appearance.policy,
+					following: false
+				}
+			};
+			snapshot.set({
+				...current,
+				appearance,
+				colors: resolveAppearanceColors(appearance, mobileThemes, current.colors)
+			});
+		}
+	} catch {}
+});
 Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
 	if (!value) return;
 	try {
@@ -2092,11 +3325,13 @@ function persistPreviewSnapshot() {
 	});
 }
 const Bridge = nativeComponent("atlas.bridge", {
-	props: ["route"],
+	props: ["route", "canHandleBack"],
 	events: [
 		"state",
 		"navigate",
-		"journal"
+		"journal",
+		"connection",
+		"back"
 	]
 });
 function iconForNavigation(id) {
@@ -2144,6 +3379,7 @@ function TaskRows() {
 	})());
 }
 let commandRef;
+let mobileJournalRequested = false;
 function setAppearance(patch) {
 	const current = snapshot();
 	if (current.appearance && !current.appearance.policy.following) {
@@ -2159,6 +3395,11 @@ function setAppearance(patch) {
 			appearance,
 			colors: resolveAppearanceColors(appearance, current.themes, current.colors)
 		});
+		if (current.chrome === "mobile") {
+			mobileAppearanceOverride.set(appearance.settings);
+			Storage.setItem(mobileAppearanceKey, JSON.stringify(appearance.settings));
+			return;
+		}
 	}
 	if (current.appearanceEditable) commandRef?.("appearance.set", patch);
 }
@@ -2277,43 +3518,104 @@ effect(() => {
 	];
 	return () => unbind.forEach((remove) => remove());
 });
-function SettingsPage() {
+function SettingsPage(props = {}) {
 	return component(AtlasAppearanceSettings, {
 		appearance: () => snapshot().appearance,
 		editable: () => snapshot().appearanceEditable,
+		get themes() {
+			return snapshot().chrome === "mobile" ? mobileThemes : snapshot().themes;
+		},
 		colors: () => snapshot().colors,
 		get shortcuts() {
 			return shortcuts();
 		},
 		onPatch: setAppearance,
-		onChangeShortcut: cycleShortcut
+		onChangeShortcut: cycleShortcut,
+		get connection() {
+			return snapshot().connection;
+		},
+		get onConnections() {
+			return props.onConnections;
+		},
+		get mobile() {
+			return snapshot().chrome === "mobile";
+		}
 	});
 }
 function App() {
-	effect(() => Window.setTitleBar("hidden", 38));
+	effect(() => {
+		if (snapshot().chrome === "tsx") Window.setTitleBar("hidden", 38);
+	});
 	const primaryNavigation = navigation_default.filter((item) => !item.footer);
 	const footerNavigation = navigation_default.filter((item) => item.footer);
 	const openNewTask = () => {
 		newTaskTitle.set("");
 		addTaskOpen.set(true);
 	};
-	const shell = snapshot().chrome === "tsx";
-	const dark = snapshot().appearance?.settings.mode !== "light";
+	const shell = () => snapshot().chrome === "tsx";
+	const dark = () => snapshot().appearance?.settings.mode !== "light";
 	const changeRoute = (target) => {
-		if (!isRoute(target)) return;
-		if (target !== "journal" && journalCalendarOpen()) toggleJournalCalendar();
+		if (journalTransition().kind !== "idle") return;
+		if (!isRoute(target) || !canNavigateToRoute(target, snapshot().devFeatures)) return;
+		if (target === route()) return;
+		if (snapshot().chrome === "mobile" && target === "journal" && route() === "home") {
+			journalTransition.set({
+				kind: "enter",
+				phase: "primed"
+			});
+			mobileRouteStack.update((stack) => [...stack, route()]);
+			route.set("journal");
+			const fadeDuration = 130 / 2;
+			setTimeout(() => journalTransition.set({
+				kind: "enter",
+				phase: "moving"
+			}), fadeDuration);
+			setTimeout(() => journalTransition.set({ kind: "idle" }), 130);
+			return;
+		}
+		if (snapshot().chrome === "mobile") mobileRouteStack.update((stack) => [...stack, route()]);
+		if (target !== "journal" && journalCalendarOpen$1()) toggleJournalCalendar$1();
 		route.set(target);
 	};
+	const goBack = () => {
+		if (journalTransition().kind !== "idle") return;
+		if (mobileJournalEditorOpen()) {
+			requestMobileJournalBack();
+			return;
+		}
+		const stack = mobileRouteStack();
+		const previous = stack[stack.length - 1] ?? "home";
+		if (snapshot().chrome === "mobile" && route() === "journal" && previous === "home") {
+			journalTransition.set({
+				kind: "exit",
+				phase: "primed"
+			});
+			const fadeDuration = 130 / 2;
+			setTimeout(() => journalTransition.set({
+				kind: "exit",
+				phase: "moving"
+			}), fadeDuration);
+			setTimeout(() => {
+				mobileRouteStack.set(stack.slice(0, -1));
+				route.set("home");
+				journalTransition.set({ kind: "idle" });
+			}, 130);
+			return;
+		}
+		mobileRouteStack.set(stack.slice(0, -1));
+		route.set(previous);
+	};
+	const transition = journalTransition();
 	return (() => {
 		const __nsh_hv8 = element("view");
 		prop(__nsh_hv8, "class", "relative h-full w-full");
 		bindProp(__nsh_hv8, "style", () => ({ backgroundColor: snapshot().colors.background }));
 		const __nsh_hv9 = element("view");
-		prop(__nsh_hv9, "class", "h-full w-full flex-row");
+		bindProp(__nsh_hv9, "class", () => `h-full w-full ${snapshot().chrome === "mobile" ? "flex-col" : "flex-row"}`);
 		const __nsh_hv14 = element("view");
 		prop(__nsh_hv14, "class", "relative min-h-0 min-w-0 flex-1");
 		insert(__nsh_hv14, [
-			() => route() === "journal" && component(JournalPage, {
+			() => route() === "journal" && snapshot().chrome !== "mobile" && component(JournalPage, {
 				entries: () => snapshot().journalEntries,
 				get colors() {
 					return snapshot().colors;
@@ -2324,20 +3626,91 @@ function App() {
 				get nativeCalendarButton() {
 					return snapshot().chrome === "native";
 				},
-				titlebarInset: shell ? 38 : 0,
-				dark
+				get titlebarInset() {
+					return shell() ? 38 : 0;
+				},
+				get dark() {
+					return dark();
+				}
 			}),
-			() => route() === "tasks" && (() => {
+			() => snapshot().chrome === "mobile" && route() === "journal" && (() => {
 				const __nsh_hv15 = element("view");
-				prop(__nsh_hv15, "class", "min-h-0 flex-1");
-				insert(__nsh_hv15, [component(TaskPage, {}), () => shell && (() => {
+				prop(__nsh_hv15, "class", "relative h-full min-h-0 flex-col overflow-hidden");
+				bindProp(__nsh_hv15, "style", () => ({
+					backgroundColor: snapshot().colors.background,
+					opacity: transition.kind === "enter" ? transition.phase === "moving" ? 1 : 0 : transition.kind === "exit" ? 0 : 1,
+					transitionProperty: "opacity",
+					transitionDuration: 130 / 2,
+					transitionTimingFunction: "ease-in-out"
+				}));
+				insert(__nsh_hv15, [() => !mobileJournalEditorOpen() && (() => {
 					const __nsh_hv16 = element("view");
-					prop(__nsh_hv16, "onPress", openNewTask);
-					prop(__nsh_hv16, "role", "button");
-					prop(__nsh_hv16, "accessibilityLabel", "Новая задача");
-					prop(__nsh_hv16, "class", "absolute items-center justify-center rounded-full");
-					prop(__nsh_hv16, "hoverStyle", { opacity: .85 });
-					bindProp(__nsh_hv16, "style", () => ({
+					prop(__nsh_hv16, "class", "h-14 flex-row items-center gap-2 px-3");
+					const __nsh_hv17 = element("view");
+					prop(__nsh_hv17, "onPress", goBack);
+					prop(__nsh_hv17, "role", "button");
+					prop(__nsh_hv17, "accessibilityLabel", "Назад");
+					prop(__nsh_hv17, "class", "h-10 w-10 items-center justify-center rounded-full border");
+					bindProp(__nsh_hv17, "style", () => ({
+						borderColor: snapshot().colors.border,
+						backgroundColor: snapshot().colors.card
+					}));
+					const __nsh_hv18 = element("text");
+					prop(__nsh_hv18, "class", "text-[25px]");
+					bindProp(__nsh_hv18, "style", () => ({ color: snapshot().colors.foreground }));
+					const __nsh_hv19 = text("‹");
+					append(__nsh_hv18, __nsh_hv19);
+					append(__nsh_hv17, __nsh_hv18);
+					const __nsh_hv20 = element("view");
+					prop(__nsh_hv20, "class", "h-10 min-w-0 flex-1 items-center justify-center rounded-full border px-4");
+					bindProp(__nsh_hv20, "style", () => ({
+						borderColor: snapshot().colors.border,
+						backgroundColor: snapshot().colors.card
+					}));
+					const __nsh_hv21 = element("text");
+					prop(__nsh_hv21, "numberOfLines", 1);
+					prop(__nsh_hv21, "ellipsizeMode", "tail");
+					prop(__nsh_hv21, "class", "min-w-0 text-center text-[16px] font-normal");
+					bindProp(__nsh_hv21, "style", () => ({
+						color: snapshot().colors.foreground,
+						fontFamily: Inter_default
+					}));
+					const __nsh_hv22 = text("Дневник");
+					append(__nsh_hv21, __nsh_hv22);
+					append(__nsh_hv20, __nsh_hv21);
+					append(__nsh_hv16, __nsh_hv17);
+					append(__nsh_hv16, __nsh_hv20);
+					return __nsh_hv16;
+				})(), component(MobileJournalPage, {
+					get entries() {
+						return snapshot().journalEntries;
+					},
+					get colors() {
+						return snapshot().colors;
+					},
+					onCreate: (text) => commandRef?.("journal.create", { text }),
+					onUpdate: (id, text) => commandRef?.("journal.update", {
+						id,
+						text
+					}),
+					onDelete: (id) => commandRef?.("journal.delete", { id }),
+					onCopy: (text) => commandRef?.("clipboard.copy", { text }),
+					nativeCalendarButton: false,
+					mobile: true
+				})]);
+				return __nsh_hv15;
+			})(),
+			() => route() === "tasks" && (() => {
+				const __nsh_hv23 = element("view");
+				prop(__nsh_hv23, "class", "min-h-0 flex-1");
+				insert(__nsh_hv23, [component(TaskPage, {}), () => shell() && (() => {
+					const __nsh_hv24 = element("view");
+					prop(__nsh_hv24, "onPress", openNewTask);
+					prop(__nsh_hv24, "role", "button");
+					prop(__nsh_hv24, "accessibilityLabel", "Новая задача");
+					prop(__nsh_hv24, "class", "absolute items-center justify-center rounded-full");
+					prop(__nsh_hv24, "hoverStyle", { opacity: .85 });
+					bindProp(__nsh_hv24, "style", () => ({
 						right: 16,
 						bottom: 16,
 						width: 32,
@@ -2345,24 +3718,78 @@ function App() {
 						backgroundColor: snapshot().colors.foreground,
 						cursor: "pointer"
 					}));
-					insert(__nsh_hv16, component(Icon, {
+					insert(__nsh_hv24, component(Icon, {
 						name: "plus",
 						size: 16,
 						get color() {
 							return snapshot().colors.background;
 						}
 					}));
-					return __nsh_hv16;
+					return __nsh_hv24;
 				})()]);
-				return __nsh_hv15;
+				return __nsh_hv23;
 			})(),
-			() => route() === "settings" && (() => {
-				const __nsh_hv17 = element("view");
-				prop(__nsh_hv17, "class", "min-h-0 flex-1");
-				prop(__nsh_hv17, "style", { paddingTop: shell ? 38 : 0 });
-				insert(__nsh_hv17, component(SettingsPage, {}));
-				return __nsh_hv17;
+			() => route() === "settings" && snapshot().chrome !== "mobile" && (() => {
+				const __nsh_hv25 = element("view");
+				prop(__nsh_hv25, "class", "min-h-0 flex-1");
+				bindProp(__nsh_hv25, "style", () => ({ paddingTop: shell() ? 38 : 0 }));
+				insert(__nsh_hv25, component(SettingsPage, {}));
+				return __nsh_hv25;
 			})(),
+			() => snapshot().chrome === "mobile" && route() === "settings" && (() => {
+				const __nsh_hv26 = element("view");
+				prop(__nsh_hv26, "class", "h-full min-h-0 flex-col");
+				bindProp(__nsh_hv26, "style", () => ({ backgroundColor: snapshot().colors.background }));
+				const __nsh_hv27 = element("view");
+				prop(__nsh_hv27, "class", "h-14 flex-row items-center px-3");
+				const __nsh_hv28 = element("view");
+				prop(__nsh_hv28, "onPress", goBack);
+				prop(__nsh_hv28, "role", "button");
+				prop(__nsh_hv28, "accessibilityLabel", "Назад");
+				prop(__nsh_hv28, "class", "h-10 w-10 items-center justify-center rounded-full border");
+				bindProp(__nsh_hv28, "style", () => ({
+					borderColor: snapshot().colors.border,
+					backgroundColor: snapshot().colors.card
+				}));
+				const __nsh_hv29 = element("text");
+				prop(__nsh_hv29, "class", "text-[25px]");
+				bindProp(__nsh_hv29, "style", () => ({ color: snapshot().colors.foreground }));
+				const __nsh_hv30 = text("‹");
+				append(__nsh_hv29, __nsh_hv30);
+				append(__nsh_hv28, __nsh_hv29);
+				append(__nsh_hv27, __nsh_hv28);
+				append(__nsh_hv26, __nsh_hv27);
+				insert(__nsh_hv26, component(SettingsPage, { onConnections: () => changeRoute("connection") }));
+				return __nsh_hv26;
+			})(),
+			() => snapshot().chrome === "mobile" && route() === "connection" && component(ConnectionPage, {
+				get colors() {
+					return snapshot().colors;
+				},
+				get version() {
+					return snapshot().version;
+				},
+				get sync() {
+					return snapshot().connection;
+				},
+				onBack: goBack,
+				onShowCode: () => commandRef?.("connection.show-code"),
+				onCopy: (text) => commandRef?.("clipboard.copy", { text }),
+				onConnectClipboard: () => commandRef?.("connection.connect-clipboard"),
+				onRestart: () => commandRef?.("connection.restart"),
+				onAccept: (deviceId) => commandRef?.("connection.accept", { device_id: deviceId }),
+				onDecline: (deviceId) => commandRef?.("connection.decline", { device_id: deviceId }),
+				onCancelPairing: () => commandRef?.("connection.cancel"),
+				onDisconnect: (deviceId) => commandRef?.("connection.disconnect", { device_id: deviceId })
+			}),
+			() => snapshot().chrome === "mobile" && component(MobileHome, {
+				get colors() {
+					return snapshot().colors;
+				},
+				mode: () => route() === "home" ? transition.kind === "enter" && transition.phase === "primed" ? "fadeOut" : "home" : transition.kind === "exit" && transition.phase === "primed" ? "fadeInStart" : transition.kind === "exit" && transition.phase === "moving" ? "fadeIn" : "hidden",
+				onOpenJournal: () => changeRoute("journal"),
+				onOpenSettings: () => changeRoute("settings")
+			}),
 			() => addTaskOpen() && component(Dialog, {
 				title: "Новая задача",
 				get colors() {
@@ -2370,31 +3797,33 @@ function App() {
 				},
 				get children() {
 					return [(() => {
-						const __nsh_hv18 = element("input");
-						bindProp(__nsh_hv18, "value", () => newTaskTitle());
-						prop(__nsh_hv18, "onChange", (value) => newTaskTitle.set(value));
-						prop(__nsh_hv18, "onSubmit", (event) => {
+						const __nsh_hv31 = element("input");
+						bindProp(__nsh_hv31, "value", () => newTaskTitle());
+						prop(__nsh_hv31, "onChange", (value) => newTaskTitle.set(value));
+						prop(__nsh_hv31, "onSubmit", (event) => {
 							createTodo(event.text);
 							addTaskOpen.set(false);
 						});
-						prop(__nsh_hv18, "placeholder", "Название задачи");
-						prop(__nsh_hv18, "accessibilityLabel", "Название задачи");
-						prop(__nsh_hv18, "class", "h-10 rounded-lg px-3 text-[13px]");
-						bindProp(__nsh_hv18, "style", () => ({
+						prop(__nsh_hv31, "placeholder", "Название задачи");
+						prop(__nsh_hv31, "accessibilityLabel", "Название задачи");
+						prop(__nsh_hv31, "class", "h-10 rounded-lg px-3 text-[13px]");
+						bindProp(__nsh_hv31, "style", () => ({
 							backgroundColor: snapshot().colors.background,
 							color: snapshot().colors.foreground
 						}));
-						return __nsh_hv18;
+						return __nsh_hv31;
 					})(), (() => {
-						const __nsh_hv19 = element("view");
-						prop(__nsh_hv19, "class", "mt-3 flex-row justify-end");
-						prop(__nsh_hv19, "style", { gap: 8 });
-						insert(__nsh_hv19, [component(GhostButton, {
+						const __nsh_hv32 = element("view");
+						prop(__nsh_hv32, "class", "mt-3 flex-row justify-end");
+						prop(__nsh_hv32, "style", { gap: 8 });
+						insert(__nsh_hv32, [component(GhostButton, {
 							label: "Отмена",
 							get colors() {
 								return snapshot().colors;
 							},
-							dark,
+							get dark() {
+								return dark();
+							},
 							onPress: () => addTaskOpen.set(false)
 						}), component(SolidButton, {
 							label: "Добавить",
@@ -2409,13 +3838,13 @@ function App() {
 								addTaskOpen.set(false);
 							}
 						})]);
-						return __nsh_hv19;
+						return __nsh_hv32;
 					})()];
 				}
 			})
 		]);
 		append(__nsh_hv9, __nsh_hv14);
-		insert(__nsh_hv9, () => shell && (() => {
+		insert(__nsh_hv9, () => shell() && (() => {
 			const __nsh_hv10 = element("view");
 			prop(__nsh_hv10, "class", "h-full shrink-0 overflow-hidden");
 			bindProp(__nsh_hv10, "style", () => ({ width: sidebarPaneWidth() }));
@@ -2424,7 +3853,7 @@ function App() {
 			bindProp(__nsh_hv11, "style", () => ({
 				width: 256,
 				paddingTop: 38 + 4,
-				backgroundColor: surfaceWash(dark),
+				backgroundColor: surfaceWash(dark()),
 				borderColor: snapshot().colors.border
 			}));
 			const __nsh_hv12 = element("view");
@@ -2439,7 +3868,9 @@ function App() {
 				get selected() {
 					return route() === item.id;
 				},
-				dark,
+				get dark() {
+					return dark();
+				},
 				get colors() {
 					return snapshot().colors;
 				},
@@ -2458,7 +3889,9 @@ function App() {
 				get selected() {
 					return route() === item.id;
 				},
-				dark,
+				get dark() {
+					return dark();
+				},
 				get colors() {
 					return snapshot().colors;
 				},
@@ -2478,36 +3911,65 @@ function App() {
 			get route() {
 				return route();
 			},
+			get canHandleBack() {
+				return snapshot().chrome === "mobile" && (route() !== "home" || mobileJournalEditorOpen());
+			},
 			onState: (next) => {
 				route.set(next.route);
 				const appearance = next.appearance ?? snapshot().appearance;
-				snapshot.set({
+				const themes = next.chrome === "mobile" ? mobileThemes : previewThemes;
+				const mobileSettings = mobileAppearanceOverride();
+				const mobileAppearance = next.chrome === "mobile" && mobileSettings && appearance ? {
+					...appearance,
+					settings: mobileSettings,
+					policy: {
+						...appearance.policy,
+						following: false
+					}
+				} : appearance;
+				const hydrated = {
 					...next,
-					themes: previewThemes,
-					journalEntries: snapshot().journalEntries,
-					sidebarVisible: sidebarVisible(),
-					colors: appearance ? resolveAppearanceColors(appearance, previewThemes, next.colors) : next.colors
-				});
+					themes,
+					journalEntries: next.chrome === "mobile" ? next.journalEntries : snapshot().journalEntries,
+					sidebarVisible: next.chrome === "mobile" ? next.sidebarVisible : sidebarVisible(),
+					connection: next.connection ?? snapshot().connection,
+					colors: mobileAppearance ? resolveAppearanceColors(mobileAppearance, themes, next.colors) : next.colors,
+					...mobileAppearance ? { appearance: mobileAppearance } : {}
+				};
+				snapshot.set(hydrated);
+				if (next.chrome === "mobile") commandRef?.("window.background", { color: hydrated.colors.background });
+				sidebarVisible.set(next.sidebarVisible);
+				if (next.chrome === "mobile" && !mobileJournalRequested) {
+					mobileJournalRequested = true;
+					commandRef?.("reload");
+				}
 			},
 			onJournal: (entries) => snapshot.set({
 				...snapshot(),
 				journalEntries: entries
 			}),
-			onNavigate: (event) => changeRoute(event.route)
+			onNavigate: (event) => changeRoute(event.route),
+			onConnection: (connection) => snapshot.set({
+				...snapshot(),
+				connection
+			}),
+			onBack: goBack
 		}), __nsh_hv9);
-		insert(__nsh_hv8, () => shell && component(TitlebarOverlay, {
+		insert(__nsh_hv8, () => shell() && component(TitlebarOverlay, {
 			get colors() {
 				return snapshot().colors;
 			},
-			dark,
+			get dark() {
+				return dark();
+			},
 			get showCalendarToggle() {
 				return route() === "journal";
 			},
 			get calendarOpen() {
-				return journalCalendarOpen();
+				return journalCalendarOpen$1();
 			},
 			onToggleSidebar: toggleSidebar,
-			onToggleCalendar: toggleJournalCalendar
+			onToggleCalendar: toggleJournalCalendar$1
 		}));
 		return __nsh_hv8;
 	})();

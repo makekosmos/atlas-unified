@@ -2,6 +2,6 @@
   "name": "atlas-nsh-ui",
   "private": true,
   "dependencies": {
-    "@makekosmos/imago-nsh": "github:makekosmos/imago#feat/native-sidebar"
+    "@makekosmos/imago-nsh": "github:makekosmos/imago#6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11"
   }
 }

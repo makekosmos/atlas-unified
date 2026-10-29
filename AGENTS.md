@@ -1,7 +1,7 @@
 # AGENTS.md — Atlas
 
-Atlas desktop app на GPUI и NSH (задачи и календарь) для Mundus. История репозитория — `atlas-unified`, один бинарный
-крейт `atlas` (публикация релизов отключена до отдельного решения). Главная платформа — Windows; Linux и macOS собираются и
+Atlas desktop app на GPUI и NSH (задачи и календарь) для Mundus плюс Atlas Android. История репозитория — `atlas-unified`,
+один desktop-бинарный крейт `atlas` и отдельный Android Rust crate. Главная платформа — Windows; Linux и macOS собираются и
 проверяются в CI. Приложение ставится Engine из GitHub Releases этого репо.
 
 ## Карта
@@ -97,5 +97,9 @@ hk run pre-push                             # или hk check --all
 
 ## Релиз
 
-Release workflow оставляет сборку и CI включёнными. Публикация отключена до
-отдельного решения; версию и тег вручную не меняй.
+Nightly release workflow выпускает Windows x86_64, macOS Apple Silicon и
+подписанный Android ARM64 APK при изменениях с прошлого релиза. Все артефакты
+собираются с одного SHA и публикуются вместе; описание содержит задачи, PR,
+каждый коммит и автора. Android signing secrets задаются в GitHub Actions как
+`ATLAS_ANDROID_KEYSTORE_BASE64` и `ATLAS_ANDROID_KEY_PASSWORD`. Версию и тег
+вручную не меняй.

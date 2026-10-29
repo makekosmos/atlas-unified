@@ -16,8 +16,9 @@ Native GPUI-приложение Atlas для Mundus. Правила для аг
 ## CI и ночные релизы
 
 GitHub Actions проверяет форматирование, правила версий, Clippy и размер файлов (Windows),
-тесты и release-сборки при push в `main` и в pull request.
-Архивы сборок доступны в Artifacts каждого успешного запуска в течение 7 дней.
+тесты и release-сборки Windows/macOS, плюс Android ARM64 APK при push в `main` и в pull request.
+Артефакты сборки, профили Gradle и профили Cargo доступны в Artifacts каждого успешного запуска в течение 7 дней.
+Release job показывает в summary длительность сборки, попадание Rust-кэша и место, занятое результатами.
 
 Каждый день в **00:00 МСК** (`21:00 UTC`) workflow `Build and release` выпускает
 новую версию, если дерево исходников изменилось с последнего опубликованного
@@ -31,17 +32,33 @@ Build and release → Run workflow на основной ветке.
   Номер должен быть выше последнего релиза; поддерживаются версии `X.Y.Z`.
 - Все платформы собирают один commit с одной версией. После успешных проверок
   бот коммитит `Cargo.toml` и `Cargo.lock`, создаёт тег `vX.Y.Z` и публикует
-  GitHub Release с архивами и `SHA256SUMS.txt`. Окно «О приложении» показывает
+  GitHub Release с Windows/macOS/Android файлами и `SHA256SUMS.txt`. APK подписывается
+  тем же Android-ключом, что и релиз `0.0.1`; его base64-keystore и пароль хранятся
+  в Actions secrets `ATLAS_ANDROID_KEYSTORE_BASE64` и `ATLAS_ANDROID_KEY_PASSWORD`.
+  Android `versionCode` вычисляется из SemVer, поэтому обновления ставятся поверх
+  (для кода версии `MINOR` и `PATCH` должны быть меньше 1000).
+  Окно «О приложении» показывает
   версию из Cargo. Локальную ветку после релиза нужно обновить через `git pull`.
 - Если основная ветка изменилась во время сборки, публикация останавливается:
   запусти workflow заново на новой вершине ветки. При сбое загрузки релиза
   повтори неудачный job до добавления новых коммитов; готовый черновик можно
   дозагрузить повторным запуском, опубликованные релизы не перезаписываются.
 
-Платформы релиза: **Windows x86_64** (ZIP с EXE) и **macOS Apple Silicon**
-(tar.gz с `Atlas.app`). Linux-сборку workflow пока не выпускает.
-macOS-приложение имеет локальную ad-hoc подпись, без Apple notarization;
-Windows EXE также без издательской подписи.
+Платформы релиза: **Windows x86_64** (`Atlas-Setup.exe`, ставит в Program Files)
+**macOS Apple Silicon** (`Atlas.dmg`: открой образ и перетащи `Atlas.app` в «Программы»)
+и **Android ARM64** (`Atlas-Android-arm64.apk`).
+Linux-сборку workflow пока не выпускает.
+macOS-приложение имеет локальную ad-hoc подпись, без Apple notarization.
+При первом запуске macOS может заблокировать его из-за карантина. После переноса
+`Atlas.app` в «Программы» выполни в Terminal команду для снятия карантина только
+с Atlas, затем открой приложение:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Atlas.app
+```
+
+Команда не отключает Gatekeeper для остальных приложений.
+Windows-установщик без издательской подписи.
 
 Workflow использует стандартный `GITHUB_TOKEN`, отдельный PAT не нужен.
 Правила основной ветки должны разрешать release-job писать версию и теги;
@@ -54,7 +71,8 @@ GitHub отключает расписания публичных репозит
 
 Описание GitHub Release автоматически содержит задачи в формате
 `KOS-123 Название задачи @author — #PR (слил @merger)` со ссылками на Linear
-и GitHub. Берутся только изменения после предыдущего релиза; повторы задач
+и GitHub, затем отдельный полный список вошедших коммитов с их авторами и ссылками.
+Берутся только изменения после предыдущего релиза; повторы задач
 объединяются. Указывай `KOS-123` в названии PR или ветки, либо ссылку на задачу
 Linear в описании PR. Для прямых коммитов указывай ID в заголовке коммита.
 Изменения без ID перечисляются отдельно. Автор берётся из GitHub, а не из
@@ -125,6 +143,15 @@ Windows cross (Linux):
 export GPUI_FXC_PATH=/path/to/fxc   # wine-wrapper ok
 cargo build --release --target x86_64-pc-windows-gnu
 ```
+
+## Android
+
+Android builds are ARM64 APKs. Atlas embeds `engine-mobile`, stores the journal
+in app-private storage, and syncs it with paired devices. To pair a phone, open
+«Настройки» → «Устройства и подключение» and exchange connection codes. The
+desktop device needs Mundus Engine running; Android runs its mobile Engine
+inside Atlas. Build, signing, and release instructions are in
+[android/README.md](android/README.md).
 
 ## Структура
 

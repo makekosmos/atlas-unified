@@ -1,0 +1,23 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@makekosmos/imago-nsh':
+        specifier: github:makekosmos/imago#6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11
+        version: https://codeload.github.com/makekosmos/imago/tar.gz/6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11
+
+packages:
+
+  '@makekosmos/imago-nsh@https://codeload.github.com/makekosmos/imago/tar.gz/6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11':
+    resolution: {gitHosted: true, integrity: sha512-leye9jenKndruwqJBAfdToAIiwbllYzrKrZ0DI5zTmGqD+UClAf31ap/RBHCVyZmHHyhy8ThbmyHt1I71EfRKw==, tarball: https://codeload.github.com/makekosmos/imago/tar.gz/6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11}
+    version: 0.1.0
+
+snapshots:
+
+  '@makekosmos/imago-nsh@https://codeload.github.com/makekosmos/imago/tar.gz/6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11': {}

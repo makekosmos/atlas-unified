@@ -10,7 +10,6 @@ import tarfile
 import tempfile
 import tomllib
 from unittest.mock import patch
-import zipfile
 
 import release
 from release import next_version, set_version, version_tuple
@@ -161,23 +160,27 @@ def test_release():
             # Archives contain the right executable; the macOS bundle embeds the version.
             for target in ["x86_64-pc-windows-msvc", "x86_64-unknown-linux-gnu", "aarch64-apple-darwin"]:
                 filename = "atlas.exe" if "windows" in target else "atlas"
-                binary = Path("target") / target / "release" / filename
+                target_dir = Path("isolated-cargo-target" if "apple" in target else "target")
+                binary = target_dir / target / "release" / filename
                 binary.parent.mkdir(parents=True)
                 binary.write_bytes(b"test executable")
-                with patch.object(release.subprocess, "run") as signer:
+                with patch.dict(os.environ, {"CARGO_TARGET_DIR": str(target_dir)}), \
+                        patch.object(release.subprocess, "run") as signer:
                     release.package(target)
-                    assert signer.called == ("apple" in target)
-                stem = f"dist/atlas-1.0.2-{target}"
-                if "windows" in target:
-                    with zipfile.ZipFile(stem + ".zip") as archive:
-                        assert archive.read(filename) == b"test executable"
-                else:
-                    with tarfile.open(stem + ".tar.gz") as archive:
-                        executable = "Atlas.app/Contents/MacOS/atlas" if "apple" in target else filename
-                        assert archive.extractfile(executable).read() == b"test executable"
-                        if "apple" in target:
-                            plist = plistlib.load(archive.extractfile("Atlas.app/Contents/Info.plist"))
-                            assert plist["CFBundleShortVersionString"] == "1.0.2"
+                    if "windows" in target:
+                        assert signer.call_args.args[0][0] == "makensis"
+                        assert "-DVERSION=1.0.2" in signer.call_args.args[0]
+                    elif "apple" in target:
+                        assert any(call.args[0][0] == "hdiutil" for call in signer.call_args_list)
+                    else:
+                        assert not signer.called
+                if "apple" in target:
+                    assert Path("dist/Atlas.app/Contents/MacOS/atlas").read_bytes() == b"test executable"
+                    plist = plistlib.load(Path("dist/Atlas.app/Contents/Info.plist").open("rb"))
+                    assert plist["CFBundleShortVersionString"] == "1.0.2"
+                elif "linux" in target:
+                    with tarfile.open(f"dist/atlas-1.0.2-{target}.tar.gz") as archive:
+                        assert archive.extractfile(filename).read() == b"test executable"
         finally:
             os.chdir(previous_cwd)
     print("Release version checks passed")
