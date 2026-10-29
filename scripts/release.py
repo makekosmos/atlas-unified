@@ -95,7 +95,8 @@ def package(target):
     dist = Path("dist")
     dist.mkdir(exist_ok=True)
     name = f"atlas-{version}-{target}"
-    binary = Path("target") / target / "release" / ("atlas.exe" if "windows" in target else "atlas")
+    target_dir = Path(os.environ.get("CARGO_TARGET_DIR", "target"))
+    binary = target_dir / target / "release" / ("atlas.exe" if "windows" in target else "atlas")
     if "windows" in target:
         subprocess.run(
             ["makensis", f"-DOUT={dist / 'Atlas-Setup.exe'}", f"-DEXE={binary}",

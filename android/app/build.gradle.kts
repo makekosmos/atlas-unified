@@ -14,11 +14,26 @@ val nshCli = providers.environmentVariable("NSH_CLI")
     .get()
 val rustProfile = if (gradle.startParameter.taskNames.any { it.contains("Release") }) "release" else "android-dev"
 val releaseSigningPassword = providers.environmentVariable("ATLAS_ANDROID_KEY_PASSWORD").orNull
-val releaseKeystore = File(System.getProperty("user.home"), ".android/atlas-release-key.p12")
+val releaseKeystore = File(
+    providers.environmentVariable("ATLAS_ANDROID_KEYSTORE_PATH").orElse(
+        "${System.getProperty("user.home")}/.android/atlas-release-key.p12"
+    ).get()
+)
 val releaseRequested = gradle.startParameter.taskNames.any { it.contains("Release") }
+val appVersion = Regex("(?m)^version = \"([0-9]+)\\.([0-9]+)\\.([0-9]+)\"")
+    .find(repoRoot.resolve("Cargo.toml").readText())
+    ?: throw GradleException("Cargo.toml must contain a numeric MAJOR.MINOR.PATCH version.")
+val appVersionParts = appVersion.groupValues.drop(1).map(String::toLong)
+if (appVersionParts[1] > 999 || appVersionParts[2] > 999) {
+    throw GradleException("Android versionCode encoding requires MINOR and PATCH to be below 1000.")
+}
+val generatedVersionCode = appVersionParts[0] * 1_000_000L + appVersionParts[1] * 1_000L + appVersionParts[2] + 3L
+if (generatedVersionCode > 2_100_000_000L) {
+    throw GradleException("Cargo version exceeds Android's supported versionCode range.")
+}
 
 if (releaseRequested && releaseSigningPassword.isNullOrBlank()) {
-    throw GradleException("Android release builds must run through scripts/build-android-release.sh so the signing key is loaded from macOS Keychain.")
+    throw GradleException("Android release builds require scripts/build-android-release.sh and the release signing key.")
 }
 if (releaseRequested && !releaseKeystore.isFile) {
     throw GradleException("Android release keystore not found at ${releaseKeystore.path}.")
@@ -58,9 +73,8 @@ android {
         applicationId = "com.mundus.atlas"
         minSdk = 28
         targetSdk = 35
-        versionCode = 3
-        versionName = Regex("(?m)^version = \"([^\"]+)\"")
-            .find(repoRoot.resolve("Cargo.toml").readText())?.groupValues?.get(1) ?: "0.0.0"
+        versionCode = generatedVersionCode.toInt()
+        versionName = appVersion.groupValues.drop(1).joinToString(".")
         ndk { abiFilters += "arm64-v8a" }
     }
 

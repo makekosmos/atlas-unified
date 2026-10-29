@@ -46,7 +46,8 @@ guard CommandLine.arguments.count >= 2 else {
 
 let repo = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 let home = FileManager.default.homeDirectoryForCurrentUser
-let keystore = home.appendingPathComponent(".android/atlas-release-key.p12")
+let environment = ProcessInfo.processInfo.environment
+let keystore = URL(fileURLWithPath: environment["ATLAS_ANDROID_KEYSTORE_PATH"] ?? home.appendingPathComponent(".android/atlas-release-key.p12").path)
 let gradle = repo.appendingPathComponent("android/gradlew")
 let releaseApk = repo.appendingPathComponent("android/app/build/outputs/apk/release/app-release.apk")
 let outputApk = repo.appendingPathComponent("dist/Atlas-Android-arm64.apk")
@@ -63,27 +64,33 @@ guard [zipalign, apksigner, aapt].allSatisfy({ FileManager.default.isExecutableF
     fail("Android build-tools 35.0.0 are missing under \(buildTools.path). Set ANDROID_HOME to the installed SDK.")
 }
 
-let query: [String: Any] = [
-    kSecClass as String: kSecClassGenericPassword,
-    kSecAttrService as String: "atlas-android-release",
-    kSecAttrAccount as String: "atlas-release",
-    kSecReturnData as String: true,
-    kSecMatchLimit as String: kSecMatchLimitOne,
-]
-var keychainResult: CFTypeRef?
-guard SecItemCopyMatching(query as CFDictionary, &keychainResult) == errSecSuccess,
-      let secret = keychainResult as? Data,
-      let password = String(data: secret, encoding: .utf8) else {
-    fail("Could not read Android release signing credentials from macOS Keychain (atlas-android-release / atlas-release).")
+let password: String
+if let suppliedPassword = environment["ATLAS_ANDROID_KEY_PASSWORD"], !suppliedPassword.isEmpty {
+    password = suppliedPassword
+} else {
+    let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: "atlas-android-release",
+        kSecAttrAccount as String: "atlas-release",
+        kSecReturnData as String: true,
+        kSecMatchLimit as String: kSecMatchLimitOne,
+    ]
+    var keychainResult: CFTypeRef?
+    guard SecItemCopyMatching(query as CFDictionary, &keychainResult) == errSecSuccess,
+          let secret = keychainResult as? Data,
+          let keychainPassword = String(data: secret, encoding: .utf8) else {
+        fail("Could not read Android release signing credentials from macOS Keychain or environment.")
+    }
+    password = keychainPassword
 }
 
-var environment = ProcessInfo.processInfo.environment
-environment["ATLAS_ANDROID_KEY_PASSWORD"] = password
-let gradleArguments = ["--project-dir", repo.appendingPathComponent("android").path, "--no-daemon", ":app:assembleRelease"]
+var buildEnvironment = environment
+buildEnvironment["ATLAS_ANDROID_KEY_PASSWORD"] = password
+let gradleArguments = ["--project-dir", repo.appendingPathComponent("android").path, "--no-daemon", "--profile", ":app:assembleRelease"]
 let build = Process()
 build.executableURL = gradle
 build.arguments = gradleArguments
-build.environment = environment
+build.environment = buildEnvironment
 build.standardOutput = FileHandle.standardOutput
 build.standardError = FileHandle.standardError
 do {

@@ -1,0 +1,242 @@
+name: Build metrics
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: '0'
+
+jobs:
+  desktop:
+    name: Cold and warm (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            target: x86_64-pc-windows-msvc
+          - os: macos-26
+            target: aarch64-apple-darwin
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_TARGET: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Isolate Cargo home
+        run: |
+          cargo_home="$RUNNER_TEMP/atlas-cargo-home"
+          if [ "$RUNNER_OS" = Windows ]; then
+            cargo_home=$(cygpath -w "$cargo_home")
+          fi
+          echo "CARGO_HOME=$cargo_home" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal --target "$BUILD_TARGET"
+          rustup default stable
+      - name: Measure cold crate download (empty Cargo home)
+        run: |
+          mkdir -p "$CARGO_HOME"
+          start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          start_s=$(date +%s)
+          cargo fetch --locked --target "$BUILD_TARGET"
+          end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          elapsed=$(($(date +%s) - start_s))
+          cargo_kb=$(du -sk "$(cygpath -u "$CARGO_HOME" 2>/dev/null || echo "$CARGO_HOME")" | awk '{print $1}')
+          echo "Cold Cargo fetch: $start to $end ($elapsed seconds; Cargo home $cargo_kb KiB)." | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Measure Cargo fetch with warm download cache
+        run: |
+          start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          start_s=$(date +%s)
+          cargo fetch --locked --target "$BUILD_TARGET"
+          end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          elapsed=$(($(date +%s) - start_s))
+          cargo_kb=$(du -sk "$(cygpath -u "$CARGO_HOME" 2>/dev/null || echo "$CARGO_HOME")" | awk '{print $1}')
+          echo "Warm Cargo fetch: $start to $end ($elapsed seconds; Cargo home $cargo_kb KiB)." | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: macOS SDK and Metal compiler
+        if: runner.os == 'macOS'
+        run: |
+          macos_sdk_version=$(xcrun --sdk macosx --show-sdk-version)
+          if [ "${macos_sdk_version%%.*}" -lt 26 ]; then
+            echo "Atlas requires macOS SDK 26+ (found $macos_sdk_version)" >&2
+            exit 1
+          fi
+          if ! xcrun --find metal; then xcodebuild -downloadComponent MetalToolchain; fi
+      - name: Cold build without Cargo or target cache
+        run: |
+          mkdir -p "$CARGO_HOME" target
+          start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          start_s=$(date +%s)
+          cargo build --locked --release --bin atlas --target "$BUILD_TARGET" --timings
+          end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          elapsed=$(($(date +%s) - start_s))
+          target_path=target
+          cargo_path="$CARGO_HOME"
+          if [ "$RUNNER_OS" = Windows ]; then
+            cargo_path=$(cygpath -u "$cargo_path")
+          fi
+          target_kb=$(du -sk "$target_path" | awk '{print $1}')
+          cargo_kb=$(du -sk "$cargo_path" | awk '{print $1}')
+          echo "| $BUILD_TARGET | Cold (no Cargo or target cache) | $start | $end | $elapsed | $target_kb KiB | $cargo_kb KiB |" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Warm build with local Cargo cache
+        run: |
+          start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          start_s=$(date +%s)
+          cargo build --locked --release --bin atlas --target "$BUILD_TARGET" --timings
+          end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          elapsed=$(($(date +%s) - start_s))
+          target_path=target
+          cargo_path="$CARGO_HOME"
+          if [ "$RUNNER_OS" = Windows ]; then
+            cargo_path=$(cygpath -u "$cargo_path")
+          fi
+          target_kb=$(du -sk "$target_path" | awk '{print $1}')
+          cargo_kb=$(du -sk "$cargo_path" | awk '{print $1}')
+          echo "| $BUILD_TARGET | Warm (same runner and Cargo target) | $start | $end | $elapsed | $target_kb KiB | $cargo_kb KiB |" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Install NSIS
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install nsis --no-progress -y
+          $nsi = "${env:ProgramFiles(x86)}\NSIS"
+          if (-not (Test-Path "$nsi\makensis.exe")) { $nsi = "$env:ProgramFiles\NSIS" }
+          Add-Content $env:GITHUB_PATH $nsi
+      - name: Package and measure installer
+        run: |
+          start_s=$(date +%s)
+          python scripts/release.py package "$BUILD_TARGET"
+          echo "Package step: $(($(date +%s) - start_s)) seconds." | tee -a "$GITHUB_STEP_SUMMARY"
+          target_path=target
+          cargo_path="$CARGO_HOME"
+          if [ "$RUNNER_OS" = Windows ]; then
+            cargo_path=$(cygpath -u "$cargo_path")
+          fi
+          du -sh "$target_path" "$cargo_path" dist | tee -a "$GITHUB_STEP_SUMMARY"
+          find dist -maxdepth 1 -type f -exec ls -lh {} \;
+      - uses: actions/upload-artifact@v7
+        with:
+          name: build-metrics-${{ matrix.target }}
+          path: |
+            dist/*
+            target/cargo-timings
+          if-no-files-found: error
+          retention-days: 14
+
+  android:
+    name: Cold and warm (Android ARM64)
+    runs-on: macos-26
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v6
+      - name: Isolate Cargo home and target directory
+        run: |
+          {
+            echo "CARGO_HOME=$RUNNER_TEMP/atlas-cargo-home"
+            echo "CARGO_TARGET_DIR=$RUNNER_TEMP/atlas-android-target"
+          } >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK and NDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
+      - name: Install Rust and cargo-ndk
+        run: |
+          rustup toolchain install 1.99.1 --profile minimal --target aarch64-linux-android
+          rustup default 1.99.1
+          mkdir -p "$CARGO_HOME/bin"
+          echo "$CARGO_HOME/bin" >> "$GITHUB_PATH"
+          cargo install cargo-ndk --locked
+      - name: Measure cold Android Rust crate download
+        run: |
+          start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          start_s=$(date +%s)
+          cargo fetch --locked --manifest-path android/rust/Cargo.toml --target aarch64-linux-android
+          end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          elapsed=$(($(date +%s) - start_s))
+          cargo_kb=$(du -sk "$CARGO_HOME" | awk '{print $1}')
+          echo "Cold Android Cargo fetch: $start to $end ($elapsed seconds; Cargo home $cargo_kb KiB)." | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Install matching NSH 0.3.0 Android SDK and CLI
+        run: |
+          mkdir -p "$RUNNER_TEMP/nsh"
+          curl -fsSL https://github.com/longbridge/nsh/releases/download/v0.3.0/nsh-embed-android.zip -o "$RUNNER_TEMP/nsh-embed-android.zip"
+          echo 'adc5c71e547c9901462208b50630548b3ae618b53555c581937a1d5c4e05eda6  nsh-embed-android.zip' > "$RUNNER_TEMP/nsh-embed-android.zip.sha256"
+          (cd "$RUNNER_TEMP" && shasum -a 256 -c nsh-embed-android.zip.sha256)
+          unzip -q "$RUNNER_TEMP/nsh-embed-android.zip" -d "$RUNNER_TEMP"
+          cargo install nsh-cli --version 0.3.0 --locked
+          {
+            echo "NSH_CLI=$CARGO_HOME/bin/nsh"
+            echo "NSH_ANDROID_AAR=$RUNNER_TEMP/nsh-embed-android/nsh.aar"
+            echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018"
+          } >> "$GITHUB_ENV"
+          "$CARGO_HOME/bin/nsh" --version | rg '^nsh 0\.3\.0 '
+      - name: Measure cold Gradle distribution and dependencies
+        run: |
+          start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          start_s=$(date +%s)
+          ./android/gradlew --project-dir android --no-daemon --version
+          wrapper_end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          wrapper_elapsed=$(($(date +%s) - start_s))
+          echo "Cold Gradle wrapper: $start to $wrapper_end ($wrapper_elapsed seconds)." | tee -a "$GITHUB_STEP_SUMMARY"
+          start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          start_s=$(date +%s)
+          ./android/gradlew --project-dir android --no-daemon :app:dependencies --configuration debugRuntimeClasspath
+          end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          elapsed=$(($(date +%s) - start_s))
+          gradle_kb=$(du -sk "$HOME/.gradle" | awk '{print $1}')
+          echo "Cold Gradle artifact resolution: $start to $end ($elapsed seconds; Gradle home $gradle_kb KiB)." | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Measure Gradle dependency resolution with warm cache
+        run: |
+          start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          start_s=$(date +%s)
+          ./android/gradlew --project-dir android --no-daemon :app:dependencies --configuration debugRuntimeClasspath
+          end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          elapsed=$(($(date +%s) - start_s))
+          gradle_kb=$(du -sk "$HOME/.gradle" | awk '{print $1}')
+          echo "Warm Gradle artifact resolution: $start to $end ($elapsed seconds; Gradle home $gradle_kb KiB)." | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Cold Android debug build without Cargo or Gradle cache
+        run: |
+          mkdir -p "$CARGO_HOME" "$CARGO_TARGET_DIR"
+          start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          start_s=$(date +%s)
+          ./android/gradlew --project-dir android --no-daemon --profile :app:assembleDebug
+          end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          elapsed=$(($(date +%s) - start_s))
+          target_kb=$(du -sk "$CARGO_TARGET_DIR" | awk '{print $1}')
+          cargo_kb=$(du -sk "$CARGO_HOME" | awk '{print $1}')
+          gradle_kb=$(du -sk android/.gradle android/app/build 2>/dev/null | awk '{s+=$1} END {print s}')
+          apk_bytes=$(stat -f '%z' android/app/build/outputs/apk/debug/app-debug.apk)
+          echo "| Android ARM64 | Cold (no Cargo or Gradle build cache) | $start | $end | $elapsed | target $target_kb KiB; Gradle $gradle_kb KiB | Cargo home $cargo_kb KiB; APK $apk_bytes bytes |" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Warm Android debug build with local caches
+        run: |
+          start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          start_s=$(date +%s)
+          ./android/gradlew --project-dir android --no-daemon --profile :app:assembleDebug
+          end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          elapsed=$(($(date +%s) - start_s))
+          target_kb=$(du -sk "$CARGO_TARGET_DIR" | awk '{print $1}')
+          cargo_kb=$(du -sk "$CARGO_HOME" | awk '{print $1}')
+          gradle_kb=$(du -sk android/.gradle android/app/build 2>/dev/null | awk '{s+=$1} END {print s}')
+          apk_bytes=$(stat -f '%z' android/app/build/outputs/apk/debug/app-debug.apk)
+          echo "| Android ARM64 | Warm (same runner, Cargo and Gradle caches) | $start | $end | $elapsed | target $target_kb KiB; Gradle $gradle_kb KiB | Cargo home $cargo_kb KiB; APK $apk_bytes bytes |" | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: build-metrics-android-arm64
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/reports/profile
+            ${{ runner.temp }}/atlas-android-target/cargo-timings
+          if-no-files-found: error
+          retention-days: 14

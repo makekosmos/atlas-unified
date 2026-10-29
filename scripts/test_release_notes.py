@@ -51,13 +51,26 @@ with patch.dict(os.environ, {"GITHUB_REPOSITORY": repo}), \
     assert sum(call.args == ("pulls/7",) for call in github.call_args_list) == 1
     assert changes[2]["author"] == "Local Author"
 
-text = notes.render(changes, {"KOS-123": "Точный заголовок"}, "v0.1.0", "head", repo)
+with patch.dict(os.environ, {"GITHUB_REPOSITORY": repo}), \
+        patch.object(notes, "run", return_value="feature\nmerge\ndirect\nlocal\nversion"), \
+        patch.object(notes, "github", side_effect=[
+            {**commit("Merged feature", "dave"), "html_url": "https://github.com/example/agenda/commit/feature"},
+            {**commit("Merge pull request", "bob"), "html_url": "https://github.com/example/agenda/commit/merge"},
+            {**commit("KOS-123: Timer follow-up"), "html_url": "https://github.com/example/agenda/commit/direct"},
+            {**commit("Docs\nPrivate commit body", None), "html_url": "https://github.com/example/agenda/commit/local"},
+            {**commit("chore: release v0.1.1"), "html_url": "https://github.com/example/agenda/commit/version"},
+        ]):
+    commits = notes.shipped_commits("v0.1.0", "head")
+assert [item["author"] for item in commits] == ["@dave", "@bob", "@carol", "Local Author"]
+text = notes.render(changes, {"KOS-123": "Точный заголовок"}, "v0.1.0", "head", repo, commits)
 assert text.count("- [KOS-123]") == 1
 assert "Точный заголовок @alice, @carol" in text
 assert "слил @bob" in text and "[#7]" in text
 assert "KOS-999" not in text and "chore: release" not in text
 assert "Docs Local Author" in text and "@Local" not in text and "Private" not in text
 assert "compare/v0.1.0...head" in text
+assert "## Коммиты" in text and "Merged feature" in text and "@dave" in text
+assert "chore: release v0.1.1" not in text
 fallback = notes.render(changes, {}, "", "head", repo)
 assert "Fix timer @alice" in fallback and "commits/head" in fallback
 assert "В вошедших изменениях нет" in notes.render([], {}, "", "head", repo)

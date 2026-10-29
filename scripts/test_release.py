@@ -160,10 +160,12 @@ def test_release():
             # Archives contain the right executable; the macOS bundle embeds the version.
             for target in ["x86_64-pc-windows-msvc", "x86_64-unknown-linux-gnu", "aarch64-apple-darwin"]:
                 filename = "atlas.exe" if "windows" in target else "atlas"
-                binary = Path("target") / target / "release" / filename
+                target_dir = Path("isolated-cargo-target" if "apple" in target else "target")
+                binary = target_dir / target / "release" / filename
                 binary.parent.mkdir(parents=True)
                 binary.write_bytes(b"test executable")
-                with patch.object(release.subprocess, "run") as signer:
+                with patch.dict(os.environ, {"CARGO_TARGET_DIR": str(target_dir)}), \
+                        patch.object(release.subprocess, "run") as signer:
                     release.package(target)
                     if "windows" in target:
                         assert signer.call_args.args[0][0] == "makensis"

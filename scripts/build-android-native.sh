@@ -28,18 +28,18 @@ find "$BINDINGS" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
 
 cd "$RUST_DIR"
 export RUSTC="${RUSTC:-$(rustup which rustc)}"
-cargo build --lib
+cargo build --lib --timings
 HOST_LIB="$TARGET_DIR/debug/libatlas_mobile.dylib"
 if [[ ! -f "$HOST_LIB" ]]; then
   # Some Cargo distributions keep target output beside the manifest even
   # when CARGO_TARGET_DIR is set; find that host artifact for UniFFI.
   HOST_LIB="$RUST_DIR/target/debug/libatlas_mobile.dylib"
 fi
-cargo run --features cli --bin uniffi-bindgen -- \
+cargo run --timings --features cli --bin uniffi-bindgen -- \
   generate --library "$HOST_LIB" --crate atlas_mobile --language kotlin --config "$RUST_DIR/uniffi.toml" --out-dir "$BINDINGS"
 
 cargo ndk -t arm64-v8a --link-libcxx-shared -o "$OUT/jniLibs" \
-  build --manifest-path "$RUST_DIR/Cargo.toml" --lib --profile "$RUST_PROFILE"
+  build --manifest-path "$RUST_DIR/Cargo.toml" --lib --profile "$RUST_PROFILE" --timings
 
 # cargo-ndk copies every cdylib built in the dependency graph. The wrapper
 # statically links engine-mobile, so only its own cdylib belongs in the APK;
