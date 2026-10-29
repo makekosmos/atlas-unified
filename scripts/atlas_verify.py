@@ -134,7 +134,13 @@ def main() -> int:
         elif args.action == "type":
             if not args.text or re.search(r"[^A-Za-z0-9._-]", args.text):
                 raise RuntimeError("type accepts ASCII letters, digits, dot, underscore, and hyphen only")
-            adb(["shell", "input", "text", args.text])
+            # Give Android's IME time to attach after the field gains focus.
+            time.sleep(0.8)
+            # Android 15 occasionally drops the tail when input text arrives as
+            # one burst while NSH is relaying native text-change events.
+            for offset in range(0, len(args.text), 3):
+                adb(["shell", "input", "text", args.text[offset:offset + 3]])
+                time.sleep(0.12)
             print(f"typed {len(args.text)} characters into the focused field")
         elif args.action == "capture":
             path = Path(args.path)
