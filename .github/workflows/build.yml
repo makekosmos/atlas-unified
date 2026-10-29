@@ -123,14 +123,23 @@ jobs:
         run: cargo run --locked --release --bin check-source-size --target "$BUILD_TARGET"
       - name: Release build
         run: cargo build --locked --release --bin atlas --target "$BUILD_TARGET"
+      - name: NSIS
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install nsis --no-progress -y
+          $nsi = "${env:ProgramFiles(x86)}\NSIS"
+          if (-not (Test-Path "$nsi\makensis.exe")) { $nsi = "$env:ProgramFiles\NSIS" }
+          Add-Content $env:GITHUB_PATH $nsi
       - name: Package
         run: python scripts/release.py package "$BUILD_TARGET"
       - uses: actions/upload-artifact@v7
         with:
           name: atlas-${{ matrix.target }}
           path: |
-            dist/*.zip
+            dist/*.dmg
             dist/*.tar.gz
+            dist/*.exe
           if-no-files-found: error
           retention-days: 7
 
@@ -170,7 +179,7 @@ jobs:
         run: |
           tag="v$RELEASE_VERSION"
           cd dist
-          sha256sum *.zip *.tar.gz > SHA256SUMS.txt
+          sha256sum Atlas-Setup.exe Atlas.dmg > SHA256SUMS.txt
           cd ..
           if gh release view "$tag" --json isDraft > release-state.json; then
             python -c 'import json; assert json.load(open("release-state.json"))["isDraft"], "Release already published"'
