@@ -6,6 +6,8 @@ import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
+import android.content.ClipData
+import android.content.ClipboardManager
 import com.longbridge.nsh.NshComponent
 import com.longbridge.nsh.NshComponentContext
 import com.mundus.atlas.mobile.AtlasMobileEngine
@@ -23,10 +25,15 @@ internal class AtlasBridge(
     private val io = Executors.newSingleThreadExecutor()
     private val debugFeatures = (activity.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
     private var engine: AtlasMobileEngine? = null
-    private var route = "journal"
+    private var route = "home"
+    private var receivedInitialRouteProp = false
+    @Volatile private var canHandleBack = false
     @Volatile private var journalEntries: List<Any?> = emptyList()
 
     init {
+        // Render the mobile shell immediately while the in-process Engine opens.
+        // Otherwise the TSX fallback briefly shows the desktop navigation.
+        publishState()
         io.execute {
             try {
                 engine = (activity.application as AtlasApplication).engine
@@ -44,15 +51,43 @@ internal class AtlasBridge(
     }
 
     override fun setProp(name: String, value: Any?) {
-        if (name != "route") return
-        val next = value as? String ?: "journal"
-        if (next == "tasks" && !debugFeatures) return
-        route = next
-        main.post { publishState() }
+        when (name) {
+            "route" -> {
+                val next = value as? String ?: "home"
+                if (!receivedInitialRouteProp) {
+                    receivedInitialRouteProp = true
+                    if (route == "home" && next == "journal") {
+                        main.post { publishState() }
+                        return
+                    }
+                }
+                if (next == "tasks" && !debugFeatures) return
+                route = next
+                main.post { publishState() }
+            }
+            "canHandleBack" -> canHandleBack = value == true
+        }
+    }
+
+    fun handleSystemBack(): Boolean {
+        if (route == "home" && !canHandleBack) return false
+        main.post { context.emit("back", emptyMap<String, Any>()) }
+        return true
     }
 
     override fun command(name: String, args: Any?) {
         when (name) {
+            "clipboard.copy" -> {
+                val text = (args as? Map<*, *>)?.get("text") as? String ?: return
+                main.post {
+                    val clipboard = activity.getSystemService(ClipboardManager::class.java)
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Atlas journal entry", text))
+                }
+            }
+            "window.background" -> {
+                val color = (args as? Map<*, *>)?.get("color") as? String ?: return
+                main.post { (activity as? MainActivity)?.applyAtlasBackground(color) }
+            }
             "journal.create" -> (args as? Map<*, *>)?.get("text")?.toString()?.let { text ->
                 io.execute { runEngine { it.journalCreate(text) } }
             }
@@ -100,16 +135,16 @@ internal class AtlasBridge(
             "foreground" to "#e7e5ea",
             "muted" to "#8d8a94",
             "border" to "#27262a",
-            "accent" to "#af94f9",
+            "accent" to "#60a5fa",
             "card" to "#131216",
         )
         val lightColors = mapOf(
-            "background" to "#f7f6f8",
-            "foreground" to "#242127",
-            "muted" to "#76727c",
-            "border" to "#dedbe2",
-            "accent" to "#7654d6",
-            "card" to "#ffffff",
+            "background" to "#f8f7f9",
+            "foreground" to "#222027",
+            "muted" to "#615f67",
+            "border" to "#dedde0",
+            "accent" to "#2563eb",
+            "card" to "#f3f2f4",
         )
         val appearance = mapOf(
             "settings" to mapOf(
@@ -126,12 +161,17 @@ internal class AtlasBridge(
         )
         val state = mapOf(
                 "route" to route,
-                "title" to if (route == "tasks") "Задачи" else if (route == "settings") "Настройки" else "Дневник",
+                "title" to when (route) {
+                    "tasks" -> "Задачи"
+                    "settings" -> "Настройки"
+                    "home" -> "Дневник"
+                    else -> "Дневник"
+                },
                 "todos" to emptyList<Any>(),
                 "journalEntries" to journalEntries,
                 "version" to BuildConfig.VERSION_NAME,
                 "appearance" to appearance,
-                "appearanceEditable" to false,
+                "appearanceEditable" to true,
                 "themes" to listOf(mapOf("key" to "default", "name" to "Default", "light" to lightColors, "dark" to darkColors)),
                 "colors" to darkColors,
                 "sidebarVisible" to true,

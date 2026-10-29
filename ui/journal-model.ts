@@ -6,6 +6,7 @@ export type JournalDayGroup =
 
 const monthNamesInDate = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
 const monthNamesShort = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+const weekdays = ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"];
 
 function localDayKey(date: Date) {
   const year = date.getFullYear();
@@ -35,8 +36,9 @@ export function buildJournalDays(entries: readonly JournalEntry[]): JournalDayGr
 
 export function formatJournalDay(group: JournalDayGroup, now = new Date()) {
   if (group.kind === "invalid") return group.label;
+  if (localDayKey(group.date) === localDayKey(now)) return "Сегодня";
   const year = group.date.getFullYear() === now.getFullYear() ? "" : ` ${group.date.getFullYear()}`;
-  return `${group.date.getDate()} ${monthNamesInDate[group.date.getMonth()]}${year}`;
+  return `${weekdays[group.date.getDay()]}, ${group.date.getDate()} ${monthNamesInDate[group.date.getMonth()]}${year}`;
 }
 
 export type CalendarDay = { key: string; date: Date; count: number; period: string };

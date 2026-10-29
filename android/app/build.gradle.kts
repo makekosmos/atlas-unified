@@ -7,7 +7,7 @@ val repoRoot = rootProject.projectDir.parentFile
 val nativeOut = layout.buildDirectory.dir("rust")
 val generatedKotlin = layout.buildDirectory.dir("generated/uniffi")
 val nshAar = providers.environmentVariable("NSH_ANDROID_AAR")
-    .orElse("${System.getProperty("user.home")}/.nsh/embed/android/nsh.aar")
+    .orElse("${System.getProperty("user.home")}/.nsh-0.3.0-atlas/embed/android/nsh.aar")
     .get()
 val nshCli = providers.environmentVariable("NSH_CLI")
     .orElse("${System.getProperty("user.home")}/.cargo/bin/nsh")
@@ -55,6 +55,7 @@ android {
     }
 
     buildTypes {
+        debug { applicationIdSuffix = ".dev" }
         release {
             isMinifyEnabled = true
             isShrinkResources = true

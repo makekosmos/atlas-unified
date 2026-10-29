@@ -13,7 +13,7 @@ members = ["crates/agenda-core"]
 gpui = { package = "gpui-kit", version = "=0.8.0", features = ["gpui-fast"] }
 gpui-component = { version = "=0.8.0", features = ["gpui-fast"] }
 # NSH screens run in the same GPUI Fast renderer as the host app.
-imago-nsh = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
+imago-nsh = { git = "https://github.com/makekosmos/imago.git", rev = "6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11" }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
@@ -35,8 +35,8 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("cargo-cli
 
 
 [target.'cfg(target_os = "macos")'.dependencies]
-imago-native-sidebar = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
-imago-window-macos = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
+imago-native-sidebar = { git = "https://github.com/makekosmos/imago.git", rev = "6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11" }
+imago-window-macos = { git = "https://github.com/makekosmos/imago.git", rev = "6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11" }
 nsh-core = "=0.3.0"
 nsh-platform-macos = { version = "=0.3.0", default-features = false, features = ["js"] }
 objc2-foundation = "=0.3.2"
@@ -88,5 +88,5 @@ gpui-fast-backend = { package = "gpui-fast", version = "=0.1.10", features = ["w
 # gpui-fast and its gpui-pre compatibility dependency are patched from the
 # same Imago revision as the shared Atlas components. Atlas uses gpui-kit's
 # gpui-fast feature and doesn't import gpui-pre itself.
-gpui-fast = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
-gpui-pre = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
+gpui-fast = { git = "https://github.com/makekosmos/imago.git", rev = "6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11" }
+gpui-pre = { git = "https://github.com/makekosmos/imago.git", rev = "6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11" }

@@ -1,7 +1,7 @@
 import { defaultColors } from "@makekosmos/imago-nsh";
 import type { Appearance, ThemeColors } from "@makekosmos/imago-nsh";
 
-export type Route = "journal" | "tasks" | "settings";
+export type Route = "home" | "journal" | "tasks" | "settings";
 export type Todo = { id: string; title: string; is_completed: boolean; scheduled_date?: string; notes?: string };
 export type JournalEntry = { id: string; text: string; createdAt: string };
 export type AtlasTheme = { key: string; name: string; light: ThemeColors; dark: ThemeColors };
@@ -43,7 +43,7 @@ export function canNavigateToRoute(route: Route, devFeatures: boolean): boolean 
 }
 
 export function isRoute(value: unknown): value is Route {
-  return value === "journal" || value === "tasks" || value === "settings";
+  return value === "home" || value === "journal" || value === "tasks" || value === "settings";
 }
 
 function isTodo(value: unknown): value is Todo {

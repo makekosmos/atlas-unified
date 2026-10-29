@@ -22,8 +22,8 @@ test("groups journal bubbles by date and omits the current year", () => {
   ]);
   expect(groups.length).toEqual(2);
   expect(groups[0].entries.length).toEqual(2);
-  expect(formatJournalDay(groups[0], new Date(2025, 11, 31))).toEqual("23 декабря");
-  expect(formatJournalDay(groups[1], new Date(2025, 11, 31))).toEqual("17 сентября 2024");
+  expect(formatJournalDay(groups[0], new Date(2025, 11, 31))).toEqual("вторник, 23 декабря");
+  expect(formatJournalDay(groups[1], new Date(2025, 11, 31))).toEqual("вторник, 17 сентября 2024");
 });
 
 test("shows recent journal days in reverse chronological order with entry counts", () => {
