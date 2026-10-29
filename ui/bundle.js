@@ -3,7 +3,7 @@ import { Clipboard, Easing, LayoutAnimation, PanResponder, Storage, createMotion
 import { Menu, Window, titleBar } from "nsh/desktop";
 import { platform } from "os";
 
-//#region ../../../../../kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
 const icons = {
 	about: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
 	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
@@ -26,7 +26,7 @@ const icons = {
 };
 
 //#endregion
-//#region ../../../../../kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+6e9b9b5d5bf9ff48ad29f9e9600e2e93eb6a9c11/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
 function Icon(props) {
 	return (() => {
 		const __nsh_hv0 = element("image");
@@ -3552,8 +3552,8 @@ function App() {
 		newTaskTitle.set("");
 		addTaskOpen.set(true);
 	};
-	const shell = snapshot().chrome === "tsx";
-	const dark = snapshot().appearance?.settings.mode !== "light";
+	const shell = () => snapshot().chrome === "tsx";
+	const dark = () => snapshot().appearance?.settings.mode !== "light";
 	const changeRoute = (target) => {
 		if (journalTransition().kind !== "idle") return;
 		if (!isRoute(target) || !canNavigateToRoute(target, snapshot().devFeatures)) return;
@@ -3626,8 +3626,12 @@ function App() {
 				get nativeCalendarButton() {
 					return snapshot().chrome === "native";
 				},
-				titlebarInset: shell ? 38 : 0,
-				dark
+				get titlebarInset() {
+					return shell() ? 38 : 0;
+				},
+				get dark() {
+					return dark();
+				}
 			}),
 			() => snapshot().chrome === "mobile" && route() === "journal" && (() => {
 				const __nsh_hv15 = element("view");
@@ -3699,7 +3703,7 @@ function App() {
 			() => route() === "tasks" && (() => {
 				const __nsh_hv23 = element("view");
 				prop(__nsh_hv23, "class", "min-h-0 flex-1");
-				insert(__nsh_hv23, [component(TaskPage, {}), () => shell && (() => {
+				insert(__nsh_hv23, [component(TaskPage, {}), () => shell() && (() => {
 					const __nsh_hv24 = element("view");
 					prop(__nsh_hv24, "onPress", openNewTask);
 					prop(__nsh_hv24, "role", "button");
@@ -3728,7 +3732,7 @@ function App() {
 			() => route() === "settings" && snapshot().chrome !== "mobile" && (() => {
 				const __nsh_hv25 = element("view");
 				prop(__nsh_hv25, "class", "min-h-0 flex-1");
-				prop(__nsh_hv25, "style", { paddingTop: shell ? 38 : 0 });
+				bindProp(__nsh_hv25, "style", () => ({ paddingTop: shell() ? 38 : 0 }));
 				insert(__nsh_hv25, component(SettingsPage, {}));
 				return __nsh_hv25;
 			})(),
@@ -3817,7 +3821,9 @@ function App() {
 							get colors() {
 								return snapshot().colors;
 							},
-							dark,
+							get dark() {
+								return dark();
+							},
 							onPress: () => addTaskOpen.set(false)
 						}), component(SolidButton, {
 							label: "Добавить",
@@ -3838,7 +3844,7 @@ function App() {
 			})
 		]);
 		append(__nsh_hv9, __nsh_hv14);
-		insert(__nsh_hv9, () => shell && (() => {
+		insert(__nsh_hv9, () => shell() && (() => {
 			const __nsh_hv10 = element("view");
 			prop(__nsh_hv10, "class", "h-full shrink-0 overflow-hidden");
 			bindProp(__nsh_hv10, "style", () => ({ width: sidebarPaneWidth() }));
@@ -3847,7 +3853,7 @@ function App() {
 			bindProp(__nsh_hv11, "style", () => ({
 				width: 256,
 				paddingTop: 38 + 4,
-				backgroundColor: surfaceWash(dark),
+				backgroundColor: surfaceWash(dark()),
 				borderColor: snapshot().colors.border
 			}));
 			const __nsh_hv12 = element("view");
@@ -3862,7 +3868,9 @@ function App() {
 				get selected() {
 					return route() === item.id;
 				},
-				dark,
+				get dark() {
+					return dark();
+				},
 				get colors() {
 					return snapshot().colors;
 				},
@@ -3881,7 +3889,9 @@ function App() {
 				get selected() {
 					return route() === item.id;
 				},
-				dark,
+				get dark() {
+					return dark();
+				},
 				get colors() {
 					return snapshot().colors;
 				},
@@ -3945,11 +3955,13 @@ function App() {
 			}),
 			onBack: goBack
 		}), __nsh_hv9);
-		insert(__nsh_hv8, () => shell && component(TitlebarOverlay, {
+		insert(__nsh_hv8, () => shell() && component(TitlebarOverlay, {
 			get colors() {
 				return snapshot().colors;
 			},
-			dark,
+			get dark() {
+				return dark();
+			},
 			get showCalendarToggle() {
 				return route() === "journal";
 			},

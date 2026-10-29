@@ -242,8 +242,8 @@ function App() {
   const primaryNavigation = navigation.filter((item) => !item.footer);
   const footerNavigation = navigation.filter((item) => item.footer);
   const openNewTask = () => { newTaskTitle.set(""); addTaskOpen.set(true); };
-  const shell = snapshot().chrome === "tsx";
-  const dark = snapshot().appearance?.settings.mode !== "light";
+  const shell = () => snapshot().chrome === "tsx";
+  const dark = () => snapshot().appearance?.settings.mode !== "light";
   const changeRoute = (target: string) => {
     if (journalTransition().kind !== "idle") return;
     if (!isRoute(target) || !canNavigateToRoute(target, snapshot().devFeatures)) return;
@@ -326,13 +326,13 @@ function App() {
         onBack={goBack}
       />
       <View class={`h-full w-full ${snapshot().chrome === "mobile" ? "flex-col" : "flex-row"}`}>
-      {shell && <View class="h-full shrink-0 overflow-hidden" style={{ width: sidebarPaneWidth() }}>
-        <View class="h-full border-r px-2" style={{ width: SIDEBAR_WIDTH, paddingTop: TITLEBAR_HEIGHT + 4, backgroundColor: surfaceWash(dark), borderColor: snapshot().colors.border }}>
+      {shell() && <View class="h-full shrink-0 overflow-hidden" style={{ width: sidebarPaneWidth() }}>
+        <View class="h-full border-r px-2" style={{ width: SIDEBAR_WIDTH, paddingTop: TITLEBAR_HEIGHT + 4, backgroundColor: surfaceWash(dark()), borderColor: snapshot().colors.border }}>
           <View style={{ gap: 2 }}>
-            {primaryNavigation.map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
+            {primaryNavigation.map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark()} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
           </View>
           <View class="mt-auto mb-2" style={{ gap: 2 }}>
-            {footerNavigation.map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
+            {footerNavigation.map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark()} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
           </View>
         </View>
       </View>}
@@ -344,8 +344,8 @@ function App() {
           onUpdate={updateJournal}
           onDelete={deleteJournal}
           nativeCalendarButton={snapshot().chrome === "native"}
-          titlebarInset={shell ? TITLEBAR_HEIGHT : 0}
-          dark={dark}
+          titlebarInset={shell() ? TITLEBAR_HEIGHT : 0}
+          dark={dark()}
         />}
         {snapshot().chrome === "mobile" && route() === "journal" && <View class="relative h-full min-h-0 flex-col overflow-hidden" style={{ backgroundColor: snapshot().colors.background, opacity: transition.kind === "enter" ? (transition.phase === "moving" ? 1 : 0) : transition.kind === "exit" ? 0 : 1, transitionProperty: "opacity", transitionDuration: mobileJournalTransitionDuration / 2, transitionTimingFunction: "ease-in-out" }}>
           {!mobileJournalEditorOpen() && <View class="h-14 flex-row items-center gap-2 px-3">
@@ -363,9 +363,9 @@ function App() {
         </View>}
         {route() === "tasks" && <View class="min-h-0 flex-1">
           <TaskPage />
-          {shell && <View onPress={openNewTask} role="button" accessibilityLabel="Новая задача" class="absolute items-center justify-center rounded-full" hoverStyle={{ opacity: 0.85 }} style={{ right: 16, bottom: 16, width: 32, height: 32, backgroundColor: snapshot().colors.foreground, cursor: "pointer" }}><SharedIcon name="plus" size={16} color={snapshot().colors.background} /></View>}
+          {shell() && <View onPress={openNewTask} role="button" accessibilityLabel="Новая задача" class="absolute items-center justify-center rounded-full" hoverStyle={{ opacity: 0.85 }} style={{ right: 16, bottom: 16, width: 32, height: 32, backgroundColor: snapshot().colors.foreground, cursor: "pointer" }}><SharedIcon name="plus" size={16} color={snapshot().colors.background} /></View>}
         </View>}
-        {route() === "settings" && snapshot().chrome !== "mobile" && <View class="min-h-0 flex-1" style={{ paddingTop: shell ? TITLEBAR_HEIGHT : 0 }}><SettingsPage /></View>}
+        {route() === "settings" && snapshot().chrome !== "mobile" && <View class="min-h-0 flex-1" style={{ paddingTop: shell() ? TITLEBAR_HEIGHT : 0 }}><SettingsPage /></View>}
         {snapshot().chrome === "mobile" && route() === "settings" && <View class="h-full min-h-0 flex-col" style={{ backgroundColor: snapshot().colors.background }}>
           <View class="h-14 flex-row items-center px-3">
             <View onPress={goBack} role="button" accessibilityLabel="Назад" class="h-10 w-10 items-center justify-center rounded-full border" style={{ borderColor: snapshot().colors.border, backgroundColor: snapshot().colors.card }}><Text class="text-[25px]" style={{ color: snapshot().colors.foreground }}>‹</Text></View>
@@ -394,15 +394,15 @@ function App() {
         {addTaskOpen() && <SharedDialog title="Новая задача" colors={snapshot().colors}>
           <Input value={newTaskTitle()} onChange={(value) => newTaskTitle.set(value)} onSubmit={(event) => { createTodo(event.text); addTaskOpen.set(false); }} placeholder="Название задачи" accessibilityLabel="Название задачи" class="h-10 rounded-lg px-3 text-[13px]" style={{ backgroundColor: snapshot().colors.background, color: snapshot().colors.foreground }} />
           <View class="mt-3 flex-row justify-end" style={{ gap: 8 }}>
-            <GhostButton label="Отмена" colors={snapshot().colors} dark={dark} onPress={() => addTaskOpen.set(false)} />
+            <GhostButton label="Отмена" colors={snapshot().colors} dark={dark()} onPress={() => addTaskOpen.set(false)} />
             <SolidButton label="Добавить" background={snapshot().colors.accent} foreground={snapshot().colors.background} onPress={() => { createTodo(newTaskTitle()); addTaskOpen.set(false); }} />
           </View>
         </SharedDialog>}
       </View>
       </View>
-      {shell && <TitlebarOverlay
+      {shell() && <TitlebarOverlay
         colors={snapshot().colors}
-        dark={dark}
+        dark={dark()}
         showCalendarToggle={route() === "journal"}
         calendarOpen={journalCalendarOpen()}
         onToggleSidebar={toggleSidebar}

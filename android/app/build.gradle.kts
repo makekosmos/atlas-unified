@@ -58,7 +58,7 @@ android {
         applicationId = "com.mundus.atlas"
         minSdk = 28
         targetSdk = 35
-        versionCode = 2
+        versionCode = 3
         versionName = Regex("(?m)^version = \"([^\"]+)\"")
             .find(repoRoot.resolve("Cargo.toml").readText())?.groupValues?.get(1) ?: "0.0.0"
         ndk { abiFilters += "arm64-v8a" }
