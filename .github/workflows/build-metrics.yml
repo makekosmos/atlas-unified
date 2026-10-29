@@ -144,6 +144,9 @@ jobs:
           {
             echo "CARGO_HOME=$RUNNER_TEMP/atlas-cargo-home"
             echo "CARGO_TARGET_DIR=$RUNNER_TEMP/atlas-android-target"
+            echo "ATLAS_TOOLS_HOME=$RUNNER_TEMP/atlas-android-tools"
+            echo "ATLAS_GRADLE_BUILD_HOME=$RUNNER_TEMP/atlas-gradle-build-home"
+            echo "ATLAS_GRADLE_MEASURE_HOME=$RUNNER_TEMP/atlas-gradle-measure-home"
           } >> "$GITHUB_ENV"
       - uses: actions/setup-java@v5
         with:
@@ -156,11 +159,19 @@ jobs:
         run: |
           rustup toolchain install 1.99.1 --profile minimal --target aarch64-linux-android
           rustup default 1.99.1
-          mkdir -p "$CARGO_HOME/bin"
-          echo "$CARGO_HOME/bin" >> "$GITHUB_PATH"
-          cargo install cargo-ndk --locked
+          mkdir -p "$ATLAS_TOOLS_HOME/bin"
+          echo "$ATLAS_TOOLS_HOME/bin" >> "$GITHUB_PATH"
+          start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          start_s=$(date +%s)
+          CARGO_HOME="$ATLAS_TOOLS_HOME" CARGO_TARGET_DIR="$RUNNER_TEMP/atlas-tool-target" cargo install cargo-ndk --locked
+          end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          elapsed=$(($(date +%s) - start_s))
+          tool_kb=$(du -sk "$ATLAS_TOOLS_HOME" "$RUNNER_TEMP/atlas-tool-target" | awk '{s+=$1} END {print s}')
+          echo "cargo-ndk toolchain install: $start to $end ($elapsed seconds; toolchain and target $tool_kb KiB)." | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Measure cold Android Rust crate download
         run: |
+          export CARGO_HOME="$RUNNER_TEMP/atlas-cargo-fetch-home"
+          mkdir -p "$CARGO_HOME"
           start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
           start_s=$(date +%s)
           cargo fetch --locked --manifest-path android/rust/Cargo.toml --target aarch64-linux-android
@@ -168,6 +179,13 @@ jobs:
           elapsed=$(($(date +%s) - start_s))
           cargo_kb=$(du -sk "$CARGO_HOME" | awk '{print $1}')
           echo "Cold Android Cargo fetch: $start to $end ($elapsed seconds; Cargo home $cargo_kb KiB)." | tee -a "$GITHUB_STEP_SUMMARY"
+          start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          start_s=$(date +%s)
+          cargo fetch --locked --manifest-path android/rust/Cargo.toml --target aarch64-linux-android
+          end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          elapsed=$(($(date +%s) - start_s))
+          cargo_kb=$(du -sk "$CARGO_HOME" | awk '{print $1}')
+          echo "Warm Android Cargo fetch: $start to $end ($elapsed seconds; Cargo home $cargo_kb KiB)." | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Install matching NSH 0.3.0 Android SDK and CLI
         run: |
           mkdir -p "$RUNNER_TEMP/nsh"
@@ -175,67 +193,84 @@ jobs:
           echo 'adc5c71e547c9901462208b50630548b3ae618b53555c581937a1d5c4e05eda6  nsh-embed-android.zip' > "$RUNNER_TEMP/nsh-embed-android.zip.sha256"
           (cd "$RUNNER_TEMP" && shasum -a 256 -c nsh-embed-android.zip.sha256)
           unzip -q "$RUNNER_TEMP/nsh-embed-android.zip" -d "$RUNNER_TEMP"
-          cargo install nsh-cli --version 0.3.0 --locked
+          start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          start_s=$(date +%s)
+          CARGO_HOME="$ATLAS_TOOLS_HOME" CARGO_TARGET_DIR="$RUNNER_TEMP/atlas-tool-target" cargo install nsh-cli --version 0.3.0 --locked
+          end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          elapsed=$(($(date +%s) - start_s))
+          tool_kb=$(du -sk "$ATLAS_TOOLS_HOME" "$RUNNER_TEMP/atlas-tool-target" | awk '{s+=$1} END {print s}')
+          echo "NSH 0.3.0 CLI install: $start to $end ($elapsed seconds; toolchain and target $tool_kb KiB)." | tee -a "$GITHUB_STEP_SUMMARY"
           {
-            echo "NSH_CLI=$CARGO_HOME/bin/nsh"
+            echo "NSH_CLI=$ATLAS_TOOLS_HOME/bin/nsh"
             echo "NSH_ANDROID_AAR=$RUNNER_TEMP/nsh-embed-android/nsh.aar"
             echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018"
           } >> "$GITHUB_ENV"
-          "$CARGO_HOME/bin/nsh" --version | rg '^nsh 0\.3\.0 '
+          "$ATLAS_TOOLS_HOME/bin/nsh" --version | rg '^nsh 0\.3\.0 '
       - name: Measure cold Gradle distribution and dependencies
         run: |
           start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
           start_s=$(date +%s)
-          ./android/gradlew --project-dir android --no-daemon --version
+          GRADLE_USER_HOME="$ATLAS_GRADLE_MEASURE_HOME" ./android/gradlew --project-dir android --no-daemon --version
           wrapper_end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
           wrapper_elapsed=$(($(date +%s) - start_s))
           echo "Cold Gradle wrapper: $start to $wrapper_end ($wrapper_elapsed seconds)." | tee -a "$GITHUB_STEP_SUMMARY"
           start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
           start_s=$(date +%s)
-          ./android/gradlew --project-dir android --no-daemon :app:dependencies --configuration debugRuntimeClasspath
+          GRADLE_USER_HOME="$ATLAS_GRADLE_MEASURE_HOME" ./android/gradlew --project-dir android --no-daemon :app:dependencies --configuration releaseRuntimeClasspath
           end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
           elapsed=$(($(date +%s) - start_s))
-          gradle_kb=$(du -sk "$HOME/.gradle" | awk '{print $1}')
+          gradle_kb=$(du -sk "$ATLAS_GRADLE_MEASURE_HOME" | awk '{print $1}')
           echo "Cold Gradle artifact resolution: $start to $end ($elapsed seconds; Gradle home $gradle_kb KiB)." | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Measure Gradle dependency resolution with warm cache
         run: |
           start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
           start_s=$(date +%s)
-          ./android/gradlew --project-dir android --no-daemon :app:dependencies --configuration debugRuntimeClasspath
+          GRADLE_USER_HOME="$ATLAS_GRADLE_MEASURE_HOME" ./android/gradlew --project-dir android --no-daemon :app:dependencies --configuration releaseRuntimeClasspath
           end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
           elapsed=$(($(date +%s) - start_s))
-          gradle_kb=$(du -sk "$HOME/.gradle" | awk '{print $1}')
+          gradle_kb=$(du -sk "$ATLAS_GRADLE_MEASURE_HOME" | awk '{print $1}')
           echo "Warm Gradle artifact resolution: $start to $end ($elapsed seconds; Gradle home $gradle_kb KiB)." | tee -a "$GITHUB_STEP_SUMMARY"
-      - name: Cold Android debug build without Cargo or Gradle cache
+      - name: Prepare isolated release signing key
+        run: |
+          metrics_password=atlas-metrics-only
+          keytool -genkeypair -keystore "$RUNNER_TEMP/atlas-metrics.p12" -storetype PKCS12 -alias atlas-release -keyalg RSA -keysize 2048 -validity 2 -dname "CN=Atlas Metrics" -storepass "$metrics_password" -keypass "$metrics_password" -noprompt
+          {
+            echo "ATLAS_ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/atlas-metrics.p12"
+            echo "ATLAS_ANDROID_KEY_PASSWORD=$metrics_password"
+            echo "GRADLE_USER_HOME=$ATLAS_GRADLE_BUILD_HOME"
+          } >> "$GITHUB_ENV"
+      - name: Cold Android release build without Cargo or Gradle cache
         run: |
           mkdir -p "$CARGO_HOME" "$CARGO_TARGET_DIR"
+          rm -rf "$CARGO_HOME/registry" "$CARGO_HOME/git" "$CARGO_TARGET_DIR" "$GRADLE_USER_HOME" android/.gradle android/app/build
+          mkdir -p "$CARGO_TARGET_DIR" "$GRADLE_USER_HOME"
           start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
           start_s=$(date +%s)
-          ./android/gradlew --project-dir android --no-daemon --profile :app:assembleDebug
+          ./android/gradlew --project-dir android --no-daemon --profile :app:assembleRelease
           end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
           elapsed=$(($(date +%s) - start_s))
           target_kb=$(du -sk "$CARGO_TARGET_DIR" | awk '{print $1}')
           cargo_kb=$(du -sk "$CARGO_HOME" | awk '{print $1}')
-          gradle_kb=$(du -sk android/.gradle android/app/build 2>/dev/null | awk '{s+=$1} END {print s}')
-          apk_bytes=$(stat -f '%z' android/app/build/outputs/apk/debug/app-debug.apk)
-          echo "| Android ARM64 | Cold (no Cargo or Gradle build cache) | $start | $end | $elapsed | target $target_kb KiB; Gradle $gradle_kb KiB | Cargo home $cargo_kb KiB; APK $apk_bytes bytes |" | tee -a "$GITHUB_STEP_SUMMARY"
-      - name: Warm Android debug build with local caches
+          gradle_kb=$(du -sk "$GRADLE_USER_HOME" android/.gradle android/app/build 2>/dev/null | awk '{s+=$1} END {print s}')
+          apk_bytes=$(stat -f '%z' android/app/build/outputs/apk/release/app-release.apk)
+          echo "| Android ARM64 release | Cold (no Cargo or Gradle build cache) | $start | $end | $elapsed | target $target_kb KiB; Gradle $gradle_kb KiB | Cargo home $cargo_kb KiB; APK $apk_bytes bytes |" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Warm Android release build with local caches
         run: |
           start=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
           start_s=$(date +%s)
-          ./android/gradlew --project-dir android --no-daemon --profile :app:assembleDebug
+          ./android/gradlew --project-dir android --no-daemon --profile :app:assembleRelease
           end=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
           elapsed=$(($(date +%s) - start_s))
           target_kb=$(du -sk "$CARGO_TARGET_DIR" | awk '{print $1}')
           cargo_kb=$(du -sk "$CARGO_HOME" | awk '{print $1}')
-          gradle_kb=$(du -sk android/.gradle android/app/build 2>/dev/null | awk '{s+=$1} END {print s}')
-          apk_bytes=$(stat -f '%z' android/app/build/outputs/apk/debug/app-debug.apk)
-          echo "| Android ARM64 | Warm (same runner, Cargo and Gradle caches) | $start | $end | $elapsed | target $target_kb KiB; Gradle $gradle_kb KiB | Cargo home $cargo_kb KiB; APK $apk_bytes bytes |" | tee -a "$GITHUB_STEP_SUMMARY"
+          gradle_kb=$(du -sk "$GRADLE_USER_HOME" android/.gradle android/app/build 2>/dev/null | awk '{s+=$1} END {print s}')
+          apk_bytes=$(stat -f '%z' android/app/build/outputs/apk/release/app-release.apk)
+          echo "| Android ARM64 release | Warm (same runner, Cargo and Gradle caches) | $start | $end | $elapsed | target $target_kb KiB; Gradle $gradle_kb KiB | Cargo home $cargo_kb KiB; APK $apk_bytes bytes |" | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
         with:
           name: build-metrics-android-arm64
           path: |
-            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/release/app-release.apk
             android/app/build/reports/profile
             ${{ runner.temp }}/atlas-android-target/cargo-timings
           if-no-files-found: error
