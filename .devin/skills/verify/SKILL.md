@@ -34,6 +34,6 @@ Do not invoke project unit tests unless the user asks. A build, ADB/UI scenario,
 - The mobile Engine opens the real journal store under app-private files and delegates create/update/delete/list operations to the shared journal store implementation.
 - Mobile appearance edits are stored locally with NSH `Storage`; they do not call Engine appearance RPC.
 - Search is not implemented; the shortcut row is present but does not bind a search action.
-- Sync status in Settings is a waiting placeholder; Android has no sync-status bridge command.
+- Sync APIs exist in `engine-mobile`, but Atlas does not expose them through its Rust wrapper or Android bridge; Settings shows only a waiting placeholder.
 - Task route is allowed in debug only and has no Android task data bridge; the production mobile home does not expose it.
 - Check that the Inter font loads in the runtime log for every build. The source import currently produces an absolute `asset://` URI; a generated asset copied to the apparent relative path did not resolve under Android 15. Do not claim the font is fixed until a fresh install shows no `Inter.ttf` asset warning.
