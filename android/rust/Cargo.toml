@@ -1,0 +1,42 @@
+[workspace]
+resolver = "2"
+
+[package]
+name = "atlas-android"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "atlas_mobile"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+required-features = ["cli"]
+
+[features]
+cli = ["uniffi/cli"]
+
+[dependencies]
+engine-mobile = { git = "https://github.com/makekosmos/cortex", rev = "75d576b249801c0ab0c2a5f49ca90d3522ddf258" }
+uniffi = "0.29"
+serde_json = "1"
+thiserror = "2"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+
+# Optimize the shipped Engine for Android footprint. Debug APKs keep quick
+# incremental builds while still using the same optimized dependency graph.
+[profile.release]
+lto = "fat"
+codegen-units = 1
+opt-level = "s"
+strip = "debuginfo"
+
+[profile.android-dev]
+inherits = "release"
+lto = "off"
+codegen-units = 16
+incremental = true

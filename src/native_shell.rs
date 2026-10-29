@@ -216,11 +216,12 @@ fn add_edit_item(
 }
 
 pub(crate) fn run(rows: Vec<Row>, footer: Vec<Row>) -> ExitCode {
-    imago_window_macos::run_with_sidebar_sections(
+    imago_window_macos::run_with_sidebar_sections_and_traffic_light_position(
         "Atlas",
         (1440.0, 900.0),
         imago_window_macos::SidebarSections { rows, footer },
         Vec::new(),
+        Some((14.0, 14.0)),
         nsh_platform_macos::Root::of::<AtlasNativeRoot>,
         nsh_platform_macos::Root::of::<AtlasNativeRoot>,
         register_components,

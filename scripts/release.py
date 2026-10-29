@@ -10,7 +10,6 @@ import shutil
 import subprocess
 import tarfile
 import tomllib
-import zipfile
 
 
 def run(*args):
@@ -98,8 +97,11 @@ def package(target):
     name = f"atlas-{version}-{target}"
     binary = Path("target") / target / "release" / ("atlas.exe" if "windows" in target else "atlas")
     if "windows" in target:
-        with zipfile.ZipFile(dist / f"{name}.zip", "w", zipfile.ZIP_DEFLATED) as archive:
-            archive.write(binary, binary.name)
+        subprocess.run(
+            ["makensis", f"-DOUT={dist / 'Atlas-Setup.exe'}", f"-DEXE={binary}",
+             f"-DVERSION={version}", str(Path(__file__).resolve().parent / "atlas.nsi")],
+            check=True,
+        )
     elif "apple" in target:
         app = dist / "Atlas.app"
         contents = app / "Contents"
@@ -137,8 +139,17 @@ def package(target):
                 "NSHighResolutionCapable": True,
             }, plist)
         subprocess.run(["codesign", "--force", "--deep", "--sign", "-", str(app)], check=True)
-        with tarfile.open(dist / f"{name}.tar.gz", "w:gz") as archive:
-            archive.add(app, arcname=app.name)
+        root = dist / "dmg-root"
+        shutil.rmtree(root, ignore_errors=True)
+        root.mkdir()
+        shutil.copytree(app, root / "Atlas.app", symlinks=True)
+        (root / "Applications").symlink_to("/Applications")
+        subprocess.run(
+            ["hdiutil", "create", "-volname", "Atlas", "-srcfolder", str(root),
+             "-ov", "-format", "UDZO", str(dist / "Atlas.dmg")],
+            check=True,
+        )
+        shutil.rmtree(root)
     else:
         with tarfile.open(dist / f"{name}.tar.gz", "w:gz") as archive:
             archive.add(binary, arcname=binary.name)

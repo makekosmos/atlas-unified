@@ -188,7 +188,7 @@ export function SidebarRow(props: {
 
 export function GhostButton(props: { label: string; colors: ThemeColors; dark: boolean; onPress: () => void }) {
   return <View onPress={props.onPress} role="button" accessibilityLabel={props.label} class="items-center justify-center" hoverStyle={{ backgroundColor: props.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }} style={{ height: ROW_HEIGHT, paddingLeft: 12, paddingRight: 12, borderRadius: ROW_RADIUS, cursor: "pointer" }}>
-    <Text class="text-[13px]" hoverStyle={{ color: props.colors.foreground }} style={{ color: props.colors.muted }}>{props.label}</Text>
+    <Text class="text-[13px]" style={{ color: props.colors.muted }}>{props.label}</Text>
   </View>;
 }
 

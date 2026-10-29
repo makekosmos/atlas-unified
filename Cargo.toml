@@ -75,6 +75,13 @@ embed-resource = "3.0"
 [target.'cfg(target_os = "windows")'.dependencies]
 gpui-fast-backend = { package = "gpui-fast", version = "=0.1.10", features = ["windows-manifest-provided-by-host"] }
 
+[target.'cfg(target_os = "macos")'.dependencies]
+imago-native-sidebar = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
+imago-window-macos = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
+nsh-core = "=0.3.0"
+nsh-platform-macos = { version = "=0.3.0", default-features = false, features = ["js"] }
+objc2-foundation = "=0.3.2"
+objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSApplication", "NSButton", "NSImage", "NSLayoutConstraint", "NSTitlebarAccessoryViewController", "NSView", "NSViewController", "NSWindow"] }
 
 [patch.crates-io]
 # gpui-fast and its gpui-pre compatibility dependency are patched from the

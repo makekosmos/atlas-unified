@@ -38,10 +38,21 @@ Build and release → Run workflow на основной ветке.
   повтори неудачный job до добавления новых коммитов; готовый черновик можно
   дозагрузить повторным запуском, опубликованные релизы не перезаписываются.
 
-Платформы релиза: **Windows x86_64** (ZIP с EXE) и **macOS Apple Silicon**
-(tar.gz с `Atlas.app`). Linux-сборку workflow пока не выпускает.
-macOS-приложение имеет локальную ad-hoc подпись, без Apple notarization;
-Windows EXE также без издательской подписи.
+Платформы релиза: **Windows x86_64** (`Atlas-Setup.exe`, ставит в Program Files)
+**macOS Apple Silicon** (`Atlas.dmg`: открой образ и перетащи `Atlas.app` в «Программы»)
+и **Android ARM64** (`Atlas-Android-arm64.apk`).
+Linux-сборку workflow пока не выпускает.
+macOS-приложение имеет локальную ad-hoc подпись, без Apple notarization.
+При первом запуске macOS может заблокировать его из-за карантина. После переноса
+`Atlas.app` в «Программы» выполни в Terminal команду для снятия карантина только
+с Atlas, затем открой приложение:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Atlas.app
+```
+
+Команда не отключает Gatekeeper для остальных приложений.
+Windows-установщик без издательской подписи.
 
 Workflow использует стандартный `GITHUB_TOKEN`, отдельный PAT не нужен.
 Правила основной ветки должны разрешать release-job писать версию и теги;
@@ -125,6 +136,15 @@ Windows cross (Linux):
 export GPUI_FXC_PATH=/path/to/fxc   # wine-wrapper ok
 cargo build --release --target x86_64-pc-windows-gnu
 ```
+
+## Android
+
+Android builds are ARM64 APKs. Atlas embeds `engine-mobile`, stores the journal
+in app-private storage, and syncs it with paired devices. To pair a phone, open
+«Настройки» → «Устройства и подключение» and exchange connection codes. The
+desktop device needs Mundus Engine running; Android runs its mobile Engine
+inside Atlas. Build, signing, and release instructions are in
+[android/README.md](android/README.md).
 
 ## Структура
 
