@@ -85,7 +85,11 @@ impl Engine {
 /// Register once per discovered directory and lock token. Failures retry on
 /// the next load or write, including when Atlas starts before the Engine.
 pub(super) fn ensure_registered(engine: &Engine) {
-    let mut registered = REGISTERED.lock().unwrap_or_else(|error| error.into_inner());
+    ensure_registered_with_cache(engine, &REGISTERED);
+}
+
+fn ensure_registered_with_cache(engine: &Engine, cache: &Mutex<Option<(PathBuf, String)>>) {
+    let mut registered = cache.lock().unwrap_or_else(|error| error.into_inner());
     let result = (|| -> Result<(), EngineError> {
         let identity = (engine.directory()?, engine.lock()?.auth_token);
         if registered.as_ref() == Some(&identity) {
@@ -184,14 +188,15 @@ mod tests {
     #[test]
     fn ensure_registered_repeats_registrations_after_token_change() {
         let engine = Recorder::start();
-        ensure_registered(&engine.client);
-        ensure_registered(&engine.client);
+        let cache = Mutex::new(None);
+        ensure_registered_with_cache(&engine.client, &cache);
+        ensure_registered_with_cache(&engine.client, &cache);
         let path = engine.directory.join("engine.lock.json");
         let mut lock: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
         lock["auth_token"] = json!("b".repeat(64));
         std::fs::write(path, lock.to_string()).unwrap();
-        ensure_registered(&engine.client);
-        ensure_registered(&engine.client);
+        ensure_registered_with_cache(&engine.client, &cache);
+        ensure_registered_with_cache(&engine.client, &cache);
         let requests = engine.stop();
         assert_eq!(requests.len(), DECLARATIONS.len() * 2);
         for batch in requests.as_chunks::<{ DECLARATIONS.len() }>().0 {

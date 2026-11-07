@@ -60,7 +60,8 @@ After the review fixes:
 
 - `cargo nextest run --workspace --all-features` passed 88 tests, with two ignored tests skipped.
 - New regression tests cover edits during load and save, FIFO and same-ID replacement, server conflicts, not-ready rejection, and immediate demo saves.
-- Registration tests verify that changing the lock token triggers another complete registration batch.
+- Registration tests verify that changing the lock token triggers another complete registration batch. The token-change test supplies its own cache to the same registration implementation; it does not share the application's process-global cache with parallel tests. The production entry point still uses `REGISTERED`.
+- `cargo test --workspace --all-features -- --test-threads=8` passed. The Atlas test executable also passed 20 repeated runs with eight test threads per process.
 - Six injected recurrence cases cover absent successor, failed object readback, failed project-link readback, failed rollback, confirmed lost acknowledgement, and a differing existing successor.
 - Workspace all-target/all-feature clippy passed with `-D warnings`. Formatting and the source-size gate passed. The existing `ui/JournalPage.tsx` exception remains at 364 lines.
 - `nsh check .` passed. `nsh test .` passed all 26 tests.
