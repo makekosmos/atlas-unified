@@ -5,15 +5,20 @@ use std::path::PathBuf;
 // ---------------------------------------------------------------------------
 // Engine contract fixtures (KOS-297).
 //
-// These are the exact objects `mapping::write` sends to `upsert_object`.
+// These are the exact objects `mapping::write` sends to `objects.upsert`.
 // The task's project is never a prop: it is a `project` link
 // (`fixtures/engine/task-project-link.json`, pinned in `store::projects`).
-// They are committed under `fixtures/engine/` and consumed by the ark-core
-// contract test in cortex (`phase3_agenda_contract`), which validates them
-// against the real `canonical_ingress`. The two repos cannot share code, so
-// the fixture files are the contract: change the write path here → regenerate
-// (`ATLAS_EMIT_FIXTURES=1 cargo test engine_payload_fixtures`), then copy the files
-// into `cortex/core/crates/ark-core/tests/fixtures/agenda/`.
+// They are committed under `fixtures/engine/` and consumed by the kernel
+// contract test in cortex (`kernel/tests/it/agenda_write_payload_contract.rs`),
+// which validates them against the real `canonical_ingress`. The two repos
+// cannot share code, so the fixture files are the contract: change the write
+// path here → regenerate (`ATLAS_EMIT_FIXTURES=1 cargo test engine_payload_fixtures`),
+// then copy the files into `cortex/core/crates/kernel/tests/fixtures/agenda/`.
+//
+// Cortex's copy still pins `core.task`: that test validates against the static
+// canonical registrations, and `com.mundus.atlas.task` only exists once this
+// app declares it. Re-copying these files therefore waits for the Cortex side
+// to register the Atlas type in that test.
 // ---------------------------------------------------------------------------
 
 const NOW: &str = "2026-05-15T10:00:00.000Z";

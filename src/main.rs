@@ -94,13 +94,18 @@ fn open_atlas_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Atlas
                     "globalThis.__MUNDUS_ATLAS_INITIAL__={initial};\n{}",
                     include_str!("../ui/bundle.js")
                 );
+                let demo = agenda.read(cx).demo;
                 imago_nsh::mount_app_view(window, cx, NshApp::Js(Bundle::source(source)), |view| {
                     view.register_component(
                         "atlas.bridge",
                         std::rc::Rc::new({
                             let agenda = agenda.clone();
                             move |context| {
-                                Box::new(nsh_bridge::AtlasBridge::new(context, agenda.clone()))
+                                Box::new(nsh_bridge::AtlasBridge::new(
+                                    context,
+                                    agenda.clone(),
+                                    demo,
+                                ))
                             }
                         }),
                     );

@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["open", "inProgress", "done", "canceled"],
+          "default": "open"
+        },
+        "at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "default": null
+        }
+      },
+      "required": ["kind", "at"]
+    },
+    "planning": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["inbox", "anytime", "someday", "today", "date"],
+          "default": "inbox"
+        },
+        "period": {
+          "type": "string",
+          "enum": ["any", "evening"],
+          "default": "any"
+        },
+        "date": {
+          "type": ["string", "null"],
+          "format": "date",
+          "default": null
+        }
+      },
+      "required": ["kind", "period", "date"]
+    },
+    "deadline": {
+      "type": ["string", "null"],
+      "format": "date",
+      "default": null
+    },
+    "reminders": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["floating", "local", "instant"]
+          },
+          "at": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": ["string", "null"],
+            "default": null
+          }
+        },
+        "required": ["kind", "at", "timeZone"]
+      }
+    },
+    "recurrence": {
+      "type": ["object", "null"],
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["calendar", "afterCompletion"]
+        },
+        "frequency": {
+          "type": "string",
+          "enum": ["daily", "weekly", "monthly", "yearly"]
+        },
+        "interval": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "daysOfWeek": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          },
+          "uniqueItems": true,
+          "default": null
+        },
+        "timeZone": {
+          "type": ["string", "null"],
+          "default": null
+        },
+        "end": {
+          "type": ["object", "null"],
+          "default": null,
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": ["until", "count"]
+            },
+            "date": {
+              "type": ["string", "null"],
+              "format": "date",
+              "default": null
+            },
+            "count": {
+              "type": ["integer", "null"],
+              "minimum": 1,
+              "default": null
+            }
+          },
+          "required": ["kind", "date", "count"]
+        }
+      },
+      "required": ["kind", "frequency", "interval", "daysOfWeek", "timeZone", "end"]
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["none", "low", "medium", "high", "urgent"],
+      "default": "none"
+    },
+    "checklist": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "text": {
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean",
+            "default": false
+          },
+          "rank": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["id", "text", "done", "rank"]
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "default": {},
+      "additionalProperties": true
+    }
+  },
+  "required": ["state", "planning", "deadline", "reminders", "recurrence", "priority", "checklist", "extensions"]
+}

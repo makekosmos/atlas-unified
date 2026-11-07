@@ -3,17 +3,29 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use std::{path::PathBuf, time::Duration};
 
+/// What `engine.lock.json` carries, before validation.
 #[derive(Deserialize)]
-struct Lock {
+struct LockFile {
     format_version: u32,
     api_version: Version,
     http_port: u16,
+    /// Absent on Engines older than the WebSocket event stream.
+    #[serde(default)]
+    ws_port: Option<u16>,
     auth_token: String,
 }
 
 #[derive(Deserialize)]
 struct Version {
     major: u32,
+}
+
+/// A validated lock file: where the Engine listens and how to authenticate.
+#[derive(Debug)]
+pub(super) struct Lock {
+    pub http_port: u16,
+    pub ws_port: Option<u16>,
+    pub auth_token: String,
 }
 
 pub struct Engine {
@@ -38,21 +50,27 @@ impl Engine {
         }
     }
 
-    pub fn rpc(&self, operation: &str, mut params: Value) -> Result<Value, EngineError> {
-        let directory = self
-            .data_dir
+    /// The data dir this client reads discovery from.
+    pub(super) fn directory(&self) -> Result<PathBuf, EngineError> {
+        self.data_dir
             .clone()
             .map(Ok)
             .unwrap_or_else(data_dir)
-            .map_err(|detail| EngineError::local(ErrorKind::NotRunning, detail))?;
-        // Re-read discovery on every request: Engine may have restarted.
+            .map_err(|detail| EngineError::local(ErrorKind::NotRunning, detail))
+    }
+
+    /// Re-read discovery: the Engine may have restarted on new ports with a
+    /// new token. The one place a lock file is parsed, for both doors (HTTP
+    /// requests and the live event socket).
+    pub(super) fn lock(&self) -> Result<Lock, EngineError> {
+        let directory = self.directory()?;
         let bytes = std::fs::read(directory.join("engine.lock.json")).map_err(|e| {
             EngineError::local(
                 ErrorKind::NotRunning,
                 format!("engine.lock.json unreadable: {e}"),
             )
         })?;
-        let lock: Lock = serde_json::from_slice(&bytes).map_err(|e| {
+        let lock: LockFile = serde_json::from_slice(&bytes).map_err(|e| {
             EngineError::local(
                 ErrorKind::NotCompatible,
                 format!("engine.lock.json malformed: {e}"),
@@ -61,6 +79,7 @@ impl Engine {
         if lock.format_version != 1
             || lock.api_version.major != 1
             || lock.http_port == 0
+            || lock.ws_port == Some(0)
             || lock.auth_token.len() != 64
             || !lock.auth_token.bytes().all(|v| v.is_ascii_hexdigit())
         {
@@ -69,6 +88,15 @@ impl Engine {
                 "engine.lock.json: incompatible format",
             ));
         }
+        Ok(Lock {
+            http_port: lock.http_port,
+            ws_port: lock.ws_port,
+            auth_token: lock.auth_token,
+        })
+    }
+
+    pub fn rpc(&self, operation: &str, mut params: Value) -> Result<Value, EngineError> {
+        let lock = self.lock()?;
         if !params.is_object() {
             return Err(EngineError::local(
                 ErrorKind::InvalidRequest,

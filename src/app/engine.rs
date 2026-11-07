@@ -2,7 +2,7 @@ use gpui::Context;
 
 use super::Atlas;
 use crate::model::Todo;
-use crate::store::{Command, EngineError, ErrorKind, Reply, Snapshot, Worker};
+use crate::store::{Command, EngineError, ErrorKind, Mutation, Reply, Snapshot, Worker};
 
 impl Atlas {
     pub(crate) fn start_storage(&mut self, cx: &mut Context<Self>) {
@@ -56,6 +56,17 @@ impl Atlas {
         self.send_storage(Command::Load);
     }
 
+    /// The Engine announced a change to what this app reads. Reload quietly:
+    /// the current list stays on screen (`storage_ready` is not cleared) and a
+    /// second event during the load only asks for one more pass.
+    pub(crate) fn refresh_storage(&mut self) {
+        if self.storage_busy {
+            self.storage_dirty = true;
+            return;
+        }
+        self.send_storage(Command::Load);
+    }
+
     pub(crate) fn send_storage(&mut self, command: Command) -> bool {
         if self
             .storage
@@ -76,9 +87,6 @@ impl Atlas {
         if self.demo {
             return true;
         }
-        if self.storage_busy {
-            return false;
-        }
         if !self.storage_ready {
             self.storage_error.get_or_insert_with(|| {
                 format!("Подключитесь к {} и обновите список.", crate::brand::NAME)
@@ -88,7 +96,36 @@ impl Atlas {
         true
     }
 
-    fn on_storage_reply(&mut self, reply: Reply, cx: &mut Context<Self>) {
+    pub(super) fn queue_mutation(&mut self, mutation: Mutation) {
+        if let Some(pending) = self
+            .pending_mutations
+            .iter_mut()
+            .find(|pending| pending.todo.id == mutation.todo.id)
+        {
+            *pending = mutation;
+        } else {
+            self.pending_mutations.push_back(mutation);
+        }
+        self.flush_mutation();
+    }
+
+    fn flush_mutation(&mut self) {
+        if self.storage_ready && !self.storage_busy {
+            if let Some(mutation) = self.pending_mutations.pop_front() {
+                self.send_storage(Command::Save(Box::new(mutation)));
+            }
+        }
+    }
+
+    pub(super) fn on_storage_reply(&mut self, reply: Reply, cx: &mut Context<Self>) {
+        if matches!(reply, Reply::Changed) {
+            if let Some(worker) = &self.storage {
+                worker.acknowledge_change();
+            }
+            self.refresh_storage();
+            cx.notify();
+            return;
+        }
         self.storage_busy = false;
         match reply {
             Reply::Loaded(Ok(snapshot)) => self.load_snapshot(snapshot),
@@ -101,6 +138,12 @@ impl Atlas {
                 self.storage_error = None;
             }
             Reply::Saved(_, Err(error)) => self.fail_write(error),
+            Reply::Changed => unreachable!("handled without clearing the busy flag"),
+        }
+        self.flush_mutation();
+        if self.storage_dirty && !self.storage_busy {
+            self.storage_dirty = false;
+            self.refresh_storage();
         }
         cx.notify();
     }

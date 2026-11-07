@@ -1,6 +1,6 @@
 //! Write side of the core.task mapping: patches a stored Engine object with the
 //! edited task and keeps every field this app does not own.
-use super::{NOT_EXTENSION, TASK_TYPE, TASK_VERSION};
+use super::{version_for, NOT_EXTENSION, TASK_TYPE, TASK_VERSION};
 use crate::model::{date_only, Status, Todo};
 use serde_json::{json, Value};
 
@@ -66,7 +66,7 @@ pub fn write_at(
         };
     }
     object["updatedAt"] = json!(now);
-    object["typeVersion"] = json!(TASK_VERSION);
+    object["typeVersion"] = json!(version_for(&object));
     Ok(object)
 }
 

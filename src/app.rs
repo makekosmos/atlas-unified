@@ -1,6 +1,8 @@
 mod actions;
 mod appearance;
 mod engine;
+#[cfg(all(test, feature = "e2e"))]
+mod engine_tests;
 
 use crate::appearance::{Poller, Response, Writer};
 use crate::model::Todo;
@@ -12,6 +14,10 @@ pub(crate) struct Atlas {
     pub(crate) storage: Option<Worker>,
     pub(crate) storage_ready: bool,
     pub(crate) storage_busy: bool,
+    /// A live Engine event arrived while a load was in flight; reload again
+    /// instead of dropping it.
+    pub(crate) storage_dirty: bool,
+    pub(crate) pending_mutations: std::collections::VecDeque<crate::store::Mutation>,
     pub(crate) storage_error: Option<String>,
     pub(crate) todos: Vec<Todo>,
     pub(crate) current_route: String,
@@ -37,6 +43,8 @@ impl Atlas {
             storage: None,
             storage_ready: demo,
             storage_busy: false,
+            storage_dirty: false,
+            pending_mutations: Default::default(),
             storage_error: None,
             todos: if demo {
                 crate::model::seed_todos()

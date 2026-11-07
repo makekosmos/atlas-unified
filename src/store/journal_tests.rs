@@ -22,20 +22,32 @@ fn journal_filter_order_and_crud_use_expected_snapshots() {
         "id":"note:unrelated", "typeId":"core.note", "typeVersion":"0.1.0",
         "title":"Not a journal", "createdAt":"2026-10-22T09:00:00.000Z",
         "updatedAt":"2026-10-22T09:00:00.000Z", "contentJson":{"type":"doc","content":[]},
-        "propsJson":{"extensions":{"entry_kind":"meeting"}}, "deletedAt":null
+        "propsJson":{"description":"Чужая заметка","extensions":{"entry_kind":"meeting"}},
+        "deletedAt":null
     });
-    let fake = FakeEngine::start(vec![fixture, old, regular_note]);
+    let atlas_note = json!({
+        "id":"journal:2026-10-25", "typeId":"com.mundus.atlas.journal", "typeVersion":"0.1.0",
+        "title":"Запись", "createdAt":"2026-10-25T09:00:00.000Z",
+        "updatedAt":"2026-10-25T09:00:00.000Z",
+        "contentJson":{"type":"doc","content":[{"type":"paragraph",
+            "content":[{"type":"text","text":"Новая запись"}]}]},
+        "propsJson":{"description":"Новая запись","extensions":{"entry_kind":"journal"}},
+        "deletedAt":null
+    });
+    let fake = FakeEngine::start(vec![fixture, old, regular_note, atlas_note]);
     let engine = fake.client();
 
     let entries = engine.journal_list().unwrap();
     assert_eq!(
         entries.len(),
-        2,
-        "only notes tagged entry_kind=journal are shown"
+        3,
+        "the journal type and notes tagged entry_kind=journal are shown; \\
+         a plain core.note is not"
     );
     assert_eq!(entries[0].id, "journal:2026-10-23");
     assert_eq!(entries[1].id, "journal:2026-10-24");
     assert_eq!(entries[1].text, "Запись за сегодня");
+    assert_eq!(entries[2].id, "journal:2026-10-25");
 
     let created = engine.journal_create("Первая запись").unwrap();
     assert!(created.id.starts_with("journal:"));
@@ -44,7 +56,7 @@ fn journal_filter_order_and_crud_use_expected_snapshots() {
         "new entries do not reuse daily-note ids"
     );
     let stored = fake.object(&created.id);
-    assert_eq!(stored["typeId"], "core.note");
+    assert_eq!(stored["typeId"], "com.mundus.atlas.journal");
     assert_eq!(
         stored["contentJson"]["content"][0]["content"][0]["text"],
         "Первая запись"
@@ -71,7 +83,7 @@ fn journal_filter_order_and_crud_use_expected_snapshots() {
 
     engine.journal_delete(&updated).unwrap();
     let entries = engine.journal_list().unwrap();
-    assert_eq!(entries.len(), 2);
+    assert_eq!(entries.len(), 3);
     assert!(!entries.iter().any(|entry| entry.id == created.id));
     fake.stop();
 }
@@ -188,12 +200,15 @@ fn serve(mut socket: TcpStream, shared: &Arc<Mutex<State>>) -> bool {
             None => json!({"exists":false,"typeId":null,"typeVersion":null,"revision":null}),
         };
         match request["operation"].as_str().unwrap() {
-            "list_objects_by_type" => {
-                json!({"ok":true,"data":state.objects.values().filter(|o| o["typeId"] == request["type_id"]).cloned().collect::<Vec<_>>()})
+            "types.register" => {
+                json!({"ok":true,"data":{"typeId":request["typeId"],"version":request["version"]}})
             }
-            "get_object_write_snapshot" => json!({"ok":true,"data":snapshot(&state, &id)}),
-            "get_object" => json!({"ok":true,"data":state.objects.get(&id)}),
-            "upsert_object" => {
+            "objects.list" => {
+                json!({"ok":true,"data":state.objects.values().filter(|o| o["typeId"] == request["typeId"]).cloned().collect::<Vec<_>>()})
+            }
+            "objects.snapshot" => json!({"ok":true,"data":snapshot(&state, &id)}),
+            "objects.get" => json!({"ok":true,"data":state.objects.get(&id)}),
+            "objects.upsert" => {
                 let object = request["object"].clone();
                 let id = object["id"].as_str().unwrap().to_owned();
                 if request["expectedSnapshot"] != snapshot(&state, &id) {
@@ -206,7 +221,7 @@ fn serve(mut socket: TcpStream, shared: &Arc<Mutex<State>>) -> bool {
                     json!({"ok":true,"data":true})
                 }
             }
-            "delete_object" => {
+            "objects.delete" => {
                 if request["expectedSnapshot"] != snapshot(&state, &id) {
                     json!({"ok":false,"error":"object_conflict:stale_snapshot"})
                 } else {

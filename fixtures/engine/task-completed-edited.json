@@ -39,7 +39,7 @@
     }
   },
   "title": "task-completed edited",
-  "typeId": "core.task",
+  "typeId": "com.mundus.atlas.task",
   "typeVersion": "0.1.0",
   "updatedAt": "2026-05-15T10:00:00.000Z"
 }

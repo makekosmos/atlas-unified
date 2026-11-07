@@ -1,8 +1,12 @@
 //! Engine is the only owner of task persistence. No database or local task mirror.
+#[cfg(test)]
+mod engine_e2e_tests;
 mod journal;
+pub(crate) mod live;
 pub mod mapping;
 #[cfg(test)]
 mod mapping_tests;
+mod ops;
 #[cfg(test)]
 mod payload_fixtures;
 pub use journal::JournalEntry;
@@ -10,12 +14,15 @@ pub use journal::JournalEntry;
 mod journal_tests;
 mod projects;
 #[cfg(test)]
+mod recurrence_tests;
+#[cfg(test)]
 mod restart_tests;
 #[cfg(test)]
 mod tests;
 mod transport;
 #[cfg(test)]
 mod transport_tests;
+mod types;
 
 use crate::model::Project;
 use crate::model::Todo;
@@ -28,6 +35,9 @@ pub struct Snapshot {
     pub todos: Vec<Todo>,
     pub projects: Vec<Project>,
 }
+
+/// Note types the journal screens read; the live watcher relays their changes.
+pub(crate) static JOURNAL_TYPES: &[&str] = &journal::NOTE_TYPES;
 
 mod worker;
 pub use worker::{Command, Mutation, Reply, Worker};
@@ -43,23 +53,44 @@ impl Engine {
         let Some(next) = next else {
             return Ok(());
         };
-        if self.save(None, next).is_ok() {
+        let Err(write_error) = self.save(None, next) else {
             return Ok(());
-        }
+        };
         // A lost acknowledgement may still mean the next occurrence was saved.
-        let stored = self.rpc("get_object", json!({"id":next.id}))?;
-        if !stored.is_null() && self.read_task(&stored)? == *next {
-            return Ok(());
-        }
-        if stored.is_null() {
-            if let Some(before) = before {
-                self.save(Some(todo), before)?;
-            }
-        }
-        Err(EngineError {
+        let stored = self
+            .rpc(ops::OBJECTS_GET, json!({"id":next.id}))
+            .and_then(|object| {
+                if object.is_null() {
+                    Ok(None)
+                } else {
+                    self.read_task(&object).map(Some)
+                }
+            });
+        let confirmation = match stored {
+            Ok(Some(task)) if task == *next => return Ok(()),
+            Ok(Some(_)) => return Err(Self::recurrence_error(format!(
+                "partial application: successor differs from the intended task; original was not rolled back ({write_error})"
+            ))),
+            Ok(None) => "successor is absent".to_owned(),
+            Err(error) => format!("successor readback failed: {error}; successor may exist"),
+        };
+        let recovery = match before {
+            Some(before) => match self.save(Some(todo), before) {
+                Ok(()) => "original occurrence restored".to_owned(),
+                Err(error) => format!("partial application: original rollback failed: {error}"),
+            },
+            None => "partial application: no original occurrence available for rollback".to_owned(),
+        };
+        Err(Self::recurrence_error(format!(
+            "successor write unconfirmed: {write_error}; {confirmation}; {recovery}"
+        )))
+    }
+
+    fn recurrence_error(detail: String) -> EngineError {
+        EngineError {
             kind: ErrorKind::Unavailable,
-            detail: "local: save_with_next unconfirmed".into(),
-        })
+            detail: format!("recurrence: {detail}"),
+        }
     }
 
     /// `mapping::read` plus the task's project from its `project` link.
@@ -80,17 +111,20 @@ impl Engine {
     }
 
     pub fn load(&self) -> Result<Snapshot, EngineError> {
-        let list = self.rpc(
-            "list_objects_by_type",
-            json!({"type_id":mapping::TASK_TYPE}),
-        )?;
-        let list = list
-            .as_array()
-            .ok_or_else(|| Self::mapping_err("list not an array".into()))?;
+        // Atlas declares its own types before it reads anything; `core.task`
+        // objects written before that keep loading under their old id.
+        types::ensure_registered(self);
         let links = self.project_links()?;
         let mut snapshot = Snapshot::default();
-        for object in list {
-            if object["typeId"] == mapping::TASK_TYPE {
+        for type_id in mapping::TASK_TYPES {
+            let list = self.rpc(ops::OBJECTS_LIST, json!({"typeId":type_id}))?;
+            let list = list
+                .as_array()
+                .ok_or_else(|| Self::mapping_err("list not an array".into()))?;
+            for object in list {
+                if !mapping::is_task(object) {
+                    continue;
+                }
                 let mut todo = mapping::read(object).map_err(Self::mapping_err)?;
                 todo.project_id = links.get(&todo.id).map(|(_, project)| project.clone());
                 snapshot.todos.push(todo);
@@ -103,7 +137,10 @@ impl Engine {
     }
 
     pub fn save(&self, before: Option<&Todo>, todo: &Todo) -> Result<(), EngineError> {
-        let current = self.rpc("get_object", json!({"id":todo.id}))?;
+        // Read the guard before the object: a concurrent write after this point
+        // must make the commit fail, never overwrite a newer legacy task.
+        let snapshot = self.rpc(ops::OBJECTS_SNAPSHOT, json!({"id":todo.id}))?;
+        let current = self.rpc(ops::OBJECTS_GET, json!({"id":todo.id}))?;
         if let Some(before) = before {
             if current.is_null() || self.read_task(&current)? != *before {
                 return Err(EngineError {
@@ -118,7 +155,7 @@ impl Engine {
             });
         }
         let object = mapping::write(current, before, todo).map_err(Self::mapping_err)?;
-        self.upsert(object)?;
+        self.upsert_with_snapshot(object, Some(snapshot))?;
         // The link needs the task to exist, so it is written after the object.
         let project_changed = before.map_or(todo.project_id.is_some(), |before| {
             before.project_id != todo.project_id
@@ -129,12 +166,28 @@ impl Engine {
         Ok(())
     }
 
+    #[cfg(test)]
     fn upsert(&self, object: Value) -> Result<(), EngineError> {
-        let result = self.rpc("upsert_object", json!({"object":object}))?;
+        self.upsert_with_snapshot(object, None)
+    }
+
+    fn upsert_with_snapshot(
+        &self,
+        object: Value,
+        snapshot: Option<Value>,
+    ) -> Result<(), EngineError> {
+        // A new object may be the first thing written after a start that
+        // happened before the Engine came up.
+        types::ensure_registered(self);
+        let mut request = json!({"object":object});
+        if let Some(snapshot) = snapshot {
+            request["expectedSnapshot"] = snapshot;
+        }
+        let result = self.rpc(ops::OBJECTS_UPSERT, request)?;
         if result != true {
             return Err(EngineError {
                 kind: ErrorKind::Transport,
-                detail: "upsert_object returned non-true data".into(),
+                detail: "objects.upsert returned non-true data".into(),
             });
         }
         Ok(())

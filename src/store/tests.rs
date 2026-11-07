@@ -6,6 +6,14 @@ use std::{
     process::Command as Process,
 };
 
+pub(super) fn snapshot(object: Option<&Value>, revision: Option<&str>) -> Value {
+    match object {
+        Some(object) => json!({"exists":true,"typeId":object["typeId"],
+            "typeVersion":object["typeVersion"],"revision":revision}),
+        None => json!({"exists":false,"typeId":null,"typeVersion":null,"revision":revision}),
+    }
+}
+
 #[test]
 fn mapping_preserves_unrepresented_fields() {
     let original = json!({"id":"real-id","typeId":mapping::TASK_TYPE,"typeVersion":"0.1.0",
@@ -57,6 +65,8 @@ fn persistence_across_client_processes() {
     let path = directory.join("fixture-store.json");
     std::fs::write(&path, "{}").unwrap();
     let server = std::thread::spawn(move || {
+        let mut revisions = std::collections::HashMap::<String, String>::new();
+        let mut sequence = 0;
         for connection in listener.incoming() {
             let mut socket = connection.unwrap();
             let mut reader = BufReader::new(socket.try_clone().unwrap());
@@ -88,19 +98,30 @@ fn persistence_across_client_processes() {
             let mut objects: serde_json::Map<String, Value> =
                 serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
             let response = match request["operation"].as_str().unwrap() {
-                "list_objects_by_type" => json!({"ok":true,"data":objects.values().filter(|v| v["typeId"] == request["type_id"]).collect::<Vec<_>>()}),
-                "get_object" => json!({"ok":true,"data":objects.get(request["id"].as_str().unwrap())}),
-                "upsert_object" if request["object"]["title"] == "REJECT" => json!({"ok":false,"error":"rejected"}),
-                "upsert_object" => {
+                "types.register" => json!({"ok":true,"data":{"typeId":request["typeId"],"version":request["version"]}}),
+                "objects.list" => json!({"ok":true,"data":objects.values().filter(|v| v["typeId"] == request["typeId"]).collect::<Vec<_>>()}),
+                "objects.snapshot" => {
+                    let id = request["id"].as_str().unwrap();
+                    json!({"ok":true,"data":snapshot(objects.get(id), revisions.get(id).map(String::as_str))})
+                }
+                "objects.get" => json!({"ok":true,"data":objects.get(request["id"].as_str().unwrap())}),
+                "objects.upsert" if request["object"]["title"] == "REJECT" => json!({"ok":false,"error":"rejected"}),
+                "objects.upsert" => {
                     let object = &request["object"];
+                    if request.get("expectedSnapshot").is_some() {
+                        let id = object["id"].as_str().unwrap();
+                        assert_eq!(request["expectedSnapshot"], snapshot(objects.get(id), revisions.get(id).map(String::as_str)));
+                    }
+                    sequence += 1;
+                    revisions.insert(object["id"].as_str().unwrap().into(), format!("r{sequence}"));
                     objects.insert(object["id"].as_str().unwrap().into(), object.clone());
                     std::fs::write(&path, serde_json::to_vec(&objects).unwrap()).unwrap();
                     json!({"ok":true,"data":true})
                 }
                 // Links live in the same store under a `link:` key prefix.
-                "list_object_links" => json!({"ok":true,"data":objects.iter().filter(|(k, _)| k.starts_with("link:")).map(|(_, v)| v).collect::<Vec<_>>()}),
+                "links.list" => json!({"ok":true,"data":objects.iter().filter(|(k, _)| k.starts_with("link:")).map(|(_, v)| v).collect::<Vec<_>>()}),
                 // Engine semantics: drop other links of the same source and type, then upsert.
-                "replace_object_link" => {
+                "links.replace" => {
                     let link = request["object_link"].clone();
                     assert!(objects.contains_key(link["sourceObjectId"].as_str().unwrap()));
                     assert!(objects.contains_key(link["targetObjectId"].as_str().unwrap()));
@@ -109,7 +130,7 @@ fn persistence_across_client_processes() {
                     std::fs::write(&path, serde_json::to_vec(&objects).unwrap()).unwrap();
                     json!({"ok":true,"data":link})
                 }
-                "delete_object_link" => {
+                "links.delete" => {
                     objects.remove(&format!("link:{}", request["id"].as_str().unwrap()));
                     std::fs::write(&path, serde_json::to_vec(&objects).unwrap()).unwrap();
                     json!({"ok":true,"data":true})

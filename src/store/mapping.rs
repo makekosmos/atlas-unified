@@ -1,13 +1,35 @@
+use super::types;
 use crate::model::{Status, Todo};
 use serde_json::{json, Value};
 
-/// core.task 0.1.0 (KOS-397). Atlas-only fields live in extensions; the
-/// project is an Engine `project` link (see `projects`), never a prop.
-/// Core props and content owned by other clients stay intact.
-/// Fields Atlas does not show (deadline, reminders, priority, checklist,
-/// recurrence, tags, evening period) stay on the object untouched.
-pub const TASK_TYPE: &str = "core.task";
-pub const TASK_VERSION: &str = "0.1.0";
+/// `com.mundus.atlas.task` (see `types`): the type Atlas declares and writes.
+/// Atlas-only fields live in extensions; the project is an Engine `project`
+/// link (see `projects`), never a prop. Props and content owned by other
+/// clients stay intact. Fields Atlas does not show (deadline, reminders,
+/// priority, checklist, recurrence, tags, evening period) stay on the object
+/// untouched.
+pub const TASK_TYPE: &str = types::TASK_TYPE;
+pub const TASK_VERSION: &str = types::TASK_VERSION;
+/// Tasks created before Atlas declared its own type. They stay `core.task`:
+/// the mapping reads them and `write` keeps the stored `typeId`.
+pub const LEGACY_TASK_TYPE: &str = "core.task";
+pub const LEGACY_TASK_VERSION: &str = "0.1.0";
+/// Both ids `read` accepts; `load` lists each of them.
+pub const TASK_TYPES: [&str; 2] = [TASK_TYPE, LEGACY_TASK_TYPE];
+
+pub fn is_task(object: &Value) -> bool {
+    TASK_TYPES.iter().any(|id| object["typeId"] == *id)
+}
+
+/// The `typeVersion` a write stores: the one belonging to the object's own
+/// `typeId`, so an old `core.task` never borrows an Atlas version.
+fn version_for(object: &Value) -> &'static str {
+    if object["typeId"] == LEGACY_TASK_TYPE {
+        LEGACY_TASK_VERSION
+    } else {
+        TASK_VERSION
+    }
+}
 /// Fields the write path never copies into `extensions`: they live in
 /// canonical props, links, or the object row itself.
 const NOT_EXTENSION: [&str; 12] = [
@@ -32,7 +54,7 @@ pub use write::write;
 pub use write::write_at;
 
 pub fn read(object: &Value) -> Result<Todo, String> {
-    if object["typeId"] != TASK_TYPE || !object["id"].is_string() {
+    if !is_task(object) || !object["id"].is_string() {
         return Err("Engine вернул некорректную задачу".into());
     }
     let props = &object["propsJson"];
