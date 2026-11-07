@@ -203,12 +203,12 @@ fn serve(mut socket: TcpStream, shared: &Arc<Mutex<State>>) -> bool {
             "types.register" => {
                 json!({"ok":true,"data":{"typeId":request["typeId"],"version":request["version"]}})
             }
-            "list_objects_by_type" => {
-                json!({"ok":true,"data":state.objects.values().filter(|o| o["typeId"] == request["type_id"]).cloned().collect::<Vec<_>>()})
+            "objects.list" => {
+                json!({"ok":true,"data":state.objects.values().filter(|o| o["typeId"] == request["typeId"]).cloned().collect::<Vec<_>>()})
             }
-            "get_object_write_snapshot" => json!({"ok":true,"data":snapshot(&state, &id)}),
-            "get_object" => json!({"ok":true,"data":state.objects.get(&id)}),
-            "upsert_object" => {
+            "objects.snapshot" => json!({"ok":true,"data":snapshot(&state, &id)}),
+            "objects.get" => json!({"ok":true,"data":state.objects.get(&id)}),
+            "objects.upsert" => {
                 let object = request["object"].clone();
                 let id = object["id"].as_str().unwrap().to_owned();
                 if request["expectedSnapshot"] != snapshot(&state, &id) {
@@ -221,7 +221,7 @@ fn serve(mut socket: TcpStream, shared: &Arc<Mutex<State>>) -> bool {
                     json!({"ok":true,"data":true})
                 }
             }
-            "delete_object" => {
+            "objects.delete" => {
                 if request["expectedSnapshot"] != snapshot(&state, &id) {
                     json!({"ok":false,"error":"object_conflict:stale_snapshot"})
                 } else {

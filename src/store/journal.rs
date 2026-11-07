@@ -2,7 +2,7 @@
 //! `core.note` daily notes other clients write with
 //! `propsJson.extensions.entry_kind = "journal"`. A `core.note` without that
 //! marker is somebody else's note and stays out of the journal.
-use super::{types, Engine, EngineError, ErrorKind};
+use super::{ops, types, Engine, EngineError, ErrorKind};
 use serde_json::{json, Value};
 
 const NOTE_TYPE: &str = types::JOURNAL_TYPE;
@@ -25,10 +25,10 @@ impl Engine {
     pub fn journal_list(&self) -> Result<Vec<JournalEntry>, EngineError> {
         let mut entries = Vec::new();
         for type_id in NOTE_TYPES {
-            let objects = self.rpc("list_objects_by_type", json!({"type_id":type_id}))?;
+            let objects = self.rpc(ops::OBJECTS_LIST, json!({"typeId":type_id}))?;
             let objects = objects
                 .as_array()
-                .ok_or_else(|| invalid("list_objects_by_type did not return an array"))?;
+                .ok_or_else(|| invalid("objects.list did not return an array"))?;
             for object in objects {
                 if object["typeId"] != *type_id || !is_active_journal(object) {
                     continue;
@@ -85,7 +85,7 @@ impl Engine {
         if text.trim().is_empty() {
             return Err(invalid("journal entry is empty"));
         }
-        let current = self.rpc("get_object", json!({"id": before.id}))?;
+        let current = self.rpc(ops::OBJECTS_GET, json!({"id": before.id}))?;
         if current.is_null() || !is_active_journal(&current) {
             return Err(conflict(
                 "journal note is missing or no longer a journal entry",
@@ -112,7 +112,7 @@ impl Engine {
 
     pub fn journal_delete(&self, entry: &JournalEntry) -> Result<(), EngineError> {
         let result = self.rpc(
-            "delete_object",
+            ops::OBJECTS_DELETE,
             json!({"id": entry.id, "expectedSnapshot": entry.snapshot}),
         )?;
         if result == true {
@@ -120,19 +120,19 @@ impl Engine {
         } else {
             Err(EngineError::local(
                 ErrorKind::Transport,
-                "delete_object returned non-true data",
+                "objects.delete returned non-true data",
             ))
         }
     }
 
     fn snapshot(&self, id: &str) -> Result<Value, EngineError> {
-        self.rpc("get_object_write_snapshot", json!({"id": id}))
+        self.rpc(ops::OBJECTS_SNAPSHOT, json!({"id": id}))
     }
 
     fn stable_journal_read(&self, id: &str) -> Result<Option<JournalEntry>, EngineError> {
         for _ in 0..3 {
             let before = self.snapshot(id)?;
-            let object = self.rpc("get_object", json!({"id": id}))?;
+            let object = self.rpc(ops::OBJECTS_GET, json!({"id": id}))?;
             let after = self.snapshot(id)?;
             if before != after {
                 continue;
@@ -153,7 +153,7 @@ impl Engine {
 
     fn upsert_journal(&self, object: Value, expected: Value) -> Result<(), EngineError> {
         let result = self.rpc(
-            "upsert_object",
+            ops::OBJECTS_UPSERT,
             json!({"object": object, "expectedSnapshot": expected}),
         )?;
         if result == true {
@@ -161,7 +161,7 @@ impl Engine {
         } else {
             Err(EngineError::local(
                 ErrorKind::Transport,
-                "upsert_object returned non-true data",
+                "objects.upsert returned non-true data",
             ))
         }
     }

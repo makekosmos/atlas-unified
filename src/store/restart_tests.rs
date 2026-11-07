@@ -114,12 +114,14 @@ fn restart_client() {
             let mut todo = new_todo("restart-linked", "Linked");
             todo.project_id = Some(project.id.clone());
             engine.save(None, &todo).unwrap();
-            let stored = engine.rpc("get_object", json!({"id":project.id})).unwrap();
+            let stored = engine
+                .rpc(ops::OBJECTS_GET, json!({"id":project.id}))
+                .unwrap();
             assert_eq!(
                 stored["typeId"], "com.mundus.atlas.project",
                 "saved project: {stored}"
             );
-            let links = engine.rpc("list_object_links", json!({})).unwrap();
+            let links = engine.rpc(ops::LINKS_LIST, json!({})).unwrap();
             assert_eq!(
                 links,
                 json!([{"id":"restart-linked:project","sourceObjectId":"restart-linked",
@@ -147,10 +149,7 @@ fn restart_client() {
             let mut todo = before.clone();
             todo.project_id = None;
             engine.save(Some(before), &todo).unwrap();
-            assert_eq!(
-                engine.rpc("list_object_links", json!({})).unwrap(),
-                json!([])
-            );
+            assert_eq!(engine.rpc(ops::LINKS_LIST, json!({})).unwrap(), json!([]));
             let reloaded = engine.load().unwrap().todos;
             let unlinked = reloaded.iter().find(|t| t.id == todo.id).unwrap();
             assert_eq!(unlinked.project_id, None);

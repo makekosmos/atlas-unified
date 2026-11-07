@@ -3,6 +3,7 @@ mod journal;
 pub mod mapping;
 #[cfg(test)]
 mod mapping_tests;
+mod ops;
 #[cfg(test)]
 mod payload_fixtures;
 pub use journal::JournalEntry;
@@ -48,7 +49,7 @@ impl Engine {
             return Ok(());
         }
         // A lost acknowledgement may still mean the next occurrence was saved.
-        let stored = self.rpc("get_object", json!({"id":next.id}))?;
+        let stored = self.rpc(ops::OBJECTS_GET, json!({"id":next.id}))?;
         if !stored.is_null() && self.read_task(&stored)? == *next {
             return Ok(());
         }
@@ -87,7 +88,7 @@ impl Engine {
         let links = self.project_links()?;
         let mut snapshot = Snapshot::default();
         for type_id in mapping::TASK_TYPES {
-            let list = self.rpc("list_objects_by_type", json!({"type_id":type_id}))?;
+            let list = self.rpc(ops::OBJECTS_LIST, json!({"typeId":type_id}))?;
             let list = list
                 .as_array()
                 .ok_or_else(|| Self::mapping_err("list not an array".into()))?;
@@ -107,7 +108,7 @@ impl Engine {
     }
 
     pub fn save(&self, before: Option<&Todo>, todo: &Todo) -> Result<(), EngineError> {
-        let current = self.rpc("get_object", json!({"id":todo.id}))?;
+        let current = self.rpc(ops::OBJECTS_GET, json!({"id":todo.id}))?;
         if let Some(before) = before {
             if current.is_null() || self.read_task(&current)? != *before {
                 return Err(EngineError {
@@ -137,11 +138,11 @@ impl Engine {
         // A new object may be the first thing written after a start that
         // happened before the Engine came up.
         types::ensure_registered(self);
-        let result = self.rpc("upsert_object", json!({"object":object}))?;
+        let result = self.rpc(ops::OBJECTS_UPSERT, json!({"object":object}))?;
         if result != true {
             return Err(EngineError {
                 kind: ErrorKind::Transport,
-                detail: "upsert_object returned non-true data".into(),
+                detail: "objects.upsert returned non-true data".into(),
             });
         }
         Ok(())

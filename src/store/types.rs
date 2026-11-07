@@ -11,7 +11,7 @@
 //! read through the same mapping and saved back under the type they already
 //! have. Rewriting their `typeId` would be a copy-migration of user data to
 //! gain a name, which this app does not do.
-use super::{Engine, EngineError, ErrorKind};
+use super::{ops, Engine, EngineError, ErrorKind};
 use serde_json::{json, Value};
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -73,7 +73,7 @@ impl Engine {
                 )
             })?;
             self.rpc(
-                "types.register",
+                ops::TYPES_REGISTER,
                 json!({"typeId":declaration.id,"version":declaration.version,
                     "name":declaration.name,"appId":APP_ID,"schema":schema}),
             )?;

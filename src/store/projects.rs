@@ -1,14 +1,17 @@
 //! Atlas projects are `com.mundus.atlas.project` objects (see `types`). A task
 //! belongs to a project through its outbound `project` link (max 1).
-use super::{types, Engine, EngineError};
+use super::{ops, types, Engine, EngineError};
 use crate::model::Project;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
 pub(super) const PROJECT_TYPE: &str = types::PROJECT_TYPE;
+/// Only the fixture helper writes a project, so the versions stay test-side.
+#[cfg(test)]
 const PROJECT_VERSION: &str = types::PROJECT_VERSION;
 /// Projects created before Atlas declared its own type stay `core.project`.
 pub(super) const LEGACY_PROJECT_TYPE: &str = "core.project";
+#[cfg(test)]
 const LEGACY_PROJECT_VERSION: &str = "0.1.0";
 const PROJECT_TYPES: [&str; 2] = [PROJECT_TYPE, LEGACY_PROJECT_TYPE];
 const PROJECT_LINK: &str = "project";
@@ -17,7 +20,7 @@ const PROJECT_STATUS: [&str; 3] = ["active", "someday", "completed"];
 impl Engine {
     #[cfg(test)]
     pub(super) fn save_project(&self, project: &Project) -> Result<(), EngineError> {
-        let current = self.rpc("get_object", json!({"id":project.id}))?;
+        let current = self.rpc(ops::OBJECTS_GET, json!({"id":project.id}))?;
         let now = chrono::Utc::now().to_rfc3339();
         self.upsert(project_object(current, project, &now))
     }
@@ -27,7 +30,7 @@ impl Engine {
     pub(super) fn projects(&self) -> Result<Vec<Project>, EngineError> {
         let mut projects = Vec::new();
         for type_id in PROJECT_TYPES {
-            let list = self.rpc("list_objects_by_type", json!({"type_id":type_id}))?;
+            let list = self.rpc(ops::OBJECTS_LIST, json!({"typeId":type_id}))?;
             let list = list
                 .as_array()
                 .ok_or_else(|| Self::mapping_err("project list not an array".into()))?;
@@ -42,7 +45,7 @@ impl Engine {
 
     /// Every `project` link as task id → (link id, project id).
     pub(super) fn project_links(&self) -> Result<HashMap<String, (String, String)>, EngineError> {
-        let links = self.rpc("list_object_links", json!({}))?;
+        let links = self.rpc(ops::LINKS_LIST, json!({}))?;
         let links = links
             .as_array()
             .ok_or_else(|| Self::mapping_err("link list not an array".into()))?;
@@ -69,13 +72,13 @@ impl Engine {
             Some(project) => {
                 let now = chrono::Utc::now().to_rfc3339();
                 self.rpc(
-                    "replace_object_link",
+                    ops::LINKS_REPLACE,
                     json!({"object_link":project_link(task, project, &now)}),
                 )?;
             }
             None => {
                 if let Some((id, _)) = self.project_links()?.remove(task) {
-                    self.rpc("delete_object_link", json!({"id":id}))?;
+                    self.rpc(ops::LINKS_DELETE, json!({"id":id}))?;
                 }
             }
         }
