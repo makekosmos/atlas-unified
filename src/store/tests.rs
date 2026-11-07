@@ -88,6 +88,7 @@ fn persistence_across_client_processes() {
             let mut objects: serde_json::Map<String, Value> =
                 serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
             let response = match request["operation"].as_str().unwrap() {
+                "types.register" => json!({"ok":true,"data":{"typeId":request["typeId"],"version":request["version"]}}),
                 "list_objects_by_type" => json!({"ok":true,"data":objects.values().filter(|v| v["typeId"] == request["type_id"]).collect::<Vec<_>>()}),
                 "get_object" => json!({"ok":true,"data":objects.get(request["id"].as_str().unwrap())}),
                 "upsert_object" if request["object"]["title"] == "REJECT" => json!({"ok":false,"error":"rejected"}),

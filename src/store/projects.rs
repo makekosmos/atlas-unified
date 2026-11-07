@@ -1,13 +1,16 @@
-//! Atlas projects are Engine `core.project` 0.1.0 objects. A task belongs to a
-//! project through its outbound `project` link (`core.task` relation, max 1).
-use super::{Engine, EngineError};
+//! Atlas projects are `com.mundus.atlas.project` objects (see `types`). A task
+//! belongs to a project through its outbound `project` link (max 1).
+use super::{types, Engine, EngineError};
 use crate::model::Project;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
-pub(super) const PROJECT_TYPE: &str = "core.project";
-#[cfg(test)]
-const PROJECT_VERSION: &str = "0.1.0";
+pub(super) const PROJECT_TYPE: &str = types::PROJECT_TYPE;
+const PROJECT_VERSION: &str = types::PROJECT_VERSION;
+/// Projects created before Atlas declared its own type stay `core.project`.
+pub(super) const LEGACY_PROJECT_TYPE: &str = "core.project";
+const LEGACY_PROJECT_VERSION: &str = "0.1.0";
+const PROJECT_TYPES: [&str; 2] = [PROJECT_TYPE, LEGACY_PROJECT_TYPE];
 const PROJECT_LINK: &str = "project";
 const PROJECT_STATUS: [&str; 3] = ["active", "someday", "completed"];
 
@@ -19,17 +22,22 @@ impl Engine {
         self.upsert(project_object(current, project, &now))
     }
 
-    /// Live (not soft-deleted) projects.
+    /// Live (not soft-deleted) projects, under either id — `objects.list` takes
+    /// one `typeId`, so the list is asked for twice.
     pub(super) fn projects(&self) -> Result<Vec<Project>, EngineError> {
-        let list = self.rpc("list_objects_by_type", json!({"type_id":PROJECT_TYPE}))?;
-        let list = list
-            .as_array()
-            .ok_or_else(|| Self::mapping_err("project list not an array".into()))?;
-        Ok(list
-            .iter()
-            .filter(|v| v["typeId"] == PROJECT_TYPE && !v["deletedAt"].is_string())
-            .map(read_project)
-            .collect())
+        let mut projects = Vec::new();
+        for type_id in PROJECT_TYPES {
+            let list = self.rpc("list_objects_by_type", json!({"type_id":type_id}))?;
+            let list = list
+                .as_array()
+                .ok_or_else(|| Self::mapping_err("project list not an array".into()))?;
+            projects.extend(
+                list.iter()
+                    .filter(|v| v["typeId"] == *type_id && !v["deletedAt"].is_string())
+                    .map(read_project),
+            );
+        }
+        Ok(projects)
     }
 
     /// Every `project` link as task id → (link id, project id).
@@ -93,7 +101,13 @@ fn project_object(current: Value, project: &Project, now: &str) -> Value {
     };
     object["title"] = json!(project.title);
     object["updatedAt"] = json!(now);
-    object["typeVersion"] = json!(PROJECT_VERSION);
+    // The stored object keeps the type it already has; only a new project is
+    // written under the Atlas type.
+    object["typeVersion"] = json!(if object["typeId"] == LEGACY_PROJECT_TYPE {
+        LEGACY_PROJECT_VERSION
+    } else {
+        PROJECT_VERSION
+    });
     let props = &mut object["propsJson"];
     props["status"] = json!(PROJECT_STATUS
         .get(usize::from(project.status))
@@ -128,7 +142,7 @@ mod tests {
     }
 
     #[test]
-    fn project_round_trips_as_core_project() {
+    fn project_round_trips_as_an_atlas_type() {
         let project = Project {
             id: "p1".into(),
             title: "Ремонт".into(),
@@ -136,7 +150,7 @@ mod tests {
             sort_order: 3,
         };
         let object = project_object(Value::Null, &project, "2026-10-05T00:00:00Z");
-        assert_eq!(object["typeId"], "core.project");
+        assert_eq!(object["typeId"], "com.mundus.atlas.project");
         assert_eq!(object["typeVersion"], "0.1.0");
         assert_eq!(object["propsJson"]["status"], "someday");
         assert_eq!(read_project(&object), project);

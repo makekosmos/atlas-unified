@@ -16,6 +16,7 @@ mod tests;
 mod transport;
 #[cfg(test)]
 mod transport_tests;
+mod types;
 
 use crate::model::Project;
 use crate::model::Todo;
@@ -80,17 +81,20 @@ impl Engine {
     }
 
     pub fn load(&self) -> Result<Snapshot, EngineError> {
-        let list = self.rpc(
-            "list_objects_by_type",
-            json!({"type_id":mapping::TASK_TYPE}),
-        )?;
-        let list = list
-            .as_array()
-            .ok_or_else(|| Self::mapping_err("list not an array".into()))?;
+        // Atlas declares its own types before it reads anything; `core.task`
+        // objects written before that keep loading under their old id.
+        types::ensure_registered(self);
         let links = self.project_links()?;
         let mut snapshot = Snapshot::default();
-        for object in list {
-            if object["typeId"] == mapping::TASK_TYPE {
+        for type_id in mapping::TASK_TYPES {
+            let list = self.rpc("list_objects_by_type", json!({"type_id":type_id}))?;
+            let list = list
+                .as_array()
+                .ok_or_else(|| Self::mapping_err("list not an array".into()))?;
+            for object in list {
+                if !mapping::is_task(object) {
+                    continue;
+                }
                 let mut todo = mapping::read(object).map_err(Self::mapping_err)?;
                 todo.project_id = links.get(&todo.id).map(|(_, project)| project.clone());
                 snapshot.todos.push(todo);
@@ -130,6 +134,9 @@ impl Engine {
     }
 
     fn upsert(&self, object: Value) -> Result<(), EngineError> {
+        // A new object may be the first thing written after a start that
+        // happened before the Engine came up.
+        types::ensure_registered(self);
         let result = self.rpc("upsert_object", json!({"object":object}))?;
         if result != true {
             return Err(EngineError {

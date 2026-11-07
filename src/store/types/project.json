@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["active", "someday", "completed"],
+      "default": "active"
+    },
+    "scheduledAt": {
+      "type": ["string", "null"],
+      "default": null,
+      "format": "date"
+    },
+    "dueAt": {
+      "type": ["string", "null"],
+      "default": null,
+      "format": "date"
+    },
+    "color": {
+      "type": ["string", "null"],
+      "default": null
+    },
+    "extensions": {
+      "type": "object",
+      "default": {},
+      "additionalProperties": true
+    }
+  },
+  "required": ["status", "scheduledAt", "dueAt", "color", "extensions"]
+}

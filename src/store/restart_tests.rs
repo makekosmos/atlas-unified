@@ -115,7 +115,10 @@ fn restart_client() {
             todo.project_id = Some(project.id.clone());
             engine.save(None, &todo).unwrap();
             let stored = engine.rpc("get_object", json!({"id":project.id})).unwrap();
-            assert_eq!(stored["typeId"], "core.project", "saved project: {stored}");
+            assert_eq!(
+                stored["typeId"], "com.mundus.atlas.project",
+                "saved project: {stored}"
+            );
             let links = engine.rpc("list_object_links", json!({})).unwrap();
             assert_eq!(
                 links,
