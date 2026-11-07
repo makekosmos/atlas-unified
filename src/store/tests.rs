@@ -90,10 +90,14 @@ fn persistence_across_client_processes() {
             let response = match request["operation"].as_str().unwrap() {
                 "types.register" => json!({"ok":true,"data":{"typeId":request["typeId"],"version":request["version"]}}),
                 "objects.list" => json!({"ok":true,"data":objects.values().filter(|v| v["typeId"] == request["typeId"]).collect::<Vec<_>>()}),
+                "objects.snapshot" => json!({"ok":true,"data":objects.get(request["id"].as_str().unwrap())}),
                 "objects.get" => json!({"ok":true,"data":objects.get(request["id"].as_str().unwrap())}),
                 "objects.upsert" if request["object"]["title"] == "REJECT" => json!({"ok":false,"error":"rejected"}),
                 "objects.upsert" => {
                     let object = &request["object"];
+                    if request.get("expectedSnapshot").is_some() {
+                        assert_eq!(request["expectedSnapshot"], objects.get(object["id"].as_str().unwrap()).cloned().unwrap_or(Value::Null));
+                    }
                     objects.insert(object["id"].as_str().unwrap().into(), object.clone());
                     std::fs::write(&path, serde_json::to_vec(&objects).unwrap()).unwrap();
                     json!({"ok":true,"data":true})

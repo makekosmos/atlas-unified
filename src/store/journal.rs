@@ -9,7 +9,7 @@ const NOTE_TYPE: &str = types::JOURNAL_TYPE;
 const NOTE_VERSION: &str = types::JOURNAL_VERSION;
 /// Journal notes written before Atlas declared its own type.
 const LEGACY_NOTE_TYPE: &str = "core.note";
-const NOTE_TYPES: [&str; 2] = [NOTE_TYPE, LEGACY_NOTE_TYPE];
+pub(super) const NOTE_TYPES: [&str; 2] = [NOTE_TYPE, LEGACY_NOTE_TYPE];
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct JournalEntry {

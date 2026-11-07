@@ -56,6 +56,17 @@ impl Atlas {
         self.send_storage(Command::Load);
     }
 
+    /// The Engine announced a change to what this app reads. Reload quietly:
+    /// the current list stays on screen (`storage_ready` is not cleared) and a
+    /// second event during the load only asks for one more pass.
+    pub(crate) fn refresh_storage(&mut self) {
+        if self.storage_busy {
+            self.storage_dirty = true;
+            return;
+        }
+        self.send_storage(Command::Load);
+    }
+
     pub(crate) fn send_storage(&mut self, command: Command) -> bool {
         if self
             .storage
@@ -89,6 +100,14 @@ impl Atlas {
     }
 
     fn on_storage_reply(&mut self, reply: Reply, cx: &mut Context<Self>) {
+        if matches!(reply, Reply::Changed) {
+            if let Some(worker) = &self.storage {
+                worker.acknowledge_change();
+            }
+            self.refresh_storage();
+            cx.notify();
+            return;
+        }
         self.storage_busy = false;
         match reply {
             Reply::Loaded(Ok(snapshot)) => self.load_snapshot(snapshot),
@@ -101,6 +120,11 @@ impl Atlas {
                 self.storage_error = None;
             }
             Reply::Saved(_, Err(error)) => self.fail_write(error),
+            Reply::Changed => unreachable!("handled without clearing the busy flag"),
+        }
+        if self.storage_dirty && !self.storage_busy {
+            self.storage_dirty = false;
+            self.refresh_storage();
         }
         cx.notify();
     }

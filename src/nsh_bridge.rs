@@ -1,4 +1,12 @@
-use std::{cell::RefCell, rc::Rc, sync::mpsc, thread};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc, Arc,
+    },
+    thread,
+};
 
 use gpui::{App, Entity, Subscription, Window};
 use imago_nsh::{ComponentContext, NativeComponent};
@@ -16,17 +24,22 @@ pub(crate) struct AtlasBridge {
     route: Rc<RefCell<String>>,
     journal_commands: mpsc::Sender<JournalRequest>,
     subscription: Option<Subscription>,
+    _journal_subscription: Option<crate::store::live::Subscription>,
+    journal_reload_pending: Arc<AtomicBool>,
 }
 
 impl AtlasBridge {
-    pub(crate) fn new(context: ComponentContext, agenda: Entity<Atlas>) -> Self {
-        let journal_commands = start_journal_bridge(context.clone());
+    pub(crate) fn new(context: ComponentContext, agenda: Entity<Atlas>, demo: bool) -> Self {
+        let (journal_commands, journal_subscription, journal_reload_pending) =
+            start_journal_bridge(context.clone(), demo);
         Self {
             context,
             agenda,
             route: Rc::new(RefCell::new("journal".into())),
             journal_commands,
             subscription: None,
+            _journal_subscription: journal_subscription,
+            journal_reload_pending,
         }
     }
 
@@ -101,8 +114,27 @@ enum JournalRequest {
     Reload,
 }
 
-fn start_journal_bridge(context: ComponentContext) -> mpsc::Sender<JournalRequest> {
+type JournalChannel = (
+    mpsc::Sender<JournalRequest>,
+    Option<crate::store::live::Subscription>,
+    Arc<AtomicBool>,
+);
+
+fn start_journal_bridge(context: ComponentContext, demo: bool) -> JournalChannel {
     let (sender, requests) = mpsc::channel();
+    let reload_pending = Arc::new(AtomicBool::new(false));
+    if demo {
+        emit_journal_entries(&context, &[]);
+        return (sender, None, reload_pending);
+    }
+    let changes = sender.clone();
+    let pending = reload_pending.clone();
+    let subscription = crate::store::live::spawn(crate::store::JOURNAL_TYPES, move || {
+        if !pending.swap(true, Ordering::AcqRel) {
+            let _ = changes.send(JournalRequest::Reload);
+        }
+    });
+    let pending = reload_pending.clone();
     thread::spawn(move || {
         let engine = Engine::default();
         let mut entries = engine.journal_list().unwrap_or_default();
@@ -137,12 +169,15 @@ fn start_journal_bridge(context: ComponentContext) -> mpsc::Sender<JournalReques
                         eprintln!("[atlas-journal] delete failed: entry is no longer visible")
                     }
                 },
-                JournalRequest::Reload => entries = engine.journal_list().unwrap_or(entries),
+                JournalRequest::Reload => {
+                    pending.store(false, Ordering::Release);
+                    entries = engine.journal_list().unwrap_or(entries);
+                }
             }
             emit_journal_entries(&context, &entries);
         }
     });
-    sender
+    (sender, Some(subscription), reload_pending)
 }
 
 fn replace_journal_entry(entries: &mut [JournalEntry], updated: JournalEntry) {
@@ -252,7 +287,9 @@ impl NativeComponent for AtlasBridge {
             }
             "reload" => {
                 self.agenda.update(cx, |agenda, _| agenda.reload_storage());
-                let _ = self.journal_commands.send(JournalRequest::Reload);
+                if !self.journal_reload_pending.swap(true, Ordering::AcqRel) {
+                    let _ = self.journal_commands.send(JournalRequest::Reload);
+                }
             }
             _ => {}
         }

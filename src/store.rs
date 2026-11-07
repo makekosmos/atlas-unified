@@ -1,5 +1,8 @@
 //! Engine is the only owner of task persistence. No database or local task mirror.
+#[cfg(test)]
+mod engine_e2e_tests;
 mod journal;
+pub(crate) mod live;
 pub mod mapping;
 #[cfg(test)]
 mod mapping_tests;
@@ -30,6 +33,9 @@ pub struct Snapshot {
     pub todos: Vec<Todo>,
     pub projects: Vec<Project>,
 }
+
+/// Note types the journal screens read; the live watcher relays their changes.
+pub(crate) static JOURNAL_TYPES: &[&str] = &journal::NOTE_TYPES;
 
 mod worker;
 pub use worker::{Command, Mutation, Reply, Worker};
@@ -108,6 +114,9 @@ impl Engine {
     }
 
     pub fn save(&self, before: Option<&Todo>, todo: &Todo) -> Result<(), EngineError> {
+        // Read the guard before the object: a concurrent write after this point
+        // must make the commit fail, never overwrite a newer legacy task.
+        let snapshot = self.rpc(ops::OBJECTS_SNAPSHOT, json!({"id":todo.id}))?;
         let current = self.rpc(ops::OBJECTS_GET, json!({"id":todo.id}))?;
         if let Some(before) = before {
             if current.is_null() || self.read_task(&current)? != *before {
@@ -123,7 +132,7 @@ impl Engine {
             });
         }
         let object = mapping::write(current, before, todo).map_err(Self::mapping_err)?;
-        self.upsert(object)?;
+        self.upsert_with_snapshot(object, Some(snapshot))?;
         // The link needs the task to exist, so it is written after the object.
         let project_changed = before.map_or(todo.project_id.is_some(), |before| {
             before.project_id != todo.project_id
@@ -134,11 +143,24 @@ impl Engine {
         Ok(())
     }
 
+    #[cfg(test)]
     fn upsert(&self, object: Value) -> Result<(), EngineError> {
+        self.upsert_with_snapshot(object, None)
+    }
+
+    fn upsert_with_snapshot(
+        &self,
+        object: Value,
+        snapshot: Option<Value>,
+    ) -> Result<(), EngineError> {
         // A new object may be the first thing written after a start that
         // happened before the Engine came up.
         types::ensure_registered(self);
-        let result = self.rpc(ops::OBJECTS_UPSERT, json!({"object":object}))?;
+        let mut request = json!({"object":object});
+        if let Some(snapshot) = snapshot {
+            request["expectedSnapshot"] = snapshot;
+        }
+        let result = self.rpc(ops::OBJECTS_UPSERT, request)?;
         if result != true {
             return Err(EngineError {
                 kind: ErrorKind::Transport,

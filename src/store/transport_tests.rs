@@ -1,4 +1,5 @@
 use super::transport::resolve;
+use super::Engine;
 use std::path::PathBuf;
 
 /// Env-var lookup over a fixed map — tests never touch the real process env.
@@ -123,4 +124,39 @@ fn no_candidates_is_an_error() {
     let env = fake_env(vec![]);
     let err = resolve(&env).unwrap_err();
     assert!(err.contains(crate::brand::NAME), "{err}");
+}
+
+/// The live event stream needs `ws_port`; an Engine too old to publish one still
+/// answers requests, so a missing port is not an incompatible lock.
+#[test]
+fn lock_reads_the_event_port_and_tolerates_its_absence() {
+    let dir = tmpdir("lock");
+    let mut client = Engine::default();
+    client.data_dir = Some(dir.clone());
+    let write = |lock: serde_json::Value| {
+        std::fs::write(dir.join("engine.lock.json"), lock.to_string()).unwrap();
+    };
+    let base = |ws_port: serde_json::Value| {
+        serde_json::json!({"format_version":1,"api_version":{"major":1},"http_port":52921,
+            "ws_port":ws_port,"auth_token":"a".repeat(64)})
+    };
+
+    write(base(serde_json::json!(52920)));
+    let lock = client.lock().unwrap();
+    assert_eq!(lock.http_port, 52921);
+    assert_eq!(lock.ws_port, Some(52920));
+    assert_eq!(lock.auth_token, "a".repeat(64));
+
+    let mut old = base(serde_json::Value::Null);
+    old.as_object_mut().unwrap().remove("ws_port");
+    write(old);
+    assert_eq!(client.lock().unwrap().ws_port, None);
+
+    // A port of 0 is a broken lock, not a reason to dial.
+    write(base(serde_json::json!(0)));
+    assert_eq!(
+        client.lock().unwrap_err().kind,
+        crate::store::ErrorKind::NotCompatible
+    );
+    std::fs::remove_dir_all(dir).unwrap();
 }

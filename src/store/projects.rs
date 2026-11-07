@@ -13,7 +13,7 @@ const PROJECT_VERSION: &str = types::PROJECT_VERSION;
 pub(super) const LEGACY_PROJECT_TYPE: &str = "core.project";
 #[cfg(test)]
 const LEGACY_PROJECT_VERSION: &str = "0.1.0";
-const PROJECT_TYPES: [&str; 2] = [PROJECT_TYPE, LEGACY_PROJECT_TYPE];
+pub(super) const PROJECT_TYPES: [&str; 2] = [PROJECT_TYPE, LEGACY_PROJECT_TYPE];
 const PROJECT_LINK: &str = "project";
 const PROJECT_STATUS: [&str; 3] = ["active", "someday", "completed"];
 

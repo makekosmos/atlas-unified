@@ -19,6 +19,7 @@ serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 uuid = { version = "1.28.0", features = ["v4"] }
 ureq = { version = "2.12", default-features = false, features = ["json"] }
+tungstenite = { version = "0.28", default-features = false, features = ["handshake"] }
 
 # a11y-tree + UI autotests: #[gpui::test] + TestAppContext/VisualTestContext
 # live behind gpui's test-support feature (deterministic executors, test

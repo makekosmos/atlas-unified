@@ -512,6 +512,7 @@ dependencies = [
  "imago-nsh",
  "serde",
  "serde_json",
+ "tungstenite 0.28.0",
  "ureq 2.12.1",
  "uuid",
 ]
