@@ -6,6 +6,14 @@ use std::{
     process::Command as Process,
 };
 
+pub(super) fn snapshot(object: Option<&Value>, revision: Option<&str>) -> Value {
+    match object {
+        Some(object) => json!({"exists":true,"typeId":object["typeId"],
+            "typeVersion":object["typeVersion"],"revision":revision}),
+        None => json!({"exists":false,"typeId":null,"typeVersion":null,"revision":revision}),
+    }
+}
+
 #[test]
 fn mapping_preserves_unrepresented_fields() {
     let original = json!({"id":"real-id","typeId":mapping::TASK_TYPE,"typeVersion":"0.1.0",
@@ -57,6 +65,8 @@ fn persistence_across_client_processes() {
     let path = directory.join("fixture-store.json");
     std::fs::write(&path, "{}").unwrap();
     let server = std::thread::spawn(move || {
+        let mut revisions = std::collections::HashMap::<String, String>::new();
+        let mut sequence = 0;
         for connection in listener.incoming() {
             let mut socket = connection.unwrap();
             let mut reader = BufReader::new(socket.try_clone().unwrap());
@@ -90,14 +100,20 @@ fn persistence_across_client_processes() {
             let response = match request["operation"].as_str().unwrap() {
                 "types.register" => json!({"ok":true,"data":{"typeId":request["typeId"],"version":request["version"]}}),
                 "objects.list" => json!({"ok":true,"data":objects.values().filter(|v| v["typeId"] == request["typeId"]).collect::<Vec<_>>()}),
-                "objects.snapshot" => json!({"ok":true,"data":objects.get(request["id"].as_str().unwrap())}),
+                "objects.snapshot" => {
+                    let id = request["id"].as_str().unwrap();
+                    json!({"ok":true,"data":snapshot(objects.get(id), revisions.get(id).map(String::as_str))})
+                }
                 "objects.get" => json!({"ok":true,"data":objects.get(request["id"].as_str().unwrap())}),
                 "objects.upsert" if request["object"]["title"] == "REJECT" => json!({"ok":false,"error":"rejected"}),
                 "objects.upsert" => {
                     let object = &request["object"];
                     if request.get("expectedSnapshot").is_some() {
-                        assert_eq!(request["expectedSnapshot"], objects.get(object["id"].as_str().unwrap()).cloned().unwrap_or(Value::Null));
+                        let id = object["id"].as_str().unwrap();
+                        assert_eq!(request["expectedSnapshot"], snapshot(objects.get(id), revisions.get(id).map(String::as_str)));
                     }
+                    sequence += 1;
+                    revisions.insert(object["id"].as_str().unwrap().into(), format!("r{sequence}"));
                     objects.insert(object["id"].as_str().unwrap().into(), object.clone());
                     std::fs::write(&path, serde_json::to_vec(&objects).unwrap()).unwrap();
                     json!({"ok":true,"data":true})

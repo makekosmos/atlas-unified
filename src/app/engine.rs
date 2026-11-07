@@ -2,7 +2,7 @@ use gpui::Context;
 
 use super::Atlas;
 use crate::model::Todo;
-use crate::store::{Command, EngineError, ErrorKind, Reply, Snapshot, Worker};
+use crate::store::{Command, EngineError, ErrorKind, Mutation, Reply, Snapshot, Worker};
 
 impl Atlas {
     pub(crate) fn start_storage(&mut self, cx: &mut Context<Self>) {
@@ -87,9 +87,6 @@ impl Atlas {
         if self.demo {
             return true;
         }
-        if self.storage_busy {
-            return false;
-        }
         if !self.storage_ready {
             self.storage_error.get_or_insert_with(|| {
                 format!("Подключитесь к {} и обновите список.", crate::brand::NAME)
@@ -99,7 +96,28 @@ impl Atlas {
         true
     }
 
-    fn on_storage_reply(&mut self, reply: Reply, cx: &mut Context<Self>) {
+    pub(super) fn queue_mutation(&mut self, mutation: Mutation) {
+        if let Some(pending) = self
+            .pending_mutations
+            .iter_mut()
+            .find(|pending| pending.todo.id == mutation.todo.id)
+        {
+            *pending = mutation;
+        } else {
+            self.pending_mutations.push_back(mutation);
+        }
+        self.flush_mutation();
+    }
+
+    fn flush_mutation(&mut self) {
+        if self.storage_ready && !self.storage_busy {
+            if let Some(mutation) = self.pending_mutations.pop_front() {
+                self.send_storage(Command::Save(Box::new(mutation)));
+            }
+        }
+    }
+
+    pub(super) fn on_storage_reply(&mut self, reply: Reply, cx: &mut Context<Self>) {
         if matches!(reply, Reply::Changed) {
             if let Some(worker) = &self.storage {
                 worker.acknowledge_change();
@@ -122,6 +140,7 @@ impl Atlas {
             Reply::Saved(_, Err(error)) => self.fail_write(error),
             Reply::Changed => unreachable!("handled without clearing the busy flag"),
         }
+        self.flush_mutation();
         if self.storage_dirty && !self.storage_busy {
             self.storage_dirty = false;
             self.refresh_storage();

@@ -36,7 +36,7 @@ export function AtlasAppearanceSettings(props: {
   const heading = (label: string) => <Text class="mb-2 px-2 text-[13px]" style={{ color: colors().muted }}>{label}</Text>;
   const card = (selected: boolean, label: string, onPress: () => void) => (
     <View onPress={canEdit() ? onPress : undefined} role="button" accessibilityState={{ selected, disabled: !canEdit() }} class="items-center justify-center rounded-lg border" hoverStyle={{ backgroundColor: wash }} style={{ height: 32, paddingLeft: 12, paddingRight: 12, backgroundColor: selected ? colors().card : colors().background, borderColor: selected ? colors().accent : colors().border, opacity: canEdit() ? 1 : 0.65, cursor: canEdit() ? "pointer" : "default" }}>
-      <Text class="text-[12px]" hoverStyle={{ color: colors().foreground }} style={{ color: selected ? colors().foreground : colors().muted }}>{label}</Text>
+      <Text class={`text-[12px] hover:text-[${colors().foreground}]`} style={{ color: selected ? colors().foreground : colors().muted }}>{label}</Text>
     </View>
   );
   const select = (id: Exclude<Selector, null>, value: string, options: { value: string; label: string }[], onSelect: (value: string) => void, width: number) => {
@@ -146,7 +146,7 @@ export function AtlasAppearanceSettings(props: {
 }
 
 function selectLabel(material: string, label: string, selected: string, onPress: (value: string) => void, colors: ThemeColors, editable: boolean, dark: boolean) {
-  return <View onPress={editable ? () => onPress(material) : undefined} role="button" accessibilityState={{ selected: selected === material, disabled: !editable }} class="items-center justify-center rounded-lg border" hoverStyle={{ backgroundColor: hoverWash(dark) }} style={{ height: 32, paddingLeft: 12, paddingRight: 12, backgroundColor: selected === material ? colors.card : colors.background, borderColor: selected === material ? colors.accent : colors.border, opacity: editable ? 1 : 0.65, cursor: editable ? "pointer" : "default" }}><Text class="text-[12px]" hoverStyle={{ color: colors.foreground }} style={{ color: selected === material ? colors.foreground : colors.muted }}>{label}</Text></View>;
+  return <View onPress={editable ? () => onPress(material) : undefined} role="button" accessibilityState={{ selected: selected === material, disabled: !editable }} class="items-center justify-center rounded-lg border" hoverStyle={{ backgroundColor: hoverWash(dark) }} style={{ height: 32, paddingLeft: 12, paddingRight: 12, backgroundColor: selected === material ? colors.card : colors.background, borderColor: selected === material ? colors.accent : colors.border, opacity: editable ? 1 : 0.65, cursor: editable ? "pointer" : "default" }}><Text class={`text-[12px] hover:text-[${colors.foreground}]`} style={{ color: selected === material ? colors.foreground : colors.muted }}>{label}</Text></View>;
 }
 
 

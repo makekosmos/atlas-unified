@@ -13,7 +13,7 @@
 //! gain a name, which this app does not do.
 use super::{ops, Engine, EngineError, ErrorKind};
 use serde_json::{json, Value};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::{path::PathBuf, sync::Mutex};
 
 /// Owner of every type here. `types.register` requires `typeId` to sit under
 /// `{appId}.`, so `core.*` cannot be claimed even by mistake.
@@ -56,9 +56,9 @@ const DECLARATIONS: [Declaration; 3] = [
     },
 ];
 
-/// Set once the Engine accepted the declarations. A failed attempt is retried
-/// on the next call, because Atlas may well start before the Engine does.
-static REGISTERED: AtomicBool = AtomicBool::new(false);
+/// Only the last successful Engine identity is cached. Hold the mutex through
+/// registration so concurrent callers cannot publish a stale success.
+static REGISTERED: Mutex<Option<(PathBuf, String)>> = Mutex::new(None);
 
 impl Engine {
     /// Declare every type in [`DECLARATIONS`]. Idempotent: the Engine answers
@@ -82,17 +82,26 @@ impl Engine {
     }
 }
 
-/// Register the types unless this process already did. Called before the first
-/// object load and before a write that may introduce a type, so a start that
-/// happened before the Engine came up heals on the next attempt.
+/// Register once per discovered directory and lock token. Failures retry on
+/// the next load or write, including when Atlas starts before the Engine.
 pub(super) fn ensure_registered(engine: &Engine) {
-    if REGISTERED.load(Ordering::Relaxed) {
-        return;
-    }
-    match engine.register_types() {
-        Ok(()) => REGISTERED.store(true, Ordering::Relaxed),
-        // Not fatal: `core.*` objects still load, and the next attempt retries.
-        Err(error) => eprintln!("[storage] types.register failed: {error}"),
+    let mut registered = REGISTERED.lock().unwrap_or_else(|error| error.into_inner());
+    let result = (|| -> Result<(), EngineError> {
+        let identity = (engine.directory()?, engine.lock()?.auth_token);
+        if registered.as_ref() == Some(&identity) {
+            return Ok(());
+        }
+        *registered = None;
+        engine.register_types()?;
+        // RPC re-reads the lock for each declaration. A restart mid-batch must
+        // not cache success for an Engine that received only part of the batch.
+        if engine.directory()? == identity.0 && engine.lock()?.auth_token == identity.1 {
+            *registered = Some(identity);
+        }
+        Ok(())
+    })();
+    if let Err(error) = result {
+        eprintln!("[storage] types.register failed: {error}");
     }
 }
 
@@ -169,6 +178,27 @@ mod tests {
             assert_eq!(request["appId"], APP_ID);
             assert_eq!(request["schema"]["type"], "object");
             assert!(request["name"].is_string());
+        }
+    }
+
+    #[test]
+    fn ensure_registered_repeats_registrations_after_token_change() {
+        let engine = Recorder::start();
+        ensure_registered(&engine.client);
+        ensure_registered(&engine.client);
+        let path = engine.directory.join("engine.lock.json");
+        let mut lock: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        lock["auth_token"] = json!("b".repeat(64));
+        std::fs::write(path, lock.to_string()).unwrap();
+        ensure_registered(&engine.client);
+        ensure_registered(&engine.client);
+        let requests = engine.stop();
+        assert_eq!(requests.len(), DECLARATIONS.len() * 2);
+        for batch in requests.as_chunks::<{ DECLARATIONS.len() }>().0 {
+            for (request, declaration) in batch.iter().zip(&DECLARATIONS) {
+                assert_eq!(request["operation"], ops::TYPES_REGISTER);
+                assert_eq!(request["typeId"], declaration.id);
+            }
         }
     }
 

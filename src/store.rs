@@ -14,6 +14,8 @@ pub use journal::JournalEntry;
 mod journal_tests;
 mod projects;
 #[cfg(test)]
+mod recurrence_tests;
+#[cfg(test)]
 mod restart_tests;
 #[cfg(test)]
 mod tests;
@@ -51,23 +53,44 @@ impl Engine {
         let Some(next) = next else {
             return Ok(());
         };
-        if self.save(None, next).is_ok() {
+        let Err(write_error) = self.save(None, next) else {
             return Ok(());
-        }
+        };
         // A lost acknowledgement may still mean the next occurrence was saved.
-        let stored = self.rpc(ops::OBJECTS_GET, json!({"id":next.id}))?;
-        if !stored.is_null() && self.read_task(&stored)? == *next {
-            return Ok(());
-        }
-        if stored.is_null() {
-            if let Some(before) = before {
-                self.save(Some(todo), before)?;
-            }
-        }
-        Err(EngineError {
+        let stored = self
+            .rpc(ops::OBJECTS_GET, json!({"id":next.id}))
+            .and_then(|object| {
+                if object.is_null() {
+                    Ok(None)
+                } else {
+                    self.read_task(&object).map(Some)
+                }
+            });
+        let confirmation = match stored {
+            Ok(Some(task)) if task == *next => return Ok(()),
+            Ok(Some(_)) => return Err(Self::recurrence_error(format!(
+                "partial application: successor differs from the intended task; original was not rolled back ({write_error})"
+            ))),
+            Ok(None) => "successor is absent".to_owned(),
+            Err(error) => format!("successor readback failed: {error}; successor may exist"),
+        };
+        let recovery = match before {
+            Some(before) => match self.save(Some(todo), before) {
+                Ok(()) => "original occurrence restored".to_owned(),
+                Err(error) => format!("partial application: original rollback failed: {error}"),
+            },
+            None => "partial application: no original occurrence available for rollback".to_owned(),
+        };
+        Err(Self::recurrence_error(format!(
+            "successor write unconfirmed: {write_error}; {confirmation}; {recovery}"
+        )))
+    }
+
+    fn recurrence_error(detail: String) -> EngineError {
+        EngineError {
             kind: ErrorKind::Unavailable,
-            detail: "local: save_with_next unconfirmed".into(),
-        })
+            detail: format!("recurrence: {detail}"),
+        }
     }
 
     /// `mapping::read` plus the task's project from its `project` link.

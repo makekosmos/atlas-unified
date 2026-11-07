@@ -43,7 +43,7 @@ pub struct Worker {
     pub commands: Sender<Command>,
     pub replies: Receiver<Reply>,
     change_pending: Arc<AtomicBool>,
-    _subscription: live::Subscription,
+    _subscription: Option<live::Subscription>,
 }
 
 impl Worker {
@@ -81,8 +81,23 @@ impl Worker {
             commands,
             replies,
             change_pending,
-            _subscription: subscription,
+            _subscription: Some(subscription),
         }
+    }
+
+    #[cfg(all(test, feature = "e2e"))]
+    pub(crate) fn test_channel() -> (Self, Receiver<Command>) {
+        let (commands, requests) = mpsc::channel();
+        let (_, replies) = mpsc::channel();
+        (
+            Self {
+                commands,
+                replies,
+                change_pending: Arc::new(AtomicBool::new(false)),
+                _subscription: None,
+            },
+            requests,
+        )
     }
 
     /// Clear before processing `Changed` so edits during reload queue another pass.

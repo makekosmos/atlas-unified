@@ -1,6 +1,6 @@
 use super::Atlas;
 use crate::model::{new_todo, Status, Todo};
-use crate::store::{Command, Mutation};
+use crate::store::Mutation;
 
 impl Atlas {
     pub(crate) fn toggle_sidebar(&mut self) {
@@ -40,10 +40,10 @@ impl Atlas {
             self.accept_todo(todo);
             return;
         }
-        self.send_storage(Command::Save(Box::new(Mutation {
+        self.queue_mutation(Mutation {
             before,
             todo,
             next: None,
-        })));
+        });
     }
 }
