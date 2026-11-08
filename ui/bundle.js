@@ -1,10 +1,10 @@
 import { append, bindProp, component, each, element, insert, prop, setup, spread, text } from "nsh:rt";
-import { Clipboard, Easing, LayoutAnimation, PanResponder, Storage, createMotion, effect, keymap, mount, nativeComponent, signal } from "nsh";
+import { Clipboard, Easing, LayoutAnimation, PanResponder, Storage, createMotion, effect, host, keymap, mount, nativeComponent, signal } from "nsh";
 import { Menu, Window, titleBar } from "nsh/desktop";
 import { platform } from "os";
 import { Popover } from "nsh/base";
 
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+38b61af907dbc4032291386f91b75cfb0d8a154c/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
+//#region ../node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
 const icons = {
 	about: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
 	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
@@ -27,7 +27,7 @@ const icons = {
 };
 
 //#endregion
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+38b61af907dbc4032291386f91b75cfb0d8a154c/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
+//#region ../node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
 function Icon(props) {
 	return (() => {
 		const __nsh_hv0 = element("image");
@@ -40,24 +40,28 @@ function Icon(props) {
 		return __nsh_hv0;
 	})();
 }
-function Dialog(props) {
+function Button(props) {
 	return (() => {
-		const __nsh_hv36 = element("view");
-		prop(__nsh_hv36, "class", "absolute inset-0 items-center justify-center bg-[#00000080] px-4");
-		const __nsh_hv37 = element("view");
-		prop(__nsh_hv37, "class", "w-full max-w-[440px] rounded-xl border p-4");
-		bindProp(__nsh_hv37, "style", () => ({
-			borderColor: props.colors.border,
-			backgroundColor: props.colors.card
+		const __nsh_hv32 = element("view");
+		bindProp(__nsh_hv32, "onPress", () => props.disabled ? void 0 : props.onPress);
+		prop(__nsh_hv32, "role", "button");
+		bindProp(__nsh_hv32, "accessibilityState", () => ({
+			selected: !!props.selected,
+			disabled: !!props.disabled
 		}));
-		const __nsh_hv38 = element("text");
-		prop(__nsh_hv38, "class", "mb-3 text-[14px]");
-		bindProp(__nsh_hv38, "style", () => ({ color: props.colors.foreground }));
-		insert(__nsh_hv38, () => props.title);
-		append(__nsh_hv37, __nsh_hv38);
-		insert(__nsh_hv37, () => props.children);
-		append(__nsh_hv36, __nsh_hv37);
-		return __nsh_hv36;
+		bindProp(__nsh_hv32, "class", () => `rounded-md border px-3 py-2 ${props.className ?? ""}`);
+		bindProp(__nsh_hv32, "style", () => ({
+			backgroundColor: props.selected ? props.colors.card : props.colors.background,
+			borderColor: props.selected ? props.colors.accent : props.colors.border,
+			opacity: props.disabled ? .5 : 1,
+			...props.style
+		}));
+		const __nsh_hv33 = element("text");
+		prop(__nsh_hv33, "class", "text-[13px]");
+		bindProp(__nsh_hv33, "style", () => ({ color: props.textColor ?? (props.selected ? props.colors.foreground : props.colors.muted) }));
+		insert(__nsh_hv33, () => props.label);
+		append(__nsh_hv32, __nsh_hv33);
+		return __nsh_hv32;
 	})();
 }
 
@@ -74,6 +78,12 @@ var navigation_default = [
 		"id": "tasks",
 		"label": "Задачи",
 		"icon": "checklist",
+		"footer": false
+	},
+	{
+		"id": "games",
+		"label": "Игры",
+		"icon": "folder",
 		"footer": false
 	},
 	{
@@ -267,7 +277,7 @@ function isSnapshot(value) {
 	return "version" in value && typeof value.version === "string" && "appearanceEditable" in value && typeof value.appearanceEditable === "boolean" && "themes" in value && Array.isArray(value.themes) && "colors" in value && isColors(value.colors) && "sidebarVisible" in value && typeof value.sidebarVisible === "boolean" && "chrome" in value && (value.chrome === "native" || value.chrome === "tsx");
 }
 function isRoute(value) {
-	return value === "journal" || value === "tasks" || value === "settings";
+	return value === "journal" || value === "tasks" || value === "games" || value === "settings";
 }
 function isTodo$1(value) {
 	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "title" in value && typeof value.title === "string" && "is_completed" in value && typeof value.is_completed === "boolean";
@@ -281,6 +291,72 @@ function isJournalVoice(value) {
 function isColors(value) {
 	if (typeof value !== "object" || value === null) return false;
 	return "background" in value && typeof value.background === "string" && "foreground" in value && typeof value.foreground === "string" && "muted" in value && typeof value.muted === "string" && "border" in value && typeof value.border === "string" && "accent" in value && typeof value.accent === "string" && "card" in value && typeof value.card === "string";
+}
+
+//#endregion
+//#region app-shortcuts.ts
+const shortcutNames = [
+	"sidebar",
+	"create",
+	"search",
+	"reload"
+];
+const defaultShortcuts = {
+	sidebar: "mod+b",
+	create: "mod+n",
+	search: "mod+k",
+	reload: "mod+r"
+};
+const shortcutOptions = {
+	sidebar: ["mod+b", "mod+shift+b"],
+	create: ["mod+n", "mod+shift+n"],
+	search: ["mod+k", "mod+shift+k"],
+	reload: ["mod+r", "mod+shift+r"]
+};
+const shortcuts = signal(defaultShortcuts);
+Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
+	if (!value) return;
+	try {
+		const saved = JSON.parse(value);
+		shortcuts.set(Object.fromEntries(shortcutNames.map((name) => [name, shortcutOptions[name].includes(saved[name] ?? "") ? saved[name] : defaultShortcuts[name]])));
+	} catch {}
+});
+function cycleShortcut(name) {
+	const current = shortcuts();
+	const choices = shortcutOptions[name];
+	const next = choices[(choices.indexOf(current[name]) + 1) % choices.length];
+	const updated = {
+		...current,
+		[name]: next
+	};
+	shortcuts.set(updated);
+	Storage.setItem("mundus.atlas.shortcuts.v1", JSON.stringify(updated));
+}
+
+//#endregion
+//#region icons.ts
+const glyphs = {
+	search: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M17%2017L21%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%2011C19%206.58172%2015.4183%203%2011%203C6.58172%203%203%206.58172%203%2011C3%2015.4183%206.58172%2019%2011%2019C15.4183%2019%2019%2015.4183%2019%2011Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	folder: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M2.5%2020V8.87695C2.5%207.58945%202.5%206.9457%202.78533%206.47048C2.9541%206.18939%203.18939%205.9541%203.47048%205.78533C3.9457%205.5%204.59449%205.5%205.89206%205.5C6.52339%205.5%206.83906%205.5%207.12612%205.58819C7.31759%205.64702%207.49914%205.73428%207.66469%205.84705C7.91289%206.01611%208.10859%206.26074%208.5%206.75C8.89141%207.23926%209.08711%207.48389%209.33531%207.65295C9.50086%207.76572%209.68241%207.85298%209.87388%207.91181C10.1609%208%2010.4742%208%2011.1008%208H15C16.4045%208%2017.1067%208%2017.6111%208.33706C17.8295%208.48298%2018.017%208.67048%2018.1629%208.88886C18.5%209.39331%2018.5%2010.0955%2018.5%2011.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M4.42028%2014.0144L3.63368%2016.0144C2.65618%2018.4998%202.16743%2019.7425%202.7524%2020.6213C3.33737%2021.5%204.65337%2021.5%207.28537%2021.5H15.1903C16.4249%2021.5%2017.0422%2021.5%2017.5295%2021.1795C18.0169%2020.859%2018.2702%2020.2865%2018.7769%2019.1415L19.6618%2017.1415C20.7866%2014.5992%2021.349%2013.3281%2020.7679%2012.4141C20.1868%2011.5%2018.8163%2011.5%2016.0752%2011.5H8.07196C6.78232%2011.5%206.1375%2011.5%205.63811%2011.8439C5.13872%2012.1877%204.89924%2012.7966%204.42028%2014.0144Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.5%204.51456C12.4151%203.28409%2013.6662%202.55594%2015.5125%202.50161C16.1155%202.48386%2016.7152%202.61395%2017.2682%202.85544C18.5748%203.42601%2019.4185%204.15644%2020%205.5L21.5%203%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	file: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M14.4961%202.00027H9.49609C8.66767%202.00027%207.99609%202.67185%207.99609%203.50027C7.99609%204.3287%208.66767%205.00027%209.49609%205.00027H14.4961C15.3245%205.00027%2015.9961%204.3287%2015.9961%203.50027C15.9961%202.67185%2015.3245%202.00027%2014.4961%202.00027Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M7.99609%2015.0003H11.4247M7.99609%2011.0003H15.9961%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M15.9961%203.50027C17.5496%203.54709%2018.4761%203.72035%2019.1174%204.36164C19.9961%205.24032%2019.9961%206.65451%2019.9961%209.4829L19.9961%2015.9997C19.9961%2018.8282%2019.9961%2020.2424%2019.1174%2021.1211C18.2387%2021.9997%2016.8245%2021.9997%2013.9961%2021.9997L9.99609%2021.9997C7.16767%2021.9997%205.75346%2021.9997%204.87478%2021.1211C3.9961%2020.2424%203.9961%2018.8282%203.99609%2015.9998L3.99611%209.48296C3.9961%206.65453%203.9961%205.24031%204.87478%204.36163C5.51606%203.72034%206.44261%203.54708%207.99599%203.50027%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
+	close: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m6%206%2012%2012M18%206%206%2018%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A",
+	gamepad: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7.1%207.5h9.8a4.5%204.5%200%200%201%204.4%203.5l1%204.7a2.6%202.6%200%200%201-4.4%202.4l-2-1.9H8.1l-2%201.9a2.6%202.6%200%200%201-4.4-2.4l1-4.7a4.5%204.5%200%200%201%204.4-3.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M7%2010.5v4m-2-2h4m7-.8h.01m2%202h.01%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A"
+};
+
+//#endregion
+//#region glyph.tsx
+function Glyph(props) {
+	return (() => {
+		const __nsh_hv0 = element("image");
+		bindProp(__nsh_hv0, "src", () => glyphs[props.name]);
+		bindProp(__nsh_hv0, "style", () => ({
+			width: props.size ?? 16,
+			height: props.size ?? 16,
+			tintColor: props.color
+		}));
+		return __nsh_hv0;
+	})();
 }
 
 //#endregion
@@ -430,6 +506,7 @@ function TitlebarOverlay(props) {
 	const captionWidth = drawCaptions ? 108 : controls.right;
 	const sidebarLeft = macos ? Math.max(controls.left, CLUSTER_START_MACOS) : Math.max(controls.left, CLUSTER_START);
 	const calendarRight = captionWidth + TRAILING_INSET;
+	const addGameRight = calendarRight + (props.showCalendarToggle ? 34 : 0);
 	const wash = hoverWash(props.dark);
 	return (() => {
 		const __nsh_hv0 = element("view");
@@ -437,13 +514,21 @@ function TitlebarOverlay(props) {
 		bindProp(__nsh_hv0, "style", () => ({ height: controls.height || 38 }));
 		prop(__nsh_hv0, "desktop", { windowDrag: true });
 		const __nsh_hv1 = element("view");
-		bindProp(__nsh_hv1, "onPress", () => props.onToggleSidebar);
-		prop(__nsh_hv1, "role", "button");
-		prop(__nsh_hv1, "accessibilityLabel", "Боковая панель");
-		prop(__nsh_hv1, "class", "absolute items-center justify-center");
-		prop(__nsh_hv1, "desktop", { windowDrag: false });
-		prop(__nsh_hv1, "hoverStyle", { backgroundColor: wash });
+		prop(__nsh_hv1, "class", "absolute top-0 bottom-0");
 		bindProp(__nsh_hv1, "style", () => ({
+			left: props.pageInset ?? 0,
+			right: 0,
+			backgroundColor: props.colors.background,
+			pointerEvents: "none"
+		}));
+		const __nsh_hv3 = element("view");
+		bindProp(__nsh_hv3, "onPress", () => props.onToggleSidebar);
+		prop(__nsh_hv3, "role", "button");
+		prop(__nsh_hv3, "accessibilityLabel", "Боковая панель");
+		prop(__nsh_hv3, "class", "absolute items-center justify-center");
+		prop(__nsh_hv3, "desktop", { windowDrag: false });
+		prop(__nsh_hv3, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv3, "style", () => ({
 			top: titlebarControlTop(24),
 			left: sidebarLeft,
 			width: 24,
@@ -451,7 +536,7 @@ function TitlebarOverlay(props) {
 			borderRadius: CONTROL_RADIUS,
 			cursor: "pointer"
 		}));
-		insert(__nsh_hv1, component(Icon, {
+		insert(__nsh_hv3, component(Icon, {
 			name: "sidebar",
 			size: 16,
 			get color() {
@@ -459,114 +544,155 @@ function TitlebarOverlay(props) {
 			}
 		}));
 		append(__nsh_hv0, __nsh_hv1);
-		insert(__nsh_hv0, [() => props.showCalendarToggle && (() => {
+		append(__nsh_hv0, __nsh_hv3);
+		insert(__nsh_hv0, () => props.dimmed && (() => {
 			const __nsh_hv2 = element("view");
-			bindProp(__nsh_hv2, "onPress", () => props.onToggleCalendar);
-			prop(__nsh_hv2, "role", "button");
-			bindProp(__nsh_hv2, "accessibilityLabel", () => props.calendarOpen ? "Скрыть календарь" : "Показать календарь");
-			bindProp(__nsh_hv2, "accessibilityState", () => ({ selected: props.calendarOpen }));
-			prop(__nsh_hv2, "class", "absolute items-center justify-center");
-			prop(__nsh_hv2, "desktop", { windowDrag: false });
-			bindProp(__nsh_hv2, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .11) }));
+			prop(__nsh_hv2, "class", "absolute top-0 bottom-0");
 			bindProp(__nsh_hv2, "style", () => ({
-				top: titlebarControlTop(28),
-				right: calendarRight,
-				width: 28,
-				height: 28,
-				borderRadius: CONTROL_RADIUS,
-				cursor: "pointer",
-				backgroundColor: props.calendarOpen ? surfaceWash(props.dark, .09) : "transparent"
-			}));
-			insert(__nsh_hv2, component(Icon, {
-				name: "sidebar",
-				size: 16,
-				get color() {
-					return props.calendarOpen ? props.colors.foreground : props.colors.muted;
-				}
+				left: props.pageInset ?? 0,
+				right: 0,
+				backgroundColor: "#00000080",
+				pointerEvents: "none"
 			}));
 			return __nsh_hv2;
-		})(), () => drawCaptions && (() => {
-			const __nsh_hv3 = element("view");
-			prop(__nsh_hv3, "class", "absolute right-0 top-0 flex-row");
-			prop(__nsh_hv3, "desktop", { windowDrag: false });
-			prop(__nsh_hv3, "style", { height: 38 });
-			const __nsh_hv4 = element("view");
-			prop(__nsh_hv4, "onPress", () => Window.minimize());
-			prop(__nsh_hv4, "role", "button");
-			prop(__nsh_hv4, "accessibilityLabel", "Свернуть окно");
-			prop(__nsh_hv4, "class", "items-center justify-center");
-			prop(__nsh_hv4, "desktop", { windowDrag: false });
-			prop(__nsh_hv4, "hoverStyle", { backgroundColor: wash });
-			prop(__nsh_hv4, "style", {
-				width: CAPTION_BUTTON_WIDTH,
-				height: 38,
-				cursor: "pointer"
-			});
-			insert(__nsh_hv4, component(Icon, {
-				name: "windowMin",
-				get color() {
-					return props.colors.foreground;
-				},
-				size: 12
-			}));
-			const __nsh_hv5 = element("view");
-			prop(__nsh_hv5, "onPress", () => Window.toggleMaximize());
-			prop(__nsh_hv5, "role", "button");
-			prop(__nsh_hv5, "accessibilityLabel", "Развернуть окно");
-			prop(__nsh_hv5, "class", "items-center justify-center");
-			prop(__nsh_hv5, "desktop", { windowDrag: false });
-			prop(__nsh_hv5, "hoverStyle", { backgroundColor: wash });
-			prop(__nsh_hv5, "style", {
-				width: CAPTION_BUTTON_WIDTH,
-				height: 38,
-				cursor: "pointer"
-			});
-			insert(__nsh_hv5, component(Icon, {
-				name: "windowMax",
-				get color() {
-					return props.colors.foreground;
-				},
-				size: 12
-			}));
-			const __nsh_hv6 = element("view");
-			prop(__nsh_hv6, "onPress", () => Window.close());
-			prop(__nsh_hv6, "onMouseEnter", () => closeHovered.set(true));
-			prop(__nsh_hv6, "onMouseLeave", () => closeHovered.set(false));
-			prop(__nsh_hv6, "role", "button");
-			prop(__nsh_hv6, "accessibilityLabel", "Закрыть окно");
-			prop(__nsh_hv6, "class", "items-center justify-center");
-			prop(__nsh_hv6, "desktop", { windowDrag: false });
-			prop(__nsh_hv6, "hoverStyle", { backgroundColor: "#e81123" });
-			prop(__nsh_hv6, "style", {
-				width: CAPTION_BUTTON_WIDTH,
-				height: 38,
-				cursor: "pointer"
-			});
-			insert(__nsh_hv6, component(Icon, {
-				name: "windowClose",
-				get color() {
-					return closeHovered() ? "#ffffff" : props.colors.foreground;
-				},
-				size: 12
-			}));
-			append(__nsh_hv3, __nsh_hv4);
-			append(__nsh_hv3, __nsh_hv5);
-			append(__nsh_hv3, __nsh_hv6);
-			return __nsh_hv3;
-		})()]);
+		})(), __nsh_hv3);
+		insert(__nsh_hv0, [
+			() => props.showCalendarToggle && (() => {
+				const __nsh_hv4 = element("view");
+				bindProp(__nsh_hv4, "onPress", () => props.onToggleCalendar);
+				prop(__nsh_hv4, "role", "button");
+				bindProp(__nsh_hv4, "accessibilityLabel", () => props.calendarOpen ? "Скрыть календарь" : "Показать календарь");
+				bindProp(__nsh_hv4, "accessibilityState", () => ({ selected: props.calendarOpen }));
+				prop(__nsh_hv4, "class", "absolute items-center justify-center");
+				prop(__nsh_hv4, "desktop", { windowDrag: false });
+				bindProp(__nsh_hv4, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .11) }));
+				bindProp(__nsh_hv4, "style", () => ({
+					top: titlebarControlTop(28),
+					right: calendarRight,
+					width: 28,
+					height: 28,
+					borderRadius: CONTROL_RADIUS,
+					cursor: "pointer",
+					backgroundColor: props.calendarOpen ? surfaceWash(props.dark, .09) : "transparent"
+				}));
+				insert(__nsh_hv4, component(Icon, {
+					name: "sidebar",
+					size: 16,
+					get color() {
+						return props.calendarOpen ? props.colors.foreground : props.colors.muted;
+					}
+				}));
+				return __nsh_hv4;
+			})(),
+			() => props.showAddGame && (() => {
+				const __nsh_hv5 = element("view");
+				prop(__nsh_hv5, "onPress", () => props.onAddGame?.());
+				prop(__nsh_hv5, "role", "button");
+				prop(__nsh_hv5, "accessibilityLabel", "Добавить игру");
+				prop(__nsh_hv5, "class", "absolute items-center justify-center");
+				prop(__nsh_hv5, "desktop", { windowDrag: false });
+				prop(__nsh_hv5, "hoverStyle", { backgroundColor: wash });
+				bindProp(__nsh_hv5, "style", () => ({
+					top: titlebarControlTop(28),
+					right: addGameRight,
+					width: 28,
+					height: 28,
+					borderRadius: CONTROL_RADIUS,
+					cursor: "pointer"
+				}));
+				insert(__nsh_hv5, component(Icon, {
+					name: "plus",
+					size: 16,
+					get color() {
+						return props.colors.muted;
+					}
+				}));
+				return __nsh_hv5;
+			})(),
+			() => drawCaptions && (() => {
+				const __nsh_hv6 = element("view");
+				prop(__nsh_hv6, "class", "absolute right-0 top-0 flex-row");
+				prop(__nsh_hv6, "desktop", { windowDrag: false });
+				prop(__nsh_hv6, "style", { height: 38 });
+				const __nsh_hv7 = element("view");
+				prop(__nsh_hv7, "onPress", () => props.onChrome("window.minimize"));
+				prop(__nsh_hv7, "role", "button");
+				prop(__nsh_hv7, "accessibilityLabel", "Свернуть окно");
+				prop(__nsh_hv7, "class", "items-center justify-center");
+				prop(__nsh_hv7, "desktop", { windowDrag: false });
+				prop(__nsh_hv7, "hoverStyle", { backgroundColor: wash });
+				prop(__nsh_hv7, "style", {
+					width: CAPTION_BUTTON_WIDTH,
+					height: 38,
+					cursor: "pointer"
+				});
+				insert(__nsh_hv7, component(Icon, {
+					name: "windowMin",
+					get color() {
+						return props.colors.foreground;
+					},
+					size: 12
+				}));
+				const __nsh_hv8 = element("view");
+				prop(__nsh_hv8, "onPress", () => props.onChrome("window.zoom"));
+				prop(__nsh_hv8, "role", "button");
+				prop(__nsh_hv8, "accessibilityLabel", "Развернуть окно");
+				prop(__nsh_hv8, "class", "items-center justify-center");
+				prop(__nsh_hv8, "desktop", { windowDrag: false });
+				prop(__nsh_hv8, "hoverStyle", { backgroundColor: wash });
+				prop(__nsh_hv8, "style", {
+					width: CAPTION_BUTTON_WIDTH,
+					height: 38,
+					cursor: "pointer"
+				});
+				insert(__nsh_hv8, component(Icon, {
+					name: "windowMax",
+					get color() {
+						return props.colors.foreground;
+					},
+					size: 12
+				}));
+				const __nsh_hv9 = element("view");
+				prop(__nsh_hv9, "onPress", () => props.onChrome("window.close"));
+				prop(__nsh_hv9, "onMouseEnter", () => closeHovered.set(true));
+				prop(__nsh_hv9, "onMouseLeave", () => closeHovered.set(false));
+				prop(__nsh_hv9, "role", "button");
+				prop(__nsh_hv9, "accessibilityLabel", "Закрыть окно");
+				prop(__nsh_hv9, "class", "items-center justify-center");
+				prop(__nsh_hv9, "desktop", { windowDrag: false });
+				prop(__nsh_hv9, "hoverStyle", { backgroundColor: "#e81123" });
+				prop(__nsh_hv9, "style", {
+					width: CAPTION_BUTTON_WIDTH,
+					height: 38,
+					cursor: "pointer"
+				});
+				insert(__nsh_hv9, component(Icon, {
+					name: "windowClose",
+					get color() {
+						return closeHovered() ? "#ffffff" : props.colors.foreground;
+					},
+					size: 12
+				}));
+				append(__nsh_hv6, __nsh_hv7);
+				append(__nsh_hv6, __nsh_hv8);
+				append(__nsh_hv6, __nsh_hv9);
+				return __nsh_hv6;
+			})()
+		]);
 		return __nsh_hv0;
 	})();
 }
 function SidebarRow(props) {
 	const wash = hoverWash(props.dark);
 	return (() => {
-		const __nsh_hv7 = element("view");
-		bindProp(__nsh_hv7, "onPress", () => props.onPress);
-		prop(__nsh_hv7, "role", "button");
-		bindProp(__nsh_hv7, "accessibilityState", () => ({ selected: props.selected }));
-		prop(__nsh_hv7, "class", "flex-row items-center");
-		prop(__nsh_hv7, "hoverStyle", { backgroundColor: wash });
-		bindProp(__nsh_hv7, "style", () => ({
+		const __nsh_hv10 = element("view");
+		bindProp(__nsh_hv10, "onPress", () => props.onPress);
+		prop(__nsh_hv10, "role", "button");
+		bindProp(__nsh_hv10, "accessibilityState", () => ({ selected: props.selected }));
+		prop(__nsh_hv10, "desktop", { windowDrag: false });
+		prop(__nsh_hv10, "class", "flex-row items-center");
+		prop(__nsh_hv10, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv10, "style", () => ({
 			height: 40,
 			gap: 10,
 			paddingLeft: 10,
@@ -575,16 +701,22 @@ function SidebarRow(props) {
 			backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent",
 			cursor: "pointer"
 		}));
-		const __nsh_hv8 = element("text");
-		prop(__nsh_hv8, "class", "text-[14px]");
-		bindProp(__nsh_hv8, "style", () => ({
+		const __nsh_hv11 = element("text");
+		prop(__nsh_hv11, "class", "text-[14px]");
+		bindProp(__nsh_hv11, "style", () => ({
 			color: props.colors.foreground,
 			fontWeight: 500,
 			lineHeight: 20
 		}));
-		insert(__nsh_hv8, () => props.label);
-		append(__nsh_hv7, __nsh_hv8);
-		insert(__nsh_hv7, component(Icon, {
+		insert(__nsh_hv11, () => props.label);
+		append(__nsh_hv10, __nsh_hv11);
+		insert(__nsh_hv10, () => props.icon === "gamepad" ? component(Glyph, {
+			name: "gamepad",
+			size: 16,
+			get color() {
+				return props.colors.foreground;
+			}
+		}) : component(Icon, {
 			get name() {
 				return props.icon;
 			},
@@ -592,42 +724,42 @@ function SidebarRow(props) {
 			get color() {
 				return props.colors.foreground;
 			}
-		}), __nsh_hv8);
-		return __nsh_hv7;
+		}), __nsh_hv11);
+		return __nsh_hv10;
 	})();
 }
 function GhostButton(props) {
 	return (() => {
-		const __nsh_hv9 = element("view");
-		bindProp(__nsh_hv9, "onPress", () => props.onPress);
-		prop(__nsh_hv9, "role", "button");
-		bindProp(__nsh_hv9, "accessibilityLabel", () => props.label);
-		prop(__nsh_hv9, "class", "items-center justify-center");
-		bindProp(__nsh_hv9, "hoverStyle", () => ({ backgroundColor: props.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }));
-		prop(__nsh_hv9, "style", {
+		const __nsh_hv12 = element("view");
+		bindProp(__nsh_hv12, "onPress", () => props.onPress);
+		prop(__nsh_hv12, "role", "button");
+		bindProp(__nsh_hv12, "accessibilityLabel", () => props.label);
+		prop(__nsh_hv12, "class", "items-center justify-center");
+		bindProp(__nsh_hv12, "hoverStyle", () => ({ backgroundColor: props.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }));
+		prop(__nsh_hv12, "style", {
 			height: 32,
 			paddingLeft: 12,
 			paddingRight: 12,
 			borderRadius: ROW_RADIUS,
 			cursor: "pointer"
 		});
-		const __nsh_hv10 = element("text");
-		bindProp(__nsh_hv10, "class", () => `text-[13px] hover:text-[${props.colors.foreground}]`);
-		bindProp(__nsh_hv10, "style", () => ({ color: props.colors.muted }));
-		insert(__nsh_hv10, () => props.label);
-		append(__nsh_hv9, __nsh_hv10);
-		return __nsh_hv9;
+		const __nsh_hv13 = element("text");
+		bindProp(__nsh_hv13, "class", () => `text-[13px] hover:text-[${props.colors.foreground}]`);
+		bindProp(__nsh_hv13, "style", () => ({ color: props.colors.muted }));
+		insert(__nsh_hv13, () => props.label);
+		append(__nsh_hv12, __nsh_hv13);
+		return __nsh_hv12;
 	})();
 }
 function SolidButton(props) {
 	return (() => {
-		const __nsh_hv11 = element("view");
-		bindProp(__nsh_hv11, "onPress", () => props.onPress);
-		prop(__nsh_hv11, "role", "button");
-		bindProp(__nsh_hv11, "accessibilityLabel", () => props.label);
-		prop(__nsh_hv11, "class", "items-center justify-center");
-		prop(__nsh_hv11, "hoverStyle", { opacity: .9 });
-		bindProp(__nsh_hv11, "style", () => ({
+		const __nsh_hv14 = element("view");
+		bindProp(__nsh_hv14, "onPress", () => props.onPress);
+		prop(__nsh_hv14, "role", "button");
+		bindProp(__nsh_hv14, "accessibilityLabel", () => props.label);
+		prop(__nsh_hv14, "class", "items-center justify-center");
+		prop(__nsh_hv14, "hoverStyle", { opacity: .9 });
+		bindProp(__nsh_hv14, "style", () => ({
 			height: 32,
 			paddingLeft: 12,
 			paddingRight: 12,
@@ -635,12 +767,12 @@ function SolidButton(props) {
 			backgroundColor: props.background,
 			cursor: "pointer"
 		}));
-		const __nsh_hv12 = element("text");
-		prop(__nsh_hv12, "class", "text-[13px] font-medium");
-		bindProp(__nsh_hv12, "style", () => ({ color: props.foreground }));
-		insert(__nsh_hv12, () => props.label);
-		append(__nsh_hv11, __nsh_hv12);
-		return __nsh_hv11;
+		const __nsh_hv15 = element("text");
+		prop(__nsh_hv15, "class", "text-[13px] font-medium");
+		bindProp(__nsh_hv15, "style", () => ({ color: props.foreground }));
+		insert(__nsh_hv15, () => props.label);
+		append(__nsh_hv14, __nsh_hv15);
+		return __nsh_hv14;
 	})();
 }
 
@@ -2343,6 +2475,1445 @@ function selectLabel(material, label, selected, onPress, colors, editable, dark)
 }
 
 //#endregion
+//#region game-library-utils.ts
+function visibleGameCards(cards, query) {
+	const search = query.trim().toLocaleLowerCase();
+	return cards.filter((card) => !card.hidden && (!search || card.title.toLocaleLowerCase().includes(search) || card.exePath.toLocaleLowerCase().includes(search)));
+}
+function pathKey(path) {
+	return path.replaceAll("/", "\\").toLocaleLowerCase();
+}
+function guessTitle(path) {
+	return (path.split(/[\\/]/).pop() ?? path).replace(/\.(exe|lnk)$/i, "").replaceAll(/[._-]+/g, " ").trim();
+}
+function isGameCard(value) {
+	if (!value || typeof value !== "object") return false;
+	const card = value;
+	return typeof card.id === "string" && typeof card.title === "string" && typeof card.exePath === "string" && !!card.exePath;
+}
+function isCandidate(value) {
+	if (!value || typeof value !== "object") return false;
+	const game = value;
+	return typeof game.title === "string" && typeof game.exePath === "string" && !!game.exePath && typeof game.source === "string";
+}
+function isScanProgress(value) {
+	if (!value || typeof value !== "object") return false;
+	const progress = value;
+	return [
+		"steam",
+		"epic",
+		"gog"
+	].includes(progress.provider ?? "") && [
+		"scanning",
+		"complete",
+		"error"
+	].includes(progress.phase ?? "") && typeof progress.completed === "number" && typeof progress.total === "number" && typeof progress.found === "number";
+}
+function providerLabel(provider) {
+	if (provider === "steam") return "Steam";
+	if (provider === "epic") return "Epic Games";
+	if (provider === "gog") return "GOG";
+	if (provider === "Engine") return "Engine";
+	return "Источник";
+}
+
+//#endregion
+//#region game-library-metadata.ts
+const metadataChoices = signal(null);
+function receiveMetadata(value, cards) {
+	if (!value || typeof value !== "object") return;
+	const event = value;
+	if (typeof event.exePath !== "string" || !event.result || typeof event.result !== "object") return;
+	const exePath = event.exePath;
+	const result = event.result;
+	if (result.status !== "ambiguous" || !Array.isArray(result.candidates)) {
+		if (metadataChoices()?.exePath === exePath) metadataChoices.set(null);
+		return;
+	}
+	const item = cards.find((card) => card.exePath.toLowerCase() === exePath.toLowerCase());
+	const candidates = result.candidates.filter((entry) => !!entry && typeof entry === "object" && typeof entry.provider === "string" && typeof entry.providerId === "string" && typeof entry.name === "string");
+	metadataChoices.set({
+		exePath,
+		title: item?.title ?? guessTitle(exePath),
+		candidates
+	});
+}
+function chooseMetadata(choice, sendCommand) {
+	const pending = metadataChoices();
+	if (!pending) return;
+	sendCommand?.("games.metadata.choose", {
+		exePath: pending.exePath,
+		title: pending.title,
+		provider: choice.provider,
+		providerId: choice.providerId
+	});
+	metadataChoices.set(null);
+}
+function setImage(exePath, source, sendCommand) {
+	sendCommand?.("games.metadata.set-image", {
+		exePath,
+		source
+	});
+}
+
+//#endregion
+//#region game-library.ts
+const legacyCardsKey = "mundus.atlas.games.v1";
+const cards = signal([]);
+const candidates = signal([]);
+const libraryState = signal("loading");
+const scanState = signal("idle");
+const scanProgress = signal(null);
+const scanError = signal("");
+const scanWarning = signal("");
+const importError = signal("");
+const error = signal("");
+const addOpen = signal(false);
+const deck = signal([]);
+const deckTotal = signal(0);
+const deckAdded = signal(0);
+const deckSkipped = signal(0);
+const reviewDone = signal(false);
+let sendCommand;
+let loadRequested = false;
+let migrationRequested = false;
+function readJson$1(raw, fallback) {
+	if (!raw) return fallback;
+	try {
+		return JSON.parse(raw);
+	} catch {
+		return fallback;
+	}
+}
+function migrateLegacyCards() {
+	if (migrationRequested) return;
+	migrationRequested = true;
+	Storage.getItem(legacyCardsKey).then((raw) => {
+		const legacy = readJson$1(raw, []).filter(isGameCard);
+		if (legacy.length) sendCommand?.("games.import-legacy", { candidates: legacy });
+	});
+}
+function bindCommand(command) {
+	sendCommand = command;
+	if (!loadRequested) {
+		loadRequested = true;
+		command("games.load");
+	}
+}
+function startDiscovery() {
+	candidates.set([]);
+	deck.set([]);
+	deckTotal.set(0);
+	deckAdded.set(0);
+	deckSkipped.set(0);
+	reviewDone.set(false);
+	scanError.set("");
+	scanWarning.set("");
+	importError.set("");
+	if (!sendCommand) {
+		scanState.set("error");
+		scanError.set("Engine недоступен");
+		reviewDone.set(true);
+		return;
+	}
+	scanProgress.set({
+		provider: "steam",
+		phase: "scanning",
+		completed: 0,
+		total: 3,
+		found: 0
+	});
+	scanState.set("scanning");
+	sendCommand("games.discover");
+}
+function openAddDialog() {
+	addOpen.set(true);
+	if (!deck().length) {
+		deckTotal.set(0);
+		reviewDone.set(false);
+	}
+}
+function startDeck() {
+	const items = availableCandidates();
+	deck.set(items);
+	deckTotal.set(items.length);
+	deckAdded.set(0);
+	deckSkipped.set(0);
+}
+function decideDeck(accept) {
+	const card = deck()[0];
+	if (!card) return;
+	deck.set(deck().slice(1));
+	if (accept) {
+		deckAdded.set(deckAdded() + 1);
+		importGames([card]);
+	} else deckSkipped.set(deckSkipped() + 1);
+}
+function beginManualAdd() {
+	importError.set("");
+}
+function importGames(selected) {
+	if (!selected.length) return;
+	if (!sendCommand) {
+		importError.set("Engine недоступен");
+		return;
+	}
+	importError.set("");
+	sendCommand("games.import", { candidates: selected });
+}
+function availableCandidates() {
+	const known = new Set(cards().map((card) => pathKey(card.exePath)));
+	return candidates().filter((candidate) => !known.has(pathKey(candidate.exePath)));
+}
+const pendingAdd = signal(null);
+const launchError = signal("");
+let confirmFromPicker = false;
+function beginConfirm(path, source = "manual", fromPicker = true) {
+	importError.set("");
+	confirmFromPicker = fromPicker;
+	addOpen.set(false);
+	pendingAdd.set({
+		path,
+		title: guessTitle(path),
+		source
+	});
+}
+function editPendingTitle(title) {
+	const pending = pendingAdd();
+	if (pending) pendingAdd.set({
+		...pending,
+		title
+	});
+}
+function cancelConfirm() {
+	pendingAdd.set(null);
+	if (confirmFromPicker) addOpen.set(true);
+}
+function confirmAdd() {
+	const pending = pendingAdd();
+	if (!pending) return;
+	pendingAdd.set(null);
+	importGames([{
+		title: pending.title.trim() || guessTitle(pending.path),
+		exePath: pending.path,
+		installDir: "",
+		source: pending.source
+	}]);
+}
+function receiveLaunch(value) {
+	const result = value && typeof value === "object" ? value : {};
+	launchError.set(result.ok === true ? "" : String(result.error ?? "Не удалось запустить игру"));
+}
+function receiveLibrary(value) {
+	if (!Array.isArray(value)) {
+		const message = value && typeof value === "object" ? String(value.error ?? "Не удалось загрузить библиотеку игр") : "Не удалось загрузить библиотеку игр";
+		libraryState.set("error");
+		error.set(message);
+		return;
+	}
+	cards.set(value.filter(isGameCard));
+	libraryState.set("ready");
+	error.set("");
+	migrateLegacyCards();
+}
+function receiveDiscovery(value) {
+	if (value && typeof value === "object" && "progress" in value) {
+		const progress = value.progress;
+		if (isScanProgress(progress)) {
+			LayoutAnimation.configureNext({
+				duration: 500,
+				update: {
+					type: "easeOut",
+					duration: 500
+				}
+			});
+			scanProgress.set(progress);
+		}
+		return;
+	}
+	const response = value && typeof value === "object" ? value : {};
+	const items = Array.isArray(value) ? value : Array.isArray(response.candidates) ? response.candidates : null;
+	if (!items) {
+		scanState.set("error");
+		scanError.set(String(response.error ?? "Не удалось проверить библиотеки игр"));
+		reviewDone.set(true);
+		return;
+	}
+	const found = items.filter(isCandidate);
+	LayoutAnimation.configureNext({
+		duration: 500,
+		create: {
+			type: "easeOut",
+			property: "opacity",
+			duration: 500
+		},
+		update: {
+			type: "easeOut",
+			duration: 500
+		},
+		delete: {
+			type: "easeOut",
+			property: "opacity",
+			duration: 500
+		}
+	});
+	const failures = Array.isArray(response.errors) ? response.errors.map((entry) => {
+		const failure = entry && typeof entry === "object" ? entry : {};
+		return `${providerLabel(failure.provider)}: ${String(failure.message ?? "ошибка")}`;
+	}) : [];
+	candidates.set(found);
+	scanProgress.set({
+		provider: "gog",
+		phase: "complete",
+		completed: 3,
+		total: 3,
+		found: found.length
+	});
+	if ((response.fatal === true || failures.length === 3) && found.length === 0) {
+		scanState.set("error");
+		scanError.set(failures.join(" · "));
+		scanWarning.set("");
+	} else {
+		scanState.set("ready");
+		scanError.set("");
+		scanWarning.set(failures.length ? `Не все библиотеки проверены: ${failures.join(" · ")}` : "");
+		startDeck();
+	}
+	reviewDone.set(true);
+}
+function receiveImport(value) {
+	const result = value && typeof value === "object" ? value : {};
+	if (result.ok === true) {
+		importError.set("");
+		if (result.legacy === true) Storage.setItem(legacyCardsKey, "[]");
+		else if (!deckTotal()) addOpen.set(false);
+	} else {
+		importError.set(String(result.error ?? "Не удалось добавить игру в Engine"));
+		if (!result.legacy && !deckTotal()) addOpen.set(true);
+	}
+}
+const gameLibrary = {
+	cards,
+	candidates,
+	libraryState,
+	scanState,
+	scanProgress,
+	scanError,
+	scanWarning,
+	importError,
+	error,
+	addOpen,
+	metadataChoices,
+	receiveMetadata: (value) => receiveMetadata(value, cards()),
+	chooseMetadata: (choice) => chooseMetadata(choice, sendCommand),
+	setImage: (exePath, source) => setImage(exePath, source, sendCommand),
+	deck,
+	deckTotal,
+	deckAdded,
+	deckSkipped,
+	reviewDone,
+	bindCommand,
+	openAddDialog,
+	scanAutomatically: startDiscovery,
+	beginManualAdd,
+	closeAddDialog: () => addOpen.set(false),
+	decideDeck,
+	importGames,
+	receiveLaunch,
+	pendingAdd,
+	launchError,
+	beginConfirm,
+	editPendingTitle,
+	cancelConfirm,
+	confirmAdd,
+	receiveLibrary,
+	receiveDiscovery,
+	receiveImport
+};
+
+//#endregion
+//#region modal.tsx
+function Modal(props) {
+	return (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "class", "absolute inset-0 items-center justify-center px-6");
+		const __nsh_hv1 = element("view");
+		bindProp(__nsh_hv1, "onPress", () => props.onDismiss);
+		prop(__nsh_hv1, "accessibilityLabel", "Закрыть окно");
+		prop(__nsh_hv1, "role", "button");
+		prop(__nsh_hv1, "class", "absolute inset-0");
+		prop(__nsh_hv1, "style", { backgroundColor: "#00000059" });
+		const __nsh_hv2 = element("view");
+		prop(__nsh_hv2, "class", "z-10 flex-col rounded-[16px] border");
+		bindProp(__nsh_hv2, "style", () => ({
+			width: props.width ?? 420,
+			borderColor: props.colors.border,
+			backgroundColor: props.colors.card
+		}));
+		prop(__nsh_hv2, "role", "none");
+		const __nsh_hv3 = element("view");
+		prop(__nsh_hv3, "class", "w-full flex-row items-center px-5 pb-3 pt-5");
+		prop(__nsh_hv3, "style", { gap: 6 });
+		const __nsh_hv7 = element("text");
+		prop(__nsh_hv7, "class", "flex-1 text-[15px] font-semibold");
+		bindProp(__nsh_hv7, "style", () => ({ color: props.colors.foreground }));
+		insert(__nsh_hv7, () => props.title);
+		const __nsh_hv8 = element("view");
+		bindProp(__nsh_hv8, "onPress", () => props.onDismiss);
+		prop(__nsh_hv8, "role", "button");
+		prop(__nsh_hv8, "accessibilityLabel", "Закрыть карточку");
+		prop(__nsh_hv8, "class", "h-6 w-6 items-center justify-center rounded-md");
+		bindProp(__nsh_hv8, "hoverStyle", () => ({ backgroundColor: props.colors.background }));
+		const __nsh_hv9 = element("text");
+		prop(__nsh_hv9, "class", "text-[13px]");
+		bindProp(__nsh_hv9, "style", () => ({ color: props.colors.muted }));
+		const __nsh_hv10 = text("✕");
+		append(__nsh_hv9, __nsh_hv10);
+		append(__nsh_hv8, __nsh_hv9);
+		append(__nsh_hv3, __nsh_hv7);
+		append(__nsh_hv3, __nsh_hv8);
+		insert(__nsh_hv3, () => props.onBack && (() => {
+			const __nsh_hv4 = element("view");
+			bindProp(__nsh_hv4, "onPress", () => props.onBack);
+			prop(__nsh_hv4, "role", "button");
+			prop(__nsh_hv4, "accessibilityLabel", "Шаг назад");
+			prop(__nsh_hv4, "class", "h-6 w-6 items-center justify-center rounded-md");
+			bindProp(__nsh_hv4, "hoverStyle", () => ({ backgroundColor: props.colors.background }));
+			const __nsh_hv5 = element("text");
+			prop(__nsh_hv5, "class", "text-[14px]");
+			bindProp(__nsh_hv5, "style", () => ({ color: props.colors.muted }));
+			const __nsh_hv6 = text("←");
+			append(__nsh_hv5, __nsh_hv6);
+			append(__nsh_hv4, __nsh_hv5);
+			return __nsh_hv4;
+		})(), __nsh_hv7);
+		const __nsh_hv11 = element("view");
+		prop(__nsh_hv11, "class", "w-full px-5 pb-5");
+		insert(__nsh_hv11, () => props.children);
+		append(__nsh_hv2, __nsh_hv3);
+		append(__nsh_hv2, __nsh_hv11);
+		insert(__nsh_hv2, () => props.footer && (() => {
+			const __nsh_hv12 = element("view");
+			prop(__nsh_hv12, "class", "flex-row items-center justify-between border-t px-5 py-3");
+			bindProp(__nsh_hv12, "style", () => ({
+				borderColor: props.colors.border,
+				gap: 12
+			}));
+			insert(__nsh_hv12, () => props.footer);
+			return __nsh_hv12;
+		})());
+		append(__nsh_hv0, __nsh_hv1);
+		append(__nsh_hv0, __nsh_hv2);
+		return __nsh_hv0;
+	})();
+}
+function ModalGhost(props) {
+	return component(Button, {
+		get label() {
+			return props.label;
+		},
+		get colors() {
+			return props.colors;
+		},
+		get onPress() {
+			return props.onPress;
+		},
+		className: "border-0 px-0 py-0",
+		style: {
+			backgroundColor: "transparent",
+			borderColor: "transparent"
+		}
+	});
+}
+
+//#endregion
+//#region games-add.tsx
+const DIALOG_WIDTH = 460;
+function runAfterPress(run) {
+	setTimeout(run, 0);
+}
+function providerName(provider) {
+	return provider === "steam" ? "Steam" : provider === "epic" ? "Epic Games" : "GOG";
+}
+function scanStage() {
+	const progress = gameLibrary.scanProgress();
+	if (!progress) return "Подключаемся к Engine…";
+	if (progress.aggregate) return `Проверены все библиотеки · найдено ${progress.found}`;
+	const provider = providerName(progress.provider);
+	if (progress.phase === "complete") return `${provider}: найдено ${progress.providerFound ?? 0}`;
+	if (progress.phase === "error") return `${provider}: не удалось проверить`;
+	return `Проверяем ${provider} (${Math.min(progress.completed + 1, progress.total)} из ${progress.total})…`;
+}
+function scanPercent() {
+	const progress = gameLibrary.scanProgress();
+	return progress ? Math.max(7, Math.round(progress.completed / progress.total * 100)) : 7;
+}
+function Action(props) {
+	return (() => {
+		const __nsh_hv0 = element("view");
+		bindProp(__nsh_hv0, "onPress", () => props.onPress);
+		prop(__nsh_hv0, "role", "button");
+		bindProp(__nsh_hv0, "accessibilityLabel", () => props.title);
+		prop(__nsh_hv0, "class", "flex-row items-center rounded-[10px] px-2 py-2");
+		prop(__nsh_hv0, "style", { gap: 12 });
+		bindProp(__nsh_hv0, "hoverStyle", () => ({ backgroundColor: props.colors.background }));
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "class", "h-9 w-9 shrink-0 items-center justify-center rounded-[10px]");
+		bindProp(__nsh_hv1, "style", () => ({ backgroundColor: props.colors.background }));
+		insert(__nsh_hv1, component(Glyph, {
+			get name() {
+				return props.icon;
+			},
+			size: 18,
+			get color() {
+				return props.colors.foreground;
+			}
+		}));
+		const __nsh_hv2 = element("view");
+		prop(__nsh_hv2, "class", "min-w-0 flex-1");
+		const __nsh_hv3 = element("text");
+		prop(__nsh_hv3, "class", "text-[13px]");
+		bindProp(__nsh_hv3, "style", () => ({ color: props.colors.foreground }));
+		insert(__nsh_hv3, () => props.title);
+		const __nsh_hv4 = element("text");
+		prop(__nsh_hv4, "class", "text-[11px]");
+		bindProp(__nsh_hv4, "style", () => ({ color: props.colors.muted }));
+		insert(__nsh_hv4, () => props.hint);
+		append(__nsh_hv2, __nsh_hv3);
+		append(__nsh_hv2, __nsh_hv4);
+		append(__nsh_hv0, __nsh_hv1);
+		append(__nsh_hv0, __nsh_hv2);
+		return __nsh_hv0;
+	})();
+}
+let decisionPending = false;
+function decide(accept) {
+	if (decisionPending) return;
+	decisionPending = true;
+	LayoutAnimation.configureNext({
+		duration: 500,
+		create: {
+			type: "easeOut",
+			property: "opacity",
+			duration: 500
+		},
+		update: {
+			type: "easeOut",
+			duration: 500
+		},
+		delete: {
+			type: "easeOut",
+			property: "opacity",
+			duration: 500
+		}
+	});
+	gameLibrary.decideDeck(accept);
+	setTimeout(() => {
+		decisionPending = false;
+	}, 500);
+}
+function ReviewCard(props) {
+	const initial = () => (gameLibrary.deck()[0]?.title ?? "?").trim().charAt(0).toLocaleUpperCase();
+	return (() => {
+		const __nsh_hv5 = element("view");
+		prop(__nsh_hv5, "class", "w-full");
+		const __nsh_hv6 = element("view");
+		prop(__nsh_hv6, "testID", "game-review-card");
+		prop(__nsh_hv6, "class", "w-full overflow-hidden rounded-[14px] border");
+		bindProp(__nsh_hv6, "style", () => ({
+			borderColor: props.colors.border,
+			backgroundColor: props.colors.background
+		}));
+		const __nsh_hv7 = element("view");
+		prop(__nsh_hv7, "class", "h-[190px] items-center justify-center overflow-hidden px-7");
+		bindProp(__nsh_hv7, "style", () => ({ backgroundColor: props.colors.card }));
+		const __nsh_hv8 = element("text");
+		prop(__nsh_hv8, "class", "absolute text-[160px] font-semibold");
+		bindProp(__nsh_hv8, "style", () => ({
+			color: props.colors.foreground,
+			opacity: .05,
+			left: 6,
+			top: -22
+		}));
+		insert(__nsh_hv8, () => initial());
+		const __nsh_hv9 = element("text");
+		prop(__nsh_hv9, "class", "text-center text-[20px] font-semibold");
+		bindProp(__nsh_hv9, "style", () => ({ color: props.colors.foreground }));
+		insert(__nsh_hv9, () => gameLibrary.deck()[0]?.title);
+		append(__nsh_hv7, __nsh_hv8);
+		append(__nsh_hv7, __nsh_hv9);
+		const __nsh_hv10 = element("view");
+		prop(__nsh_hv10, "class", "flex-row items-center border-t px-4 py-3");
+		bindProp(__nsh_hv10, "style", () => ({
+			borderColor: props.colors.border,
+			gap: 10
+		}));
+		const __nsh_hv11 = element("text");
+		prop(__nsh_hv11, "class", "min-w-0 flex-1 text-[11px]");
+		bindProp(__nsh_hv11, "style", () => ({ color: props.colors.muted }));
+		insert(__nsh_hv11, () => gameLibrary.deck()[0]?.exePath);
+		const __nsh_hv12 = element("text");
+		prop(__nsh_hv12, "class", "shrink-0 text-[11px]");
+		bindProp(__nsh_hv12, "style", () => ({ color: props.colors.muted }));
+		insert(__nsh_hv12, () => `${gameLibrary.deckTotal() - gameLibrary.deck().length + 1} из ${gameLibrary.deckTotal()}`);
+		append(__nsh_hv10, __nsh_hv11);
+		append(__nsh_hv10, __nsh_hv12);
+		append(__nsh_hv6, __nsh_hv7);
+		append(__nsh_hv6, __nsh_hv10);
+		const __nsh_hv13 = element("view");
+		prop(__nsh_hv13, "class", "mt-3 flex-row");
+		prop(__nsh_hv13, "style", { gap: 10 });
+		const __nsh_hv14 = element("view");
+		prop(__nsh_hv14, "onPress", () => decide(false));
+		prop(__nsh_hv14, "role", "button");
+		prop(__nsh_hv14, "accessibilityLabel", "Пропустить игру");
+		prop(__nsh_hv14, "class", "h-10 flex-1 flex-row items-center justify-center rounded-[10px] border");
+		bindProp(__nsh_hv14, "style", () => ({
+			gap: 8,
+			backgroundColor: props.colors.background,
+			borderColor: props.colors.border
+		}));
+		prop(__nsh_hv14, "hoverStyle", { opacity: .88 });
+		const __nsh_hv15 = element("text");
+		prop(__nsh_hv15, "class", "text-[13px]");
+		bindProp(__nsh_hv15, "style", () => ({ color: props.colors.foreground }));
+		const __nsh_hv16 = text("Пропустить");
+		append(__nsh_hv15, __nsh_hv16);
+		append(__nsh_hv14, __nsh_hv15);
+		insert(__nsh_hv14, component(Glyph, {
+			name: "close",
+			size: 15,
+			get color() {
+				return props.colors.muted;
+			}
+		}), __nsh_hv15);
+		const __nsh_hv17 = element("view");
+		prop(__nsh_hv17, "onPress", () => decide(true));
+		prop(__nsh_hv17, "role", "button");
+		prop(__nsh_hv17, "accessibilityLabel", "Добавить игру в библиотеку");
+		prop(__nsh_hv17, "class", "h-10 flex-1 flex-row items-center justify-center rounded-[10px]");
+		bindProp(__nsh_hv17, "style", () => ({
+			gap: 8,
+			backgroundColor: props.colors.accent
+		}));
+		prop(__nsh_hv17, "hoverStyle", { opacity: .88 });
+		const __nsh_hv18 = element("text");
+		prop(__nsh_hv18, "class", "text-[13px]");
+		bindProp(__nsh_hv18, "style", () => ({ color: props.colors.background }));
+		const __nsh_hv19 = text("Добавить");
+		append(__nsh_hv18, __nsh_hv19);
+		append(__nsh_hv17, __nsh_hv18);
+		insert(__nsh_hv17, component(Glyph, {
+			name: "check",
+			size: 15,
+			get color() {
+				return props.colors.background;
+			}
+		}), __nsh_hv18);
+		append(__nsh_hv13, __nsh_hv14);
+		append(__nsh_hv13, __nsh_hv17);
+		append(__nsh_hv5, __nsh_hv6);
+		append(__nsh_hv5, __nsh_hv13);
+		return __nsh_hv5;
+	})();
+}
+function ReviewSummary(props) {
+	const reviewed = () => gameLibrary.deckTotal() > 0;
+	const failed = () => !reviewed() && gameLibrary.scanState() === "error";
+	const headline = () => reviewed() ? `Добавлено ${gameLibrary.deckAdded()} · пропущено ${gameLibrary.deckSkipped()}` : failed() ? "Не удалось проверить библиотеки" : gameLibrary.candidates().length ? "Новых игр нет" : "Ничего не нашлось";
+	const detail = () => {
+		if (reviewed()) return gameLibrary.importError() || gameLibrary.scanWarning() || "Игры из списка можно запустить в любой момент";
+		if (failed()) return gameLibrary.scanError();
+		if (gameLibrary.candidates().length) return `Все ${gameLibrary.candidates().length} найденных игр уже в библиотеке`;
+		return "Автоматический поиск не нашёл игр";
+	};
+	return (() => {
+		const __nsh_hv20 = element("view");
+		prop(__nsh_hv20, "class", "w-full items-center py-2");
+		const __nsh_hv21 = element("view");
+		prop(__nsh_hv21, "class", "h-11 w-11 items-center justify-center rounded-full");
+		bindProp(__nsh_hv21, "style", () => ({ backgroundColor: props.colors.background }));
+		insert(__nsh_hv21, component(Glyph, {
+			get name() {
+				return failed() ? "close" : "check";
+			},
+			size: 20,
+			get color() {
+				return failed() ? props.colors.muted : props.colors.accent;
+			}
+		}));
+		const __nsh_hv22 = element("text");
+		prop(__nsh_hv22, "class", "mt-3 text-center text-[14px]");
+		bindProp(__nsh_hv22, "style", () => ({ color: props.colors.foreground }));
+		insert(__nsh_hv22, () => headline());
+		const __nsh_hv23 = element("text");
+		prop(__nsh_hv23, "class", "mt-1 text-center text-[12px]");
+		bindProp(__nsh_hv23, "style", () => ({ color: props.colors.muted }));
+		insert(__nsh_hv23, () => detail());
+		const __nsh_hv24 = element("view");
+		prop(__nsh_hv24, "class", "mt-4 flex-row self-stretch");
+		prop(__nsh_hv24, "style", { gap: 10 });
+		const __nsh_hv28 = element("view");
+		bindProp(__nsh_hv28, "onPress", () => gameLibrary.closeAddDialog);
+		prop(__nsh_hv28, "role", "button");
+		prop(__nsh_hv28, "accessibilityLabel", "Готово");
+		prop(__nsh_hv28, "class", "h-9 flex-1 items-center justify-center rounded-[10px]");
+		bindProp(__nsh_hv28, "style", () => ({ backgroundColor: props.colors.accent }));
+		prop(__nsh_hv28, "hoverStyle", { opacity: .88 });
+		const __nsh_hv29 = element("text");
+		prop(__nsh_hv29, "class", "text-[13px]");
+		bindProp(__nsh_hv29, "style", () => ({ color: props.colors.background }));
+		const __nsh_hv30 = text("Готово");
+		append(__nsh_hv29, __nsh_hv30);
+		append(__nsh_hv28, __nsh_hv29);
+		append(__nsh_hv24, __nsh_hv28);
+		insert(__nsh_hv24, () => failed() && (() => {
+			const __nsh_hv25 = element("view");
+			bindProp(__nsh_hv25, "onPress", () => gameLibrary.scanAutomatically);
+			prop(__nsh_hv25, "role", "button");
+			prop(__nsh_hv25, "accessibilityLabel", "Повторить поиск");
+			prop(__nsh_hv25, "class", "h-9 flex-1 items-center justify-center rounded-[10px] border");
+			bindProp(__nsh_hv25, "style", () => ({
+				backgroundColor: props.colors.background,
+				borderColor: props.colors.border
+			}));
+			prop(__nsh_hv25, "hoverStyle", { opacity: .88 });
+			const __nsh_hv26 = element("text");
+			prop(__nsh_hv26, "class", "text-[13px]");
+			bindProp(__nsh_hv26, "style", () => ({ color: props.colors.foreground }));
+			const __nsh_hv27 = text("Повторить");
+			append(__nsh_hv26, __nsh_hv27);
+			append(__nsh_hv25, __nsh_hv26);
+			return __nsh_hv25;
+		})(), __nsh_hv28);
+		append(__nsh_hv20, __nsh_hv21);
+		append(__nsh_hv20, __nsh_hv22);
+		append(__nsh_hv20, __nsh_hv23);
+		append(__nsh_hv20, __nsh_hv24);
+		return __nsh_hv20;
+	})();
+}
+function ScanPanel(props) {
+	return (() => {
+		const __nsh_hv31 = element("view");
+		prop(__nsh_hv31, "class", "w-full rounded-[12px] p-4");
+		bindProp(__nsh_hv31, "style", () => ({ backgroundColor: props.colors.background }));
+		const __nsh_hv32 = element("view");
+		prop(__nsh_hv32, "class", "flex-row items-center justify-between");
+		const __nsh_hv33 = element("text");
+		prop(__nsh_hv33, "class", "text-[13px]");
+		bindProp(__nsh_hv33, "style", () => ({ color: props.colors.foreground }));
+		insert(__nsh_hv33, () => scanStage());
+		const __nsh_hv34 = element("text");
+		prop(__nsh_hv34, "class", "text-[11px]");
+		bindProp(__nsh_hv34, "style", () => ({ color: props.colors.muted }));
+		insert(__nsh_hv34, () => `${gameLibrary.scanProgress()?.found ?? 0} игр`);
+		append(__nsh_hv32, __nsh_hv33);
+		append(__nsh_hv32, __nsh_hv34);
+		const __nsh_hv35 = element("view");
+		prop(__nsh_hv35, "class", "mt-3 h-1 overflow-hidden rounded");
+		bindProp(__nsh_hv35, "style", () => ({ backgroundColor: props.colors.border }));
+		const __nsh_hv36 = element("view");
+		prop(__nsh_hv36, "class", "h-full rounded");
+		bindProp(__nsh_hv36, "style", () => ({
+			width: `${scanPercent()}%`,
+			backgroundColor: props.colors.accent
+		}));
+		append(__nsh_hv35, __nsh_hv36);
+		const __nsh_hv37 = element("text");
+		prop(__nsh_hv37, "class", "mt-3 text-[11px]");
+		bindProp(__nsh_hv37, "style", () => ({ color: props.colors.muted }));
+		const __nsh_hv38 = text("Дальше покажем найденное по одной игре — добавить или пропустить");
+		append(__nsh_hv37, __nsh_hv38);
+		append(__nsh_hv31, __nsh_hv32);
+		append(__nsh_hv31, __nsh_hv35);
+		append(__nsh_hv31, __nsh_hv37);
+		return __nsh_hv31;
+	})();
+}
+function reviewing() {
+	return gameLibrary.scanState() !== "scanning" && gameLibrary.deck().length > 0;
+}
+function settled() {
+	return gameLibrary.reviewDone() && gameLibrary.deck().length === 0;
+}
+function menuHint() {
+	if (gameLibrary.scanState() === "error") return gameLibrary.scanError();
+	return gameLibrary.importError();
+}
+function AddGamesDialog(props) {
+	return component(Modal, {
+		title: "Добавить игры",
+		get colors() {
+			return props.colors;
+		},
+		get onDismiss() {
+			return gameLibrary.closeAddDialog;
+		},
+		width: DIALOG_WIDTH,
+		get children() {
+			return gameLibrary.scanState() === "scanning" ? component(ScanPanel, { get colors() {
+				return props.colors;
+			} }) : reviewing() ? component(ReviewCard, { get colors() {
+				return props.colors;
+			} }) : settled() ? component(ReviewSummary, { get colors() {
+				return props.colors;
+			} }) : (() => {
+				const __nsh_hv39 = element("view");
+				prop(__nsh_hv39, "class", "w-full");
+				insert(__nsh_hv39, [
+					component(Action, {
+						get colors() {
+							return props.colors;
+						},
+						icon: "search",
+						title: "Найти автоматически",
+						hint: "Поиск установленных игр",
+						get onPress() {
+							return gameLibrary.scanAutomatically;
+						}
+					}),
+					component(Action, {
+						get colors() {
+							return props.colors;
+						},
+						icon: "folder",
+						title: "Просканировать папку",
+						hint: "Выбрать exe из папки игры",
+						onPress: () => {
+							gameLibrary.beginManualAdd();
+							runAfterPress(props.onBrowseFolder);
+						}
+					}),
+					component(Action, {
+						get colors() {
+							return props.colors;
+						},
+						icon: "file",
+						title: "Выбрать exe",
+						hint: "Один файл",
+						onPress: () => {
+							gameLibrary.beginManualAdd();
+							runAfterPress(props.onBrowse);
+						}
+					}),
+					() => menuHint() ? (() => {
+						const __nsh_hv40 = element("text");
+						prop(__nsh_hv40, "class", "mt-2 px-2 text-[11px]");
+						bindProp(__nsh_hv40, "style", () => ({ color: props.colors.muted }));
+						insert(__nsh_hv40, () => menuHint());
+						return __nsh_hv40;
+					})() : null
+				]);
+				return __nsh_hv39;
+			})();
+		}
+	});
+}
+
+//#endregion
+//#region game-confirm.tsx
+function sourceLabel(source) {
+	if (source === "steam") return "Steam";
+	if (source === "epic") return "Epic Games";
+	if (source === "gog") return "GOG";
+	if (source === "folder") return "Папка игры";
+	return "Выбрано вручную";
+}
+function ConfirmGameDialog(props) {
+	const pending = gameLibrary.pendingAdd();
+	if (!pending) return (() => {
+		return element("view");
+	})();
+	const footer = (() => {
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "class", "flex-row items-center justify-between");
+		prop(__nsh_hv1, "style", { gap: 8 });
+		insert(__nsh_hv1, [component(Button, {
+			label: "Назад",
+			get colors() {
+				return props.colors;
+			},
+			get onPress() {
+				return gameLibrary.cancelConfirm;
+			},
+			className: "border-0 px-0 py-0",
+			style: {
+				backgroundColor: "transparent",
+				borderColor: "transparent"
+			}
+		}), component(Button, {
+			label: "Добавить",
+			get colors() {
+				return props.colors;
+			},
+			get onPress() {
+				return gameLibrary.confirmAdd;
+			},
+			selected: true,
+			className: "h-9 items-center justify-center px-3 py-0",
+			get style() {
+				return {
+					backgroundColor: props.colors.accent,
+					borderColor: "transparent"
+				};
+			},
+			get textColor() {
+				return props.colors.background;
+			}
+		})]);
+		return __nsh_hv1;
+	})();
+	return component(Modal, {
+		title: "Добавить игру",
+		get colors() {
+			return props.colors;
+		},
+		get onDismiss() {
+			return gameLibrary.cancelConfirm;
+		},
+		get onBack() {
+			return gameLibrary.cancelConfirm;
+		},
+		width: 460,
+		footer,
+		get children() {
+			return [
+				(() => {
+					const __nsh_hv2 = element("text");
+					prop(__nsh_hv2, "class", "mb-2 text-[12px]");
+					bindProp(__nsh_hv2, "style", () => ({ color: props.colors.muted }));
+					const __nsh_hv3 = text("Поправь название, если угадалось неверно.");
+					append(__nsh_hv2, __nsh_hv3);
+					return __nsh_hv2;
+				})(),
+				(() => {
+					const __nsh_hv4 = element("input");
+					bindProp(__nsh_hv4, "value", () => pending.title);
+					bindProp(__nsh_hv4, "onChange", () => gameLibrary.editPendingTitle);
+					prop(__nsh_hv4, "accessibilityLabel", "Название игры");
+					prop(__nsh_hv4, "class", "h-10 rounded-[10px] px-3 text-[13px]");
+					bindProp(__nsh_hv4, "style", () => ({
+						backgroundColor: props.colors.background,
+						color: props.colors.foreground
+					}));
+					return __nsh_hv4;
+				})(),
+				(() => {
+					const __nsh_hv5 = element("view");
+					prop(__nsh_hv5, "class", "mt-3 rounded-[10px] p-3");
+					bindProp(__nsh_hv5, "style", () => ({ backgroundColor: props.colors.background }));
+					const __nsh_hv6 = element("text");
+					prop(__nsh_hv6, "class", "text-[11px]");
+					bindProp(__nsh_hv6, "style", () => ({ color: props.colors.muted }));
+					const __nsh_hv7 = text("Запускается");
+					append(__nsh_hv6, __nsh_hv7);
+					const __nsh_hv8 = element("text");
+					prop(__nsh_hv8, "class", "mt-1 text-[12px]");
+					bindProp(__nsh_hv8, "style", () => ({ color: props.colors.foreground }));
+					insert(__nsh_hv8, () => pending.path);
+					const __nsh_hv9 = element("text");
+					prop(__nsh_hv9, "class", "mt-2 text-[11px]");
+					bindProp(__nsh_hv9, "style", () => ({ color: props.colors.muted }));
+					const __nsh_hv10 = text("Источник · ");
+					append(__nsh_hv9, __nsh_hv10);
+					insert(__nsh_hv9, () => sourceLabel(pending.source));
+					append(__nsh_hv5, __nsh_hv6);
+					append(__nsh_hv5, __nsh_hv8);
+					append(__nsh_hv5, __nsh_hv9);
+					return __nsh_hv5;
+				})(),
+				(() => {
+					const __nsh_hv11 = element("text");
+					prop(__nsh_hv11, "class", "mt-3 text-[11px] leading-[17px]");
+					bindProp(__nsh_hv11, "style", () => ({ color: props.colors.muted }));
+					const __nsh_hv12 = text("После добавления игра появится сразу; метаданные и горизонтальная обложка загрузятся в фоне. Если источники не найдут игру, её можно дополнить вручную.");
+					append(__nsh_hv11, __nsh_hv12);
+					return __nsh_hv11;
+				})()
+			];
+		}
+	});
+}
+
+//#endregion
+//#region game-details.tsx
+const imageSource = signal("");
+function xml(text) {
+	return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\"", "&quot;");
+}
+function placeholder(title) {
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="920" height="430" viewBox="0 0 920 430"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#18212f"/><stop offset=".55" stop-color="#493a70"/><stop offset="1" stop-color="#a65951"/></linearGradient></defs><rect width="920" height="430" fill="url(#g)"/><circle cx="780" cy="80" r="240" fill="#fff" opacity=".06"/><text x="46" y="350" fill="#fff" font-family="sans-serif" font-size="42" font-weight="600">${xml(title.trim().slice(0, 42) || "Игра")}</text></svg>`;
+	return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+function Artwork(props) {
+	const height = props.height ?? 215;
+	return (() => {
+		const __nsh_hv0 = element("image");
+		bindProp(__nsh_hv0, "src", () => props.path || placeholder(props.title));
+		prop(__nsh_hv0, "style", {
+			width: "100%",
+			height
+		});
+		return __nsh_hv0;
+	})();
+}
+function metadataStatus(card) {
+	if (card.metadataStatus === "loading") return "Метаданные загружаются…";
+	if (card.metadataStatus === "not-found") return "Источник не нашёл метаданные — можно добавить картинку вручную";
+	if (card.metadataStatus === "error") return "Не удалось загрузить метаданные";
+	return "";
+}
+function GameDetailsDialog(props) {
+	const genres = props.card.genres?.join(" · ") || "Жанры неизвестны";
+	const developers = props.card.developers?.join(" · ") || "неизвестен";
+	const publishers = props.card.publishers?.join(" · ") || "неизвестен";
+	const footer = (() => {
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "class", "flex-row items-center justify-between");
+		prop(__nsh_hv1, "style", { gap: 10 });
+		const __nsh_hv2 = element("input");
+		bindProp(__nsh_hv2, "value", () => imageSource());
+		prop(__nsh_hv2, "onChange", (value) => imageSource.set(value));
+		prop(__nsh_hv2, "placeholder", "URL или путь к картинке");
+		prop(__nsh_hv2, "accessibilityLabel", "URL или путь к своей картинке");
+		prop(__nsh_hv2, "class", "h-9 min-w-0 flex-1 rounded-lg px-3 text-[12px]");
+		bindProp(__nsh_hv2, "style", () => ({
+			backgroundColor: props.colors.background,
+			color: props.colors.foreground
+		}));
+		append(__nsh_hv1, __nsh_hv2);
+		insert(__nsh_hv1, component(Button, {
+			label: "Сохранить",
+			get colors() {
+				return props.colors;
+			},
+			onPress: () => {
+				const source = imageSource().trim();
+				if (source) props.onSetImage(source);
+			},
+			className: "h-9 items-center justify-center px-3 py-0"
+		}));
+		return __nsh_hv1;
+	})();
+	return component(Modal, {
+		get title() {
+			return props.card.title;
+		},
+		get colors() {
+			return props.colors;
+		},
+		get onDismiss() {
+			return props.onClose;
+		},
+		width: 520,
+		footer,
+		get children() {
+			return [
+				component(Artwork, {
+					get title() {
+						return props.card.title;
+					},
+					get path() {
+						return props.card.headerImagePath;
+					}
+				}),
+				(() => {
+					const __nsh_hv3 = element("text");
+					prop(__nsh_hv3, "class", "mt-3 text-[12px]");
+					bindProp(__nsh_hv3, "style", () => ({ color: props.colors.muted }));
+					const __nsh_hv4 = text("Разработчик: ");
+					const __nsh_hv5 = text(" · издатель: ");
+					append(__nsh_hv3, __nsh_hv4);
+					append(__nsh_hv3, __nsh_hv5);
+					insert(__nsh_hv3, developers, __nsh_hv5);
+					insert(__nsh_hv3, publishers);
+					return __nsh_hv3;
+				})(),
+				() => metadataStatus(props.card) && (() => {
+					const __nsh_hv6 = element("text");
+					prop(__nsh_hv6, "class", "mt-1 text-[11px]");
+					bindProp(__nsh_hv6, "style", () => ({ color: props.colors.muted }));
+					insert(__nsh_hv6, () => metadataStatus(props.card));
+					return __nsh_hv6;
+				})(),
+				(() => {
+					const __nsh_hv7 = element("text");
+					prop(__nsh_hv7, "class", "mt-2 text-[12px]");
+					bindProp(__nsh_hv7, "style", () => ({ color: props.colors.muted }));
+					const __nsh_hv8 = text(" · ");
+					append(__nsh_hv7, __nsh_hv8);
+					insert(__nsh_hv7, genres, __nsh_hv8);
+					insert(__nsh_hv7, () => props.card.releaseDateText || props.card.released || "дата выхода неизвестна");
+					return __nsh_hv7;
+				})(),
+				() => props.card.description && (() => {
+					const __nsh_hv9 = element("text");
+					prop(__nsh_hv9, "class", "mt-3 text-[12px] leading-[18px]");
+					bindProp(__nsh_hv9, "style", () => ({ color: props.colors.foreground }));
+					insert(__nsh_hv9, () => props.card.description);
+					return __nsh_hv9;
+				})(),
+				(() => {
+					const __nsh_hv10 = element("text");
+					prop(__nsh_hv10, "class", "mt-3 text-[11px]");
+					bindProp(__nsh_hv10, "style", () => ({ color: props.colors.muted }));
+					const __nsh_hv11 = text("Можно вставить URL изображения или путь к локальному файлу.");
+					append(__nsh_hv10, __nsh_hv11);
+					return __nsh_hv10;
+				})()
+			];
+		}
+	});
+}
+function MetadataChoicesDialog(props) {
+	return component(Modal, {
+		get title() {
+			return `Выбери версию игры: ${props.choices.title}`;
+		},
+		get colors() {
+			return props.colors;
+		},
+		get onDismiss() {
+			return props.onClose;
+		},
+		width: 520,
+		get children() {
+			return [(() => {
+				const __nsh_hv12 = element("text");
+				prop(__nsh_hv12, "class", "mb-3 text-[12px]");
+				bindProp(__nsh_hv12, "style", () => ({ color: props.colors.muted }));
+				const __nsh_hv13 = text("Нашлось несколько похожих игр. Выбор привяжет подходящие метаданные.");
+				append(__nsh_hv12, __nsh_hv13);
+				return __nsh_hv12;
+			})(), (() => {
+				const __nsh_hv14 = element("view");
+				prop(__nsh_hv14, "class", "flex-col");
+				prop(__nsh_hv14, "style", { gap: 8 });
+				insert(__nsh_hv14, () => props.choices.candidates.slice(0, 5).map((candidate) => (() => {
+					const __nsh_hv15 = element("view");
+					prop(__nsh_hv15, "onPress", () => props.onChoose(candidate));
+					prop(__nsh_hv15, "role", "button");
+					bindProp(__nsh_hv15, "accessibilityLabel", () => `Выбрать ${candidate.name}`);
+					prop(__nsh_hv15, "class", "h-[76px] flex-row items-center overflow-hidden rounded-[10px] border px-2");
+					bindProp(__nsh_hv15, "style", () => ({
+						gap: 10,
+						borderColor: props.colors.border,
+						backgroundColor: props.colors.background
+					}));
+					const __nsh_hv16 = element("image");
+					bindProp(__nsh_hv16, "src", () => candidate.headerImagePath || placeholder(candidate.name));
+					prop(__nsh_hv16, "style", {
+						width: 132,
+						height: 62
+					});
+					const __nsh_hv17 = element("text");
+					prop(__nsh_hv17, "class", "min-w-0 flex-1 text-[13px]");
+					bindProp(__nsh_hv17, "style", () => ({ color: props.colors.foreground }));
+					insert(__nsh_hv17, () => candidate.name);
+					append(__nsh_hv15, __nsh_hv16);
+					append(__nsh_hv15, __nsh_hv17);
+					return __nsh_hv15;
+				})()));
+				return __nsh_hv14;
+			})()];
+		}
+	});
+}
+
+//#endregion
+//#region games.tsx
+const emptyExtensions = { games: true };
+const gamesOn = signal(true);
+const livePrograms = signal([]);
+const searchQuery = signal("");
+const fromDrop = signal(false);
+const selectedGameId = signal(null);
+let extensionsStamp = 0;
+const extensionsKey = "mundus.atlas.extensions.v1";
+function loadGamePrefs() {
+	const extensionsAt = extensionsStamp;
+	Storage.getItem(extensionsKey).then((value) => {
+		if (extensionsAt !== extensionsStamp) return;
+		const saved = readJson(value, emptyExtensions);
+		gamesOn.set(saved.games !== false);
+	});
+}
+function readJson(value, fallback) {
+	if (!value) return fallback;
+	try {
+		return JSON.parse(value);
+	} catch {
+		return fallback;
+	}
+}
+function saveExtensions(next) {
+	extensionsStamp += 1;
+	gamesOn.set(next.games);
+	Storage.setItem(extensionsKey, JSON.stringify(next));
+}
+function pathFromDrop(uri) {
+	return decodeURIComponent(uri).replace(/^file:\/*(?=[A-Za-z]:)/, "").replace(/^file:\/\//, "").replaceAll("/", "\\");
+}
+function usageFor(path, programs) {
+	const key = path.replaceAll("/", "\\").toLowerCase();
+	const file = key.split("\\").pop() ?? "";
+	const stem = file.replace(/\.exe$/i, "").replace(/\.lnk$/i, "");
+	return programs.find((program) => {
+		const process = program.process.toLowerCase();
+		return program.path.replaceAll("/", "\\").toLowerCase() === key || process === file || process === stem || process === `${stem}.exe`;
+	});
+}
+function visibleCards() {
+	return visibleGameCards(gameLibrary.cards(), searchQuery());
+}
+function formatTime(ms) {
+	const minutes = Math.floor(ms / 6e4);
+	if (minutes < 1) return "меньше минуты";
+	const hours = Math.floor(minutes / 60);
+	const rest = minutes % 60;
+	return hours < 1 ? `${rest} мин` : rest ? `${hours} ч ${rest} мин` : `${hours} ч`;
+}
+function GamesLibrary(props) {
+	effect(() => {
+		const picked = props.pickedExes;
+		if (!picked.length) return;
+		gameLibrary.closeAddDialog();
+		if (picked.length !== 1) return;
+		gameLibrary.beginConfirm(picked[0], props.pickSource, !fromDrop());
+		fromDrop.set(false);
+		props.onClearPick();
+	});
+	return (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "class", "flex-1");
+		prop(__nsh_hv0, "onFileDrop", (event) => {
+			const path = pathFromDrop(event.uris[0] ?? "");
+			if (path) {
+				fromDrop.set(true);
+				props.onPick(path);
+			}
+		});
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "class", "flex-row items-center px-7 pt-3");
+		const __nsh_hv2 = element("input");
+		bindProp(__nsh_hv2, "value", () => searchQuery());
+		prop(__nsh_hv2, "onChange", (value) => searchQuery.set(value));
+		prop(__nsh_hv2, "placeholder", "Поиск игр");
+		prop(__nsh_hv2, "accessibilityLabel", "Поиск игр");
+		prop(__nsh_hv2, "class", "h-9 min-w-0 flex-1 rounded-lg px-3 text-[13px]");
+		bindProp(__nsh_hv2, "style", () => ({
+			backgroundColor: props.colors.card,
+			color: props.colors.foreground,
+			placeholderColor: props.colors.muted
+		}));
+		append(__nsh_hv1, __nsh_hv2);
+		append(__nsh_hv0, __nsh_hv1);
+		insert(__nsh_hv0, [
+			() => gameLibrary.launchError() && (() => {
+				const __nsh_hv3 = element("text");
+				prop(__nsh_hv3, "class", "px-7 pt-2 text-[11px]");
+				bindProp(__nsh_hv3, "style", () => ({ color: props.colors.muted }));
+				insert(__nsh_hv3, () => gameLibrary.launchError());
+				return __nsh_hv3;
+			})(),
+			() => visibleCards().length === 0 && (() => {
+				const __nsh_hv4 = element("view");
+				prop(__nsh_hv4, "class", "flex-1 items-center justify-center px-7");
+				const __nsh_hv5 = element("text");
+				prop(__nsh_hv5, "class", "mb-2 text-[14px]");
+				bindProp(__nsh_hv5, "style", () => ({ color: props.colors.muted }));
+				insert(__nsh_hv5, () => searchQuery().trim() ? "Игры не найдены" : gameLibrary.libraryState() === "loading" ? "Загружаем библиотеку игр…" : gameLibrary.libraryState() === "error" ? "Не удалось загрузить библиотеку" : "Игр пока нет");
+				const __nsh_hv6 = element("text");
+				prop(__nsh_hv6, "class", "text-center text-[12px]");
+				bindProp(__nsh_hv6, "style", () => ({ color: props.colors.muted }));
+				insert(__nsh_hv6, () => gameLibrary.error() || "Нажми + в заголовке, чтобы найти игры или добавить exe вручную");
+				append(__nsh_hv4, __nsh_hv5);
+				append(__nsh_hv4, __nsh_hv6);
+				return __nsh_hv4;
+			})(),
+			each(() => visibleCards(), (card) => {
+				const item = card();
+				const usage = usageFor(item.exePath, livePrograms());
+				const byline = item.metadataStatus === "loading" ? "Загружаем метаданные…" : item.developers?.join(" · ") || item.genres?.slice(0, 2).join(" · ");
+				return (() => {
+					const __nsh_hv7 = element("view");
+					prop(__nsh_hv7, "class", "mx-7 h-14 flex-row items-center border-b");
+					bindProp(__nsh_hv7, "style", () => ({ borderColor: props.colors.border }));
+					const __nsh_hv8 = element("view");
+					prop(__nsh_hv8, "onPress", () => selectedGameId.set(item.id));
+					prop(__nsh_hv8, "role", "button");
+					bindProp(__nsh_hv8, "accessibilityLabel", () => `Подробнее: ${item.title}`);
+					prop(__nsh_hv8, "class", "min-w-0 flex-1");
+					const __nsh_hv9 = element("text");
+					prop(__nsh_hv9, "class", "text-[14px]");
+					bindProp(__nsh_hv9, "style", () => ({ color: props.colors.foreground }));
+					insert(__nsh_hv9, () => item.title);
+					const __nsh_hv10 = element("text");
+					prop(__nsh_hv10, "class", "text-[12px]");
+					bindProp(__nsh_hv10, "style", () => ({ color: props.colors.muted }));
+					insert(__nsh_hv10, () => byline || (usage ? `${formatTime(usage.foregroundMs)} · ${usage.sessions} сесс.` : "Время ещё не посчитано"));
+					append(__nsh_hv8, __nsh_hv9);
+					append(__nsh_hv8, __nsh_hv10);
+					append(__nsh_hv7, __nsh_hv8);
+					insert(__nsh_hv7, component(Button, {
+						label: "Запустить",
+						get colors() {
+							return props.colors;
+						},
+						onPress: () => props.onLaunch(item.exePath),
+						className: "border-0 px-0 py-0",
+						style: {
+							backgroundColor: "transparent",
+							borderColor: "transparent"
+						}
+					}));
+					return __nsh_hv7;
+				})();
+			}),
+			() => gameLibrary.pendingAdd() ? component(ConfirmGameDialog, { get colors() {
+				return props.colors;
+			} }) : gameLibrary.addOpen() && component(AddGamesDialog, {
+				get colors() {
+					return props.colors;
+				},
+				get onBrowse() {
+					return props.onBrowse;
+				},
+				get onBrowseFolder() {
+					return props.onBrowseFolder;
+				}
+			}),
+			() => props.pickedExes.length > 1 && component(Modal, {
+				title: "Какой файл запускать",
+				get colors() {
+					return props.colors;
+				},
+				get onDismiss() {
+					return props.onClearPick;
+				},
+				get children() {
+					return [() => props.pickedExes.map((path) => component(Button, {
+						get label() {
+							return guessTitle(path);
+						},
+						get colors() {
+							return props.colors;
+						},
+						onPress: () => {
+							gameLibrary.beginConfirm(path, props.pickSource, true);
+							props.onClearPick();
+						},
+						className: "border-0 px-0 py-0",
+						style: {
+							backgroundColor: "transparent",
+							borderColor: "transparent"
+						}
+					})), component(Button, {
+						label: "Отмена",
+						get colors() {
+							return props.colors;
+						},
+						get onPress() {
+							return props.onClearPick;
+						},
+						className: "mt-3 border-0 px-0 py-0",
+						style: {
+							backgroundColor: "transparent",
+							borderColor: "transparent"
+						}
+					})];
+				}
+			}),
+			() => selectedGameId() && gameLibrary.cards().find((card) => card.id === selectedGameId()) && component(GameDetailsDialog, {
+				get card() {
+					return gameLibrary.cards().find((card) => card.id === selectedGameId());
+				},
+				get colors() {
+					return props.colors;
+				},
+				onClose: () => selectedGameId.set(null),
+				onSetImage: (source) => {
+					const card = gameLibrary.cards().find((item) => item.id === selectedGameId());
+					if (card) gameLibrary.setImage(card.exePath, source);
+				}
+			}),
+			() => !selectedGameId() && gameLibrary.metadataChoices() && component(MetadataChoicesDialog, {
+				get choices() {
+					return gameLibrary.metadataChoices();
+				},
+				get colors() {
+					return props.colors;
+				},
+				get onChoose() {
+					return gameLibrary.chooseMetadata;
+				},
+				onClose: () => gameLibrary.metadataChoices.set(null)
+			})
+		]);
+		return __nsh_hv0;
+	})();
+}
+function ExtensionsPage(props) {
+	return (() => {
+		const __nsh_hv11 = element("view");
+		prop(__nsh_hv11, "class", "px-7 pt-6");
+		const __nsh_hv12 = element("text");
+		prop(__nsh_hv12, "class", "mb-3 text-[13px]");
+		bindProp(__nsh_hv12, "style", () => ({ color: props.colors.foreground }));
+		const __nsh_hv13 = text("Расширения");
+		append(__nsh_hv12, __nsh_hv13);
+		const __nsh_hv14 = element("text");
+		prop(__nsh_hv14, "class", "mt-2 text-[12px]");
+		bindProp(__nsh_hv14, "style", () => ({ color: props.colors.muted }));
+		const __nsh_hv15 = text("Выключение прячет страницу. Записи остаются");
+		append(__nsh_hv14, __nsh_hv15);
+		append(__nsh_hv11, __nsh_hv12);
+		append(__nsh_hv11, __nsh_hv14);
+		insert(__nsh_hv11, component(Button, {
+			get label() {
+				return gamesOn() ? "Расширение Игры: включено" : "Расширение Игры";
+			},
+			get colors() {
+				return props.colors;
+			},
+			onPress: () => saveExtensions({ games: !gamesOn() }),
+			className: "border-0 px-0 py-0",
+			style: {
+				backgroundColor: "transparent",
+				borderColor: "transparent"
+			}
+		}), __nsh_hv14);
+		return __nsh_hv11;
+	})();
+}
+function GamesSettings(props) {
+	return (() => {
+		const __nsh_hv16 = element("view");
+		prop(__nsh_hv16, "class", "px-7 pt-6");
+		const __nsh_hv17 = element("text");
+		prop(__nsh_hv17, "class", "mb-2 text-[13px]");
+		bindProp(__nsh_hv17, "style", () => ({ color: props.colors.foreground }));
+		const __nsh_hv18 = text("Игры");
+		append(__nsh_hv17, __nsh_hv18);
+		const __nsh_hv19 = element("text");
+		prop(__nsh_hv19, "class", "mb-4 text-[12px]");
+		bindProp(__nsh_hv19, "style", () => ({ color: props.colors.muted }));
+		const __nsh_hv20 = text("Метаданные игр и обложки загружаются без ключей и кэшируются в каталоге данных Engine.");
+		append(__nsh_hv19, __nsh_hv20);
+		const __nsh_hv21 = element("text");
+		prop(__nsh_hv21, "class", "text-[12px]");
+		bindProp(__nsh_hv21, "style", () => ({ color: props.colors.muted }));
+		const __nsh_hv22 = text("Источники и порядок загрузки задаются в game-metadata.json.");
+		append(__nsh_hv21, __nsh_hv22);
+		append(__nsh_hv16, __nsh_hv17);
+		append(__nsh_hv16, __nsh_hv19);
+		append(__nsh_hv16, __nsh_hv21);
+		return __nsh_hv16;
+	})();
+}
+
+//#endregion
 //#region preview.ts
 const PREVIEW_STORAGE_KEY = "mundus.atlas.preview.v1";
 function persistPreview(store) {
@@ -2375,7 +3946,7 @@ function isTodo(value) {
 //#endregion
 //#region App.tsx
 setup(null, "{\n  \"cssVars\": {\n    \"theme\": {\n      \"font-sans\": \"Inter, sans-serif\",\n      \"radius\": \"0.625rem\",\n      \"radius-control\": \"0.5rem\",\n      \"spacing-sidebar\": \"240px\",\n      \"spacing-titlebar\": \"40px\",\n      \"spacing-row\": \"32px\",\n      \"font-size-body\": \"13px\",\n      \"font-size-label\": \"12px\"\n    },\n    \"light\": {\n      \"background\": \"#faf9fb\",\n      \"foreground\": \"#26242a\",\n      \"card\": \"#f2f0f4\",\n      \"card-foreground\": \"#26242a\",\n      \"muted\": \"#ece9ef\",\n      \"muted-foreground\": \"#77727e\",\n      \"primary\": \"#7152bf\",\n      \"primary-foreground\": \"#ffffff\",\n      \"border\": \"#dedbe2\",\n      \"input\": \"#dedbe2\",\n      \"ring\": \"#b18aff\"\n    },\n    \"dark\": {\n      \"background\": \"#0d0c10\",\n      \"foreground\": \"#e7e5ea\",\n      \"card\": \"#131216\",\n      \"card-foreground\": \"#e7e5ea\",\n      \"muted\": \"#27262a\",\n      \"muted-foreground\": \"#8d8a94\",\n      \"primary\": \"#af94f9\",\n      \"primary-foreground\": \"#0d0c10\",\n      \"border\": \"#27262a\",\n      \"input\": \"#27262a\",\n      \"ring\": \"#af94f9\"\n    }\n  }\n}\n", null, null);
-const initialValue = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__");
+const initialValue = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__") ?? host.params.atlas;
 const hosted = isSnapshot(initialValue);
 const initial = hosted ? initialValue : fallback;
 const snapshot = signal(initial);
@@ -2388,32 +3959,9 @@ const voiceLevel = signal(0);
 const voiceElapsed = signal(0);
 const voicePlaying = signal(null);
 let voiceStartedAt = 0;
-const shortcutNames = [
-	"sidebar",
-	"create",
-	"search",
-	"reload"
-];
-const defaultShortcuts = {
-	sidebar: "mod+b",
-	create: "mod+n",
-	search: "mod+k",
-	reload: "mod+r"
-};
-const shortcutOptions = {
-	sidebar: ["mod+b", "mod+shift+b"],
-	create: ["mod+n", "mod+shift+n"],
-	search: ["mod+k", "mod+shift+k"],
-	reload: ["mod+r", "mod+shift+r"]
-};
-const shortcuts = signal(defaultShortcuts);
-Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
-	if (!value) return;
-	try {
-		const saved = JSON.parse(value);
-		shortcuts.set(Object.fromEntries(shortcutNames.map((name) => [name, shortcutOptions[name].includes(saved[name] ?? "") ? saved[name] : defaultShortcuts[name]])));
-	} catch {}
-});
+const pickedExes = signal([]);
+const pickSource = signal("manual");
+loadGamePrefs();
 if (!hosted) loadPreview().then((saved) => {
 	if (!saved) return;
 	snapshot.set({
@@ -2438,13 +3986,21 @@ const Bridge = nativeComponent("atlas.bridge", {
 		"voiceLevel",
 		"voiceRecorded",
 		"voicePlayed",
-		"voiceFailed"
+		"voiceFailed",
+		"usage",
+		"picked",
+		"games",
+		"discovered",
+		"imported",
+		"launched",
+		"metadata"
 	]
 });
 function iconForNavigation(id) {
 	switch (id) {
 		case "journal": return "logbook";
 		case "tasks": return "week";
+		case "games": return "gamepad";
 		default: return "settings";
 	}
 }
@@ -2503,17 +4059,6 @@ function setAppearance(patch) {
 		});
 	}
 	if (current.appearanceEditable) commandRef?.("appearance.set", patch);
-}
-function cycleShortcut(name) {
-	const current = shortcuts();
-	const choices = shortcutOptions[name];
-	const next = choices[(choices.indexOf(current[name]) + 1) % choices.length];
-	const updated = {
-		...current,
-		[name]: next
-	};
-	shortcuts.set(updated);
-	Storage.setItem("mundus.atlas.shortcuts.v1", JSON.stringify(updated));
 }
 function TaskPage() {
 	return (() => {
@@ -2666,23 +4211,35 @@ effect(() => {
 	return () => unbind.forEach((remove) => remove());
 });
 function SettingsPage() {
-	return component(AtlasAppearanceSettings, {
-		appearance: () => snapshot().appearance,
-		editable: () => snapshot().appearanceEditable,
-		colors: () => snapshot().colors,
-		get shortcuts() {
-			return shortcuts();
-		},
-		onPatch: setAppearance,
-		onChangeShortcut: cycleShortcut
-	});
+	return (() => {
+		const __nsh_hv8 = element("view");
+		insert(__nsh_hv8, [
+			component(AtlasAppearanceSettings, {
+				appearance: () => snapshot().appearance,
+				editable: () => snapshot().appearanceEditable,
+				colors: () => snapshot().colors,
+				get shortcuts() {
+					return shortcuts();
+				},
+				onPatch: setAppearance,
+				onChangeShortcut: cycleShortcut
+			}),
+			component(ExtensionsPage, { get colors() {
+				return snapshot().colors;
+			} }),
+			() => gamesOn() && component(GamesSettings, { get colors() {
+				return snapshot().colors;
+			} })
+		]);
+		return __nsh_hv8;
+	})();
 }
 function App() {
 	effect(() => Window.setTitleBar({
 		style: "hidden",
 		height: 38
 	}));
-	const primaryNavigation = navigation_default.filter((item) => !item.footer);
+	const primaryNavigation = navigation_default.filter((item) => !item.footer && (item.id !== "games" || gamesOn()));
 	const footerNavigation = navigation_default.filter((item) => item.footer);
 	const openNewTask = () => {
 		newTaskTitle.set("");
@@ -2696,14 +4253,14 @@ function App() {
 		route.set(target);
 	};
 	return (() => {
-		const __nsh_hv8 = element("view");
-		prop(__nsh_hv8, "class", "relative h-full w-full");
-		bindProp(__nsh_hv8, "style", () => ({ backgroundColor: snapshot().colors.background }));
 		const __nsh_hv9 = element("view");
-		prop(__nsh_hv9, "class", "h-full w-full flex-row");
-		const __nsh_hv14 = element("view");
-		prop(__nsh_hv14, "class", "relative min-h-0 min-w-0 flex-1");
-		insert(__nsh_hv14, [
+		prop(__nsh_hv9, "class", "relative h-full w-full");
+		bindProp(__nsh_hv9, "style", () => ({ backgroundColor: snapshot().colors.background }));
+		const __nsh_hv10 = element("view");
+		prop(__nsh_hv10, "class", "h-full w-full flex-row");
+		const __nsh_hv15 = element("view");
+		prop(__nsh_hv15, "class", "relative min-h-0 min-w-0 flex-1");
+		insert(__nsh_hv15, [
 			() => route() === "journal" && component(JournalPage, {
 				entries: () => snapshot().journalEntries,
 				get colors() {
@@ -2726,16 +4283,16 @@ function App() {
 				dark
 			}),
 			() => route() === "tasks" && (() => {
-				const __nsh_hv15 = element("view");
-				prop(__nsh_hv15, "class", "min-h-0 flex-1");
-				insert(__nsh_hv15, [component(TaskPage, {}), () => shell && (() => {
-					const __nsh_hv16 = element("view");
-					prop(__nsh_hv16, "onPress", openNewTask);
-					prop(__nsh_hv16, "role", "button");
-					prop(__nsh_hv16, "accessibilityLabel", "Новая задача");
-					prop(__nsh_hv16, "class", "absolute items-center justify-center rounded-full");
-					prop(__nsh_hv16, "hoverStyle", { opacity: .85 });
-					bindProp(__nsh_hv16, "style", () => ({
+				const __nsh_hv16 = element("view");
+				prop(__nsh_hv16, "class", "min-h-0 flex-1");
+				insert(__nsh_hv16, [component(TaskPage, {}), () => shell && (() => {
+					const __nsh_hv17 = element("view");
+					prop(__nsh_hv17, "onPress", openNewTask);
+					prop(__nsh_hv17, "role", "button");
+					prop(__nsh_hv17, "accessibilityLabel", "Новая задача");
+					prop(__nsh_hv17, "class", "absolute items-center justify-center rounded-full");
+					prop(__nsh_hv17, "hoverStyle", { opacity: .85 });
+					bindProp(__nsh_hv17, "style", () => ({
 						right: 16,
 						bottom: 16,
 						width: 32,
@@ -2743,83 +4300,125 @@ function App() {
 						backgroundColor: snapshot().colors.foreground,
 						cursor: "pointer"
 					}));
-					insert(__nsh_hv16, component(Icon, {
+					insert(__nsh_hv17, component(Icon, {
 						name: "plus",
 						size: 16,
 						get color() {
 							return snapshot().colors.background;
 						}
 					}));
-					return __nsh_hv16;
+					return __nsh_hv17;
 				})()]);
-				return __nsh_hv15;
+				return __nsh_hv16;
+			})(),
+			() => route() === "games" && gamesOn() && (() => {
+				const __nsh_hv18 = element("view");
+				prop(__nsh_hv18, "class", "min-h-0 flex-1");
+				prop(__nsh_hv18, "style", { paddingTop: shell ? 38 : 0 });
+				insert(__nsh_hv18, component(GamesLibrary, {
+					get colors() {
+						return snapshot().colors;
+					},
+					get pickedExes() {
+						return pickedExes();
+					},
+					get pickSource() {
+						return pickSource();
+					},
+					onPick: (path) => askEngine("games.pick", { path }),
+					onBrowse: () => {
+						pickSource.set("manual");
+						askEngine("games.browse");
+					},
+					onBrowseFolder: () => {
+						pickSource.set("folder");
+						askEngine("games.browse-folder");
+					},
+					onLaunch: (path) => askEngine("games.launch", { path }),
+					onClearPick: () => {
+						pickedExes.set([]);
+						askEngine("games.clear-pick");
+					}
+				}));
+				return __nsh_hv18;
 			})(),
 			() => route() === "settings" && (() => {
-				const __nsh_hv17 = element("view");
-				prop(__nsh_hv17, "class", "min-h-0 flex-1");
-				prop(__nsh_hv17, "style", { paddingTop: shell ? 38 : 0 });
-				insert(__nsh_hv17, component(SettingsPage, {}));
-				return __nsh_hv17;
+				const __nsh_hv19 = element("view");
+				prop(__nsh_hv19, "class", "min-h-0 flex-1");
+				prop(__nsh_hv19, "style", { paddingTop: shell ? 38 : 0 });
+				insert(__nsh_hv19, component(SettingsPage, {}));
+				return __nsh_hv19;
 			})(),
-			() => addTaskOpen() && component(Dialog, {
+			() => addTaskOpen() && component(Modal, {
 				title: "Новая задача",
 				get colors() {
 					return snapshot().colors;
 				},
-				get children() {
-					return [(() => {
-						const __nsh_hv18 = element("input");
-						bindProp(__nsh_hv18, "value", () => newTaskTitle());
-						prop(__nsh_hv18, "onChange", (e) => newTaskTitle.set(e.value));
-						prop(__nsh_hv18, "onSubmit", (event) => {
-							createTodo(event.text);
-							addTaskOpen.set(false);
-						});
-						prop(__nsh_hv18, "placeholder", "Название задачи");
-						prop(__nsh_hv18, "accessibilityLabel", "Название задачи");
-						prop(__nsh_hv18, "class", "h-10 rounded-lg px-3 text-[13px]");
-						bindProp(__nsh_hv18, "style", () => ({
-							backgroundColor: snapshot().colors.background,
-							color: snapshot().colors.foreground
-						}));
-						return __nsh_hv18;
-					})(), (() => {
-						const __nsh_hv19 = element("view");
-						prop(__nsh_hv19, "class", "mt-3 flex-row justify-end");
-						prop(__nsh_hv19, "style", { gap: 8 });
-						insert(__nsh_hv19, [component(GhostButton, {
+				onDismiss: () => addTaskOpen.set(false),
+				get footer() {
+					return (() => {
+						const __nsh_hv20 = element("view");
+						prop(__nsh_hv20, "class", "flex-row items-center justify-end");
+						prop(__nsh_hv20, "style", { gap: 8 });
+						insert(__nsh_hv20, [component(ModalGhost, {
 							label: "Отмена",
 							get colors() {
 								return snapshot().colors;
 							},
-							dark,
 							onPress: () => addTaskOpen.set(false)
-						}), component(SolidButton, {
+						}), component(Button, {
 							label: "Добавить",
-							get background() {
-								return snapshot().colors.accent;
-							},
-							get foreground() {
-								return snapshot().colors.background;
+							get colors() {
+								return snapshot().colors;
 							},
 							onPress: () => {
 								createTodo(newTaskTitle());
 								addTaskOpen.set(false);
+							},
+							selected: true,
+							className: "h-9 items-center justify-center px-3 py-0",
+							get style() {
+								return {
+									backgroundColor: snapshot().colors.accent,
+									borderColor: "transparent"
+								};
+							},
+							get textColor() {
+								return snapshot().colors.background;
 							}
 						})]);
-						return __nsh_hv19;
-					})()];
+						return __nsh_hv20;
+					})();
+				},
+				get children() {
+					return (() => {
+						const __nsh_hv21 = element("input");
+						bindProp(__nsh_hv21, "value", () => newTaskTitle());
+						prop(__nsh_hv21, "onChange", (value) => newTaskTitle.set(value));
+						prop(__nsh_hv21, "onSubmit", (event) => {
+							createTodo(event.text);
+							addTaskOpen.set(false);
+						});
+						prop(__nsh_hv21, "placeholder", "Название задачи");
+						prop(__nsh_hv21, "accessibilityLabel", "Название задачи");
+						prop(__nsh_hv21, "class", "h-10 rounded-lg px-3 text-[13px]");
+						bindProp(__nsh_hv21, "style", () => ({
+							backgroundColor: snapshot().colors.background,
+							color: snapshot().colors.foreground
+						}));
+						return __nsh_hv21;
+					})();
 				}
 			})
 		]);
-		append(__nsh_hv9, __nsh_hv14);
-		insert(__nsh_hv9, () => shell && (() => {
-			const __nsh_hv10 = element("view");
-			prop(__nsh_hv10, "class", "h-full shrink-0 overflow-hidden");
-			bindProp(__nsh_hv10, "style", () => ({ width: sidebarPaneWidth() }));
+		append(__nsh_hv10, __nsh_hv15);
+		insert(__nsh_hv10, () => shell && (() => {
 			const __nsh_hv11 = element("view");
-			prop(__nsh_hv11, "class", "box-border h-full");
-			bindProp(__nsh_hv11, "style", () => ({
+			prop(__nsh_hv11, "class", "h-full shrink-0 overflow-hidden");
+			bindProp(__nsh_hv11, "style", () => ({ width: sidebarPaneWidth() }));
+			const __nsh_hv12 = element("view");
+			prop(__nsh_hv12, "class", "box-border h-full");
+			bindProp(__nsh_hv12, "style", () => ({
 				width: 282,
 				paddingTop: 38 + 8,
 				paddingBottom: 16,
@@ -2827,28 +4426,9 @@ function App() {
 				paddingRight: 8,
 				backgroundColor: shellFill(snapshot().colors, dark)
 			}));
-			const __nsh_hv12 = element("view");
-			prop(__nsh_hv12, "style", { gap: 2 });
-			insert(__nsh_hv12, () => primaryNavigation.map((item) => component(SidebarRow, {
-				get label() {
-					return item.label;
-				},
-				get icon() {
-					return iconForNavigation(item.id);
-				},
-				get selected() {
-					return route() === item.id;
-				},
-				dark,
-				get colors() {
-					return snapshot().colors;
-				},
-				onPress: () => changeRoute(item.id)
-			})));
 			const __nsh_hv13 = element("view");
-			prop(__nsh_hv13, "class", "mt-auto mb-2");
 			prop(__nsh_hv13, "style", { gap: 2 });
-			insert(__nsh_hv13, () => footerNavigation.map((item) => component(SidebarRow, {
+			insert(__nsh_hv13, () => primaryNavigation.map((item) => component(SidebarRow, {
 				get label() {
 					return item.label;
 				},
@@ -2864,16 +4444,36 @@ function App() {
 				},
 				onPress: () => changeRoute(item.id)
 			})));
+			const __nsh_hv14 = element("view");
+			prop(__nsh_hv14, "class", "mt-auto mb-2");
+			prop(__nsh_hv14, "style", { gap: 2 });
+			insert(__nsh_hv14, () => footerNavigation.map((item) => component(SidebarRow, {
+				get label() {
+					return item.label;
+				},
+				get icon() {
+					return iconForNavigation(item.id);
+				},
+				get selected() {
+					return route() === item.id;
+				},
+				dark,
+				get colors() {
+					return snapshot().colors;
+				},
+				onPress: () => changeRoute(item.id)
+			})));
+			append(__nsh_hv12, __nsh_hv13);
+			append(__nsh_hv12, __nsh_hv14);
 			append(__nsh_hv11, __nsh_hv12);
-			append(__nsh_hv11, __nsh_hv13);
-			append(__nsh_hv10, __nsh_hv11);
-			return __nsh_hv10;
-		})(), __nsh_hv14);
-		append(__nsh_hv8, __nsh_hv9);
-		insert(__nsh_hv8, component(Bridge, {
+			return __nsh_hv11;
+		})(), __nsh_hv15);
+		append(__nsh_hv9, __nsh_hv10);
+		insert(__nsh_hv9, component(Bridge, {
 			class: "absolute left-0 top-0 h-px w-px",
 			ref: (node) => {
 				commandRef = (name, args) => node.command(name, args);
+				gameLibrary.bindCommand((name, args) => node.command(name, args));
 			},
 			get route() {
 				return route();
@@ -2912,8 +4512,8 @@ function App() {
 				stopVoiceTicker = null;
 			},
 			onNavigate: (event) => changeRoute(event.route)
-		}), __nsh_hv9);
-		insert(__nsh_hv8, () => shell && component(TitlebarOverlay, {
+		}), __nsh_hv10);
+		insert(__nsh_hv9, () => shell && component(TitlebarOverlay, {
 			get colors() {
 				return snapshot().colors;
 			},
@@ -2924,10 +4524,23 @@ function App() {
 			get calendarOpen() {
 				return journalCalendarOpen();
 			},
+			get showAddGame() {
+				return route() === "games" && gamesOn();
+			},
+			get pageInset() {
+				return sidebarPaneWidth();
+			},
+			get dimmed() {
+				return addTaskOpen() || gameLibrary.addOpen() || pickedExes().length > 1;
+			},
 			onToggleSidebar: toggleSidebar,
-			onToggleCalendar: toggleJournalCalendar
+			onToggleCalendar: toggleJournalCalendar,
+			get onAddGame() {
+				return gameLibrary.openAddDialog;
+			},
+			onChrome: (command) => askEngine(command)
 		}));
-		return __nsh_hv8;
+		return __nsh_hv9;
 	})();
 }
 mount(App);

@@ -12,10 +12,10 @@ import { JournalPage, journalCalendarOpen, markJournalArriving, toggleJournalCal
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
 import { ExtensionsPage, GamesLibrary, GamesSettings, gamesOn, livePrograms, loadGamePrefs } from "./games";
 import type { ProgramUsage } from "./games";
-import { GhostButton, SIDEBAR_WIDTH, SolidButton, TITLEBAR_HEIGHT, TitlebarOverlay, animateSidebar, sidebarPaneWidth, shellFill, surfaceWash, SidebarRow } from "./chrome";
+import { SIDEBAR_WIDTH, TITLEBAR_HEIGHT, TitlebarOverlay, animateSidebar, sidebarPaneWidth, shellFill, SidebarRow } from "./chrome";
 import { loadPreview, persistPreview } from "./preview";
 import { gameLibrary } from "./game-library";
-import { Modal, ModalGhost, ModalPrimary } from "./modal";
+import { Modal, ModalGhost } from "./modal";
 
 const initialValue: unknown = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__") ?? host.params.atlas;
 const hosted = isSnapshot(initialValue);
@@ -279,12 +279,11 @@ function App() {
       />
       <View class="h-full w-full flex-row">
       {shell && <View class="h-full shrink-0 overflow-hidden" style={{ width: sidebarPaneWidth() }}>
-        <View class="relative box-border h-full" style={{ width: SIDEBAR_WIDTH, paddingTop: TITLEBAR_HEIGHT + 8, paddingBottom: 16, paddingLeft: 8, paddingRight: 8, backgroundColor: shellFill(snapshot().colors, dark) }}>
-          <View onPressDown={() => askEngine("window.drag")} class="absolute left-0 right-0 top-0 bottom-0" desktop={{ windowDrag: false }} />
-          <View pointerEvents="box-none" style={{ gap: 2 }}>
+        <View class="box-border h-full" style={{ width: SIDEBAR_WIDTH, paddingTop: TITLEBAR_HEIGHT + 8, paddingBottom: 16, paddingLeft: 8, paddingRight: 8, backgroundColor: shellFill(snapshot().colors, dark) }}>
+          <View style={{ gap: 2 }}>
             {primaryNavigation.map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
           </View>
-          <View pointerEvents="box-none" class="mt-auto mb-2" style={{ gap: 2 }}>
+          <View class="mt-auto mb-2" style={{ gap: 2 }}>
             {footerNavigation.map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
           </View>
         </View>

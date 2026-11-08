@@ -15,7 +15,7 @@ gpui-component = { version = "=0.8.0", features = ["gpui-fast"] }
 # NSH screens run in the same GPUI Fast renderer as the host app.
 imago-nsh = { git = "https://github.com/makekosmos/imago.git", branch = "feat/native-sidebar" }
 # Enables the NSH dev-server client in the embedded GPUI host.
-nsh-platform-gpui = { version = "=0.3.0", default-features = false, features = ["js", "dev"] }
+nsh-platform-gpui = { version = "=0.4.0", default-features = false, features = ["js", "dev"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
