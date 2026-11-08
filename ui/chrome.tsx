@@ -188,6 +188,7 @@ export function TitlebarOverlay(props: {
   return <View class="absolute left-0 right-0 top-0 z-20" style={{ height: controls.height || TITLEBAR_HEIGHT }} desktop={{ windowDrag: true }}>
     <View class="absolute top-0 bottom-0" style={{ left: props.pageInset ?? 0, right: 0, backgroundColor: props.colors.background, pointerEvents: "none" }} />
     {props.dimmed && <View class="absolute top-0 bottom-0" style={{ left: props.pageInset ?? 0, right: 0, backgroundColor: "#00000080", pointerEvents: "none" }} />}
+    <View onPressDown={() => props.onChrome("window.drag")} class="absolute left-0 right-0 top-0 bottom-0" />
     <View onPress={props.onToggleSidebar} role="button" accessibilityLabel="Боковая панель" class="absolute items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ top: titlebarControlTop(24), left: sidebarLeft, width: 24, height: 24, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
       <SharedIcon name="sidebar" size={16} color={props.colors.muted} />
     </View>

@@ -522,13 +522,16 @@ function TitlebarOverlay(props) {
 			pointerEvents: "none"
 		}));
 		const __nsh_hv3 = element("view");
-		bindProp(__nsh_hv3, "onPress", () => props.onToggleSidebar);
-		prop(__nsh_hv3, "role", "button");
-		prop(__nsh_hv3, "accessibilityLabel", "Боковая панель");
-		prop(__nsh_hv3, "class", "absolute items-center justify-center");
-		prop(__nsh_hv3, "desktop", { windowDrag: false });
-		prop(__nsh_hv3, "hoverStyle", { backgroundColor: wash });
-		bindProp(__nsh_hv3, "style", () => ({
+		prop(__nsh_hv3, "onPressDown", () => props.onChrome("window.drag"));
+		prop(__nsh_hv3, "class", "absolute left-0 right-0 top-0 bottom-0");
+		const __nsh_hv4 = element("view");
+		bindProp(__nsh_hv4, "onPress", () => props.onToggleSidebar);
+		prop(__nsh_hv4, "role", "button");
+		prop(__nsh_hv4, "accessibilityLabel", "Боковая панель");
+		prop(__nsh_hv4, "class", "absolute items-center justify-center");
+		prop(__nsh_hv4, "desktop", { windowDrag: false });
+		prop(__nsh_hv4, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv4, "style", () => ({
 			top: titlebarControlTop(24),
 			left: sidebarLeft,
 			width: 24,
@@ -536,7 +539,7 @@ function TitlebarOverlay(props) {
 			borderRadius: CONTROL_RADIUS,
 			cursor: "pointer"
 		}));
-		insert(__nsh_hv3, component(Icon, {
+		insert(__nsh_hv4, component(Icon, {
 			name: "sidebar",
 			size: 16,
 			get color() {
@@ -545,6 +548,7 @@ function TitlebarOverlay(props) {
 		}));
 		append(__nsh_hv0, __nsh_hv1);
 		append(__nsh_hv0, __nsh_hv3);
+		append(__nsh_hv0, __nsh_hv4);
 		insert(__nsh_hv0, () => props.dimmed && (() => {
 			const __nsh_hv2 = element("view");
 			prop(__nsh_hv2, "class", "absolute top-0 bottom-0");
@@ -558,15 +562,15 @@ function TitlebarOverlay(props) {
 		})(), __nsh_hv3);
 		insert(__nsh_hv0, [
 			() => props.showCalendarToggle && (() => {
-				const __nsh_hv4 = element("view");
-				bindProp(__nsh_hv4, "onPress", () => props.onToggleCalendar);
-				prop(__nsh_hv4, "role", "button");
-				bindProp(__nsh_hv4, "accessibilityLabel", () => props.calendarOpen ? "Скрыть календарь" : "Показать календарь");
-				bindProp(__nsh_hv4, "accessibilityState", () => ({ selected: props.calendarOpen }));
-				prop(__nsh_hv4, "class", "absolute items-center justify-center");
-				prop(__nsh_hv4, "desktop", { windowDrag: false });
-				bindProp(__nsh_hv4, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .11) }));
-				bindProp(__nsh_hv4, "style", () => ({
+				const __nsh_hv5 = element("view");
+				bindProp(__nsh_hv5, "onPress", () => props.onToggleCalendar);
+				prop(__nsh_hv5, "role", "button");
+				bindProp(__nsh_hv5, "accessibilityLabel", () => props.calendarOpen ? "Скрыть календарь" : "Показать календарь");
+				bindProp(__nsh_hv5, "accessibilityState", () => ({ selected: props.calendarOpen }));
+				prop(__nsh_hv5, "class", "absolute items-center justify-center");
+				prop(__nsh_hv5, "desktop", { windowDrag: false });
+				bindProp(__nsh_hv5, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .11) }));
+				bindProp(__nsh_hv5, "style", () => ({
 					top: titlebarControlTop(28),
 					right: calendarRight,
 					width: 28,
@@ -575,24 +579,24 @@ function TitlebarOverlay(props) {
 					cursor: "pointer",
 					backgroundColor: props.calendarOpen ? surfaceWash(props.dark, .09) : "transparent"
 				}));
-				insert(__nsh_hv4, component(Icon, {
+				insert(__nsh_hv5, component(Icon, {
 					name: "sidebar",
 					size: 16,
 					get color() {
 						return props.calendarOpen ? props.colors.foreground : props.colors.muted;
 					}
 				}));
-				return __nsh_hv4;
+				return __nsh_hv5;
 			})(),
 			() => props.showAddGame && (() => {
-				const __nsh_hv5 = element("view");
-				prop(__nsh_hv5, "onPress", () => props.onAddGame?.());
-				prop(__nsh_hv5, "role", "button");
-				prop(__nsh_hv5, "accessibilityLabel", "Добавить игру");
-				prop(__nsh_hv5, "class", "absolute items-center justify-center");
-				prop(__nsh_hv5, "desktop", { windowDrag: false });
-				prop(__nsh_hv5, "hoverStyle", { backgroundColor: wash });
-				bindProp(__nsh_hv5, "style", () => ({
+				const __nsh_hv6 = element("view");
+				prop(__nsh_hv6, "onPress", () => props.onAddGame?.());
+				prop(__nsh_hv6, "role", "button");
+				prop(__nsh_hv6, "accessibilityLabel", "Добавить игру");
+				prop(__nsh_hv6, "class", "absolute items-center justify-center");
+				prop(__nsh_hv6, "desktop", { windowDrag: false });
+				prop(__nsh_hv6, "hoverStyle", { backgroundColor: wash });
+				bindProp(__nsh_hv6, "style", () => ({
 					top: titlebarControlTop(28),
 					right: addGameRight,
 					width: 28,
@@ -600,43 +604,24 @@ function TitlebarOverlay(props) {
 					borderRadius: CONTROL_RADIUS,
 					cursor: "pointer"
 				}));
-				insert(__nsh_hv5, component(Icon, {
+				insert(__nsh_hv6, component(Icon, {
 					name: "plus",
 					size: 16,
 					get color() {
 						return props.colors.muted;
 					}
 				}));
-				return __nsh_hv5;
+				return __nsh_hv6;
 			})(),
 			() => drawCaptions && (() => {
-				const __nsh_hv6 = element("view");
-				prop(__nsh_hv6, "class", "absolute right-0 top-0 flex-row");
-				prop(__nsh_hv6, "desktop", { windowDrag: false });
-				prop(__nsh_hv6, "style", { height: 38 });
 				const __nsh_hv7 = element("view");
-				prop(__nsh_hv7, "onPress", () => props.onChrome("window.minimize"));
-				prop(__nsh_hv7, "role", "button");
-				prop(__nsh_hv7, "accessibilityLabel", "Свернуть окно");
-				prop(__nsh_hv7, "class", "items-center justify-center");
+				prop(__nsh_hv7, "class", "absolute right-0 top-0 flex-row");
 				prop(__nsh_hv7, "desktop", { windowDrag: false });
-				prop(__nsh_hv7, "hoverStyle", { backgroundColor: wash });
-				prop(__nsh_hv7, "style", {
-					width: CAPTION_BUTTON_WIDTH,
-					height: 38,
-					cursor: "pointer"
-				});
-				insert(__nsh_hv7, component(Icon, {
-					name: "windowMin",
-					get color() {
-						return props.colors.foreground;
-					},
-					size: 12
-				}));
+				prop(__nsh_hv7, "style", { height: 38 });
 				const __nsh_hv8 = element("view");
-				prop(__nsh_hv8, "onPress", () => props.onChrome("window.zoom"));
+				prop(__nsh_hv8, "onPress", () => props.onChrome("window.minimize"));
 				prop(__nsh_hv8, "role", "button");
-				prop(__nsh_hv8, "accessibilityLabel", "Развернуть окно");
+				prop(__nsh_hv8, "accessibilityLabel", "Свернуть окно");
 				prop(__nsh_hv8, "class", "items-center justify-center");
 				prop(__nsh_hv8, "desktop", { windowDrag: false });
 				prop(__nsh_hv8, "hoverStyle", { backgroundColor: wash });
@@ -646,37 +631,56 @@ function TitlebarOverlay(props) {
 					cursor: "pointer"
 				});
 				insert(__nsh_hv8, component(Icon, {
-					name: "windowMax",
+					name: "windowMin",
 					get color() {
 						return props.colors.foreground;
 					},
 					size: 12
 				}));
 				const __nsh_hv9 = element("view");
-				prop(__nsh_hv9, "onPress", () => props.onChrome("window.close"));
-				prop(__nsh_hv9, "onMouseEnter", () => closeHovered.set(true));
-				prop(__nsh_hv9, "onMouseLeave", () => closeHovered.set(false));
+				prop(__nsh_hv9, "onPress", () => props.onChrome("window.zoom"));
 				prop(__nsh_hv9, "role", "button");
-				prop(__nsh_hv9, "accessibilityLabel", "Закрыть окно");
+				prop(__nsh_hv9, "accessibilityLabel", "Развернуть окно");
 				prop(__nsh_hv9, "class", "items-center justify-center");
 				prop(__nsh_hv9, "desktop", { windowDrag: false });
-				prop(__nsh_hv9, "hoverStyle", { backgroundColor: "#e81123" });
+				prop(__nsh_hv9, "hoverStyle", { backgroundColor: wash });
 				prop(__nsh_hv9, "style", {
 					width: CAPTION_BUTTON_WIDTH,
 					height: 38,
 					cursor: "pointer"
 				});
 				insert(__nsh_hv9, component(Icon, {
+					name: "windowMax",
+					get color() {
+						return props.colors.foreground;
+					},
+					size: 12
+				}));
+				const __nsh_hv10 = element("view");
+				prop(__nsh_hv10, "onPress", () => props.onChrome("window.close"));
+				prop(__nsh_hv10, "onMouseEnter", () => closeHovered.set(true));
+				prop(__nsh_hv10, "onMouseLeave", () => closeHovered.set(false));
+				prop(__nsh_hv10, "role", "button");
+				prop(__nsh_hv10, "accessibilityLabel", "Закрыть окно");
+				prop(__nsh_hv10, "class", "items-center justify-center");
+				prop(__nsh_hv10, "desktop", { windowDrag: false });
+				prop(__nsh_hv10, "hoverStyle", { backgroundColor: "#e81123" });
+				prop(__nsh_hv10, "style", {
+					width: CAPTION_BUTTON_WIDTH,
+					height: 38,
+					cursor: "pointer"
+				});
+				insert(__nsh_hv10, component(Icon, {
 					name: "windowClose",
 					get color() {
 						return closeHovered() ? "#ffffff" : props.colors.foreground;
 					},
 					size: 12
 				}));
-				append(__nsh_hv6, __nsh_hv7);
-				append(__nsh_hv6, __nsh_hv8);
-				append(__nsh_hv6, __nsh_hv9);
-				return __nsh_hv6;
+				append(__nsh_hv7, __nsh_hv8);
+				append(__nsh_hv7, __nsh_hv9);
+				append(__nsh_hv7, __nsh_hv10);
+				return __nsh_hv7;
 			})()
 		]);
 		return __nsh_hv0;
@@ -685,14 +689,14 @@ function TitlebarOverlay(props) {
 function SidebarRow(props) {
 	const wash = hoverWash(props.dark);
 	return (() => {
-		const __nsh_hv10 = element("view");
-		bindProp(__nsh_hv10, "onPress", () => props.onPress);
-		prop(__nsh_hv10, "role", "button");
-		bindProp(__nsh_hv10, "accessibilityState", () => ({ selected: props.selected }));
-		prop(__nsh_hv10, "desktop", { windowDrag: false });
-		prop(__nsh_hv10, "class", "flex-row items-center");
-		prop(__nsh_hv10, "hoverStyle", { backgroundColor: wash });
-		bindProp(__nsh_hv10, "style", () => ({
+		const __nsh_hv11 = element("view");
+		bindProp(__nsh_hv11, "onPress", () => props.onPress);
+		prop(__nsh_hv11, "role", "button");
+		bindProp(__nsh_hv11, "accessibilityState", () => ({ selected: props.selected }));
+		prop(__nsh_hv11, "desktop", { windowDrag: false });
+		prop(__nsh_hv11, "class", "flex-row items-center");
+		prop(__nsh_hv11, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv11, "style", () => ({
 			height: 40,
 			gap: 10,
 			paddingLeft: 10,
@@ -701,16 +705,16 @@ function SidebarRow(props) {
 			backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent",
 			cursor: "pointer"
 		}));
-		const __nsh_hv11 = element("text");
-		prop(__nsh_hv11, "class", "text-[14px]");
-		bindProp(__nsh_hv11, "style", () => ({
+		const __nsh_hv12 = element("text");
+		prop(__nsh_hv12, "class", "text-[14px]");
+		bindProp(__nsh_hv12, "style", () => ({
 			color: props.colors.foreground,
 			fontWeight: 500,
 			lineHeight: 20
 		}));
-		insert(__nsh_hv11, () => props.label);
-		append(__nsh_hv10, __nsh_hv11);
-		insert(__nsh_hv10, () => props.icon === "gamepad" ? component(Glyph, {
+		insert(__nsh_hv12, () => props.label);
+		append(__nsh_hv11, __nsh_hv12);
+		insert(__nsh_hv11, () => props.icon === "gamepad" ? component(Glyph, {
 			name: "gamepad",
 			size: 16,
 			get color() {
@@ -724,42 +728,42 @@ function SidebarRow(props) {
 			get color() {
 				return props.colors.foreground;
 			}
-		}), __nsh_hv11);
-		return __nsh_hv10;
+		}), __nsh_hv12);
+		return __nsh_hv11;
 	})();
 }
 function GhostButton(props) {
 	return (() => {
-		const __nsh_hv12 = element("view");
-		bindProp(__nsh_hv12, "onPress", () => props.onPress);
-		prop(__nsh_hv12, "role", "button");
-		bindProp(__nsh_hv12, "accessibilityLabel", () => props.label);
-		prop(__nsh_hv12, "class", "items-center justify-center");
-		bindProp(__nsh_hv12, "hoverStyle", () => ({ backgroundColor: props.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }));
-		prop(__nsh_hv12, "style", {
+		const __nsh_hv13 = element("view");
+		bindProp(__nsh_hv13, "onPress", () => props.onPress);
+		prop(__nsh_hv13, "role", "button");
+		bindProp(__nsh_hv13, "accessibilityLabel", () => props.label);
+		prop(__nsh_hv13, "class", "items-center justify-center");
+		bindProp(__nsh_hv13, "hoverStyle", () => ({ backgroundColor: props.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }));
+		prop(__nsh_hv13, "style", {
 			height: 32,
 			paddingLeft: 12,
 			paddingRight: 12,
 			borderRadius: ROW_RADIUS,
 			cursor: "pointer"
 		});
-		const __nsh_hv13 = element("text");
-		bindProp(__nsh_hv13, "class", () => `text-[13px] hover:text-[${props.colors.foreground}]`);
-		bindProp(__nsh_hv13, "style", () => ({ color: props.colors.muted }));
-		insert(__nsh_hv13, () => props.label);
-		append(__nsh_hv12, __nsh_hv13);
-		return __nsh_hv12;
+		const __nsh_hv14 = element("text");
+		bindProp(__nsh_hv14, "class", () => `text-[13px] hover:text-[${props.colors.foreground}]`);
+		bindProp(__nsh_hv14, "style", () => ({ color: props.colors.muted }));
+		insert(__nsh_hv14, () => props.label);
+		append(__nsh_hv13, __nsh_hv14);
+		return __nsh_hv13;
 	})();
 }
 function SolidButton(props) {
 	return (() => {
-		const __nsh_hv14 = element("view");
-		bindProp(__nsh_hv14, "onPress", () => props.onPress);
-		prop(__nsh_hv14, "role", "button");
-		bindProp(__nsh_hv14, "accessibilityLabel", () => props.label);
-		prop(__nsh_hv14, "class", "items-center justify-center");
-		prop(__nsh_hv14, "hoverStyle", { opacity: .9 });
-		bindProp(__nsh_hv14, "style", () => ({
+		const __nsh_hv15 = element("view");
+		bindProp(__nsh_hv15, "onPress", () => props.onPress);
+		prop(__nsh_hv15, "role", "button");
+		bindProp(__nsh_hv15, "accessibilityLabel", () => props.label);
+		prop(__nsh_hv15, "class", "items-center justify-center");
+		prop(__nsh_hv15, "hoverStyle", { opacity: .9 });
+		bindProp(__nsh_hv15, "style", () => ({
 			height: 32,
 			paddingLeft: 12,
 			paddingRight: 12,
@@ -767,12 +771,12 @@ function SolidButton(props) {
 			backgroundColor: props.background,
 			cursor: "pointer"
 		}));
-		const __nsh_hv15 = element("text");
-		prop(__nsh_hv15, "class", "text-[13px] font-medium");
-		bindProp(__nsh_hv15, "style", () => ({ color: props.foreground }));
-		insert(__nsh_hv15, () => props.label);
-		append(__nsh_hv14, __nsh_hv15);
-		return __nsh_hv14;
+		const __nsh_hv16 = element("text");
+		prop(__nsh_hv16, "class", "text-[13px] font-medium");
+		bindProp(__nsh_hv16, "style", () => ({ color: props.foreground }));
+		insert(__nsh_hv16, () => props.label);
+		append(__nsh_hv15, __nsh_hv16);
+		return __nsh_hv15;
 	})();
 }
 
@@ -4258,9 +4262,9 @@ function App() {
 		bindProp(__nsh_hv9, "style", () => ({ backgroundColor: snapshot().colors.background }));
 		const __nsh_hv10 = element("view");
 		prop(__nsh_hv10, "class", "h-full w-full flex-row");
-		const __nsh_hv15 = element("view");
-		prop(__nsh_hv15, "class", "relative min-h-0 min-w-0 flex-1");
-		insert(__nsh_hv15, [
+		const __nsh_hv16 = element("view");
+		prop(__nsh_hv16, "class", "relative min-h-0 min-w-0 flex-1");
+		insert(__nsh_hv16, [
 			() => route() === "journal" && component(JournalPage, {
 				entries: () => snapshot().journalEntries,
 				get colors() {
@@ -4283,16 +4287,16 @@ function App() {
 				dark
 			}),
 			() => route() === "tasks" && (() => {
-				const __nsh_hv16 = element("view");
-				prop(__nsh_hv16, "class", "min-h-0 flex-1");
-				insert(__nsh_hv16, [component(TaskPage, {}), () => shell && (() => {
-					const __nsh_hv17 = element("view");
-					prop(__nsh_hv17, "onPress", openNewTask);
-					prop(__nsh_hv17, "role", "button");
-					prop(__nsh_hv17, "accessibilityLabel", "Новая задача");
-					prop(__nsh_hv17, "class", "absolute items-center justify-center rounded-full");
-					prop(__nsh_hv17, "hoverStyle", { opacity: .85 });
-					bindProp(__nsh_hv17, "style", () => ({
+				const __nsh_hv17 = element("view");
+				prop(__nsh_hv17, "class", "min-h-0 flex-1");
+				insert(__nsh_hv17, [component(TaskPage, {}), () => shell && (() => {
+					const __nsh_hv18 = element("view");
+					prop(__nsh_hv18, "onPress", openNewTask);
+					prop(__nsh_hv18, "role", "button");
+					prop(__nsh_hv18, "accessibilityLabel", "Новая задача");
+					prop(__nsh_hv18, "class", "absolute items-center justify-center rounded-full");
+					prop(__nsh_hv18, "hoverStyle", { opacity: .85 });
+					bindProp(__nsh_hv18, "style", () => ({
 						right: 16,
 						bottom: 16,
 						width: 32,
@@ -4300,22 +4304,22 @@ function App() {
 						backgroundColor: snapshot().colors.foreground,
 						cursor: "pointer"
 					}));
-					insert(__nsh_hv17, component(Icon, {
+					insert(__nsh_hv18, component(Icon, {
 						name: "plus",
 						size: 16,
 						get color() {
 							return snapshot().colors.background;
 						}
 					}));
-					return __nsh_hv17;
+					return __nsh_hv18;
 				})()]);
-				return __nsh_hv16;
+				return __nsh_hv17;
 			})(),
 			() => route() === "games" && gamesOn() && (() => {
-				const __nsh_hv18 = element("view");
-				prop(__nsh_hv18, "class", "min-h-0 flex-1");
-				prop(__nsh_hv18, "style", { paddingTop: shell ? 38 : 0 });
-				insert(__nsh_hv18, component(GamesLibrary, {
+				const __nsh_hv19 = element("view");
+				prop(__nsh_hv19, "class", "min-h-0 flex-1");
+				prop(__nsh_hv19, "style", { paddingTop: shell ? 38 : 0 });
+				insert(__nsh_hv19, component(GamesLibrary, {
 					get colors() {
 						return snapshot().colors;
 					},
@@ -4340,14 +4344,14 @@ function App() {
 						askEngine("games.clear-pick");
 					}
 				}));
-				return __nsh_hv18;
+				return __nsh_hv19;
 			})(),
 			() => route() === "settings" && (() => {
-				const __nsh_hv19 = element("view");
-				prop(__nsh_hv19, "class", "min-h-0 flex-1");
-				prop(__nsh_hv19, "style", { paddingTop: shell ? 38 : 0 });
-				insert(__nsh_hv19, component(SettingsPage, {}));
-				return __nsh_hv19;
+				const __nsh_hv20 = element("view");
+				prop(__nsh_hv20, "class", "min-h-0 flex-1");
+				prop(__nsh_hv20, "style", { paddingTop: shell ? 38 : 0 });
+				insert(__nsh_hv20, component(SettingsPage, {}));
+				return __nsh_hv20;
 			})(),
 			() => addTaskOpen() && component(Modal, {
 				title: "Новая задача",
@@ -4357,10 +4361,10 @@ function App() {
 				onDismiss: () => addTaskOpen.set(false),
 				get footer() {
 					return (() => {
-						const __nsh_hv20 = element("view");
-						prop(__nsh_hv20, "class", "flex-row items-center justify-end");
-						prop(__nsh_hv20, "style", { gap: 8 });
-						insert(__nsh_hv20, [component(ModalGhost, {
+						const __nsh_hv21 = element("view");
+						prop(__nsh_hv21, "class", "flex-row items-center justify-end");
+						prop(__nsh_hv21, "style", { gap: 8 });
+						insert(__nsh_hv21, [component(ModalGhost, {
 							label: "Отмена",
 							get colors() {
 								return snapshot().colors;
@@ -4387,37 +4391,37 @@ function App() {
 								return snapshot().colors.background;
 							}
 						})]);
-						return __nsh_hv20;
+						return __nsh_hv21;
 					})();
 				},
 				get children() {
 					return (() => {
-						const __nsh_hv21 = element("input");
-						bindProp(__nsh_hv21, "value", () => newTaskTitle());
-						prop(__nsh_hv21, "onChange", (value) => newTaskTitle.set(value));
-						prop(__nsh_hv21, "onSubmit", (event) => {
+						const __nsh_hv22 = element("input");
+						bindProp(__nsh_hv22, "value", () => newTaskTitle());
+						prop(__nsh_hv22, "onChange", (value) => newTaskTitle.set(value));
+						prop(__nsh_hv22, "onSubmit", (event) => {
 							createTodo(event.text);
 							addTaskOpen.set(false);
 						});
-						prop(__nsh_hv21, "placeholder", "Название задачи");
-						prop(__nsh_hv21, "accessibilityLabel", "Название задачи");
-						prop(__nsh_hv21, "class", "h-10 rounded-lg px-3 text-[13px]");
-						bindProp(__nsh_hv21, "style", () => ({
+						prop(__nsh_hv22, "placeholder", "Название задачи");
+						prop(__nsh_hv22, "accessibilityLabel", "Название задачи");
+						prop(__nsh_hv22, "class", "h-10 rounded-lg px-3 text-[13px]");
+						bindProp(__nsh_hv22, "style", () => ({
 							backgroundColor: snapshot().colors.background,
 							color: snapshot().colors.foreground
 						}));
-						return __nsh_hv21;
+						return __nsh_hv22;
 					})();
 				}
 			})
 		]);
-		append(__nsh_hv10, __nsh_hv15);
+		append(__nsh_hv10, __nsh_hv16);
 		insert(__nsh_hv10, () => shell && (() => {
 			const __nsh_hv11 = element("view");
 			prop(__nsh_hv11, "class", "h-full shrink-0 overflow-hidden");
 			bindProp(__nsh_hv11, "style", () => ({ width: sidebarPaneWidth() }));
 			const __nsh_hv12 = element("view");
-			prop(__nsh_hv12, "class", "box-border h-full");
+			prop(__nsh_hv12, "class", "relative box-border h-full");
 			bindProp(__nsh_hv12, "style", () => ({
 				width: 282,
 				paddingTop: 38 + 8,
@@ -4427,8 +4431,14 @@ function App() {
 				backgroundColor: shellFill(snapshot().colors, dark)
 			}));
 			const __nsh_hv13 = element("view");
-			prop(__nsh_hv13, "style", { gap: 2 });
-			insert(__nsh_hv13, () => primaryNavigation.map((item) => component(SidebarRow, {
+			prop(__nsh_hv13, "onPressDown", () => askEngine("window.drag"));
+			prop(__nsh_hv13, "class", "absolute left-0 right-0 top-0 bottom-0");
+			const __nsh_hv14 = element("view");
+			prop(__nsh_hv14, "style", {
+				gap: 2,
+				pointerEvents: "box-none"
+			});
+			insert(__nsh_hv14, () => primaryNavigation.map((item) => component(SidebarRow, {
 				get label() {
 					return item.label;
 				},
@@ -4444,10 +4454,13 @@ function App() {
 				},
 				onPress: () => changeRoute(item.id)
 			})));
-			const __nsh_hv14 = element("view");
-			prop(__nsh_hv14, "class", "mt-auto mb-2");
-			prop(__nsh_hv14, "style", { gap: 2 });
-			insert(__nsh_hv14, () => footerNavigation.map((item) => component(SidebarRow, {
+			const __nsh_hv15 = element("view");
+			prop(__nsh_hv15, "class", "mt-auto mb-2");
+			prop(__nsh_hv15, "style", {
+				gap: 2,
+				pointerEvents: "box-none"
+			});
+			insert(__nsh_hv15, () => footerNavigation.map((item) => component(SidebarRow, {
 				get label() {
 					return item.label;
 				},
@@ -4465,9 +4478,10 @@ function App() {
 			})));
 			append(__nsh_hv12, __nsh_hv13);
 			append(__nsh_hv12, __nsh_hv14);
+			append(__nsh_hv12, __nsh_hv15);
 			append(__nsh_hv11, __nsh_hv12);
 			return __nsh_hv11;
-		})(), __nsh_hv15);
+		})(), __nsh_hv16);
 		append(__nsh_hv9, __nsh_hv10);
 		insert(__nsh_hv9, component(Bridge, {
 			class: "absolute left-0 top-0 h-px w-px",

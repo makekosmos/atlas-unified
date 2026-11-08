@@ -279,11 +279,12 @@ function App() {
       />
       <View class="h-full w-full flex-row">
       {shell && <View class="h-full shrink-0 overflow-hidden" style={{ width: sidebarPaneWidth() }}>
-        <View class="box-border h-full" style={{ width: SIDEBAR_WIDTH, paddingTop: TITLEBAR_HEIGHT + 8, paddingBottom: 16, paddingLeft: 8, paddingRight: 8, backgroundColor: shellFill(snapshot().colors, dark) }}>
-          <View style={{ gap: 2 }}>
+        <View class="relative box-border h-full" style={{ width: SIDEBAR_WIDTH, paddingTop: TITLEBAR_HEIGHT + 8, paddingBottom: 16, paddingLeft: 8, paddingRight: 8, backgroundColor: shellFill(snapshot().colors, dark) }}>
+          <View onPressDown={() => askEngine("window.drag")} class="absolute left-0 right-0 top-0 bottom-0" />
+          <View style={{ gap: 2, pointerEvents: "box-none" }}>
             {primaryNavigation.map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
           </View>
-          <View class="mt-auto mb-2" style={{ gap: 2 }}>
+          <View class="mt-auto mb-2" style={{ gap: 2, pointerEvents: "box-none" }}>
             {footerNavigation.map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
           </View>
         </View>
