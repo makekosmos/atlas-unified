@@ -1,8 +1,9 @@
 import { LayoutAnimation, Text, View, signal } from "nsh";
-import { Window as DesktopWindow, titleBar } from "nsh/desktop";
+import { titleBar } from "nsh/desktop";
 import { platform } from "os";
 import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import type { IconName, ThemeColors } from "@makekosmos/imago-nsh";
+import { Glyph } from "./glyph";
 
 export const TITLEBAR_HEIGHT = 38;
 export const TITLEBAR_TOP_PAD = 4;
@@ -167,8 +168,13 @@ export function TitlebarOverlay(props: {
   dark: boolean;
   showCalendarToggle: boolean;
   calendarOpen: boolean;
+  showAddGame?: boolean;
+  dimmed?: boolean;
+  pageInset?: number;
   onToggleSidebar: () => void;
   onToggleCalendar: () => void;
+  onAddGame?: () => void;
+  onChrome: (command: string) => void;
 }) {
   const controls = titleBar();
   const os = hostOs();
@@ -177,33 +183,42 @@ export function TitlebarOverlay(props: {
   const captionWidth = drawCaptions ? CAPTION_BUTTON_WIDTH * 3 : controls.right;
   const sidebarLeft = macos ? Math.max(controls.left, CLUSTER_START_MACOS) : Math.max(controls.left, CLUSTER_START);
   const calendarRight = captionWidth + TRAILING_INSET;
+  const addGameRight = calendarRight + (props.showCalendarToggle ? 34 : 0);
   const wash = hoverWash(props.dark);
-  return <View class="absolute left-0 right-0 top-0 z-20" style={{ height: controls.height || TITLEBAR_HEIGHT }} desktop={{ windowDrag: true }}>
+  return <View class="absolute left-0 right-0 top-0 z-20" style={{ height: controls.height || TITLEBAR_HEIGHT }}>
+    <View class="absolute top-0 bottom-0" style={{ left: props.pageInset ?? 0, right: 0, backgroundColor: props.colors.background }} pointerEvents="none" />
+    {props.dimmed && <View class="absolute top-0 bottom-0" style={{ left: props.pageInset ?? 0, right: 0, backgroundColor: "#00000080" }} pointerEvents="none" />}
+    <View onPressDown={() => props.onChrome("window.drag")} class="absolute left-0 right-0 top-0 bottom-0" desktop={{ windowDrag: false }} />
     <View onPress={props.onToggleSidebar} role="button" accessibilityLabel="Боковая панель" class="absolute items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ top: titlebarControlTop(24), left: sidebarLeft, width: 24, height: 24, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
       <SharedIcon name="sidebar" size={16} color={props.colors.muted} />
     </View>
     {props.showCalendarToggle && <View onPress={props.onToggleCalendar} role="button" accessibilityLabel={props.calendarOpen ? "Скрыть календарь" : "Показать календарь"} accessibilityState={{ selected: props.calendarOpen }} class="absolute items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: surfaceWash(props.dark, 0.11) }} style={{ top: titlebarControlTop(28), right: calendarRight, width: 28, height: 28, borderRadius: CONTROL_RADIUS, cursor: "pointer", backgroundColor: props.calendarOpen ? surfaceWash(props.dark, 0.09) : "transparent" }}>
       <SharedIcon name="sidebar" size={16} color={props.calendarOpen ? props.colors.foreground : props.colors.muted} />
     </View>}
+    {props.showAddGame && <View onPress={() => props.onAddGame?.()} role="button" accessibilityLabel="Добавить игру" class="absolute items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ top: titlebarControlTop(28), right: addGameRight, width: 28, height: 28, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
+      <SharedIcon name="plus" size={16} color={props.colors.muted} />
+    </View>}
     {drawCaptions && <View class="absolute right-0 top-0 flex-row" desktop={{ windowDrag: false }} style={{ height: TITLEBAR_HEIGHT }}>
-      <View onPress={() => DesktopWindow.minimize()} role="button" accessibilityLabel="Свернуть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowMin" color={props.colors.foreground} size={12} /></View>
-      <View onPress={() => DesktopWindow.toggleMaximize()} role="button" accessibilityLabel="Развернуть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowMax" color={props.colors.foreground} size={12} /></View>
-      <View onPress={() => DesktopWindow.close()} onMouseEnter={() => closeHovered.set(true)} onMouseLeave={() => closeHovered.set(false)} role="button" accessibilityLabel="Закрыть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: "#e81123" }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowClose" color={closeHovered() ? "#ffffff" : props.colors.foreground} size={12} /></View>
+      <View onPress={() => props.onChrome("window.minimize")} role="button" accessibilityLabel="Свернуть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowMin" color={props.colors.foreground} size={12} /></View>
+      <View onPress={() => props.onChrome("window.zoom")} role="button" accessibilityLabel="Развернуть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowMax" color={props.colors.foreground} size={12} /></View>
+      <View onPress={() => props.onChrome("window.close")} onMouseEnter={() => closeHovered.set(true)} onMouseLeave={() => closeHovered.set(false)} role="button" accessibilityLabel="Закрыть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: "#e81123" }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowClose" color={closeHovered() ? "#ffffff" : props.colors.foreground} size={12} /></View>
     </View>}
   </View>;
 }
 
 export function SidebarRow(props: {
   label: string;
-  icon: IconName;
+  icon: IconName | "gamepad";
   selected: boolean;
   dark: boolean;
   colors: ThemeColors;
   onPress: () => void;
 }) {
   const wash = hoverWash(props.dark);
-  return <View onPress={props.onPress} role="button" accessibilityState={{ selected: props.selected }} class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: NAV_ROW_HEIGHT, gap: 10, paddingLeft: 10, paddingRight: 10, borderRadius: NAV_ROW_RADIUS, backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent", cursor: "pointer" }}>
-    <SharedIcon name={props.icon} size={16} color={props.colors.foreground} />
+  return <View onPress={props.onPress} role="button" accessibilityState={{ selected: props.selected }} desktop={{ windowDrag: false }} class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: NAV_ROW_HEIGHT, gap: 10, paddingLeft: 10, paddingRight: 10, borderRadius: NAV_ROW_RADIUS, backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent", cursor: "pointer" }}>
+    {props.icon === "gamepad"
+      ? <Glyph name="gamepad" size={16} color={props.colors.foreground} />
+      : <SharedIcon name={props.icon} size={16} color={props.colors.foreground} />}
     <Text class="text-[14px]" style={{ color: props.colors.foreground, fontWeight: 500, lineHeight: 20 }}>{props.label}</Text>
   </View>;
 }

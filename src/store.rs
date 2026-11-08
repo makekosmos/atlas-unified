@@ -20,6 +20,7 @@ mod restart_tests;
 #[cfg(test)]
 mod tests;
 mod transport;
+mod usage;
 #[cfg(test)]
 mod transport_tests;
 mod types;

@@ -1,18 +1,23 @@
-import { effect, mount, Scroll, signal, Text, View, nativeComponent, keymap, Storage } from "nsh";
+import { effect, host, mount, Scroll, signal, Text, View, nativeComponent, keymap } from "nsh";
 import { Input } from "nsh/base";
 import { Window as DesktopWindow } from "nsh/desktop";
-import { Icon as SharedIcon, Dialog as SharedDialog } from "@makekosmos/imago-nsh";
+import { Icon as SharedIcon, Button as SharedButton } from "@makekosmos/imago-nsh";
 import type { Appearance, IconName } from "@makekosmos/imago-nsh";
 import navigation from "./navigation.json";
 import { fallback, isRoute, isSnapshot, resolveAppearanceColors } from "./state";
+import { cycleShortcut, shortcutOptions, shortcuts } from "./app-shortcuts";
 import { previewThemes } from "./themes";
 import type { JournalEntry, JournalVoice, Route, Snapshot } from "./state";
 import { JournalPage, journalCalendarOpen, markJournalArriving, toggleJournalCalendar } from "./JournalPage";
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
-import { GhostButton, SIDEBAR_WIDTH, SolidButton, TITLEBAR_HEIGHT, TitlebarOverlay, animateSidebar, sidebarPaneWidth, shellFill, SidebarRow } from "./chrome";
+import { ExtensionsPage, GamesLibrary, GamesSettings, gamesOn, livePrograms, loadGamePrefs } from "./games";
+import type { ProgramUsage } from "./games";
+import { GhostButton, SIDEBAR_WIDTH, SolidButton, TITLEBAR_HEIGHT, TitlebarOverlay, animateSidebar, sidebarPaneWidth, shellFill, surfaceWash, SidebarRow } from "./chrome";
 import { loadPreview, persistPreview } from "./preview";
+import { gameLibrary } from "./game-library";
+import { Modal, ModalGhost, ModalPrimary } from "./modal";
 
-const initialValue: unknown = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__");
+const initialValue: unknown = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__") ?? host.params.atlas;
 const hosted = isSnapshot(initialValue);
 const initial = hosted ? initialValue : fallback;
 const snapshot = signal(initial);
@@ -26,24 +31,9 @@ const voiceLevel = signal(0);
 const voiceElapsed = signal(0);
 const voicePlaying = signal<string | null>(null);
 let voiceStartedAt = 0;
-const shortcutNames = ["sidebar", "create", "search", "reload"] as const;
-type ShortcutName = typeof shortcutNames[number];
-type Shortcuts = Record<ShortcutName, string>;
-const defaultShortcuts: Shortcuts = { sidebar: "mod+b", create: "mod+n", search: "mod+k", reload: "mod+r" };
-const shortcutOptions: Record<ShortcutName, string[]> = {
-  sidebar: ["mod+b", "mod+shift+b"],
-  create: ["mod+n", "mod+shift+n"],
-  search: ["mod+k", "mod+shift+k"],
-  reload: ["mod+r", "mod+shift+r"],
-};
-const shortcuts = signal<Shortcuts>(defaultShortcuts);
-void Storage.getItem("mundus.atlas.shortcuts.v1").then((value) => {
-  if (!value) return;
-  try {
-    const saved = JSON.parse(value) as Partial<Shortcuts>;
-    shortcuts.set(Object.fromEntries(shortcutNames.map((name) => [name, shortcutOptions[name].includes(saved[name] ?? "") ? saved[name] : defaultShortcuts[name]])) as Shortcuts);
-  } catch { /* A damaged preference falls back to the defaults. */ }
-});
+const pickedExes = signal<string[]>([]);
+const pickSource = signal("manual");
+loadGamePrefs();
 if (!hosted) {
   void loadPreview().then((saved) => {
     if (!saved) return;
@@ -55,15 +45,16 @@ function persistPreviewSnapshot() {
   if (hosted) return;
   persistPreview({ journalEntries: snapshot().journalEntries, todos: snapshot().todos });
 }
-const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[]; voiceLevel: { level: number }; voiceRecorded: JournalVoice & Record<string, unknown>; voicePlayed: Record<string, never>; voiceFailed: { reason: string } }>("atlas.bridge", {
+const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[]; voiceLevel: { level: number }; voiceRecorded: JournalVoice & Record<string, unknown>; voicePlayed: Record<string, never>; voiceFailed: { reason: string }; usage: ProgramUsage[]; picked: string[]; games: unknown; discovered: unknown; imported: unknown; launched: unknown; metadata: unknown }>("atlas.bridge", {
   props: ["route"],
-  events: ["state", "navigate", "journal", "voiceLevel", "voiceRecorded", "voicePlayed", "voiceFailed"],
+  events: ["state", "navigate", "journal", "voiceLevel", "voiceRecorded", "voicePlayed", "voiceFailed", "usage", "picked", "games", "discovered", "imported", "launched", "metadata"],
 });
 
-function iconForNavigation(id: string): IconName {
+function iconForNavigation(id: string): IconName | "gamepad" {
   switch (id) {
     case "journal": return "logbook";
     case "tasks": return "week";
+    case "games": return "gamepad";
     default: return "settings";
   }
 }
@@ -95,15 +86,6 @@ function setAppearance(patch: Record<string, unknown>) {
     });
   }
   if (current.appearanceEditable) commandRef?.("appearance.set", patch);
-}
-
-function cycleShortcut(name: ShortcutName) {
-  const current = shortcuts();
-  const choices = shortcutOptions[name];
-  const next = choices[(choices.indexOf(current[name]) + 1) % choices.length];
-  const updated = { ...current, [name]: next };
-  shortcuts.set(updated);
-  void Storage.setItem("mundus.atlas.shortcuts.v1", JSON.stringify(updated));
 }
 
 function TaskPage() {
@@ -232,19 +214,23 @@ effect(() => {
 });
 
 function SettingsPage() {
-  return <AtlasAppearanceSettings
-    appearance={() => snapshot().appearance}
-    editable={() => snapshot().appearanceEditable}
-    colors={() => snapshot().colors}
-    shortcuts={shortcuts()}
-    onPatch={setAppearance}
-    onChangeShortcut={cycleShortcut}
-  />;
+  return <View>
+    <AtlasAppearanceSettings
+      appearance={() => snapshot().appearance}
+      editable={() => snapshot().appearanceEditable}
+      colors={() => snapshot().colors}
+      shortcuts={shortcuts()}
+      onPatch={setAppearance}
+      onChangeShortcut={cycleShortcut}
+    />
+    <ExtensionsPage colors={snapshot().colors} />
+    {gamesOn() && <GamesSettings colors={snapshot().colors} />}
+  </View>;
 }
 
 function App() {
   effect(() => DesktopWindow.setTitleBar({ style: "hidden", height: TITLEBAR_HEIGHT }));
-  const primaryNavigation = navigation.filter((item) => !item.footer);
+  const primaryNavigation = navigation.filter((item) => !item.footer && (item.id !== "games" || gamesOn()));
   const footerNavigation = navigation.filter((item) => item.footer);
   const openNewTask = () => { newTaskTitle.set(""); addTaskOpen.set(true); };
   const shell = snapshot().chrome === "tsx";
@@ -260,7 +246,8 @@ function App() {
         class="absolute left-0 top-0 h-px w-px"
         ref={(node) => {
           commandRef = (name, args) => node.command(name, args);
-        }}
+          gameLibrary.bindCommand((name, args) => node.command(name, args));
+          }}
         route={route()}
         onState={(next) => {
           route.set(next.route);
@@ -292,11 +279,12 @@ function App() {
       />
       <View class="h-full w-full flex-row">
       {shell && <View class="h-full shrink-0 overflow-hidden" style={{ width: sidebarPaneWidth() }}>
-        <View class="box-border h-full" style={{ width: SIDEBAR_WIDTH, paddingTop: TITLEBAR_HEIGHT + 8, paddingBottom: 16, paddingLeft: 8, paddingRight: 8, backgroundColor: shellFill(snapshot().colors, dark) }}>
-          <View style={{ gap: 2 }}>
+        <View class="relative box-border h-full" style={{ width: SIDEBAR_WIDTH, paddingTop: TITLEBAR_HEIGHT + 8, paddingBottom: 16, paddingLeft: 8, paddingRight: 8, backgroundColor: shellFill(snapshot().colors, dark) }}>
+          <View onPressDown={() => askEngine("window.drag")} class="absolute left-0 right-0 top-0 bottom-0" desktop={{ windowDrag: false }} />
+          <View pointerEvents="box-none" style={{ gap: 2 }}>
             {primaryNavigation.map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
           </View>
-          <View class="mt-auto mb-2" style={{ gap: 2 }}>
+          <View pointerEvents="box-none" class="mt-auto mb-2" style={{ gap: 2 }}>
             {footerNavigation.map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
           </View>
         </View>
@@ -323,14 +311,18 @@ function App() {
           <TaskPage />
           {shell && <View onPress={openNewTask} role="button" accessibilityLabel="Новая задача" class="absolute items-center justify-center rounded-full" hoverStyle={{ opacity: 0.85 }} style={{ right: 16, bottom: 16, width: 32, height: 32, backgroundColor: snapshot().colors.foreground, cursor: "pointer" }}><SharedIcon name="plus" size={16} color={snapshot().colors.background} /></View>}
         </View>}
+        {route() === "games" && gamesOn() && <View class="min-h-0 flex-1" style={{ paddingTop: shell ? TITLEBAR_HEIGHT : 0 }}>
+          <GamesLibrary colors={snapshot().colors} pickedExes={pickedExes()} pickSource={pickSource()} onPick={(path) => askEngine("games.pick", { path })} onBrowse={() => { pickSource.set("manual"); askEngine("games.browse"); }} onBrowseFolder={() => { pickSource.set("folder"); askEngine("games.browse-folder"); }} onLaunch={(path) => askEngine("games.launch", { path })} onClearPick={() => { pickedExes.set([]); askEngine("games.clear-pick"); }} />
+        </View>}
         {route() === "settings" && <View class="min-h-0 flex-1" style={{ paddingTop: shell ? TITLEBAR_HEIGHT : 0 }}><SettingsPage /></View>}
-        {addTaskOpen() && <SharedDialog title="Новая задача" colors={snapshot().colors}>
-          <Input value={newTaskTitle()} onChange={(e) => newTaskTitle.set(e.value)} onSubmit={(event) => { createTodo(event.text); addTaskOpen.set(false); }} placeholder="Название задачи" accessibilityLabel="Название задачи" class="h-10 rounded-lg px-3 text-[13px]" style={{ backgroundColor: snapshot().colors.background, color: snapshot().colors.foreground }} />
-          <View class="mt-3 flex-row justify-end" style={{ gap: 8 }}>
-            <GhostButton label="Отмена" colors={snapshot().colors} dark={dark} onPress={() => addTaskOpen.set(false)} />
-            <SolidButton label="Добавить" background={snapshot().colors.accent} foreground={snapshot().colors.background} onPress={() => { createTodo(newTaskTitle()); addTaskOpen.set(false); }} />
+        {addTaskOpen() && <Modal title="Новая задача" colors={snapshot().colors} onDismiss={() => addTaskOpen.set(false)} footer={
+          <View class="flex-row items-center justify-end" style={{ gap: 8 }}>
+            <ModalGhost label="Отмена" colors={snapshot().colors} onPress={() => addTaskOpen.set(false)} />
+            <SharedButton label="Добавить" colors={snapshot().colors} onPress={() => { createTodo(newTaskTitle()); addTaskOpen.set(false); }} selected className="h-9 items-center justify-center px-3 py-0" style={{ backgroundColor: snapshot().colors.accent, borderColor: "transparent" }} textColor={snapshot().colors.background} />
           </View>
-        </SharedDialog>}
+        }>
+          <Input value={newTaskTitle()} onChange={(value) => newTaskTitle.set(value)} onSubmit={(event) => { createTodo(event.text); addTaskOpen.set(false); }} placeholder="Название задачи" accessibilityLabel="Название задачи" class="h-10 rounded-lg px-3 text-[13px]" style={{ backgroundColor: snapshot().colors.background, color: snapshot().colors.foreground }} />
+        </Modal>}
       </View>
       </View>
       {shell && <TitlebarOverlay
@@ -338,11 +330,26 @@ function App() {
         dark={dark}
         showCalendarToggle={route() === "journal"}
         calendarOpen={journalCalendarOpen()}
+        showAddGame={route() === "games" && gamesOn()} pageInset={sidebarPaneWidth()}
+        dimmed={addTaskOpen() || gameLibrary.addOpen() || pickedExes().length > 1}
         onToggleSidebar={toggleSidebar}
         onToggleCalendar={toggleJournalCalendar}
+        onAddGame={gameLibrary.openAddDialog}
+        onChrome={(command) => askEngine(command)}
       />}
     </View>
   );
 }
 
 mount(App);
+
+
+
+
+
+
+
+
+
+
+

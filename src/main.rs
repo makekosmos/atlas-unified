@@ -6,6 +6,7 @@ mod assets;
 mod brand;
 #[cfg(feature = "e2e")]
 mod e2e;
+mod games;
 mod model;
 mod nsh_bridge;
 mod nsh_host;
@@ -13,6 +14,7 @@ mod nsh_scope;
 mod palettes;
 mod scope;
 mod store;
+mod win_chrome;
 use gpui::{px, size, App, AppContext, Bounds, Styled, WindowBounds, WindowOptions};
 #[cfg(target_os = "windows")]
 use gpui_fast_backend as _;
@@ -91,33 +93,45 @@ fn open_atlas_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Atlas
             // Shell keeps the FPS meter outside Atlas's subtree; the
             // sidebar and content own their independent caches.
             let nsh = cx.new(|cx| {
-                let initial = serde_json::to_string(&nsh_bridge::initial_snapshot(agenda.read(cx)))
-                    .expect("serialize initial Atlas state");
-                let source = format!(
-                    "globalThis.__MUNDUS_ATLAS_INITIAL__={initial};\n{}",
-                    include_str!("../ui/bundle.js")
-                );
+                let initial = nsh_bridge::initial_snapshot(agenda.read(cx));
                 let demo = agenda.read(cx).demo;
-                imago_nsh::mount_app_view(window, cx, NshApp::Js(Bundle::source(source)), |view| {
-                    view.register_component(
-                        "atlas.bridge",
-                        std::rc::Rc::new({
-                            let agenda = agenda.clone();
-                            move |context| {
-                                Box::new(nsh_bridge::AtlasBridge::new(
-                                    context,
-                                    agenda.clone(),
-                                    demo,
-                                ))
-                            }
-                        }),
+                let view =
+                    imago_nsh::AppView::new(nsh_platform_gpui::AppOptions::default(), window, cx);
+                view.register_component(
+                    "atlas.bridge",
+                    std::rc::Rc::new({
+                        let agenda = agenda.clone();
+                        move |context| {
+                            Box::new(nsh_bridge::AtlasBridge::new(
+                                context,
+                                agenda.clone(),
+                                demo,
+                            ))
+                        }
+                    }),
+                );
+                view.register_component(
+                    "atlas.scope",
+                    std::rc::Rc::new(|context| Box::new(nsh_scope::AtlasScope::new(context))),
+                );
+                view.on_error(|message| eprintln!("Atlas nsh: {message}"));
+                if let Ok(url) = std::env::var("ATLAS_NSH_DEV_SERVER") {
+                    // Dev server: the UI comes from `nsh dev` and hot reloads;
+                    // the initial snapshot still rides in as a host param.
+                    let mut params = serde_json::Map::new();
+                    params.insert("atlas".into(), initial.clone());
+                    view.host().set_params(params);
+                    view.connect_dev_server(url, cx);
+                } else {
+                    let initial =
+                        serde_json::to_string(&initial).expect("serialize initial Atlas state");
+                    let source = format!(
+                        "globalThis.__MUNDUS_ATLAS_INITIAL__={initial};\n{}",
+                        include_str!("../ui/bundle.js")
                     );
-                    view.register_component(
-                        "atlas.scope",
-                        std::rc::Rc::new(|context| Box::new(nsh_scope::AtlasScope::new(context))),
-                    );
-                    view.on_error(|message| eprintln!("Atlas nsh: {message}"));
-                })
+                    view.load(NshApp::Js(Bundle::source(source)));
+                }
+                view
             });
             let view = cx.new(|_| nsh_host::AtlasShell {
                 agenda,
@@ -140,6 +154,10 @@ fn open_atlas_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Atlas
 }
 
 fn main() {
+    std::panic::set_hook(Box::new(|info| {
+        win_chrome::trace(&format!("panic {info}"));
+    }));
+    win_chrome::trace("start");
     gpui::application().run(|cx: &mut App| {
         gpui_component::init(cx);
         cx.text_system()

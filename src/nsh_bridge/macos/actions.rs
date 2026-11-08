@@ -1,7 +1,69 @@
+use std::{path::PathBuf, sync::mpsc::Sender};
+
+use nsh_platform_macos::{objc2::MainThreadMarker, ComponentContext};
+use objc2_app_kit::{NSModalResponseOK, NSOpenPanel};
+use serde_json::{json, Value};
+
+use super::super::games;
 use crate::{
     model::{new_todo, Status},
     store::{Engine, JournalEntry},
 };
+
+pub(super) fn games_command(
+    name: &str,
+    args: &Value,
+    requests: &Sender<games::Request>,
+    context: &ComponentContext,
+) -> bool {
+    if !name.starts_with("games.") {
+        return false;
+    }
+    let result = match name {
+        "games.pick" => args
+            .get("path")
+            .and_then(Value::as_str)
+            .map(|path| {
+                requests
+                    .send(games::Request::PickPath(path.to_owned()))
+                    .map_err(|error| error.to_string())
+            })
+            .unwrap_or(Ok(())),
+        "games.clear-pick" => requests
+            .send(games::Request::ClearPick)
+            .map_err(|error| error.to_string()),
+        "games.browse" => browse_for_game(requests),
+        _ => games::enqueue(requests, name, args),
+    };
+    if let Err(error) = result {
+        context.emit(
+            "imported",
+            json!({"ok":false,"legacy":name == "games.import-legacy","error":error}),
+        );
+    }
+    true
+}
+
+fn browse_for_game(requests: &Sender<games::Request>) -> Result<(), String> {
+    let marker = MainThreadMarker::new()
+        .ok_or_else(|| "Системный выбор файла требует главного потока AppKit".to_owned())?;
+    let panel = NSOpenPanel::openPanel(marker);
+    panel.setCanChooseFiles(true);
+    panel.setCanChooseDirectories(false);
+    panel.setAllowsMultipleSelection(false);
+    if panel.runModal() != NSModalResponseOK {
+        return Ok(());
+    }
+    let path = panel
+        .URLs()
+        .firstObject()
+        .and_then(|url| url.path())
+        .map(|path| PathBuf::from(path.to_string()));
+    let Some(path) = path else { return Ok(()) };
+    requests
+        .send(games::Request::PickPaths(vec![path]))
+        .map_err(|error| error.to_string())
+}
 
 pub(super) fn complete(engine: &Engine, id: &str) {
     let Ok(snapshot) = engine.load() else { return };

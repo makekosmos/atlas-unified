@@ -6,6 +6,7 @@ use nsh_platform_macos::objc2::MainThreadOnly;
 use nsh_platform_macos::{AppView, ComponentContext, ComponentFactory, NativeComponent};
 use serde_json::{json, Value};
 
+use super::games;
 use crate::{
     appearance::{Response, APP_ID},
     store::{Engine, JournalEntry},
@@ -58,16 +59,22 @@ pub(crate) fn initial_snapshot() -> Value {
 struct AtlasBridge {
     route: String,
     requests: mpsc::Sender<Request>,
+    games: mpsc::Sender<games::Request>,
+    context: ComponentContext,
 }
 
 impl AtlasBridge {
     fn new(context: ComponentContext) -> Self {
         let (requests, receiver) = mpsc::channel();
+        let event_context = context.clone();
+        let games = games::start_worker(move |event, value| event_context.emit(event, value));
+        let command_context = context.clone();
         thread::spawn(move || {
             let engine = Engine::default();
             let mut route = "journal".to_owned();
             let mut entries = engine.journal_list().unwrap_or_default();
             publish(&engine, &context, &route, &entries);
+            context.emit("usage", json!(engine.program_usage()));
             loop {
                 let mut refresh = false;
                 match receiver.recv_timeout(Duration::from_millis(30)) {
@@ -119,12 +126,13 @@ impl AtlasBridge {
                     Ok(Request::Reload) => {
                         refresh = true;
                         entries = engine.journal_list().unwrap_or(entries);
+                        context.emit("usage", json!(engine.program_usage()));
                     }
                     Err(mpsc::RecvTimeoutError::Disconnected) => break,
                     Err(mpsc::RecvTimeoutError::Timeout) => {}
                 }
                 for picked in imago_window_macos::sidebar_presses() {
-                    if matches!(picked.as_str(), "journal" | "tasks" | "settings") {
+                    if matches!(picked.as_str(), "journal" | "tasks" | "games" | "settings") {
                         route = picked.clone();
                         context.emit("navigate", json!({"route": picked}));
                         refresh = true;
@@ -138,6 +146,8 @@ impl AtlasBridge {
         Self {
             route: "journal".into(),
             requests,
+            games,
+            context: command_context,
         }
     }
 }
@@ -169,6 +179,9 @@ impl NativeComponent for AtlasBridge {
     }
 
     fn command(&mut self, name: &str, args: &Value) {
+        if actions::games_command(name, args, &self.games, &self.context) {
+            return;
+        }
         let string = |key| args.get(key).and_then(Value::as_str).map(str::to_owned);
         let request = match name {
             "complete" => string("id").map(Request::Complete),
@@ -228,6 +241,7 @@ fn publish(engine: &Engine, context: &ComponentContext, route: &str, entries: &[
     let theme_choices = crate::palettes::choices_json();
     let title = match route {
         "tasks" => "Задачи",
+        "games" => "Игры",
         "settings" => "Настройки",
         _ => "Дневник",
     };

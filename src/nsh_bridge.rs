@@ -1,3 +1,5 @@
+mod games;
+
 use std::{
     cell::RefCell,
     rc::Rc,
@@ -25,6 +27,7 @@ pub(crate) struct AtlasBridge {
     agenda: Entity<Atlas>,
     route: Rc<RefCell<String>>,
     journal_commands: mpsc::Sender<JournalRequest>,
+    games: games::Bridge,
     subscription: Option<Subscription>,
     _journal_subscription: Option<crate::store::live::Subscription>,
     journal_reload_pending: Arc<AtomicBool>,
@@ -59,11 +62,13 @@ impl AtlasBridge {
     pub(crate) fn new(context: ComponentContext, agenda: Entity<Atlas>, demo: bool) -> Self {
         let (journal_commands, journal_subscription, journal_reload_pending) =
             start_journal_bridge(context.clone(), demo);
+        let games = games::Bridge::new(context.clone());
         Self {
             context,
             agenda,
             route: Rc::new(RefCell::new("journal".into())),
             journal_commands,
+            games,
             subscription: None,
             _journal_subscription: journal_subscription,
             journal_reload_pending,
@@ -91,6 +96,7 @@ fn snapshot(agenda: &Atlas, route: &str) -> Value {
     let title = match route {
         "journal" => "Дневник",
         "tasks" => "Задачи",
+        "games" => "Игры",
         "settings" => "Настройки",
         _ => "Дневник",
     };
@@ -168,6 +174,7 @@ fn start_journal_bridge(context: ComponentContext, demo: bool) -> JournalChannel
         let engine = Engine::default();
         let mut entries = engine.journal_list().unwrap_or_default();
         emit_journal_entries(&context, &entries);
+        emit_usage(&context, &engine);
         while let Ok(request) = requests.recv() {
             match request {
                 JournalRequest::Create(text) => match engine.journal_create(&text) {
@@ -212,6 +219,7 @@ fn start_journal_bridge(context: ComponentContext, demo: bool) -> JournalChannel
                 JournalRequest::Reload => {
                     pending.store(false, Ordering::Release);
                     entries = engine.journal_list().unwrap_or(entries);
+                    emit_usage(&context, &engine);
                 }
             }
             emit_journal_entries(&context, &entries);
@@ -224,6 +232,10 @@ fn replace_journal_entry(entries: &mut [JournalEntry], updated: JournalEntry) {
     if let Some(entry) = entries.iter_mut().find(|entry| entry.id == updated.id) {
         *entry = updated;
     }
+}
+
+fn emit_usage(context: &ComponentContext, engine: &Engine) {
+    context.emit("usage", json!(engine.program_usage()));
 }
 
 fn emit_journal_entries(context: &ComponentContext, entries: &[JournalEntry]) {
@@ -275,7 +287,7 @@ impl NativeComponent for AtlasBridge {
         self.publish(cx);
     }
 
-    fn command(&mut self, name: &str, args: &Value, _window: &mut Window, cx: &mut App) {
+    fn command(&mut self, name: &str, args: &Value, window: &mut Window, cx: &mut App) {
         match name {
             "journal.create" => {
                 if let Some(text) = args.get("text").and_then(Value::as_str) {
@@ -346,12 +358,29 @@ impl NativeComponent for AtlasBridge {
             "toggle-sidebar" => {
                 self.agenda.update(cx, |agenda, _| agenda.toggle_sidebar());
             }
+            "games.pick"
+            | "games.browse"
+            | "games.browse-folder"
+            | "games.launch"
+            | "games.clear-pick"
+            | "games.load"
+            | "games.discover"
+            | "games.import"
+            | "games.import-legacy"
+            | "games.metadata.choose"
+            | "games.metadata.set-image" => {
+                self.games.command(name, args, cx);
+            }
             "reload" => {
                 self.agenda.update(cx, |agenda, _| agenda.reload_storage());
                 if !self.journal_reload_pending.swap(true, Ordering::AcqRel) {
                     let _ = self.journal_commands.send(JournalRequest::Reload);
                 }
             }
+            "window.drag" => crate::win_chrome::drag(window),
+            "window.minimize" => window.minimize_window(),
+            "window.zoom" => crate::win_chrome::toggle_zoom(window),
+            "window.close" => crate::win_chrome::request_close(window),
             _ => {}
         }
     }

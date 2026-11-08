@@ -6,6 +6,8 @@ Atlas desktop app на GPUI и NSH (задачи и календарь) для M
 
 ## Карта
 
+- `HANDOFF.md` — незавершённая работа по играм: что сделано, известные
+  проблемы, чеклист. Читать первым, если задача про игры.
 - `src/main.rs`, `src/app.rs`, `src/app/` — оболочка приложения и окна.
 - `src/pages/` — экраны; `src/widgets.rs`, `src/chrome.rs`, `src/text_field.rs` —
   общий UI.

@@ -20,3 +20,6 @@ ui/app.json
 
 # Local Android scaffold with its Gradle cache.
 /android/
+
+# dev scratch
+.dev-*

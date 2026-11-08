@@ -3,5 +3,6 @@
   "id": "com.mundus.atlas",
   "version": "1.0.0",
   "build": 1,
+  "capabilities": { "host": [] },
   "theme": "../node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/theme.json"
 }
