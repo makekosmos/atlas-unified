@@ -1,5 +1,6 @@
 #![windows_subsystem = "windows"]
 mod app;
+mod audio;
 mod appearance;
 mod assets;
 mod brand;
@@ -8,7 +9,9 @@ mod e2e;
 mod model;
 mod nsh_bridge;
 mod nsh_host;
+mod nsh_scope;
 mod palettes;
+mod scope;
 mod store;
 use gpui::{px, size, App, AppContext, Bounds, Styled, WindowBounds, WindowOptions};
 #[cfg(target_os = "windows")]
@@ -108,6 +111,10 @@ fn open_atlas_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Atlas
                                 ))
                             }
                         }),
+                    );
+                    view.register_component(
+                        "atlas.scope",
+                        std::rc::Rc::new(|context| Box::new(nsh_scope::AtlasScope::new(context))),
                     );
                     view.on_error(|message| eprintln!("Atlas nsh: {message}"));
                 })

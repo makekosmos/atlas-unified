@@ -17,6 +17,8 @@ pub struct JournalEntry {
     pub text: String,
     pub created_at: String,
     pub updated_at: String,
+    /// A voice note: `{durationMs, peaks, data}` with Opus in base64.
+    pub voice: Option<Value>,
     snapshot: Value,
 }
 
@@ -46,7 +48,24 @@ impl Engine {
     }
 
     pub fn journal_create(&self, text: &str) -> Result<JournalEntry, EngineError> {
-        if text.trim().is_empty() {
+        self.journal_create_with(text, None)
+    }
+
+    /// A voice note: the text may stay empty, the clip carries the entry.
+    pub fn journal_create_voice(
+        &self,
+        text: &str,
+        voice: Value,
+    ) -> Result<JournalEntry, EngineError> {
+        self.journal_create_with(text, Some(voice))
+    }
+
+    fn journal_create_with(
+        &self,
+        text: &str,
+        voice: Option<Value>,
+    ) -> Result<JournalEntry, EngineError> {
+        if text.trim().is_empty() && voice.is_none() {
             return Err(invalid("journal entry is empty"));
         }
         // A write may be the first thing after a start that happened before the
@@ -58,6 +77,11 @@ impl Engine {
             return Err(conflict("generated journal id already exists"));
         }
         let now = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+        let mut extensions = serde_json::Map::new();
+        extensions.insert("entry_kind".into(), json!("journal"));
+        if let Some(voice) = voice {
+            extensions.insert("voice".into(), voice);
+        }
         let object = json!({
             "id": id,
             "typeId": NOTE_TYPE,
@@ -68,7 +92,7 @@ impl Engine {
             "contentJson": document(text),
             "propsJson": {
                 "description": text,
-                "extensions": {"entry_kind": "journal"}
+                "extensions": Value::Object(extensions)
             },
             "deletedAt": null
         });
@@ -145,6 +169,10 @@ impl Engine {
                 text: content_text(&object["contentJson"]),
                 created_at: object["createdAt"].as_str().unwrap_or_default().to_owned(),
                 updated_at: object["updatedAt"].as_str().unwrap_or_default().to_owned(),
+                voice: object["propsJson"]["extensions"]
+                    .get("voice")
+                    .filter(|voice| !voice.is_null())
+                    .cloned(),
                 snapshot: after,
             }));
         }

@@ -4,7 +4,7 @@ import { Menu, Window, titleBar } from "nsh/desktop";
 import { platform } from "os";
 import { Popover } from "nsh/base";
 
-//#region ../../../../../kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+38b61af907dbc4032291386f91b75cfb0d8a154c/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
 const icons = {
 	about: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
 	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
@@ -27,7 +27,7 @@ const icons = {
 };
 
 //#endregion
-//#region ../../../../../kos436/atlas-journal-native-shell/node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+79570d556deefca52dd45795e055cd3122181524/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+38b61af907dbc4032291386f91b75cfb0d8a154c/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
 function Icon(props) {
 	return (() => {
 		const __nsh_hv0 = element("image");
@@ -99,10 +99,10 @@ function colors(background, foreground, muted, border, accent, card) {
 const BLUE_LIGHT = "#1e86fc";
 const BLUE_DARK = "#1784fc";
 const previewThemes = [{
-	key: "default",
-	name: "Default",
-	light: colors("#f8f7f9", "#222027", "#615f67", "#dedde0", BLUE_LIGHT, "#f3f2f4"),
-	dark: colors("#0d0c10", "#e7e5ea", "#8d8a94", "#27262a", BLUE_DARK, "#131216")
+	key: "cobalt-foundry",
+	name: "Cobalt Foundry",
+	light: colors("#f7f8fa", "#111820", "#5f6a7a", "#dde2ea", "#1f6df5", "#ffffff"),
+	dark: colors("#090c15", "#ffffff", "#717580", "#1e222b", "#1784fc", "#101318")
 }];
 const systemAccents = [
 	{
@@ -223,8 +223,8 @@ const fallback = {
 	appearance: {
 		settings: {
 			mode: "dark",
-			light_theme: "default",
-			dark_theme: "default",
+			light_theme: "cobalt-foundry",
+			dark_theme: "cobalt-foundry",
 			accent_source: "theme",
 			material: "default",
 			font_size: 13,
@@ -249,7 +249,7 @@ const fallback = {
 function resolveAppearanceColors(appearance, themes, fallbackColors) {
 	const settings = appearance.settings;
 	const dark = settings.mode !== "light";
-	const themeColors = (themes.find((item) => item.key === "default") ?? themes[0])?.[dark ? "dark" : "light"] ?? fallbackColors;
+	const themeColors = (themes.find((item) => item.key === "cobalt-foundry") ?? themes[0])?.[dark ? "dark" : "light"] ?? fallbackColors;
 	if (settings.accent_source === "wallpaper") return {
 		...themeColors,
 		accent: fallbackColors.accent
@@ -273,7 +273,10 @@ function isTodo$1(value) {
 	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "title" in value && typeof value.title === "string" && "is_completed" in value && typeof value.is_completed === "boolean";
 }
 function isJournalEntry$1(value) {
-	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "text" in value && typeof value.text === "string" && "createdAt" in value && typeof value.createdAt === "string";
+	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "text" in value && typeof value.text === "string" && "createdAt" in value && typeof value.createdAt === "string" && (!("voice" in value) || value.voice === void 0 || isJournalVoice(value.voice));
+}
+function isJournalVoice(value) {
+	return typeof value === "object" && value !== null && "durationMs" in value && typeof value.durationMs === "number" && "data" in value && typeof value.data === "string" && "peaks" in value && Array.isArray(value.peaks) && value.peaks.every((peak) => typeof peak === "number");
 }
 function isColors(value) {
 	if (typeof value !== "object" || value === null) return false;
@@ -283,10 +286,12 @@ function isColors(value) {
 //#endregion
 //#region chrome.tsx
 const TITLEBAR_HEIGHT = 38;
-const SIDEBAR_WIDTH = 256;
+const SIDEBAR_WIDTH = 282;
 const ROW_HEIGHT = 32;
+const NAV_ROW_HEIGHT = 40;
 const CONTROL_RADIUS = 6;
 const ROW_RADIUS = 8;
+const NAV_ROW_RADIUS = 10;
 const CLUSTER_START_MACOS = 88;
 const CLUSTER_START = 10;
 const TRAILING_INSET = 6;
@@ -301,8 +306,14 @@ function animatePanes() {
 		}
 	});
 }
-const SIDEBAR_MOTION_MS = 200;
-const sidebarWidth = signal(256);
+const SIDEBAR_HIDE_MS = 150;
+const SIDEBAR_OPEN_MS = 100;
+const SIDEBAR_MOTION_MS = 150;
+/** How long a toggle runs: hiding is slower than opening by design. */
+function sidebarMotionMs(open) {
+	return open ? 100 : 150;
+}
+const sidebarWidth = signal(282);
 let sidebarTween = null;
 let sidebarScheduled = false;
 function easeOut(t) {
@@ -316,19 +327,19 @@ function easeOut(t) {
 	}
 	return 3 * (1 - u) * u * u + u * u * u;
 }
-function sidebarWidthAt(from, to, elapsed, duration = 200) {
+function sidebarWidthAt(from, to, elapsed, duration = 150) {
 	const t = duration <= 0 ? 1 : Math.min(1, Math.max(0, elapsed / duration));
 	return from + (to - from) * easeOut(t);
 }
 function sidebarFrame(now) {
 	const tween = sidebarTween;
 	if (!tween) return sidebarWidth();
-	if (now - tween.started >= 200) {
+	if (now - tween.started >= tween.duration) {
 		sidebarTween = null;
 		sidebarWidth.set(tween.to);
 		return tween.to;
 	}
-	const value = sidebarWidthAt(tween.from, tween.to, now - tween.started);
+	const value = sidebarWidthAt(tween.from, tween.to, now - tween.started, tween.duration);
 	sidebarWidth.set(value);
 	return value;
 }
@@ -343,7 +354,7 @@ function scheduleSidebar() {
 	});
 }
 function animateSidebar(open, now) {
-	const to = open ? 256 : 0;
+	const to = open ? 282 : 0;
 	const from = sidebarWidth();
 	if (from === to) {
 		sidebarTween = null;
@@ -352,7 +363,8 @@ function animateSidebar(open, now) {
 	sidebarTween = {
 		from,
 		to,
-		started: now ?? Date.now()
+		started: now ?? Date.now(),
+		duration: sidebarMotionMs(open)
 	};
 	if (now === void 0) scheduleSidebar();
 }
@@ -365,6 +377,14 @@ function surfaceWash(dark, alpha = .05) {
 function hoverWash(dark) {
 	return surfaceWash(dark, dark ? .11 : .06);
 }
+/** The window shell: a step away from the page background, the sidebar's fill. */
+function shellFill(colors, dark) {
+	return mixHex(colors.background, dark ? "#ffffff" : "#000000", .03);
+}
+/** A raised surface: the selected sidebar row, a card above the page. */
+function raisedFill(colors, dark) {
+	return mixHex(colors.background, dark ? "#ffffff" : "#000000", dark ? .065 : .04);
+}
 function titlebarControlTop(size) {
 	return 21 - size / 2;
 }
@@ -374,6 +394,17 @@ function channel(hex, shift) {
 	const n = Number.parseInt(h, 16);
 	if (Number.isNaN(n)) return null;
 	return n >> shift & 255;
+}
+function mixHex(from, to, t) {
+	const fr = channel(from, 16);
+	const fg = channel(from, 8);
+	const fb = channel(from, 0);
+	const tr = channel(to, 16);
+	const tg = channel(to, 8);
+	const tb = channel(to, 0);
+	if (fr === null || fg === null || fb === null || tr === null || tg === null || tb === null) return from;
+	const mix = (a, b) => Math.round(a + (b - a) * t).toString(16).padStart(2, "0");
+	return `#${mix(fr, tr)}${mix(fg, tg)}${mix(fb, tb)}`;
 }
 function colorAlpha(hex, alpha) {
 	const r = channel(hex, 16);
@@ -499,8 +530,8 @@ function TitlebarOverlay(props) {
 			}));
 			const __nsh_hv6 = element("view");
 			prop(__nsh_hv6, "onPress", () => Window.close());
-			prop(__nsh_hv6, "onHoverIn", () => closeHovered.set(true));
-			prop(__nsh_hv6, "onHoverOut", () => closeHovered.set(false));
+			prop(__nsh_hv6, "onMouseEnter", () => closeHovered.set(true));
+			prop(__nsh_hv6, "onMouseLeave", () => closeHovered.set(false));
 			prop(__nsh_hv6, "role", "button");
 			prop(__nsh_hv6, "accessibilityLabel", "Закрыть окно");
 			prop(__nsh_hv6, "class", "items-center justify-center");
@@ -536,17 +567,21 @@ function SidebarRow(props) {
 		prop(__nsh_hv7, "class", "flex-row items-center");
 		prop(__nsh_hv7, "hoverStyle", { backgroundColor: wash });
 		bindProp(__nsh_hv7, "style", () => ({
-			height: 32,
-			gap: 8,
-			paddingLeft: 8,
-			paddingRight: 8,
-			borderRadius: ROW_RADIUS,
-			backgroundColor: props.selected ? wash : "transparent",
+			height: 40,
+			gap: 10,
+			paddingLeft: 10,
+			paddingRight: 10,
+			borderRadius: NAV_ROW_RADIUS,
+			backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent",
 			cursor: "pointer"
 		}));
 		const __nsh_hv8 = element("text");
-		prop(__nsh_hv8, "class", "text-[13px]");
-		bindProp(__nsh_hv8, "style", () => ({ color: props.colors.foreground }));
+		prop(__nsh_hv8, "class", "text-[14px]");
+		bindProp(__nsh_hv8, "style", () => ({
+			color: props.colors.foreground,
+			fontWeight: 500,
+			lineHeight: 20
+		}));
 		insert(__nsh_hv8, () => props.label);
 		append(__nsh_hv7, __nsh_hv8);
 		insert(__nsh_hv7, component(Icon, {
@@ -577,8 +612,7 @@ function GhostButton(props) {
 			cursor: "pointer"
 		});
 		const __nsh_hv10 = element("text");
-		prop(__nsh_hv10, "class", "text-[13px]");
-		bindProp(__nsh_hv10, "hoverStyle", () => ({ color: props.colors.foreground }));
+		bindProp(__nsh_hv10, "class", () => `text-[13px] hover:text-[${props.colors.foreground}]`);
 		bindProp(__nsh_hv10, "style", () => ({ color: props.colors.muted }));
 		insert(__nsh_hv10, () => props.label);
 		append(__nsh_hv9, __nsh_hv10);
@@ -824,9 +858,22 @@ function JournalCalendar(props) {
 
 //#endregion
 //#region JournalPage.tsx
-const COMPOSER_RADIUS = 26;
+/** Hugeicons `mic-01`, drawn in `currentColor` so a tint applies. */
+const DotScope = nativeComponent("atlas.scope", {
+	props: [
+		"level",
+		"active",
+		"done"
+	],
+	events: []
+});
+const MIC_ICON = "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M12%202C10.3431%202%209%203.34315%209%205V12C9%2013.6569%2010.3431%2015%2012%2015C13.6569%2015%2015%2013.6569%2015%2012V5C15%203.34315%2013.6569%202%2012%202Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%2011V12C19%2015.866%2015.866%2019%2012%2019C8.13401%2019%205%2015.866%205%2012V11%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12%2019V22%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E";
+const COMPOSER_RADIUS = 50;
 const COMPOSER_COMPACT_HEIGHT = 49;
-const COMPOSER_SEND = 30;
+/** The recording scope sits in its own compartment above the field. */
+const SCOPE_HEIGHT = 64;
+const SCOPE_RADIUS = 26;
+const COMPOSER_SEND = 31;
 const COMPOSER_LINE = 22;
 const COMPOSER_PAD_X = 16;
 const COMPOSER_PAD_Y = 12;
@@ -837,7 +884,7 @@ const CARET_BLINK_MS = 500;
 const COMPOSER_FADE = 20;
 const BUBBLE_RADIUS = 18;
 const FEED_PAD = 16;
-const THREAD_WIDTH = 690;
+const THREAD_WIDTH = 650;
 const JOURNAL_DATE_DELAY_MS = 2e3;
 const feedBox = signal({
 	width: 0,
@@ -916,6 +963,57 @@ const journalCalendarResizeActive = signal(false);
 const editingJournalId = signal(null);
 const editingJournalText = signal("");
 const arrivingId = signal(null);
+/**
+* The recording compartment hands over to the message: the scope plays its
+* "done" clear, the block fades, and only then does the field close the gap.
+* A plain flag, not a signal, so the effect that drives this subscribes to
+* the recording state alone and a fast second take can cancel the exit.
+*/
+const scopeShown = signal(false);
+/** 0 while recording, 0..1 through the exit. */
+const scopeExit = signal(0);
+const SCOPE_EXIT_MS = 320;
+/** Share of the exit spent fading; the height closes in the rest. */
+const SCOPE_FADE_SHARE = .7;
+let scopeMounted = false;
+let scopeExitStep = null;
+function stopScopeExit() {
+	if (scopeExitStep) {
+		clearTimeout(scopeExitStep);
+		scopeExitStep = null;
+	}
+}
+function runScopeExit() {
+	stopScopeExit();
+	const started = Date.now();
+	const step = () => {
+		const progress = Math.min(1, (Date.now() - started) / SCOPE_EXIT_MS);
+		scopeExit.set(progress);
+		if (progress < 1) {
+			scopeExitStep = setTimeout(step, 16);
+			return;
+		}
+		scopeExitStep = null;
+		scopeMounted = false;
+		scopeShown.set(false);
+		scopeExit.set(0);
+	};
+	step();
+}
+function scopeOpacity() {
+	const progress = scopeExit();
+	if (progress === 0) return 1;
+	return Math.max(0, 1 - progress / SCOPE_FADE_SHARE);
+}
+function scopeHeight() {
+	const progress = scopeExit();
+	if (progress <= SCOPE_FADE_SHARE) return SCOPE_HEIGHT;
+	const closing = (progress - SCOPE_FADE_SHARE) / .30000000000000004;
+	return SCOPE_HEIGHT * Math.max(0, 1 - closing);
+}
+function markJournalArriving(id) {
+	arrivingId.set(id);
+}
 let sendSeq = 0;
 let composerRef;
 let editFocus;
@@ -1008,6 +1106,81 @@ function nextEntryId() {
 	sendSeq += 1;
 	return `local-${Date.now()}-${sendSeq}`;
 }
+/** 0:42, the way a voice message shows its length. */
+function formatVoiceDuration(ms) {
+	const total = Math.max(0, Math.round(ms / 1e3));
+	const minutes = Math.floor(total / 60);
+	const seconds = total % 60;
+	return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+}
+const VOICE_BAR_MIN = 3;
+const VOICE_BAR_MAX = 20;
+/**
+* One recorded bar's height. Peaks arrive on the recorder's decibel scale
+* (0..100), and the 0.55 curve lifts ordinary speech past the floor: a quiet
+* word at 20 still draws half the range.
+*/
+function voiceBarHeight(peak) {
+	const level = Math.pow(Math.max(0, Math.min(100, peak)) / 100, .55);
+	return VOICE_BAR_MIN + Math.round(level * 17);
+}
+function VoiceBubble(props) {
+	const voice = props.entry.voice;
+	return (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "class", "flex-row items-center");
+		prop(__nsh_hv0, "style", {
+			gap: 10,
+			height: 26
+		});
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "onPress", () => props.onPlay(props.entry));
+		prop(__nsh_hv1, "role", "button");
+		bindProp(__nsh_hv1, "accessibilityLabel", () => props.playing ? "Остановить голосовую запись" : "Прослушать голосовую запись");
+		bindProp(__nsh_hv1, "accessibilityState", () => ({ selected: props.playing }));
+		prop(__nsh_hv1, "class", "shrink-0 items-center justify-center rounded-full");
+		prop(__nsh_hv1, "hoverStyle", { opacity: .8 });
+		prop(__nsh_hv1, "activeStyle", { opacity: .6 });
+		bindProp(__nsh_hv1, "style", () => ({
+			width: 24,
+			height: 24,
+			backgroundColor: colorAlpha("#ffffff", .24),
+			cursor: "pointer"
+		}));
+		const __nsh_hv2 = element("text");
+		prop(__nsh_hv2, "class", "text-[10px]");
+		prop(__nsh_hv2, "style", { color: "#ffffff" });
+		insert(__nsh_hv2, () => props.playing ? "■" : "▶");
+		append(__nsh_hv1, __nsh_hv2);
+		const __nsh_hv3 = element("view");
+		prop(__nsh_hv3, "class", "flex-row items-center");
+		prop(__nsh_hv3, "style", {
+			gap: 2,
+			height: VOICE_BAR_MAX
+		});
+		insert(__nsh_hv3, each(() => voice.peaks, (peak) => (() => {
+			const __nsh_hv4 = element("view");
+			bindProp(__nsh_hv4, "style", () => ({
+				width: 2,
+				borderRadius: 1,
+				backgroundColor: colorAlpha("#ffffff", .78),
+				height: voiceBarHeight(peak())
+			}));
+			return __nsh_hv4;
+		})()));
+		const __nsh_hv5 = element("text");
+		prop(__nsh_hv5, "class", "text-[12px]");
+		bindProp(__nsh_hv5, "style", () => ({
+			color: colorAlpha("#ffffff", .82),
+			fontVariantNumeric: "tabular-nums"
+		}));
+		insert(__nsh_hv5, () => formatVoiceDuration(voice.durationMs));
+		append(__nsh_hv0, __nsh_hv1);
+		append(__nsh_hv0, __nsh_hv3);
+		append(__nsh_hv0, __nsh_hv5);
+		return __nsh_hv0;
+	})();
+}
 function JournalBubble(props) {
 	const sendMotion = props.arriving ? createMotion({ enter: {
 		keyframes: [{
@@ -1043,40 +1216,40 @@ function JournalBubble(props) {
 		], event.pagePosition);
 	};
 	return (() => {
-		const __nsh_hv0 = element("view");
-		prop(__nsh_hv0, "onHoverIn", () => showJournalDate(props.entry.id));
-		prop(__nsh_hv0, "onHoverOut", () => hideJournalDate(props.entry.id));
-		prop(__nsh_hv0, "class", "mb-2 w-full flex-row items-center justify-end");
-		const __nsh_hv2 = element("view");
-		prop(__nsh_hv2, "onContextMenu", openEntryMenu);
-		prop(__nsh_hv2, "class", "max-w-[75%] px-3 py-2");
-		bindProp(__nsh_hv2, "style", () => ({
+		const __nsh_hv6 = element("view");
+		prop(__nsh_hv6, "onMouseEnter", () => showJournalDate(props.entry.id));
+		prop(__nsh_hv6, "onMouseLeave", () => hideJournalDate(props.entry.id));
+		prop(__nsh_hv6, "class", "mb-1 w-full flex-row items-center justify-end");
+		const __nsh_hv8 = element("view");
+		prop(__nsh_hv8, "onContextMenu", openEntryMenu);
+		prop(__nsh_hv8, "class", "max-w-[75%] px-3 py-2");
+		bindProp(__nsh_hv8, "style", () => ({
 			backgroundColor: editingJournalId() === props.entry.id ? props.colors.card : journalBubble(props.colors.accent),
 			borderRadius: BUBBLE_RADIUS,
 			transformOrigin: "bottom right",
 			...sendMotion?.style ?? {}
 		}));
-		insert(__nsh_hv2, () => editingJournalId() === props.entry.id ? (() => {
-			const __nsh_hv3 = element("view");
-			const __nsh_hv4 = element("input");
-			prop(__nsh_hv4, "ref", (node) => {
+		insert(__nsh_hv8, () => editingJournalId() === props.entry.id ? (() => {
+			const __nsh_hv9 = element("view");
+			const __nsh_hv10 = element("input");
+			prop(__nsh_hv10, "ref", (node) => {
 				editFocus = node;
 			});
-			prop(__nsh_hv4, "autoFocus", true);
-			bindProp(__nsh_hv4, "value", () => editingJournalText());
-			prop(__nsh_hv4, "onChange", (value) => editingJournalText.set(value));
-			prop(__nsh_hv4, "multiline", true);
-			prop(__nsh_hv4, "submitBehavior", "newline");
-			prop(__nsh_hv4, "accessibilityLabel", "Текст записи");
-			prop(__nsh_hv4, "class", "min-h-[56px] w-full rounded-lg px-2 py-1 text-[15px]");
-			bindProp(__nsh_hv4, "style", () => ({
+			prop(__nsh_hv10, "autoFocus", true);
+			bindProp(__nsh_hv10, "value", () => editingJournalText());
+			prop(__nsh_hv10, "onChange", (e) => editingJournalText.set(e.value));
+			prop(__nsh_hv10, "multiline", true);
+			prop(__nsh_hv10, "submitBehavior", "newline");
+			prop(__nsh_hv10, "accessibilityLabel", "Текст записи");
+			prop(__nsh_hv10, "class", "min-h-[56px] w-full rounded-lg px-2 py-1 text-[15px]");
+			bindProp(__nsh_hv10, "style", () => ({
 				color: props.colors.foreground,
 				backgroundColor: props.colors.background
 			}));
-			const __nsh_hv5 = element("view");
-			prop(__nsh_hv5, "class", "mt-2 flex-row justify-end");
-			prop(__nsh_hv5, "style", { gap: 8 });
-			insert(__nsh_hv5, [component(GhostButton, {
+			const __nsh_hv11 = element("view");
+			prop(__nsh_hv11, "class", "mt-2 flex-row justify-end");
+			prop(__nsh_hv11, "style", { gap: 8 });
+			insert(__nsh_hv11, [component(GhostButton, {
 				label: "Отмена",
 				get colors() {
 					return props.colors;
@@ -1098,31 +1271,46 @@ function JournalBubble(props) {
 					editingJournalId.set(null);
 				}
 			})]);
-			append(__nsh_hv3, __nsh_hv4);
-			append(__nsh_hv3, __nsh_hv5);
-			return __nsh_hv3;
-		})() : (() => {
-			const __nsh_hv6 = element("text");
-			prop(__nsh_hv6, "selectable", true);
-			prop(__nsh_hv6, "onContextMenu", openEntryMenu);
-			prop(__nsh_hv6, "class", "text-[15px] leading-5");
-			bindProp(__nsh_hv6, "style", () => ({
+			append(__nsh_hv9, __nsh_hv10);
+			append(__nsh_hv9, __nsh_hv11);
+			return __nsh_hv9;
+		})() : props.entry.voice ? component(VoiceBubble, {
+			get entry() {
+				return props.entry;
+			},
+			get playing() {
+				return props.playing;
+			},
+			get colors() {
+				return props.colors;
+			},
+			get onPlay() {
+				return props.onPlay;
+			}
+		}) : (() => {
+			const __nsh_hv12 = element("text");
+			prop(__nsh_hv12, "onContextMenu", openEntryMenu);
+			prop(__nsh_hv12, "class", "select-text text-[15px] leading-5");
+			bindProp(__nsh_hv12, "style", () => ({
 				color: "#ffffff",
+				fontWeight: 500,
 				selectionColor: colorAlpha(props.colors.accent, props.dark ? .35 : .24)
 			}));
-			insert(__nsh_hv6, () => props.entry.text);
-			return __nsh_hv6;
+			insert(__nsh_hv12, () => props.entry.text);
+			return __nsh_hv12;
 		})());
-		append(__nsh_hv0, __nsh_hv2);
-		insert(__nsh_hv0, () => journalDateShown() === props.entry.id && (() => {
-			const __nsh_hv1 = element("text");
-			prop(__nsh_hv1, "pointerEvents", "none");
-			prop(__nsh_hv1, "class", "mr-2 text-[11px]");
-			bindProp(__nsh_hv1, "style", () => ({ color: props.colors.muted }));
-			insert(__nsh_hv1, () => formatJournalStamp(props.entry.createdAt));
-			return __nsh_hv1;
-		})(), __nsh_hv2);
-		return __nsh_hv0;
+		append(__nsh_hv6, __nsh_hv8);
+		insert(__nsh_hv6, () => journalDateShown() === props.entry.id && (() => {
+			const __nsh_hv7 = element("text");
+			prop(__nsh_hv7, "class", "mr-2 text-[11px]");
+			bindProp(__nsh_hv7, "style", () => ({
+				color: props.colors.muted,
+				pointerEvents: "none"
+			}));
+			insert(__nsh_hv7, () => formatJournalStamp(props.entry.createdAt));
+			return __nsh_hv7;
+		})(), __nsh_hv8);
+		return __nsh_hv6;
 	})();
 }
 function JournalPage(props) {
@@ -1183,6 +1371,17 @@ function JournalPage(props) {
 		}, CARET_BLINK_MS);
 		return () => clearTimeout(timer);
 	});
+	effect(() => {
+		if (props.recording()) {
+			stopScopeExit();
+			scopeMounted = true;
+			scopeExit.set(0);
+			scopeShown.set(true);
+			return;
+		}
+		if (!scopeMounted) return;
+		runScopeExit();
+	});
 	const send = (text) => {
 		const value = text.trim();
 		if (!value) return;
@@ -1218,48 +1417,48 @@ function JournalPage(props) {
 		}
 	};
 	return (() => {
-		const __nsh_hv7 = element("view");
-		prop(__nsh_hv7, "onLayout", (bounds) => {
-			pageWidth = bounds.size.width;
+		const __nsh_hv13 = element("view");
+		prop(__nsh_hv13, "onLayout", (e) => {
+			pageWidth = e.bounds.size.width;
 		});
-		prop(__nsh_hv7, "onPress", claimJournalComposer);
-		prop(__nsh_hv7, "class", "min-h-0 flex-1 flex-row overflow-hidden");
-		const __nsh_hv8 = element("view");
-		prop(__nsh_hv8, "class", "relative min-w-0 flex-1 flex-col items-center");
-		const __nsh_hv10 = element("view");
-		prop(__nsh_hv10, "class", "relative min-h-0 w-full flex-1");
-		const __nsh_hv11 = element("scroll");
-		prop(__nsh_hv11, "ref", (node) => {
+		prop(__nsh_hv13, "onPress", claimJournalComposer);
+		prop(__nsh_hv13, "class", "min-h-0 flex-1 flex-row overflow-hidden");
+		const __nsh_hv14 = element("view");
+		prop(__nsh_hv14, "class", "relative min-w-0 flex-1 flex-col items-center");
+		const __nsh_hv16 = element("view");
+		prop(__nsh_hv16, "class", "relative min-h-0 w-full flex-1");
+		const __nsh_hv17 = element("scroll");
+		prop(__nsh_hv17, "ref", (node) => {
 			feedRef = node;
 		});
-		prop(__nsh_hv11, "onLayout", (bounds) => feedBox.set({
-			width: bounds.size.width,
-			height: bounds.size.height
+		prop(__nsh_hv17, "onLayout", (e) => feedBox.set({
+			width: e.bounds.size.width,
+			height: e.bounds.size.height
 		}));
-		prop(__nsh_hv11, "contentStyle", { flexGrow: 1 });
-		prop(__nsh_hv11, "class", "min-h-0 w-full flex-1 pb-4");
-		const __nsh_hv12 = element("view");
-		prop(__nsh_hv12, "onHoverOut", leaveJournalDates);
-		prop(__nsh_hv12, "class", "mx-auto justify-end");
-		bindProp(__nsh_hv12, "style", () => ({
+		prop(__nsh_hv17, "contentStyle", { flexGrow: 1 });
+		prop(__nsh_hv17, "class", "min-h-0 w-full flex-1 pb-4");
+		const __nsh_hv18 = element("view");
+		prop(__nsh_hv18, "onMouseLeave", leaveJournalDates);
+		prop(__nsh_hv18, "class", "mx-auto justify-end");
+		bindProp(__nsh_hv18, "style", () => ({
 			width: threadSpan(),
 			minHeight: feedBox().height,
 			paddingTop: props.titlebarInset + 16,
 			paddingLeft: FEED_PAD,
 			paddingRight: FEED_PAD
 		}));
-		insert(__nsh_hv12, [each(() => groups(), (group) => (() => {
-			const __nsh_hv13 = element("view");
-			prop(__nsh_hv13, "onLayout", (bounds) => {
-				dayOffsets.set(group().key, bounds.origin.y);
+		insert(__nsh_hv18, [each(() => groups(), (group) => (() => {
+			const __nsh_hv19 = element("view");
+			prop(__nsh_hv19, "onLayout", (e) => {
+				dayOffsets.set(group().key, e.bounds.origin.y);
 			});
-			prop(__nsh_hv13, "class", "mb-4");
-			const __nsh_hv14 = element("text");
-			prop(__nsh_hv14, "class", "mb-3 text-center text-[12px]");
-			bindProp(__nsh_hv14, "style", () => ({ color: props.colors.muted }));
-			insert(__nsh_hv14, () => formatJournalDay(group()));
-			append(__nsh_hv13, __nsh_hv14);
-			insert(__nsh_hv13, each(() => group().entries, (entry) => component(JournalBubble, {
+			prop(__nsh_hv19, "class", "mb-4");
+			const __nsh_hv20 = element("text");
+			prop(__nsh_hv20, "class", "mb-3 text-center text-[12px]");
+			bindProp(__nsh_hv20, "style", () => ({ color: props.colors.muted }));
+			insert(__nsh_hv20, () => formatJournalDay(group()));
+			append(__nsh_hv19, __nsh_hv20);
+			insert(__nsh_hv19, each(() => group().entries, (entry) => component(JournalBubble, {
 				get entry() {
 					return entry();
 				},
@@ -1272,6 +1471,12 @@ function JournalPage(props) {
 				get dark() {
 					return props.dark;
 				},
+				get playing() {
+					return props.playing() === entry().id;
+				},
+				get onPlay() {
+					return props.onPlayVoice;
+				},
 				get onUpdate() {
 					return props.onUpdate;
 				},
@@ -1279,164 +1484,294 @@ function JournalPage(props) {
 					return props.onDelete;
 				}
 			}), ((entry) => entry.id)));
-			return __nsh_hv13;
+			return __nsh_hv19;
 		})(), ((group) => group.key)), () => groups().length === 0 && (() => {
-			const __nsh_hv15 = element("view");
-			prop(__nsh_hv15, "class", "flex-1 items-center justify-center py-12");
-			const __nsh_hv16 = element("text");
-			prop(__nsh_hv16, "class", "text-[13px]");
-			bindProp(__nsh_hv16, "style", () => ({ color: props.colors.muted }));
-			const __nsh_hv17 = text("Записей пока нет");
-			append(__nsh_hv16, __nsh_hv17);
-			append(__nsh_hv15, __nsh_hv16);
-			return __nsh_hv15;
+			const __nsh_hv21 = element("view");
+			prop(__nsh_hv21, "class", "flex-1 items-center justify-center py-12");
+			const __nsh_hv22 = element("text");
+			prop(__nsh_hv22, "class", "text-[13px]");
+			bindProp(__nsh_hv22, "style", () => ({ color: props.colors.muted }));
+			const __nsh_hv23 = text("Записей пока нет");
+			append(__nsh_hv22, __nsh_hv23);
+			append(__nsh_hv21, __nsh_hv22);
+			return __nsh_hv21;
 		})()]);
-		append(__nsh_hv11, __nsh_hv12);
-		const __nsh_hv18 = element("view");
-		prop(__nsh_hv18, "pointerEvents", "none");
-		prop(__nsh_hv18, "class", "absolute right-0 top-0 bottom-0 w-[8px]");
-		bindProp(__nsh_hv18, "style", () => ({
+		append(__nsh_hv17, __nsh_hv18);
+		const __nsh_hv24 = element("view");
+		prop(__nsh_hv24, "class", "absolute right-0 top-0 bottom-0 w-[8px]");
+		bindProp(__nsh_hv24, "style", () => ({
 			backgroundColor: props.colors.background,
-			opacity: .86
+			opacity: .86,
+			pointerEvents: "none"
 		}));
-		append(__nsh_hv10, __nsh_hv11);
-		append(__nsh_hv10, __nsh_hv18);
-		const __nsh_hv19 = element("view");
-		prop(__nsh_hv19, "class", "mb-4 mx-auto w-full");
-		prop(__nsh_hv19, "style", {
+		append(__nsh_hv16, __nsh_hv17);
+		append(__nsh_hv16, __nsh_hv24);
+		const __nsh_hv25 = element("view");
+		prop(__nsh_hv25, "class", "mx-auto w-full");
+		prop(__nsh_hv25, "style", {
 			maxWidth: THREAD_WIDTH,
 			paddingLeft: FEED_PAD,
-			paddingRight: FEED_PAD
+			paddingRight: FEED_PAD,
+			marginBottom: 18
 		});
-		const __nsh_hv20 = element("view");
-		prop(__nsh_hv20, "class", "w-full flex-row border");
-		bindProp(__nsh_hv20, "style", () => ({
+		const __nsh_hv26 = element("view");
+		prop(__nsh_hv26, "class", "w-full overflow-hidden border");
+		bindProp(__nsh_hv26, "style", () => ({
+			borderRadius: scopeShown() ? SCOPE_RADIUS : COMPOSER_RADIUS,
+			borderColor: props.colors.border,
+			backgroundColor: props.colors.card
+		}));
+		const __nsh_hv30 = element("view");
+		prop(__nsh_hv30, "class", "w-full flex-row");
+		bindProp(__nsh_hv30, "style", () => ({
 			height: composerPillHeight(),
 			alignItems: composerExpanded() ? "flex-end" : "center",
-			backgroundColor: props.colors.card,
-			borderColor: props.colors.border,
-			borderRadius: COMPOSER_RADIUS
+			backgroundColor: "transparent"
 		}));
-		const __nsh_hv21 = element("view");
-		prop(__nsh_hv21, "class", "relative min-w-0 flex-1 overflow-hidden");
-		bindProp(__nsh_hv21, "style", () => ({ height: composerViewportHeight() }));
-		const __nsh_hv22 = element("scroll");
-		prop(__nsh_hv22, "ref", (node) => {
-			composerScrollRef = node;
-		});
-		prop(__nsh_hv22, "scrollbar", false);
-		prop(__nsh_hv22, "onScroll", (event) => journalScrollY.set(event.offset.y));
-		prop(__nsh_hv22, "class", "w-full");
-		bindProp(__nsh_hv22, "style", () => ({ height: composerViewportHeight() }));
-		const __nsh_hv23 = element("view");
-		prop(__nsh_hv23, "class", "relative w-full");
-		bindProp(__nsh_hv23, "style", () => ({ height: composerInputHeight() }));
-		const __nsh_hv24 = element("input");
-		prop(__nsh_hv24, "ref", (node) => {
-			composerRef = node;
-		});
-		prop(__nsh_hv24, "autoFocus", true);
-		bindProp(__nsh_hv24, "value", () => journalDraft());
-		prop(__nsh_hv24, "onChange", (value) => journalDraft.set(value));
-		prop(__nsh_hv24, "onContentSizeChange", ({ height }) => {
-			const raw = Math.max(COMPOSER_LINE, Math.round(height));
-			if (raw === journalDraftContentHeight()) return;
-			if (clampDraftHeight(raw) !== clampDraftHeight(journalDraftContentHeight())) animateComposer();
-			journalDraftContentHeight.set(raw);
-			revealComposer(journalCaret());
-		});
-		prop(__nsh_hv24, "onCaretMove", (event) => {
-			placeCaret(event.bounds);
-			revealComposer(journalCaret());
-		});
-		prop(__nsh_hv24, "onSelectionChange", (range) => journalSelection.set(range));
-		prop(__nsh_hv24, "onFocus", () => journalFocused.set(true));
-		prop(__nsh_hv24, "onBlur", () => journalFocused.set(false));
-		prop(__nsh_hv24, "onSubmit", (event) => send(event.text));
-		prop(__nsh_hv24, "multiline", true);
-		prop(__nsh_hv24, "submitBehavior", "submit");
-		prop(__nsh_hv24, "caret", false);
-		prop(__nsh_hv24, "placeholder", "Запись в дневник…");
-		prop(__nsh_hv24, "accessibilityLabel", "Новая запись в дневник");
-		prop(__nsh_hv24, "class", "min-w-0 w-full text-[15px]");
-		bindProp(__nsh_hv24, "style", () => ({
-			height: composerInputHeight(),
-			fontSize: 15,
-			lineHeight: COMPOSER_LINE,
-			paddingLeft: COMPOSER_PAD_X,
-			paddingRight: 8,
-			paddingTop: COMPOSER_PAD_Y,
-			paddingBottom: COMPOSER_PAD_Y,
-			placeholderColor: props.colors.muted,
-			selectionColor: colorAlpha(props.colors.accent, props.dark ? .35 : .24),
-			backgroundColor: "transparent",
-			color: props.colors.foreground
-		}));
-		const __nsh_hv25 = element("view");
-		prop(__nsh_hv25, "pointerEvents", "none");
-		prop(__nsh_hv25, "class", "absolute");
-		bindProp(__nsh_hv25, "style", () => ({
-			left: journalCaret().x,
-			top: journalCaret().y,
-			width: CARET_WIDTH,
-			height: journalCaret().height,
-			backgroundColor: props.colors.accent,
-			opacity: composerCaretShown() ? 1 : 0,
-			zIndex: 1
-		}));
-		append(__nsh_hv23, __nsh_hv24);
-		append(__nsh_hv23, __nsh_hv25);
-		append(__nsh_hv22, __nsh_hv23);
-		append(__nsh_hv21, __nsh_hv22);
-		insert(__nsh_hv21, [() => composerFadeTop() && (() => {
-			const __nsh_hv26 = element("view");
-			prop(__nsh_hv26, "pointerEvents", "none");
-			prop(__nsh_hv26, "class", "absolute left-0 right-0 top-0");
-			bindProp(__nsh_hv26, "style", () => ({
-				height: COMPOSER_FADE,
-				backgroundImage: `linear-gradient(to bottom, ${props.colors.card}, ${colorAlpha(props.colors.card, 0)})`,
-				zIndex: 2
-			}));
-			return __nsh_hv26;
-		})(), () => composerFadeBottom() && (() => {
+		insert(__nsh_hv30, [
+			() => !props.recording() && (() => {
+				const __nsh_hv31 = element("view");
+				prop(__nsh_hv31, "class", "relative min-w-0 flex-1 overflow-hidden");
+				bindProp(__nsh_hv31, "style", () => ({ height: composerViewportHeight() }));
+				const __nsh_hv32 = element("scroll");
+				prop(__nsh_hv32, "ref", (node) => {
+					composerScrollRef = node;
+				});
+				prop(__nsh_hv32, "scrollbar", false);
+				prop(__nsh_hv32, "onScroll", (event) => journalScrollY.set(event.offset.y));
+				prop(__nsh_hv32, "class", "w-full");
+				bindProp(__nsh_hv32, "style", () => ({ height: composerViewportHeight() }));
+				const __nsh_hv33 = element("view");
+				prop(__nsh_hv33, "class", "relative w-full");
+				bindProp(__nsh_hv33, "style", () => ({ height: composerInputHeight() }));
+				const __nsh_hv34 = element("input");
+				prop(__nsh_hv34, "ref", (node) => {
+					composerRef = node;
+				});
+				prop(__nsh_hv34, "autoFocus", true);
+				bindProp(__nsh_hv34, "value", () => journalDraft());
+				prop(__nsh_hv34, "onChange", (e) => journalDraft.set(e.value));
+				prop(__nsh_hv34, "onContentSizeChange", ({ size }) => {
+					const raw = Math.max(COMPOSER_LINE, Math.round(size.height));
+					if (raw === journalDraftContentHeight()) return;
+					if (clampDraftHeight(raw) !== clampDraftHeight(journalDraftContentHeight())) animateComposer();
+					journalDraftContentHeight.set(raw);
+					revealComposer(journalCaret());
+				});
+				prop(__nsh_hv34, "onCaretMove", (event) => {
+					placeCaret(event.bounds);
+					revealComposer(journalCaret());
+				});
+				prop(__nsh_hv34, "onSelectionChange", (range) => journalSelection.set(range));
+				prop(__nsh_hv34, "onFocus", () => journalFocused.set(true));
+				prop(__nsh_hv34, "onBlur", () => journalFocused.set(false));
+				prop(__nsh_hv34, "onSubmit", (event) => send(event.text));
+				prop(__nsh_hv34, "multiline", true);
+				prop(__nsh_hv34, "submitBehavior", "submit");
+				prop(__nsh_hv34, "caret", false);
+				prop(__nsh_hv34, "placeholder", "Запись в дневник…");
+				prop(__nsh_hv34, "accessibilityLabel", "Новая запись в дневник");
+				prop(__nsh_hv34, "class", "min-w-0 w-full text-[15px]");
+				bindProp(__nsh_hv34, "style", () => ({
+					height: composerInputHeight(),
+					fontSize: 15,
+					lineHeight: COMPOSER_LINE,
+					paddingLeft: COMPOSER_PAD_X,
+					paddingRight: 8,
+					paddingTop: COMPOSER_PAD_Y,
+					paddingBottom: COMPOSER_PAD_Y,
+					placeholderColor: props.colors.muted,
+					selectionColor: colorAlpha(props.colors.accent, props.dark ? .35 : .24),
+					backgroundColor: "transparent",
+					color: props.colors.foreground
+				}));
+				const __nsh_hv35 = element("view");
+				prop(__nsh_hv35, "class", "absolute");
+				bindProp(__nsh_hv35, "style", () => ({
+					pointerEvents: "none",
+					left: journalCaret().x,
+					top: journalCaret().y,
+					width: CARET_WIDTH,
+					height: journalCaret().height,
+					backgroundColor: props.colors.accent,
+					opacity: composerCaretShown() ? 1 : 0,
+					zIndex: 1
+				}));
+				append(__nsh_hv33, __nsh_hv34);
+				append(__nsh_hv33, __nsh_hv35);
+				append(__nsh_hv32, __nsh_hv33);
+				append(__nsh_hv31, __nsh_hv32);
+				insert(__nsh_hv31, [() => composerFadeTop() && (() => {
+					const __nsh_hv36 = element("view");
+					prop(__nsh_hv36, "class", "absolute left-0 right-0 top-0");
+					bindProp(__nsh_hv36, "style", () => ({
+						pointerEvents: "none",
+						height: COMPOSER_FADE,
+						backgroundImage: `linear-gradient(to bottom, ${props.colors.card}, ${colorAlpha(props.colors.card, 0)})`,
+						zIndex: 2
+					}));
+					return __nsh_hv36;
+				})(), () => composerFadeBottom() && (() => {
+					const __nsh_hv37 = element("view");
+					prop(__nsh_hv37, "class", "absolute left-0 right-0 bottom-0");
+					bindProp(__nsh_hv37, "style", () => ({
+						pointerEvents: "none",
+						height: COMPOSER_FADE,
+						backgroundImage: `linear-gradient(to bottom, ${colorAlpha(props.colors.card, 0)}, ${props.colors.card})`,
+						zIndex: 2
+					}));
+					return __nsh_hv37;
+				})()]);
+				return __nsh_hv31;
+			})(),
+			() => props.recording() && (() => {
+				const __nsh_hv38 = element("view");
+				prop(__nsh_hv38, "class", "min-w-0 flex-1 flex-row items-center");
+				prop(__nsh_hv38, "style", {
+					paddingLeft: COMPOSER_PAD_X,
+					gap: 8
+				});
+				const __nsh_hv39 = element("view");
+				prop(__nsh_hv39, "class", "shrink-0 rounded-full");
+				prop(__nsh_hv39, "style", {
+					width: 8,
+					height: 8,
+					backgroundColor: "#ff453a"
+				});
+				const __nsh_hv40 = element("text");
+				prop(__nsh_hv40, "class", "text-[13px]");
+				bindProp(__nsh_hv40, "style", () => ({
+					color: props.colors.foreground,
+					fontVariantNumeric: "tabular-nums"
+				}));
+				insert(__nsh_hv40, () => formatVoiceDuration(props.elapsed()));
+				append(__nsh_hv38, __nsh_hv39);
+				append(__nsh_hv38, __nsh_hv40);
+				return __nsh_hv38;
+			})(),
+			() => journalDraft().trim() ? (() => {
+				const __nsh_hv41 = element("view");
+				prop(__nsh_hv41, "onPress", () => send(journalDraft()));
+				prop(__nsh_hv41, "role", "button");
+				prop(__nsh_hv41, "accessibilityLabel", "Отправить запись");
+				prop(__nsh_hv41, "class", "shrink-0 items-center justify-center rounded-full");
+				bindProp(__nsh_hv41, "hoverStyle", () => ({ opacity: journalDraft().trim() ? .85 : .35 }));
+				bindProp(__nsh_hv41, "activeStyle", () => ({ opacity: journalDraft().trim() ? .7 : .35 }));
+				bindProp(__nsh_hv41, "style", () => ({
+					width: COMPOSER_SEND,
+					height: COMPOSER_SEND,
+					marginRight: 8,
+					marginBottom: composerExpanded() ? 10 : 0,
+					backgroundColor: journalBubble(props.colors.accent),
+					opacity: journalDraft().trim() ? 1 : .35,
+					cursor: journalDraft().trim() ? "pointer" : "default"
+				}));
+				const __nsh_hv42 = element("text");
+				prop(__nsh_hv42, "class", "text-[14px] font-semibold");
+				bindProp(__nsh_hv42, "style", () => ({ color: accentMark(journalBubble(props.colors.accent)) }));
+				const __nsh_hv43 = text("↑");
+				append(__nsh_hv42, __nsh_hv43);
+				append(__nsh_hv41, __nsh_hv42);
+				return __nsh_hv41;
+			})() : props.recording() ? (() => {
+				const __nsh_hv44 = element("view");
+				prop(__nsh_hv44, "onPress", () => {
+					animateComposer();
+					props.onStopRecording();
+				});
+				prop(__nsh_hv44, "role", "button");
+				prop(__nsh_hv44, "accessibilityLabel", "Остановить запись");
+				prop(__nsh_hv44, "accessibilityState", { selected: true });
+				prop(__nsh_hv44, "class", "shrink-0 items-center justify-center rounded-full");
+				prop(__nsh_hv44, "hoverStyle", { opacity: .85 });
+				prop(__nsh_hv44, "activeStyle", { opacity: .7 });
+				bindProp(__nsh_hv44, "style", () => ({
+					width: COMPOSER_SEND,
+					height: COMPOSER_SEND,
+					marginRight: 8,
+					marginBottom: composerExpanded() ? 10 : 0,
+					backgroundColor: "#ff453a",
+					cursor: "pointer"
+				}));
+				const __nsh_hv45 = element("view");
+				prop(__nsh_hv45, "style", {
+					width: 10,
+					height: 10,
+					borderRadius: 2,
+					backgroundColor: "#ffffff"
+				});
+				append(__nsh_hv44, __nsh_hv45);
+				return __nsh_hv44;
+			})() : (() => {
+				const __nsh_hv46 = element("view");
+				prop(__nsh_hv46, "onPress", () => {
+					animateComposer();
+					props.onStartRecording();
+				});
+				prop(__nsh_hv46, "role", "button");
+				prop(__nsh_hv46, "accessibilityLabel", "Записать голос");
+				prop(__nsh_hv46, "class", "shrink-0 items-center justify-center rounded-full");
+				prop(__nsh_hv46, "hoverStyle", { opacity: .85 });
+				prop(__nsh_hv46, "activeStyle", { opacity: .7 });
+				bindProp(__nsh_hv46, "style", () => ({
+					width: COMPOSER_SEND,
+					height: COMPOSER_SEND,
+					marginRight: 8,
+					marginBottom: composerExpanded() ? 10 : 0,
+					backgroundColor: journalBubble(props.colors.accent),
+					cursor: "pointer"
+				}));
+				const __nsh_hv47 = element("image");
+				prop(__nsh_hv47, "src", MIC_ICON);
+				bindProp(__nsh_hv47, "style", () => ({
+					width: 17,
+					height: 17,
+					tintColor: accentMark(journalBubble(props.colors.accent))
+				}));
+				append(__nsh_hv46, __nsh_hv47);
+				return __nsh_hv46;
+			})()
+		]);
+		append(__nsh_hv26, __nsh_hv30);
+		insert(__nsh_hv26, [() => scopeShown() && (() => {
 			const __nsh_hv27 = element("view");
-			prop(__nsh_hv27, "pointerEvents", "none");
-			prop(__nsh_hv27, "class", "absolute left-0 right-0 bottom-0");
+			prop(__nsh_hv27, "class", "relative w-full overflow-hidden");
 			bindProp(__nsh_hv27, "style", () => ({
-				height: COMPOSER_FADE,
-				backgroundImage: `linear-gradient(to bottom, ${colorAlpha(props.colors.card, 0)}, ${props.colors.card})`,
-				zIndex: 2
+				height: scopeHeight(),
+				opacity: scopeOpacity()
 			}));
+			const __nsh_hv28 = element("view");
+			prop(__nsh_hv28, "class", "absolute left-0 right-0 top-0 bottom-0");
+			insert(__nsh_hv28, component(DotScope, {
+				get level() {
+					return props.level();
+				},
+				get active() {
+					return props.recording();
+				},
+				get done() {
+					return !props.recording();
+				},
+				style: {
+					width: "100%",
+					height: "100%"
+				}
+			}));
+			append(__nsh_hv27, __nsh_hv28);
 			return __nsh_hv27;
-		})()]);
-		const __nsh_hv28 = element("view");
-		prop(__nsh_hv28, "onPress", () => send(journalDraft()));
-		prop(__nsh_hv28, "role", "button");
-		prop(__nsh_hv28, "accessibilityLabel", "Отправить запись");
-		prop(__nsh_hv28, "class", "shrink-0 items-center justify-center rounded-full");
-		bindProp(__nsh_hv28, "hoverStyle", () => ({ opacity: journalDraft().trim() ? .85 : .35 }));
-		bindProp(__nsh_hv28, "activeStyle", () => ({ opacity: journalDraft().trim() ? .7 : .35 }));
-		bindProp(__nsh_hv28, "style", () => ({
-			width: COMPOSER_SEND,
-			height: COMPOSER_SEND,
-			marginRight: 8,
-			marginBottom: composerExpanded() ? 10 : 0,
-			backgroundColor: journalBubble(props.colors.accent),
-			opacity: journalDraft().trim() ? 1 : .35,
-			cursor: journalDraft().trim() ? "pointer" : "default"
-		}));
-		const __nsh_hv29 = element("text");
-		prop(__nsh_hv29, "class", "text-[14px] font-semibold");
-		bindProp(__nsh_hv29, "style", () => ({ color: accentMark(journalBubble(props.colors.accent)) }));
-		const __nsh_hv30 = text("↑");
-		append(__nsh_hv29, __nsh_hv30);
-		append(__nsh_hv28, __nsh_hv29);
-		append(__nsh_hv20, __nsh_hv21);
-		append(__nsh_hv20, __nsh_hv28);
-		append(__nsh_hv19, __nsh_hv20);
-		append(__nsh_hv8, __nsh_hv10);
-		append(__nsh_hv8, __nsh_hv19);
-		insert(__nsh_hv8, () => props.nativeCalendarButton ? component(NativeCalendarToggle, {
+		})(), () => scopeShown() && (() => {
+			const __nsh_hv29 = element("view");
+			prop(__nsh_hv29, "class", "w-full");
+			bindProp(__nsh_hv29, "style", () => ({
+				height: scopeHeight() > .5 ? 1 : 0,
+				backgroundColor: props.colors.border
+			}));
+			return __nsh_hv29;
+		})()], __nsh_hv30);
+		append(__nsh_hv25, __nsh_hv26);
+		append(__nsh_hv14, __nsh_hv16);
+		append(__nsh_hv14, __nsh_hv25);
+		insert(__nsh_hv14, () => props.nativeCalendarButton ? component(NativeCalendarToggle, {
 			get expanded() {
 				return journalCalendarOpen();
 			},
@@ -1452,14 +1787,14 @@ function JournalPage(props) {
 				return { top: props.titlebarInset + 16 };
 			}
 		}) : props.titlebarInset === 0 && (() => {
-			const __nsh_hv9 = element("view");
-			prop(__nsh_hv9, "onPress", toggleJournalCalendar);
-			prop(__nsh_hv9, "role", "button");
-			bindProp(__nsh_hv9, "accessibilityLabel", () => journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь");
-			bindProp(__nsh_hv9, "accessibilityState", () => ({ selected: journalCalendarOpen() }));
-			prop(__nsh_hv9, "class", "absolute z-10 items-center justify-center");
-			bindProp(__nsh_hv9, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .11) }));
-			bindProp(__nsh_hv9, "style", () => ({
+			const __nsh_hv15 = element("view");
+			prop(__nsh_hv15, "onPress", toggleJournalCalendar);
+			prop(__nsh_hv15, "role", "button");
+			bindProp(__nsh_hv15, "accessibilityLabel", () => journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь");
+			bindProp(__nsh_hv15, "accessibilityState", () => ({ selected: journalCalendarOpen() }));
+			prop(__nsh_hv15, "class", "absolute z-10 items-center justify-center");
+			bindProp(__nsh_hv15, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .11) }));
+			bindProp(__nsh_hv15, "style", () => ({
 				top: 16,
 				right: 16,
 				width: 28,
@@ -1468,21 +1803,21 @@ function JournalPage(props) {
 				cursor: "pointer",
 				backgroundColor: journalCalendarOpen() ? surfaceWash(props.dark, .09) : "transparent"
 			}));
-			insert(__nsh_hv9, component(Icon, {
+			insert(__nsh_hv15, component(Icon, {
 				name: "sidebar",
 				size: 16,
 				get color() {
 					return journalCalendarOpen() ? props.colors.foreground : props.colors.muted;
 				}
 			}));
-			return __nsh_hv9;
-		})(), __nsh_hv10);
-		const __nsh_hv31 = element("view");
-		prop(__nsh_hv31, "class", "relative h-full shrink-0 overflow-hidden");
-		bindProp(__nsh_hv31, "style", () => ({ width: journalCalendarOpen() ? journalCalendarWidth() : 0 }));
-		const __nsh_hv32 = element("view");
-		prop(__nsh_hv32, "class", "h-full border-l");
-		bindProp(__nsh_hv32, "style", () => ({
+			return __nsh_hv15;
+		})(), __nsh_hv16);
+		const __nsh_hv48 = element("view");
+		prop(__nsh_hv48, "class", "relative h-full shrink-0 overflow-hidden");
+		bindProp(__nsh_hv48, "style", () => ({ width: journalCalendarOpen() ? journalCalendarWidth() : 0 }));
+		const __nsh_hv49 = element("view");
+		prop(__nsh_hv49, "class", "h-full border-l");
+		bindProp(__nsh_hv49, "style", () => ({
 			width: journalCalendarWidth(),
 			paddingTop: props.titlebarInset,
 			backgroundColor: surfaceWash(props.dark),
@@ -1491,7 +1826,7 @@ function JournalPage(props) {
 			transitionDuration: 150,
 			transitionTimingFunction: "ease-out"
 		}));
-		insert(__nsh_hv32, component(JournalCalendar, {
+		insert(__nsh_hv49, component(JournalCalendar, {
 			get width() {
 				return journalCalendarWidth();
 			},
@@ -1508,24 +1843,24 @@ function JournalPage(props) {
 			},
 			onSelect: jumpToDay
 		}));
-		append(__nsh_hv31, __nsh_hv32);
-		insert(__nsh_hv31, () => journalCalendarOpen() && (() => {
-			const __nsh_hv33 = element("view");
-			spread(__nsh_hv33, resizeCalendar.panHandlers);
-			prop(__nsh_hv33, "role", "button");
-			prop(__nsh_hv33, "accessibilityLabel", "Изменить ширину календаря");
-			prop(__nsh_hv33, "onHoverIn", () => journalCalendarResizeHovered.set(true));
-			prop(__nsh_hv33, "onHoverOut", () => journalCalendarResizeHovered.set(false));
-			prop(__nsh_hv33, "class", "absolute top-0 bottom-0 z-10 w-5");
-			prop(__nsh_hv33, "style", {
+		append(__nsh_hv48, __nsh_hv49);
+		insert(__nsh_hv48, () => journalCalendarOpen() && (() => {
+			const __nsh_hv50 = element("view");
+			spread(__nsh_hv50, resizeCalendar.panHandlers);
+			prop(__nsh_hv50, "role", "button");
+			prop(__nsh_hv50, "accessibilityLabel", "Изменить ширину календаря");
+			prop(__nsh_hv50, "onMouseEnter", () => journalCalendarResizeHovered.set(true));
+			prop(__nsh_hv50, "onMouseLeave", () => journalCalendarResizeHovered.set(false));
+			prop(__nsh_hv50, "class", "absolute top-0 bottom-0 z-10 w-5");
+			prop(__nsh_hv50, "style", {
 				left: -10,
 				cursor: "col-resize"
 			});
-			return __nsh_hv33;
+			return __nsh_hv50;
 		})());
-		append(__nsh_hv7, __nsh_hv8);
-		append(__nsh_hv7, __nsh_hv31);
-		return __nsh_hv7;
+		append(__nsh_hv13, __nsh_hv14);
+		append(__nsh_hv13, __nsh_hv48);
+		return __nsh_hv13;
 	})();
 }
 function toggleJournalCalendar() {
@@ -1600,8 +1935,7 @@ function AtlasAppearanceSettings(props) {
 			cursor: canEdit() ? "pointer" : "default"
 		}));
 		const __nsh_hv2 = element("text");
-		prop(__nsh_hv2, "class", "text-[12px]");
-		bindProp(__nsh_hv2, "hoverStyle", () => ({ color: colors().foreground }));
+		bindProp(__nsh_hv2, "class", () => `text-[12px] hover:text-[${colors().foreground}]`);
 		bindProp(__nsh_hv2, "style", () => ({ color: selected ? colors().foreground : colors().muted }));
 		insert(__nsh_hv2, label);
 		append(__nsh_hv1, __nsh_hv2);
@@ -2000,8 +2334,7 @@ function selectLabel(material, label, selected, onPress, colors, editable, dark)
 			cursor: editable ? "pointer" : "default"
 		}));
 		const __nsh_hv62 = element("text");
-		prop(__nsh_hv62, "class", "text-[12px]");
-		bindProp(__nsh_hv62, "hoverStyle", () => ({ color: colors.foreground }));
+		bindProp(__nsh_hv62, "class", () => `text-[12px] hover:text-[${colors.foreground}]`);
 		bindProp(__nsh_hv62, "style", () => ({ color: selected === material ? colors.foreground : colors.muted }));
 		insert(__nsh_hv62, label);
 		append(__nsh_hv61, __nsh_hv62);
@@ -2050,6 +2383,11 @@ const route = signal(initial.route);
 const addTaskOpen = signal(false);
 const newTaskTitle = signal("");
 const sidebarVisible = signal(true);
+const voiceRecording = signal(false);
+const voiceLevel = signal(0);
+const voiceElapsed = signal(0);
+const voicePlaying = signal(null);
+let voiceStartedAt = 0;
 const shortcutNames = [
 	"sidebar",
 	"create",
@@ -2096,7 +2434,11 @@ const Bridge = nativeComponent("atlas.bridge", {
 	events: [
 		"state",
 		"navigate",
-		"journal"
+		"journal",
+		"voiceLevel",
+		"voiceRecorded",
+		"voicePlayed",
+		"voiceFailed"
 	]
 });
 function iconForNavigation(id) {
@@ -2218,6 +2560,52 @@ function createJournal(text, id) {
 	});
 	persistPreviewSnapshot();
 }
+function createVoiceJournal(voice, id) {
+	markJournalArriving(id);
+	askEngine("journal.createVoice", {
+		text: "",
+		voice
+	});
+	snapshot.set({
+		...snapshot(),
+		journalEntries: [...snapshot().journalEntries, {
+			id,
+			text: "",
+			createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+			voice
+		}]
+	});
+	persistPreviewSnapshot();
+}
+function startRecording() {
+	if (voiceRecording()) return;
+	voicePlaying.set(null);
+	voiceLevel.set(0);
+	voiceElapsed.set(0);
+	voiceStartedAt = Date.now();
+	voiceRecording.set(true);
+	askEngine("voice.start");
+	const timer = setInterval(() => {
+		if (!voiceRecording()) return;
+		voiceElapsed.set(Date.now() - voiceStartedAt);
+	}, 50);
+	stopVoiceTicker = () => clearInterval(timer);
+}
+let stopVoiceTicker = null;
+function stopRecording() {
+	if (!voiceRecording()) return;
+	askEngine("voice.stop");
+}
+function playVoice(entry) {
+	if (!entry.voice) return;
+	if (voicePlaying() === entry.id) {
+		askEngine("voice.pause");
+		voicePlaying.set(null);
+		return;
+	}
+	voicePlaying.set(entry.id);
+	askEngine("voice.play", { data: entry.voice.data });
+}
 function updateJournal(id, text) {
 	askEngine("journal.update", {
 		id,
@@ -2290,7 +2678,10 @@ function SettingsPage() {
 	});
 }
 function App() {
-	effect(() => Window.setTitleBar("hidden", 38));
+	effect(() => Window.setTitleBar({
+		style: "hidden",
+		height: 38
+	}));
 	const primaryNavigation = navigation_default.filter((item) => !item.footer);
 	const footerNavigation = navigation_default.filter((item) => item.footer);
 	const openNewTask = () => {
@@ -2321,6 +2712,13 @@ function App() {
 				onCreate: createJournal,
 				onUpdate: updateJournal,
 				onDelete: deleteJournal,
+				recording: voiceRecording,
+				level: voiceLevel,
+				elapsed: voiceElapsed,
+				playing: voicePlaying,
+				onStartRecording: startRecording,
+				onStopRecording: stopRecording,
+				onPlayVoice: playVoice,
 				get nativeCalendarButton() {
 					return snapshot().chrome === "native";
 				},
@@ -2372,7 +2770,7 @@ function App() {
 					return [(() => {
 						const __nsh_hv18 = element("input");
 						bindProp(__nsh_hv18, "value", () => newTaskTitle());
-						prop(__nsh_hv18, "onChange", (value) => newTaskTitle.set(value));
+						prop(__nsh_hv18, "onChange", (e) => newTaskTitle.set(e.value));
 						prop(__nsh_hv18, "onSubmit", (event) => {
 							createTodo(event.text);
 							addTaskOpen.set(false);
@@ -2420,12 +2818,14 @@ function App() {
 			prop(__nsh_hv10, "class", "h-full shrink-0 overflow-hidden");
 			bindProp(__nsh_hv10, "style", () => ({ width: sidebarPaneWidth() }));
 			const __nsh_hv11 = element("view");
-			prop(__nsh_hv11, "class", "h-full border-r px-2");
+			prop(__nsh_hv11, "class", "box-border h-full");
 			bindProp(__nsh_hv11, "style", () => ({
-				width: 256,
-				paddingTop: 38 + 4,
-				backgroundColor: surfaceWash(dark),
-				borderColor: snapshot().colors.border
+				width: 282,
+				paddingTop: 38 + 8,
+				paddingBottom: 16,
+				paddingLeft: 8,
+				paddingRight: 8,
+				backgroundColor: shellFill(snapshot().colors, dark)
 			}));
 			const __nsh_hv12 = element("view");
 			prop(__nsh_hv12, "style", { gap: 2 });
@@ -2493,6 +2893,24 @@ function App() {
 				...snapshot(),
 				journalEntries: entries
 			}),
+			onVoiceLevel: (event) => voiceLevel.set(event.level),
+			onVoiceRecorded: (voice) => {
+				voiceRecording.set(false);
+				stopVoiceTicker?.();
+				stopVoiceTicker = null;
+				createVoiceJournal({
+					durationMs: voice.durationMs,
+					peaks: voice.peaks,
+					data: voice.data
+				}, `local-${Date.now()}`);
+			},
+			onVoicePlayed: () => voicePlaying.set(null),
+			onVoiceFailed: () => {
+				voiceRecording.set(false);
+				voicePlaying.set(null);
+				stopVoiceTicker?.();
+				stopVoiceTicker = null;
+			},
 			onNavigate: (event) => changeRoute(event.route)
 		}), __nsh_hv9);
 		insert(__nsh_hv8, () => shell && component(TitlebarOverlay, {

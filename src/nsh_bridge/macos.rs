@@ -256,8 +256,8 @@ fn default_appearance() -> Value {
         "settings": {
             "schema_version": 1,
             "mode": "dark",
-            "light_theme": "default",
-            "dark_theme": "default",
+            "light_theme": "cobalt-foundry",
+            "dark_theme": "cobalt-foundry",
             "accent_source": "theme",
             "accent_color": null,
             "material": "default",

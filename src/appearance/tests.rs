@@ -1,6 +1,6 @@
 use super::*;
 fn sample() -> serde_json::Value {
-    json!({"settings":{"schema_version":1,"mode":"system","light_theme":"default","dark_theme":"claude","accent_source":"custom","accent_color":"#123ABC","follow_apps":true,"material":"frosted","font_family":"Inter","font_size":13,"revision":3},"capabilities":{"materials":["default","frosted"],"wallpaper_accent":true},"wallpaper_accent":"#DEAD00"})
+    json!({"settings":{"schema_version":1,"mode":"system","light_theme":"cobalt-foundry","dark_theme":"claude","accent_source":"custom","accent_color":"#123ABC","follow_apps":true,"material":"frosted","font_family":"Inter","font_size":13,"revision":3},"capabilities":{"materials":["default","frosted"],"wallpaper_accent":true},"wallpaper_accent":"#DEAD00"})
 }
 #[test]
 fn parses_and_resolves_modes_accents_material() {

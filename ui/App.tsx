@@ -6,10 +6,10 @@ import type { Appearance, IconName } from "@makekosmos/imago-nsh";
 import navigation from "./navigation.json";
 import { fallback, isRoute, isSnapshot, resolveAppearanceColors } from "./state";
 import { previewThemes } from "./themes";
-import type { JournalEntry, Route, Snapshot } from "./state";
-import { JournalPage, journalCalendarOpen, toggleJournalCalendar } from "./JournalPage";
+import type { JournalEntry, JournalVoice, Route, Snapshot } from "./state";
+import { JournalPage, journalCalendarOpen, markJournalArriving, toggleJournalCalendar } from "./JournalPage";
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
-import { GhostButton, SIDEBAR_WIDTH, SolidButton, TITLEBAR_HEIGHT, TitlebarOverlay, animateSidebar, sidebarPaneWidth, surfaceWash, SidebarRow } from "./chrome";
+import { GhostButton, SIDEBAR_WIDTH, SolidButton, TITLEBAR_HEIGHT, TitlebarOverlay, animateSidebar, sidebarPaneWidth, shellFill, SidebarRow } from "./chrome";
 import { loadPreview, persistPreview } from "./preview";
 
 const initialValue: unknown = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__");
@@ -20,6 +20,12 @@ const route = signal<Route>(initial.route);
 const addTaskOpen = signal(false);
 const newTaskTitle = signal("");
 const sidebarVisible = signal(true);
+// Voice notes: the recorder runs in the host, the UI only draws it.
+const voiceRecording = signal(false);
+const voiceLevel = signal(0);
+const voiceElapsed = signal(0);
+const voicePlaying = signal<string | null>(null);
+let voiceStartedAt = 0;
 const shortcutNames = ["sidebar", "create", "search", "reload"] as const;
 type ShortcutName = typeof shortcutNames[number];
 type Shortcuts = Record<ShortcutName, string>;
@@ -49,9 +55,9 @@ function persistPreviewSnapshot() {
   if (hosted) return;
   persistPreview({ journalEntries: snapshot().journalEntries, todos: snapshot().todos });
 }
-const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[] }>("atlas.bridge", {
+const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[]; voiceLevel: { level: number }; voiceRecorded: JournalVoice & Record<string, unknown>; voicePlayed: Record<string, never>; voiceFailed: { reason: string } }>("atlas.bridge", {
   props: ["route"],
-  events: ["state", "navigate", "journal"],
+  events: ["state", "navigate", "journal", "voiceLevel", "voiceRecorded", "voicePlayed", "voiceFailed"],
 });
 
 function iconForNavigation(id: string): IconName {
@@ -132,6 +138,51 @@ function createJournal(text: string, id: string) {
   persistPreviewSnapshot();
 }
 
+function createVoiceJournal(voice: JournalVoice, id: string) {
+  markJournalArriving(id);
+  askEngine("journal.createVoice", { text: "", voice });
+  snapshot.set({
+    ...snapshot(),
+    journalEntries: [...snapshot().journalEntries, { id, text: "", createdAt: new Date().toISOString(), voice }],
+  });
+  persistPreviewSnapshot();
+}
+
+function startRecording() {
+  if (voiceRecording()) return;
+  voicePlaying.set(null);
+  voiceLevel.set(0);
+  voiceElapsed.set(0);
+  voiceStartedAt = Date.now();
+  voiceRecording.set(true);
+  askEngine("voice.start");
+  // Fifty frames a second: the live bars follow the dictation pill's wobble.
+  const timer = setInterval(() => {
+    if (!voiceRecording()) return;
+    voiceElapsed.set(Date.now() - voiceStartedAt);
+  }, 50);
+  stopVoiceTicker = () => clearInterval(timer);
+}
+
+let stopVoiceTicker: (() => void) | null = null;
+
+function stopRecording() {
+  if (!voiceRecording()) return;
+  // The host answers with `voiceRecorded`; the recorder keeps running until then.
+  askEngine("voice.stop");
+}
+
+function playVoice(entry: JournalEntry) {
+  if (!entry.voice) return;
+  if (voicePlaying() === entry.id) {
+    askEngine("voice.pause");
+    voicePlaying.set(null);
+    return;
+  }
+  voicePlaying.set(entry.id);
+  askEngine("voice.play", { data: entry.voice.data });
+}
+
 function updateJournal(id: string, text: string) {
   askEngine("journal.update", { id, text });
   snapshot.set({
@@ -192,7 +243,7 @@ function SettingsPage() {
 }
 
 function App() {
-  effect(() => DesktopWindow.setTitleBar("hidden", TITLEBAR_HEIGHT));
+  effect(() => DesktopWindow.setTitleBar({ style: "hidden", height: TITLEBAR_HEIGHT }));
   const primaryNavigation = navigation.filter((item) => !item.footer);
   const footerNavigation = navigation.filter((item) => item.footer);
   const openNewTask = () => { newTaskTitle.set(""); addTaskOpen.set(true); };
@@ -223,11 +274,25 @@ function App() {
           });
         }}
         onJournal={(entries) => snapshot.set({ ...snapshot(), journalEntries: entries })}
+        onVoiceLevel={(event) => voiceLevel.set(event.level)}
+        onVoiceRecorded={(voice) => {
+          voiceRecording.set(false);
+          stopVoiceTicker?.();
+          stopVoiceTicker = null;
+          createVoiceJournal({ durationMs: voice.durationMs, peaks: voice.peaks, data: voice.data }, `local-${Date.now()}`);
+        }}
+        onVoicePlayed={() => voicePlaying.set(null)}
+        onVoiceFailed={() => {
+          voiceRecording.set(false);
+          voicePlaying.set(null);
+          stopVoiceTicker?.();
+          stopVoiceTicker = null;
+        }}
         onNavigate={(event) => changeRoute(event.route)}
       />
       <View class="h-full w-full flex-row">
       {shell && <View class="h-full shrink-0 overflow-hidden" style={{ width: sidebarPaneWidth() }}>
-        <View class="h-full border-r px-2" style={{ width: SIDEBAR_WIDTH, paddingTop: TITLEBAR_HEIGHT + 4, backgroundColor: surfaceWash(dark), borderColor: snapshot().colors.border }}>
+        <View class="box-border h-full" style={{ width: SIDEBAR_WIDTH, paddingTop: TITLEBAR_HEIGHT + 8, paddingBottom: 16, paddingLeft: 8, paddingRight: 8, backgroundColor: shellFill(snapshot().colors, dark) }}>
           <View style={{ gap: 2 }}>
             {primaryNavigation.map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
           </View>
@@ -243,6 +308,13 @@ function App() {
           onCreate={createJournal}
           onUpdate={updateJournal}
           onDelete={deleteJournal}
+          recording={voiceRecording}
+          level={voiceLevel}
+          elapsed={voiceElapsed}
+          playing={voicePlaying}
+          onStartRecording={startRecording}
+          onStopRecording={stopRecording}
+          onPlayVoice={playVoice}
           nativeCalendarButton={snapshot().chrome === "native"}
           titlebarInset={shell ? TITLEBAR_HEIGHT : 0}
           dark={dark}
@@ -253,7 +325,7 @@ function App() {
         </View>}
         {route() === "settings" && <View class="min-h-0 flex-1" style={{ paddingTop: shell ? TITLEBAR_HEIGHT : 0 }}><SettingsPage /></View>}
         {addTaskOpen() && <SharedDialog title="Новая задача" colors={snapshot().colors}>
-          <Input value={newTaskTitle()} onChange={(value) => newTaskTitle.set(value)} onSubmit={(event) => { createTodo(event.text); addTaskOpen.set(false); }} placeholder="Название задачи" accessibilityLabel="Название задачи" class="h-10 rounded-lg px-3 text-[13px]" style={{ backgroundColor: snapshot().colors.background, color: snapshot().colors.foreground }} />
+          <Input value={newTaskTitle()} onChange={(e) => newTaskTitle.set(e.value)} onSubmit={(event) => { createTodo(event.text); addTaskOpen.set(false); }} placeholder="Название задачи" accessibilityLabel="Название задачи" class="h-10 rounded-lg px-3 text-[13px]" style={{ backgroundColor: snapshot().colors.background, color: snapshot().colors.foreground }} />
           <View class="mt-3 flex-row justify-end" style={{ gap: 8 }}>
             <GhostButton label="Отмена" colors={snapshot().colors} dark={dark} onPress={() => addTaskOpen.set(false)} />
             <SolidButton label="Добавить" background={snapshot().colors.accent} foreground={snapshot().colors.background} onPress={() => { createTodo(newTaskTitle()); addTaskOpen.set(false); }} />

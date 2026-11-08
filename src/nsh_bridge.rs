@@ -6,6 +6,7 @@ use std::{
         mpsc, Arc,
     },
     thread,
+    time::Duration,
 };
 
 use gpui::{App, Entity, Subscription, Window};
@@ -14,6 +15,7 @@ use serde_json::{json, Value};
 
 use crate::{
     app::Atlas,
+    audio,
     model::Todo,
     store::{Engine, JournalEntry},
 };
@@ -26,6 +28,31 @@ pub(crate) struct AtlasBridge {
     subscription: Option<Subscription>,
     _journal_subscription: Option<crate::store::live::Subscription>,
     journal_reload_pending: Arc<AtomicBool>,
+    voice: Voice,
+}
+
+/// The microphone and the speaker, one of each at a time.
+#[derive(Default)]
+struct Voice {
+    recorder: Option<audio::Recorder>,
+    level_stop: Option<Arc<AtomicBool>>,
+    player: Option<audio::Player>,
+}
+
+impl Voice {
+    /// Ends the recording; the caller encodes and reports it.
+    fn take_recorder(&mut self) -> Option<audio::Recorder> {
+        if let Some(flag) = self.level_stop.take() {
+            flag.store(true, Ordering::Release);
+        }
+        self.recorder.take()
+    }
+
+    fn stop_playback(&mut self) {
+        if let Some(player) = self.player.take() {
+            player.stop();
+        }
+    }
 }
 
 impl AtlasBridge {
@@ -40,6 +67,7 @@ impl AtlasBridge {
             subscription: None,
             _journal_subscription: journal_subscription,
             journal_reload_pending,
+            voice: Voice::default(),
         }
     }
 
@@ -109,6 +137,7 @@ fn snapshot(agenda: &Atlas, route: &str) -> Value {
 
 enum JournalRequest {
     Create(String),
+    CreateVoice(String, Value),
     Update(String, String),
     Delete(String),
     Reload,
@@ -149,6 +178,17 @@ fn start_journal_bridge(context: ComponentContext, demo: bool) -> JournalChannel
                     }
                     Err(error) => eprintln!("[atlas-journal] create failed: {error}"),
                 },
+                JournalRequest::CreateVoice(text, voice) => {
+                    match engine.journal_create_voice(&text, voice) {
+                        Ok(entry) => {
+                            entries.push(entry);
+                            entries.sort_by(|a, b| {
+                                a.created_at.cmp(&b.created_at).then(a.id.cmp(&b.id))
+                            });
+                        }
+                        Err(error) => eprintln!("[atlas-journal] voice create failed: {error}"),
+                    }
+                }
                 JournalRequest::Update(id, text) => {
                     match entries.iter().find(|entry| entry.id == id) {
                         Some(before) => match engine.journal_update(before, &text) {
@@ -191,7 +231,12 @@ fn emit_journal_entries(context: &ComponentContext, entries: &[JournalEntry]) {
         "journal",
         json!(entries
             .iter()
-            .map(|entry| json!({"id": entry.id, "text": entry.text, "createdAt": entry.created_at}))
+            .map(|entry| json!({
+                "id": entry.id,
+                "text": entry.text,
+                "createdAt": entry.created_at,
+                "voice": entry.voice
+            }))
             .collect::<Vec<_>>()),
     );
 }
@@ -256,6 +301,22 @@ impl NativeComponent for AtlasBridge {
                         .send(JournalRequest::Delete(id.to_owned()));
                 }
             }
+            "journal.createVoice" => {
+                if let Some(voice) = args.get("voice").filter(|voice| voice.is_object()) {
+                    let text = args
+                        .get("text")
+                        .and_then(Value::as_str)
+                        .unwrap_or_default()
+                        .to_owned();
+                    let _ = self
+                        .journal_commands
+                        .send(JournalRequest::CreateVoice(text, voice.clone()));
+                }
+            }
+            "voice.start" => self.start_recording(),
+            "voice.stop" => self.stop_recording(),
+            "voice.play" => self.play_voice(args),
+            "voice.pause" => self.voice.stop_playback(),
             "complete" => {
                 if let Some(id) = args.get("id").and_then(Value::as_str) {
                     let id = id.to_owned();
@@ -292,6 +353,89 @@ impl NativeComponent for AtlasBridge {
                 }
             }
             _ => {}
+        }
+    }
+}
+
+impl AtlasBridge {
+    /// Opens the microphone and streams its loudness to the composer.
+    fn start_recording(&mut self) {
+        self.voice.stop_playback();
+        let _ = self.voice.take_recorder();
+        match audio::Recorder::start() {
+            Ok(recorder) => {
+                let context = self.context.clone();
+                let level = recorder.level_flag();
+                let stop = Arc::new(AtomicBool::new(false));
+                let flag = stop.clone();
+                thread::spawn(move || {
+                    while !flag.load(Ordering::Acquire) {
+                        context.emit(
+                            "voiceLevel",
+                            json!({"level": level.load(Ordering::Relaxed)}),
+                        );
+                        thread::sleep(Duration::from_millis(60));
+                    }
+                    context.emit("voiceLevel", json!({"level": 0}));
+                });
+                self.voice.level_stop = Some(stop);
+                self.voice.recorder = Some(recorder);
+            }
+            Err(error) => {
+                eprintln!("[atlas-voice] record failed: {error}");
+                self.context.emit("voiceFailed", json!({"reason": error}));
+            }
+        }
+    }
+
+    /// Stops the microphone and hands the encoded clip back to the UI.
+    fn stop_recording(&mut self) {
+        let Some(recorder) = self.voice.take_recorder() else {
+            return;
+        };
+        let context = self.context.clone();
+        // Encoding a minute takes milliseconds, but never on the UI thread.
+        thread::spawn(move || match recorder.stop() {
+            Ok(clip) if !clip.is_empty() => {
+                context.emit(
+                    "voiceRecorded",
+                    json!({
+                        "durationMs": clip.duration_ms,
+                        "peaks": clip.peaks,
+                        "data": clip.to_base64(),
+                    }),
+                );
+            }
+            Ok(_) => context.emit("voiceFailed", json!({"reason": "empty"})),
+            Err(error) => {
+                eprintln!("[atlas-voice] encode failed: {error}");
+                context.emit("voiceFailed", json!({"reason": error}));
+            }
+        });
+    }
+
+    fn play_voice(&mut self, args: &Value) {
+        self.voice.stop_playback();
+        let Some(data) = args.get("data").and_then(Value::as_str) else {
+            return;
+        };
+        let clip = match audio::Clip::from_base64(data) {
+            Ok(clip) => clip,
+            Err(error) => {
+                eprintln!("[atlas-voice] play refused: {error}");
+                self.context.emit("voiceFailed", json!({"reason": error}));
+                return;
+            }
+        };
+        let context = self.context.clone();
+        match audio::Player::play(&clip, move || {
+            context.emit("voicePlayed", json!({}));
+        }) {
+            Ok(player) => self.voice.player = Some(player),
+            Err(error) => {
+                eprintln!("[atlas-voice] play failed: {error}");
+                self.context.emit("voiceFailed", json!({"reason": error}));
+            }
         }
     }
 }

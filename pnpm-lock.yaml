@@ -1,0 +1,23 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@makekosmos/imago-nsh':
+        specifier: github:makekosmos/imago#feat/native-sidebar
+        version: https://codeload.github.com/makekosmos/imago/tar.gz/38b61af907dbc4032291386f91b75cfb0d8a154c
+
+packages:
+
+  '@makekosmos/imago-nsh@https://codeload.github.com/makekosmos/imago/tar.gz/38b61af907dbc4032291386f91b75cfb0d8a154c':
+    resolution: {gitHosted: true, integrity: sha512-TOdzs55oWt47aTEe18urRiAJASVlTC+o3j277W9JODJEEmirzI7GoW8UGBlguV4U5opWulTqYOiQxIOibLYcdA==, tarball: https://codeload.github.com/makekosmos/imago/tar.gz/38b61af907dbc4032291386f91b75cfb0d8a154c}
+    version: 0.1.0
+
+snapshots:
+
+  '@makekosmos/imago-nsh@https://codeload.github.com/makekosmos/imago/tar.gz/38b61af907dbc4032291386f91b75cfb0d8a154c': {}

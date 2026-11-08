@@ -12,3 +12,11 @@ _ref/
 .cargo/imago-local.toml
 
 .nsh/
+
+# Build artifacts from `nsh build`; bundle.js is the one that ships.
+ui/bundle.js.map
+ui/bundle.nshc
+ui/app.json
+
+# Local Android scaffold with its Gradle cache.
+/android/

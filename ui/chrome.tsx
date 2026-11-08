@@ -6,10 +6,13 @@ import type { IconName, ThemeColors } from "@makekosmos/imago-nsh";
 
 export const TITLEBAR_HEIGHT = 38;
 export const TITLEBAR_TOP_PAD = 4;
-export const SIDEBAR_WIDTH = 256;
+export const SIDEBAR_WIDTH = 282;
 export const ROW_HEIGHT = 32;
+// Sidebar rows follow the reference layout: 40pt tall, 10pt radius.
+export const NAV_ROW_HEIGHT = 40;
 const CONTROL_RADIUS = 6;
 const ROW_RADIUS = 8;
+const NAV_ROW_RADIUS = 10;
 const CLUSTER_START_MACOS = 88;
 const CLUSTER_START = 10;
 const TRAILING_INSET = 6;
@@ -21,12 +24,21 @@ export function animatePanes() {
   LayoutAnimation.configureNext({ duration: 200, update: { type: "easeOut", duration: 200 } });
 }
 
-// Zeron RESIZE: 200ms, cubic-bezier(0, 0, 0.58, 1). The signal is the width
+// Zeron RESIZE: cubic-bezier(0, 0, 0.58, 1). The signal is the width
 // last painted, so a new toggle retargets from the screen, not from a clock
-// that has already run ahead of the frame.
-export const SIDEBAR_MOTION_MS = 200;
+// that has already run ahead of the frame. Hiding is quicker than the old
+// 200 ms; opening runs 1.5 times faster than hiding.
+export const SIDEBAR_HIDE_MS = 150;
+export const SIDEBAR_OPEN_MS = 100;
+export const SIDEBAR_MOTION_MS = SIDEBAR_HIDE_MS;
+
+/** How long a toggle runs: hiding is slower than opening by design. */
+export function sidebarMotionMs(open: boolean) {
+  return open ? SIDEBAR_OPEN_MS : SIDEBAR_HIDE_MS;
+}
+
 const sidebarWidth = signal(SIDEBAR_WIDTH);
-let sidebarTween: { from: number; to: number; started: number } | null = null;
+let sidebarTween: { from: number; to: number; started: number; duration: number } | null = null;
 let sidebarScheduled = false;
 
 function easeOut(t: number) {
@@ -49,12 +61,12 @@ export function sidebarWidthAt(from: number, to: number, elapsed: number, durati
 export function sidebarFrame(now: number) {
   const tween = sidebarTween;
   if (!tween) return sidebarWidth();
-  if (now - tween.started >= SIDEBAR_MOTION_MS) {
+  if (now - tween.started >= tween.duration) {
     sidebarTween = null;
     sidebarWidth.set(tween.to);
     return tween.to;
   }
-  const value = sidebarWidthAt(tween.from, tween.to, now - tween.started);
+  const value = sidebarWidthAt(tween.from, tween.to, now - tween.started, tween.duration);
   sidebarWidth.set(value);
   return value;
 }
@@ -77,7 +89,7 @@ export function animateSidebar(open: boolean, now?: number) {
     sidebarTween = null;
     return;
   }
-  sidebarTween = { from, to, started: now ?? Date.now() };
+  sidebarTween = { from, to, started: now ?? Date.now(), duration: sidebarMotionMs(open) };
   if (now === undefined) scheduleSidebar();
 }
 
@@ -91,6 +103,16 @@ export function surfaceWash(dark: boolean, alpha = 0.05) {
 
 export function hoverWash(dark: boolean) {
   return surfaceWash(dark, dark ? 0.11 : 0.06);
+}
+
+/** The window shell: a step away from the page background, the sidebar's fill. */
+export function shellFill(colors: { background: string }, dark: boolean) {
+  return mixHex(colors.background, dark ? "#ffffff" : "#000000", 0.03);
+}
+
+/** A raised surface: the selected sidebar row, a card above the page. */
+export function raisedFill(colors: { background: string }, dark: boolean) {
+  return mixHex(colors.background, dark ? "#ffffff" : "#000000", dark ? 0.065 : 0.04);
 }
 
 export function titlebarControlTop(size: number) {
@@ -166,7 +188,7 @@ export function TitlebarOverlay(props: {
     {drawCaptions && <View class="absolute right-0 top-0 flex-row" desktop={{ windowDrag: false }} style={{ height: TITLEBAR_HEIGHT }}>
       <View onPress={() => DesktopWindow.minimize()} role="button" accessibilityLabel="Свернуть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowMin" color={props.colors.foreground} size={12} /></View>
       <View onPress={() => DesktopWindow.toggleMaximize()} role="button" accessibilityLabel="Развернуть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowMax" color={props.colors.foreground} size={12} /></View>
-      <View onPress={() => DesktopWindow.close()} onHoverIn={() => closeHovered.set(true)} onHoverOut={() => closeHovered.set(false)} role="button" accessibilityLabel="Закрыть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: "#e81123" }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowClose" color={closeHovered() ? "#ffffff" : props.colors.foreground} size={12} /></View>
+      <View onPress={() => DesktopWindow.close()} onMouseEnter={() => closeHovered.set(true)} onMouseLeave={() => closeHovered.set(false)} role="button" accessibilityLabel="Закрыть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: "#e81123" }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowClose" color={closeHovered() ? "#ffffff" : props.colors.foreground} size={12} /></View>
     </View>}
   </View>;
 }
@@ -180,9 +202,9 @@ export function SidebarRow(props: {
   onPress: () => void;
 }) {
   const wash = hoverWash(props.dark);
-  return <View onPress={props.onPress} role="button" accessibilityState={{ selected: props.selected }} class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: ROW_HEIGHT, gap: 8, paddingLeft: 8, paddingRight: 8, borderRadius: ROW_RADIUS, backgroundColor: props.selected ? wash : "transparent", cursor: "pointer" }}>
+  return <View onPress={props.onPress} role="button" accessibilityState={{ selected: props.selected }} class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: NAV_ROW_HEIGHT, gap: 10, paddingLeft: 10, paddingRight: 10, borderRadius: NAV_ROW_RADIUS, backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent", cursor: "pointer" }}>
     <SharedIcon name={props.icon} size={16} color={props.colors.foreground} />
-    <Text class="text-[13px]" style={{ color: props.colors.foreground }}>{props.label}</Text>
+    <Text class="text-[14px]" style={{ color: props.colors.foreground, fontWeight: 500, lineHeight: 20 }}>{props.label}</Text>
   </View>;
 }
 

@@ -3,16 +3,18 @@ import { previewThemes, systemAccent } from "./themes";
 
 export type Route = "journal" | "tasks" | "settings";
 export type Todo = { id: string; title: string; is_completed: boolean; scheduled_date?: string; notes?: string };
-export type JournalEntry = { id: string; text: string; createdAt: string };
+/** A voice note: Opus in base64, plus what the bubble draws. */
+export type JournalVoice = { durationMs: number; peaks: number[]; data: string };
+export type JournalEntry = { id: string; text: string; createdAt: string; voice?: JournalVoice };
 export type AtlasTheme = { key: string; name: string; light: ThemeColors; dark: ThemeColors };
 export type Snapshot = { route: Route; title: string; todos: Todo[]; journalEntries: JournalEntry[]; version: string; appearance?: Appearance; appearanceEditable: boolean; themes: AtlasTheme[]; colors: ThemeColors; sidebarVisible: boolean; chrome: "native" | "tsx" };
 
-export const fallback: Snapshot = { route: "journal", title: "Дневник", todos: [], journalEntries: [], version: "", appearance: { settings: { mode: "dark", light_theme: "default", dark_theme: "default", accent_source: "theme", material: "default", font_size: 13, font_family: "Inter" }, policy: { following: false }, capabilities: { materials: ["default", "frosted", "mica"], wallpaper_accent: false } }, appearanceEditable: false, themes: previewThemes, colors: previewThemes[0].dark, sidebarVisible: true, chrome: "tsx" };
+export const fallback: Snapshot = { route: "journal", title: "Дневник", todos: [], journalEntries: [], version: "", appearance: { settings: { mode: "dark", light_theme: "cobalt-foundry", dark_theme: "cobalt-foundry", accent_source: "theme", material: "default", font_size: 13, font_family: "Inter" }, policy: { following: false }, capabilities: { materials: ["default", "frosted", "mica"], wallpaper_accent: false } }, appearanceEditable: false, themes: previewThemes, colors: previewThemes[0].dark, sidebarVisible: true, chrome: "tsx" };
 
 export function resolveAppearanceColors(appearance: Appearance, themes: AtlasTheme[], fallbackColors: ThemeColors): ThemeColors {
   const settings = appearance.settings;
   const dark = settings.mode !== "light";
-  const theme = themes.find((item) => item.key === "default") ?? themes[0];
+  const theme = themes.find((item) => item.key === "cobalt-foundry") ?? themes[0];
   const themeColors = theme?.[dark ? "dark" : "light"] ?? fallbackColors;
   if (settings.accent_source === "wallpaper") return { ...themeColors, accent: fallbackColors.accent };
   const custom = settings.accent_source === "custom" ? systemAccent(settings.accent_color, dark) : undefined;
@@ -46,7 +48,15 @@ function isJournalEntry(value: unknown): value is JournalEntry {
   return typeof value === "object" && value !== null
     && "id" in value && typeof value.id === "string"
     && "text" in value && typeof value.text === "string"
-    && "createdAt" in value && typeof value.createdAt === "string";
+    && "createdAt" in value && typeof value.createdAt === "string"
+    && (!("voice" in value) || value.voice === undefined || isJournalVoice(value.voice));
+}
+
+export function isJournalVoice(value: unknown): value is JournalVoice {
+  return typeof value === "object" && value !== null
+    && "durationMs" in value && typeof value.durationMs === "number"
+    && "data" in value && typeof value.data === "string"
+    && "peaks" in value && Array.isArray(value.peaks) && value.peaks.every((peak) => typeof peak === "number");
 }
 
 function isColors(value: unknown): value is ThemeColors {

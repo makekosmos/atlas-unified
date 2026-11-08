@@ -20,6 +20,13 @@ serde_json = "1.0.154"
 uuid = { version = "1.28.0", features = ["v4"] }
 ureq = { version = "2.12", default-features = false, features = ["json"] }
 tungstenite = { version = "0.28", default-features = false, features = ["handshake"] }
+cpal = "0.18.2"
+audiopus = "0.2.0"
+base64 = "0.23.1"
+wgpu = "29.0.4"
+pollster = "1.0.1"
+anyhow = "1.0.104"
+image = { version = "0.25.10", default-features = false }
 
 # a11y-tree + UI autotests: #[gpui::test] + TestAppContext/VisualTestContext
 # live behind gpui's test-support feature (deterministic executors, test

@@ -13,8 +13,10 @@ function colors(background: string, foreground: string, muted: string, border: s
 const BLUE_LIGHT = "#1e86fc";
 const BLUE_DARK = "#1784fc";
 
+// Cobalt Foundry — the palette Atlas wears: forged steel greys lit by a cobalt
+// arc, the same scheme `imago-nsh/ui/palettes.ts` ships.
 export const previewThemes: PreviewTheme[] = [
-  { key: "default", name: "Default", light: colors("#f8f7f9", "#222027", "#615f67", "#dedde0", BLUE_LIGHT, "#f3f2f4"), dark: colors("#0d0c10", "#e7e5ea", "#8d8a94", "#27262a", BLUE_DARK, "#131216") },
+  { key: "cobalt-foundry", name: "Cobalt Foundry", light: colors("#f7f8fa", "#111820", "#5f6a7a", "#dde2ea", "#1f6df5", "#ffffff"), dark: colors("#090c15", "#ffffff", "#717580", "#1e222b", "#1784fc", "#101318") },
 ];
 
 export const systemAccents: { key: string; name: string; darkName?: string; light: string; dark: string; plate: string; legacy: string[] }[] = [

@@ -1,5 +1,6 @@
 import { expect, open, test } from "nsh/test";
-import { SIDEBAR_MOTION_MS, SIDEBAR_WIDTH, animateSidebar, drawsCaptionButtons, navInk, sidebarFrame, sidebarWidthAt, titlebarControlTop } from "./chrome";
+import { voiceBarHeight } from "./JournalPage";
+import { SIDEBAR_HIDE_MS, SIDEBAR_MOTION_MS, SIDEBAR_OPEN_MS, SIDEBAR_WIDTH, animateSidebar, drawsCaptionButtons, navInk, sidebarFrame, sidebarWidthAt, titlebarControlTop } from "./chrome";
 import { composerFadeEdges, journalDateDelay } from "./JournalPage";
 import { buildCalendarDays, buildJournalDays, closestJournalDay, formatJournalDay, formatJournalStamp } from "./journal-model";
 import { fallback, resolveAppearanceColors } from "./state";
@@ -225,15 +226,15 @@ test("keeps every sidebar row on the same ink", () => {
 });
 
 test("one theme keeps Apple accents saturated in both modes", () => {
-  expect(fallback.themes.map((theme) => theme.key).join(",")).toEqual("default");
+  expect(fallback.themes.map((theme) => theme.key).join(",")).toEqual("cobalt-foundry");
   const appearance = fallback.appearance;
   if (!appearance) throw new Error("fallback appearance");
   const dark = resolveAppearanceColors(appearance, fallback.themes, fallback.colors);
   const light = resolveAppearanceColors({ ...appearance, settings: { ...appearance.settings, mode: "light" } }, fallback.themes, fallback.colors);
-  expect(dark.background).toEqual("#0d0c10");
-  expect(light.background).toEqual("#f8f7f9");
+  expect(dark.background).toEqual("#090c15");
+  expect(light.background).toEqual("#f7f8fa");
   expect(dark.accent).toEqual("#1784fc");
-  expect(light.accent).toEqual("#1e86fc");
+  expect(light.accent).toEqual("#1f6df5");
   const red = { ...appearance, settings: { ...appearance.settings, accent_source: "custom" as const, accent_color: "#e74347" } };
   expect(resolveAppearanceColors(red, fallback.themes, fallback.colors).accent).toEqual("#fc2d3e");
   expect(resolveAppearanceColors({ ...red, settings: { ...red.settings, mode: "light" } }, fallback.themes, fallback.colors).accent).toEqual("#fb2c3f");
@@ -259,6 +260,20 @@ test("reverses the sidebar from wherever the width is", () => {
   animateSidebar(true, started + SIDEBAR_MOTION_MS / 2);
   expect(sidebarFrame(started + SIDEBAR_MOTION_MS / 2)).toEqual(painted);
   expect(sidebarFrame(started + SIDEBAR_MOTION_MS / 2 + SIDEBAR_MOTION_MS)).toEqual(SIDEBAR_WIDTH);
+});
+
+test("lifts a recorded bar with the voice", () => {
+  expect(voiceBarHeight(0)).toEqual(3);
+  expect(voiceBarHeight(20)).toBeGreaterThanOrEqual(9);
+  expect(voiceBarHeight(45)).toBeGreaterThanOrEqual(14);
+  expect(voiceBarHeight(100)).toEqual(20);
+  expect(voiceBarHeight(30)).toBeGreaterThan(voiceBarHeight(20));
+  expect(voiceBarHeight(120)).toEqual(20);
+});
+
+test("opens the sidebar 1.5 times faster than it hides", () => {
+  expect(SIDEBAR_HIDE_MS / SIDEBAR_OPEN_MS).toEqual(1.5);
+  expect(SIDEBAR_HIDE_MS).toBeLessThan(200);
 });
 
 test("toggles the sidebar from the keyboard without the engine", async () => {

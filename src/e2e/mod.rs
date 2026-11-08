@@ -12,6 +12,7 @@ use gpui::{AnyWindowHandle, App, AsyncApp, Entity};
 mod capture;
 mod nsh_host;
 mod nsh_stage3;
+mod nsh_voice;
 
 pub fn requested() -> bool {
     std::env::var("ATLAS_E2E").is_ok()
@@ -30,6 +31,8 @@ pub fn run(window: AnyWindowHandle, agenda: Entity<Atlas>, cx: &mut App) {
     cx.spawn(async move |cx| {
         if std::env::var("ATLAS_E2E").as_deref() == Ok("nsh-stage3") {
             run.nsh_stage3(cx).await;
+        } else if std::env::var("ATLAS_E2E").as_deref() == Ok("nsh-voice") {
+            nsh_voice::run(&run, cx).await;
         } else {
             run.shot(cx, "journal").await;
         }
@@ -90,6 +93,10 @@ impl Run {
 
     pub(super) async fn nsh_stage3(&self, cx: &mut AsyncApp) {
         nsh_stage3::run(self, cx).await;
+    }
+
+    pub(super) async fn nsh_voice(&self, cx: &mut AsyncApp) {
+        nsh_voice::run(self, cx).await;
     }
 
     fn finish(&self) -> bool {
