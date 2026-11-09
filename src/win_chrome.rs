@@ -38,6 +38,86 @@ pub(crate) fn request_close(window: &mut Window) {
     window.remove_window();
 }
 
+/// Keeps one Atlas window: a second launch focuses the running window and
+/// exits instead of stacking another one on top of it (two windows look like
+/// two sets of title-bar controls). `ATLAS_ALLOW_MULTIPLE=1` opts out.
+///
+/// The name is scoped to this executable, so an installed Atlas and a debug
+/// build do not fight over it.
+pub(crate) fn claim_single_instance() -> bool {
+    if std::env::var("ATLAS_ALLOW_MULTIPLE").is_ok() {
+        return true;
+    }
+    #[cfg(windows)]
+    {
+        windows_instance::claim()
+    }
+    #[cfg(not(windows))]
+    {
+        true
+    }
+}
+
+#[cfg(windows)]
+mod windows_instance {
+    use std::ffi::c_void;
+
+    const ERROR_ALREADY_EXISTS: u32 = 183;
+    const SW_RESTORE: i32 = 9;
+
+    fn mutex_name() -> Vec<u16> {
+        // One mutex per executable: a debug build and an installed one are
+        // different apps for this purpose.
+        let path = std::env::current_exe()
+            .map(|path| path.to_string_lossy().to_lowercase())
+            .unwrap_or_else(|_| "atlas".into());
+        let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+        for byte in path.as_bytes() {
+            hash ^= u64::from(*byte);
+            hash = hash.wrapping_mul(0x100_0000_01b3);
+        }
+        let mut name: Vec<u16> = format!("Local\\MundusAtlas-{hash:016x}")
+            .encode_utf16()
+            .collect();
+        name.push(0);
+        name
+    }
+
+    fn title() -> Vec<u16> {
+        let mut title: Vec<u16> = "Atlas".encode_utf16().collect();
+        title.push(0);
+        title
+    }
+
+    pub(super) fn claim() -> bool {
+        let name = mutex_name();
+        unsafe {
+            let handle = CreateMutexW(std::ptr::null_mut(), 0, name.as_ptr());
+            if handle.is_null() {
+                return true;
+            }
+            if GetLastError() != ERROR_ALREADY_EXISTS {
+                // Stays open for the life of the process, which is the point.
+                return true;
+            }
+            let window = FindWindowW(std::ptr::null(), title().as_ptr());
+            if !window.is_null() {
+                ShowWindowAsync(window, SW_RESTORE);
+                SetForegroundWindow(window);
+            }
+            false
+        }
+    }
+
+    unsafe extern "system" {
+        fn CreateMutexW(attributes: *mut c_void, owner: i32, name: *const u16) -> *mut c_void;
+        fn GetLastError() -> u32;
+        fn FindWindowW(class: *const u16, window: *const u16) -> *mut c_void;
+        fn ShowWindowAsync(window: *mut c_void, command: i32) -> i32;
+        fn SetForegroundWindow(window: *mut c_void) -> i32;
+    }
+}
+
 #[cfg(windows)]
 fn hwnd(window: &Window) -> Option<*mut std::ffi::c_void> {
     use raw_window_handle::{HasWindowHandle, RawWindowHandle};

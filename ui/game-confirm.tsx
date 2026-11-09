@@ -25,7 +25,7 @@ export function ConfirmGameDialog(props: { colors: ThemeColors }) {
   </View>;
   return <Modal title="Добавить игру" colors={props.colors} onDismiss={gameLibrary.cancelConfirm} onBack={gameLibrary.cancelConfirm} width={460} footer={footer}>
     <Text class="mb-2 text-[12px]" style={{ color: props.colors.muted }}>Поправь название, если угадалось неверно.</Text>
-    <Input value={pending.title} onChange={gameLibrary.editPendingTitle} accessibilityLabel="Название игры" class="h-10 rounded-[10px] px-3 text-[13px]" style={{ backgroundColor: props.colors.background, color: props.colors.foreground }} />
+    <Input value={pending.title} onChange={(e) => gameLibrary.editPendingTitle(e.value)} accessibilityLabel="Название игры" class="h-10 rounded-[10px] px-3 text-[13px]" style={{ backgroundColor: props.colors.background, color: props.colors.foreground }} />
     <View class="mt-3 rounded-[10px] p-3" style={{ backgroundColor: props.colors.background }}>
       <Text class="text-[11px]" style={{ color: props.colors.muted }}>Запускается</Text>
       <Text class="mt-1 text-[12px]" style={{ color: props.colors.foreground }}>{pending.path}</Text>

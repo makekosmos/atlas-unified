@@ -3394,7 +3394,7 @@ function ConfirmGameDialog(props) {
 				(() => {
 					const __nsh_hv4 = element("input");
 					bindProp(__nsh_hv4, "value", () => pending.title);
-					bindProp(__nsh_hv4, "onChange", () => gameLibrary.editPendingTitle);
+					prop(__nsh_hv4, "onChange", (e) => gameLibrary.editPendingTitle(e.value));
 					prop(__nsh_hv4, "accessibilityLabel", "Название игры");
 					prop(__nsh_hv4, "class", "h-10 rounded-[10px] px-3 text-[13px]");
 					bindProp(__nsh_hv4, "style", () => ({
@@ -3478,7 +3478,7 @@ function GameDetailsDialog(props) {
 		prop(__nsh_hv1, "style", { gap: 10 });
 		const __nsh_hv2 = element("input");
 		bindProp(__nsh_hv2, "value", () => imageSource());
-		prop(__nsh_hv2, "onChange", (value) => imageSource.set(value));
+		prop(__nsh_hv2, "onChange", (e) => imageSource.set(e.value));
 		prop(__nsh_hv2, "placeholder", "URL или путь к картинке");
 		prop(__nsh_hv2, "accessibilityLabel", "URL или путь к своей картинке");
 		prop(__nsh_hv2, "class", "h-9 min-w-0 flex-1 rounded-lg px-3 text-[12px]");
@@ -3702,7 +3702,7 @@ function GamesLibrary(props) {
 		prop(__nsh_hv1, "class", "flex-row items-center px-7 pt-3");
 		const __nsh_hv2 = element("input");
 		bindProp(__nsh_hv2, "value", () => searchQuery());
-		prop(__nsh_hv2, "onChange", (value) => searchQuery.set(value));
+		prop(__nsh_hv2, "onChange", (e) => searchQuery.set(e.value));
 		prop(__nsh_hv2, "placeholder", "Поиск игр");
 		prop(__nsh_hv2, "accessibilityLabel", "Поиск игр");
 		prop(__nsh_hv2, "class", "h-9 min-w-0 flex-1 rounded-lg px-3 text-[13px]");
@@ -4398,7 +4398,7 @@ function App() {
 					return (() => {
 						const __nsh_hv22 = element("input");
 						bindProp(__nsh_hv22, "value", () => newTaskTitle());
-						prop(__nsh_hv22, "onChange", (value) => newTaskTitle.set(value));
+						prop(__nsh_hv22, "onChange", (e) => newTaskTitle.set(e.value));
 						prop(__nsh_hv22, "onSubmit", (event) => {
 							createTodo(event.text);
 							addTaskOpen.set(false);

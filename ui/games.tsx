@@ -83,7 +83,7 @@ export function GamesLibrary(props: { colors: ThemeColors; pickedExes: string[];
   });
   return <View class="flex-1" onFileDrop={(event) => { const path = pathFromDrop(event.uris[0] ?? ""); if (path) { fromDrop.set(true); props.onPick(path); } }}>
     <View class="flex-row items-center px-7 pt-3">
-      <Input value={searchQuery()} onChange={(value) => searchQuery.set(value)} placeholder="Поиск игр" accessibilityLabel="Поиск игр" class="h-9 min-w-0 flex-1 rounded-lg px-3 text-[13px]" style={{ backgroundColor: props.colors.card, color: props.colors.foreground, placeholderColor: props.colors.muted }} />
+      <Input value={searchQuery()} onChange={(e) => searchQuery.set(e.value)} placeholder="Поиск игр" accessibilityLabel="Поиск игр" class="h-9 min-w-0 flex-1 rounded-lg px-3 text-[13px]" style={{ backgroundColor: props.colors.card, color: props.colors.foreground, placeholderColor: props.colors.muted }} />
     </View>
     {gameLibrary.launchError() && <Text class="px-7 pt-2 text-[11px]" style={{ color: props.colors.muted }}>{gameLibrary.launchError()}</Text>}
     {visibleCards().length === 0 && <View class="flex-1 items-center justify-center px-7">

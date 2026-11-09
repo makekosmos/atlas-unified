@@ -321,7 +321,7 @@ function App() {
             <SharedButton label="Добавить" colors={snapshot().colors} onPress={() => { createTodo(newTaskTitle()); addTaskOpen.set(false); }} selected className="h-9 items-center justify-center px-3 py-0" style={{ backgroundColor: snapshot().colors.accent, borderColor: "transparent" }} textColor={snapshot().colors.background} />
           </View>
         }>
-          <Input value={newTaskTitle()} onChange={(value) => newTaskTitle.set(value)} onSubmit={(event) => { createTodo(event.text); addTaskOpen.set(false); }} placeholder="Название задачи" accessibilityLabel="Название задачи" class="h-10 rounded-lg px-3 text-[13px]" style={{ backgroundColor: snapshot().colors.background, color: snapshot().colors.foreground }} />
+          <Input value={newTaskTitle()} onChange={(e) => newTaskTitle.set(e.value)} onSubmit={(event) => { createTodo(event.text); addTaskOpen.set(false); }} placeholder="Название задачи" accessibilityLabel="Название задачи" class="h-10 rounded-lg px-3 text-[13px]" style={{ backgroundColor: snapshot().colors.background, color: snapshot().colors.foreground }} />
         </Modal>}
       </View>
       </View>

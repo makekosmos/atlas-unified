@@ -34,7 +34,7 @@ export function GameDetailsDialog(props: { card: GameCard; colors: ThemeColors; 
   const developers = props.card.developers?.join(" · ") || "неизвестен";
   const publishers = props.card.publishers?.join(" · ") || "неизвестен";
   const footer = <View class="flex-row items-center justify-between" style={{ gap: 10 }}>
-    <Input value={imageSource()} onChange={(value) => imageSource.set(value)} placeholder="URL или путь к картинке" accessibilityLabel="URL или путь к своей картинке" class="h-9 min-w-0 flex-1 rounded-lg px-3 text-[12px]" style={{ backgroundColor: props.colors.background, color: props.colors.foreground }} />
+    <Input value={imageSource()} onChange={(e) => imageSource.set(e.value)} placeholder="URL или путь к картинке" accessibilityLabel="URL или путь к своей картинке" class="h-9 min-w-0 flex-1 rounded-lg px-3 text-[12px]" style={{ backgroundColor: props.colors.background, color: props.colors.foreground }} />
     <SharedButton label="Сохранить" colors={props.colors} onPress={() => { const source = imageSource().trim(); if (source) props.onSetImage(source); }} className="h-9 items-center justify-center px-3 py-0" />
   </View>;
   return <Modal title={props.card.title} colors={props.colors} onDismiss={props.onClose} width={520} footer={footer}>

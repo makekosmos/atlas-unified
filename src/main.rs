@@ -158,6 +158,10 @@ fn main() {
         win_chrome::trace(&format!("panic {info}"));
     }));
     win_chrome::trace("start");
+    if !win_chrome::claim_single_instance() {
+        win_chrome::trace("start: another Atlas is already running");
+        return;
+    }
     gpui::application().run(|cx: &mut App| {
         gpui_component::init(cx);
         cx.text_system()
