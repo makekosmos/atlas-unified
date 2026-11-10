@@ -99,6 +99,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang libfontconfig-dev libwayland-dev libxkbcommon-x11-dev libx11-xcb-dev libssl-dev libzstd-dev libvulkan1
+      - name: macOS build tools for Opus
+        if: runner.os == 'macOS'
+        run: brew install autoconf automake libtool
       - name: macOS SDK and Metal compiler
         if: runner.os == 'macOS'
         run: |
