@@ -26,6 +26,8 @@ const COMPOSER_PAD_X = 16;
 const COMPOSER_PAD_Y = 12;
 const COMPOSER_MAX_CONTENT = 132;
 const COMPOSER_MAX_HEIGHT = 168;
+const CARET_WIDTH = 2;
+const CARET_BLINK_MS = 500;
 const COMPOSER_FADE = 20;
 const BUBBLE_RADIUS = 18;
 const FEED_PAD = 16;
@@ -89,6 +91,8 @@ const journalDraftContentHeight = signal(COMPOSER_LINE);
 const journalFocused = signal(false);
 const journalSelection = signal({ start: 0, end: 0 });
 const journalCaret = signal({ x: COMPOSER_PAD_X, y: COMPOSER_PAD_Y, height: COMPOSER_LINE });
+const journalCaretOn = signal(true);
+const journalCaretTick = signal(0);
 const journalScrollY = signal(0);
 const editingJournalId = signal<string | null>(null);
 const editingJournalText = signal("");
@@ -204,11 +208,17 @@ function placeCaret(bounds: { origin: { x: number; y: number }; size: { height: 
   const height = bounds.size.height;
   if (height <= 0) return;
   journalCaret.set({ x: bounds.origin.x, y: bounds.origin.y, height });
+  journalCaretOn.set(true);
+  journalCaretTick.update((n) => n + 1);
 }
 
 function composerSelecting() {
   const range = journalSelection();
   return range.start !== range.end;
+}
+
+function composerCaretShown() {
+  return journalFocused() && !composerSelecting() && journalCaretOn();
 }
 
 function animateSend() {
@@ -353,6 +363,16 @@ export function JournalPage(props: {
     return () => journalFocused.set(false);
   });
   effect(() => {
+    if (!journalFocused()) return;
+    journalCaretTick();
+    journalCaretOn.set(true);
+    let timer = setTimeout(function tick() {
+      journalCaretOn.update((on) => !on);
+      timer = setTimeout(tick, CARET_BLINK_MS);
+    }, CARET_BLINK_MS);
+    return () => clearTimeout(timer);
+  });
+  effect(() => {
     const recording = props.recording();
     if (recording) {
       stopScopeExit();
@@ -377,6 +397,8 @@ export function JournalPage(props: {
     journalScrollY.set(0);
     composerScrollRef?.scrollTo({ y: 0, animated: false });
     journalCaret.set({ x: COMPOSER_PAD_X, y: COMPOSER_PAD_Y, height: COMPOSER_LINE });
+    journalCaretOn.set(true);
+    journalCaretTick.update((n) => n + 1);
     composerRef?.focus();
   };
 
@@ -406,7 +428,8 @@ export function JournalPage(props: {
           {!props.recording() && <View class="relative min-w-0 flex-1 overflow-hidden" style={{ height: composerViewportHeight() }}>
             <Scroll ref={(node) => { composerScrollRef = node; }} scrollbar={false} onScroll={(event) => journalScrollY.set(event.offset.y)} class="w-full" style={{ height: composerViewportHeight() }}>
               <View class="relative w-full" style={{ height: composerInputHeight() }}>
-                <Input ref={(node) => { composerRef = node; }} autoFocus value={journalDraft()} onChange={(e) => journalDraft.set(e.value)} onContentSizeChange={({ size }) => { const raw = Math.max(COMPOSER_LINE, Math.round(size.height)); if (raw === journalDraftContentHeight()) return; if (clampDraftHeight(raw) !== clampDraftHeight(journalDraftContentHeight())) animateComposer(); journalDraftContentHeight.set(raw); revealComposer(journalCaret()); }} onCaretMove={(event) => { placeCaret(event.bounds); revealComposer(journalCaret()); }} onSelectionChange={(range) => journalSelection.set(range)} onFocus={() => journalFocused.set(true)} onBlur={() => journalFocused.set(false)} onSubmit={(event) => send(event.text)} multiline={true} submitBehavior="submit" placeholder="Запись в дневник…" accessibilityLabel="Новая запись в дневник" class="min-w-0 w-full text-[15px]" style={{ height: composerInputHeight(), fontSize: 15, lineHeight: COMPOSER_LINE, paddingLeft: COMPOSER_PAD_X, paddingRight: 8, paddingTop: COMPOSER_PAD_Y, paddingBottom: COMPOSER_PAD_Y, placeholderColor: props.colors.muted, selectionColor: colorAlpha(props.colors.accent, props.dark ? 0.35 : 0.24), backgroundColor: "transparent", color: props.colors.foreground }} />
+                <Input ref={(node) => { composerRef = node; }} autoFocus value={journalDraft()} onChange={(e) => journalDraft.set(e.value)} onContentSizeChange={({ size }) => { const raw = Math.max(COMPOSER_LINE, Math.round(size.height)); if (raw === journalDraftContentHeight()) return; if (clampDraftHeight(raw) !== clampDraftHeight(journalDraftContentHeight())) animateComposer(); journalDraftContentHeight.set(raw); revealComposer(journalCaret()); }} onCaretMove={(event) => { placeCaret(event.bounds); revealComposer(journalCaret()); }} onSelectionChange={(range) => journalSelection.set(range)} onFocus={() => journalFocused.set(true)} onBlur={() => journalFocused.set(false)} onSubmit={(event) => send(event.text)} multiline={true} submitBehavior="submit" caret={false} placeholder="Запись в дневник…" accessibilityLabel="Новая запись в дневник" class="min-w-0 w-full text-[15px]" style={{ height: composerInputHeight(), fontSize: 15, lineHeight: COMPOSER_LINE, paddingLeft: COMPOSER_PAD_X, paddingRight: 8, paddingTop: COMPOSER_PAD_Y, paddingBottom: COMPOSER_PAD_Y, placeholderColor: props.colors.muted, selectionColor: colorAlpha(props.colors.accent, props.dark ? 0.35 : 0.24), backgroundColor: "transparent", color: props.colors.foreground }} />
+                <View class="absolute" style={{ pointerEvents: "none", left: journalCaret().x, top: journalCaret().y, width: CARET_WIDTH, height: journalCaret().height, backgroundColor: props.colors.accent, opacity: composerCaretShown() ? 1 : 0, zIndex: 1 }} />
               </View>
             </Scroll>
             {composerFadeTop() && <View class="absolute left-0 right-0 top-0" style={{ pointerEvents: "none", height: COMPOSER_FADE, backgroundImage: `linear-gradient(to bottom, ${props.colors.card}, ${colorAlpha(props.colors.card, 0)})`, zIndex: 2 }} />}
