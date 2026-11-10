@@ -1,5 +1,6 @@
 import { effect, host, mount, Scroll, signal, Text, View, nativeComponent, keymap } from "nsh";
 import { Input } from "nsh/base";
+import { Menu } from "nsh/desktop";
 import { Window as DesktopWindow } from "nsh/desktop";
 import { Icon as SharedIcon, Button as SharedButton } from "@makekosmos/imago-nsh";
 import type { Appearance, IconName } from "@makekosmos/imago-nsh";
@@ -9,7 +10,7 @@ import { cycleShortcut, shortcutOptions, shortcuts } from "./app-shortcuts";
 import { previewThemes } from "./themes";
 import type { JournalEntry, JournalVoice, Note, Route, Snapshot } from "./state";
 import { JournalPage, markJournalArriving } from "./JournalPage";
-import { addNote, bindNoteCommands, closeOpenNote, createOpenNote, hasOpenNote, notes, NotesPage, openNoteById, openNoteTitle, removeOpenNote, renameOpenNote, setNotes } from "./notes";
+import { addNote, bindNoteCommands, closeOpenNote, codeLanguages, createOpenNote, openCodeLanguage, pickCodeLanguage, hasOpenNote, notes, NotesPage, openNoteById, openNoteTitle, removeOpenNote, renameOpenNote, setNotes } from "./notes";
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
 import { GamesLibrary, GamesSettings, livePrograms } from "./games";
 import { SettingsPage as SettingsPageScroll, WidgetsSection } from "./settings";
@@ -402,6 +403,8 @@ function App() {
         dimmed={addTaskOpen() || gameLibrary.addOpen() || pickedExes().length > 1}
         noteActive={route() === "notes" && hasOpenNote()}
         noteTitle={route() === "notes" ? openNoteTitle() : ""}
+        codeLanguage={route() === "notes" ? openCodeLanguage() : ""}
+        onPickLanguage={(at) => { void Menu.popup(codeLanguages.map(([value, label]) => ({ label, onSelect: () => pickCodeLanguage(value) })), at); }}
         onRenameNote={renameOpenNote}
         onCloseNote={closeOpenNote}
         onDeleteNote={removeOpenNote}

@@ -65,3 +65,11 @@ test("every token kind has a colour in both themes", () => {
     }
   }
 });
+
+// The menu names a language by its fence: every choice has to be one the
+// scanner reads, or the block would stay plain after the pick.
+test("every language the menu offers is one the scanner reads", () => {
+  for (const name of ["rust", "ts", "js", "python", "json", "bash", "sql", "go", "html", "css", "markdown"]) {
+    expect(languageOf(name)).toEqual(name === "js" || name === "ts" ? name : name);
+  }
+});

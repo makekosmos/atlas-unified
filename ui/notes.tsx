@@ -106,6 +106,29 @@ export const notes = signal<Note[]>([]);
 /// The editor is made again for every note, and the view with it: the component
 /// takes its session once, when it is made.
 const editorVersion = signal(0);
+/// The language of the code block the caret sits in, named in the title bar:
+/// a block of code says what it is without a word inside it.
+const codeLanguage = signal("");
+const codeBlockPos = signal<number | null>(null);
+export const openCodeLanguage = () => codeLanguage();
+
+/// The languages the app knows, as a menu names them.
+export const codeLanguages: [string, string][] = [
+  ["rust", "Rust"], ["ts", "TypeScript"], ["js", "JavaScript"], ["python", "Python"],
+  ["json", "JSON"], ["bash", "Bash"], ["sql", "SQL"], ["go", "Go"],
+  ["html", "HTML"], ["css", "CSS"], ["markdown", "Markdown"], ["", "Простой текст"],
+];
+
+/// Names the block under the caret: the same attribute the scanner reads.
+export function pickCodeLanguage(language: string) {
+  const live = editor;
+  const pos = codeBlockPos();
+  if (!live || pos === null) return;
+  live.setNodeAttribute(pos, "language", language);
+  paintCode();
+  syncCodeLanguage();
+}
+
 /// The plugin the code block's colours are handed to.
 const highlight = new RichEditorPlugin("highlight");
 /// The theme the code colours were picked for, so a switch repaints them.
@@ -205,6 +228,22 @@ function paintNodes(nodes: unknown[], from: number, palette: Record<TokenKind, s
   return at;
 }
 
+/// Reads the language of the block under the caret, for the title bar.
+function syncCodeLanguage() {
+  const live = editor;
+  if (!live) {
+    codeLanguage.set("");
+    return;
+  }
+  const found = live.findParentNode("codeBlock") as { pos?: number; node?: { attrs?: { language?: string } } } | null;
+  // A press on the title bar's badge takes the focus off the editor for a
+  // moment: the last block stays the one the menu renames.
+  if (typeof found?.pos === "number") codeBlockPos.set(found.pos);
+  const named = found?.node?.attrs?.language;
+  const known = named ? languageOf(named) : "";
+  codeLanguage.set(known || (named ? String(named) : ""));
+}
+
 /// Colours the code blocks of the open note, once its text has settled.
 function paintCode() {
   const live = editor;
@@ -232,6 +271,9 @@ function open(note: Note | null) {
     const taker = new RichEditorPlugin("slash-keys");
     taker.captureKeys(["ArrowUp", "ArrowDown", "Enter", "Tab", "Escape"], (key) => onSlashKey(key));
     const made = makeEditor(note, taker);
+    made.on("selectionUpdate", () => {
+      syncCodeLanguage();
+    });
     made.on("revision", () => {
       scheduleSave();
       // The suggestion state lands with the transaction: reading it a second
@@ -251,6 +293,7 @@ function open(note: Note | null) {
     // same one, and this way they are there on the first frame.
     outline.set(headingsOf(documentOf(note.doc)));
     paintCode();
+    syncCodeLanguage();
   } else {
     outline.set([]);
   }
