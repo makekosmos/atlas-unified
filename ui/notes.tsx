@@ -52,6 +52,10 @@ const CARD_GAP = 16;
 const CARD_RATIO = 264 / 236;
 /// How many heading marks the rails show, as AnyType's table of contents does.
 const OUTLINE_LIMIT = 50;
+/// The outline hugs the window's right edge the way AnyType does: a narrow
+/// strip of marks, close enough that the pointer finds them without aiming.
+const RAIL_INSET = 12;
+const RAIL_WIDTH = 22;
 /// Beyond five columns a card stops reading as a page.
 const CARD_MAX_COLUMNS = 5;
 /// How many cards stagger in on the first paint: a card that scrolls into view
@@ -176,6 +180,10 @@ function open(note: Note | null) {
     });
     editor = made;
     keyTaker = taker;
+    // What is on disk already: a caret move must not look like an edit and
+    // send the library back through the host.
+    savedBody = JSON.stringify(made.getJSON());
+    savedTitle = text(note.title);
     // The rails come from the note's own document: the session's copy is the
     // same one, and this way they are there on the first frame.
     outline.set(headingsOf(documentOf(note.doc)));
@@ -280,7 +288,15 @@ function scheduleOutline() {
   if (outlineTimer) clearTimeout(outlineTimer);
   outlineTimer = setTimeout(() => {
     outlineTimer = null;
-    if (editor) outline.set(headingsOf(editor.getJSON()));
+    if (!editor) return;
+    const next = headingsOf(editor.getJSON());
+    const current = outline();
+    // A caret move fires a revision too: only a changed outline re-renders.
+    const same = next.length === current.length && next.every((mark, index) => {
+      const old = current[index];
+      return mark.pos === old.pos && mark.text === old.text && mark.level === old.level;
+    });
+    if (!same) outline.set(next);
   }, 320);
 }
 
@@ -393,6 +409,11 @@ function scheduleSave() {
   saveTimer = setTimeout(flushSave, SAVE_DELAY_MS);
 }
 
+/// The document and title as they were last written: a revision fires on a
+/// caret move too, and saving then would refresh the whole library.
+let savedBody = "";
+let savedTitle = "";
+
 function flushSave() {
   if (saveTimer) {
     clearTimeout(saveTimer);
@@ -401,10 +422,17 @@ function flushSave() {
   if (!dirty()) return;
   const note = selected();
   if (!note || !editor) return;
-  dirty.set(false);
   const title = draftTitle().trim() || "Без названия";
   const doc = editor.getJSON();
   const body = editor.getText();
+  const serialized = JSON.stringify(doc);
+  if (serialized === savedBody && title === savedTitle) {
+    dirty.set(false);
+    return;
+  }
+  savedBody = serialized;
+  savedTitle = title;
+  dirty.set(false);
   notes.set(notes().map((item) => (text(item.id) === text(note.id) ? { ...item, title, text: body } : item)));
   commands.save(text(note.id), title, doc);
 }
@@ -633,8 +661,8 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
   const colors = props.colors;
   const wash = surfaceWash(props.dark, 0.07);
   const note = selected();
-  // The session is a plain module variable: a hot reload drops it, while the
-  // chosen note stays. Open the note again instead of showing a blank page.
+  // The session is a plain module variable: a reload of the module drops it,
+  // while the chosen note stays. Open the note again instead of a blank page.
   if (note && !editor) open(note);
   const enter = createMotion({
     enter: {
@@ -685,7 +713,7 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
         </View>}
       </View>
     </View>
-    <View class="absolute top-0 bottom-0" style={{ right: Math.max(2, pagePad() - 34) }}>
+    <View class="absolute top-0 bottom-0" style={{ right: RAIL_INSET }}>
       {outlineRails(colors, props.dark)}
     </View>
     </View>
@@ -709,7 +737,7 @@ function outlineRails(colors: ThemeColors, dark: boolean) {
   // pointing anywhere.
   const marks = outline().slice(0, OUTLINE_LIMIT);
   if (marks.length < 2) return null;
-  return <View class="h-full items-end justify-center" style={{ width: 32, gap: 2 }}>
+  return <View class="h-full items-end justify-center" style={{ width: RAIL_WIDTH, gap: 3 }}>
     {marks.map((mark) => <View
       onPress={() => {
         if (!editor || !editorRef) return;
@@ -720,9 +748,9 @@ function outlineRails(colors: ThemeColors, dark: boolean) {
       accessibilityLabel={mark.text || "Заголовок"}
       class="items-end justify-center"
       hoverStyle={{ backgroundColor: surfaceWash(dark, 0.06) }}
-      style={{ width: 32, height: 10, paddingRight: 8, borderRadius: 4, cursor: "pointer" }}
+      style={{ width: RAIL_WIDTH, height: 8, paddingRight: 3, borderRadius: 4, cursor: "pointer" }}
     >
-      <View style={{ width: 16 / mark.level, height: 2, borderRadius: 2, backgroundColor: colors.muted }} />
+      <View style={{ width: 14 / mark.level, height: 2, borderRadius: 2, backgroundColor: colors.muted }} />
     </View>)}
   </View>;
 }
