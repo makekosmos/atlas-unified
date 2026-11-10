@@ -9,7 +9,7 @@ import { cycleShortcut, shortcutOptions, shortcuts } from "./app-shortcuts";
 import { previewThemes } from "./themes";
 import type { JournalEntry, JournalVoice, Note, Route, Snapshot } from "./state";
 import { JournalPage, markJournalArriving } from "./JournalPage";
-import { addNote, bindNoteCommands, closeOpenNote, hasOpenNote, notes, NotesPage, openNoteById, openNoteTitle, removeOpenNote, renameOpenNote, setNotes } from "./notes";
+import { addNote, bindNoteCommands, closeOpenNote, createOpenNote, hasOpenNote, notes, NotesPage, openNoteById, openNoteTitle, removeOpenNote, renameOpenNote, setNotes } from "./notes";
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
 import { GamesLibrary, GamesSettings, livePrograms } from "./games";
 import { SettingsPage as SettingsPageScroll, WidgetsSection } from "./settings";
@@ -223,6 +223,7 @@ effect(() => {
     keymap.bind(active.sidebar, () => toggleSidebar(), { repeat: true }),
     keymap.bind(active.create, () => { newTaskTitle.set(""); addTaskOpen.set(true); }, { when: "notEditing" }),
     keymap.bind(active.reload, () => commandRef?.("reload"), { when: "notEditing" }),
+    keymap.bind("mod+t", () => { route.set("notes"); createOpenNote(); }),
   ];
   return () => unbind.forEach((remove) => remove());
 });

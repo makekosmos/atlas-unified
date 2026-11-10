@@ -417,6 +417,8 @@ export const hasOpenNote = () => selectedId() !== null;
 export const renameOpenNote = (value: string) => editTitle(value);
 export const closeOpenNote = () => closeNote();
 export const removeOpenNote = () => removeNote();
+/// A new note straight from the keyboard, the way the floating button does it.
+export const createOpenNote = () => createNote();
 
 /// Opens a note from elsewhere in the app, the sidebar's recent list first.
 export function openNoteById(id: string) {
@@ -532,8 +534,7 @@ export function NotesPage(props: { colors: ThemeColors; dark: boolean; titlebarI
 /// miniature. The cards come in one after another.
 function LibraryView(props: { colors: ThemeColors; dark: boolean; onBack?: () => void }) {
   const colors = props.colors;
-  const wash = surfaceWash(props.dark, 0.07);
-  return <View class="min-h-0 flex-1 flex-col">
+  return <View class="relative min-h-0 flex-1 flex-col">
     <View class="flex-row items-center" style={{ height: 54, paddingLeft: compact() ? 12 : GRID_PAD, paddingRight: compact() ? 12 : GRID_PAD - 6, gap: 10 }}>
       {compact() && props.onBack
         ? <View onPress={props.onBack} role="button" accessibilityLabel="Назад" class="items-center justify-center" style={{ width: 24, height: 28, cursor: "pointer" }}>
@@ -542,10 +543,6 @@ function LibraryView(props: { colors: ThemeColors; dark: boolean; onBack?: () =>
         : null}
       {/* The page's name stays put: this screen is the library, not a count. */}
       <Text class="text-[17px] font-semibold flex-1" style={{ color: colors.foreground }}>Заметки</Text>
-      <View onPress={createNote} role="button" accessibilityLabel="Новая заметка" class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: 28, paddingLeft: 10, paddingRight: 12, gap: 6, borderRadius: 9, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, cursor: "pointer" }}>
-        <SharedIcon name="plus" size={13} color={colors.foreground} />
-        <Text class="text-[13px]" style={{ color: colors.foreground }}>Новая заметка</Text>
-      </View>
     </View>
     <View class="min-h-0 flex-1" onLayout={(event) => gridWidth.set(event.bounds.size.width)}>
       {loading()
@@ -555,6 +552,12 @@ function LibraryView(props: { colors: ThemeColors; dark: boolean; onBack?: () =>
           : compact()
             ? libraryList(notes(), colors, props.dark)
             : libraryGrid(notes(), colors, props.dark)}
+    </View>
+    {/* Out of the header and over the page: the one thing a card list always
+        offers stays within reach of the thumb and of the last row. */}
+    <View onPress={createNote} role="button" accessibilityLabel="Новая заметка" class="absolute flex-row items-center" hoverStyle={{ opacity: 0.92 }} style={{ right: compact() ? 16 : 24, bottom: 24, height: 40, paddingLeft: 14, paddingRight: 18, gap: 8, borderRadius: 20, backgroundColor: colors.accent, cursor: "pointer", boxShadow: cardShadow(props.dark) }}>
+      <SharedIcon name="plus" size={15} color={colors.background} />
+      <Text class="text-[13px] font-medium" style={{ color: colors.background }}>Новая заметка</Text>
     </View>
   </View>;
 }

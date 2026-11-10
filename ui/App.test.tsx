@@ -266,3 +266,11 @@ test("keeps appearance controls usable in a narrow window", async () => {
   await app.press("14 px");
   await app.waitUntil(() => app.texts().includes("14 px"));
 });
+
+// `mod+t` is the keyboard's way to a new note, from any page.
+test("mod+t opens the notes page", async () => {
+  const app = await open("./App.tsx");
+  await app.keyboard.press("mod+t");
+  expect(app.texts()).toContain("Заметки");
+  expect(app.texts()).toContain("Новая заметка");
+});

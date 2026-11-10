@@ -55,3 +55,11 @@ test("a thousand notes show the cards near the viewport, not the whole list", as
   expect(app.texts()).not.toContain("Заметка 1000");
   expect(spent).toBeLessThan(10_000);
 });
+
+// The header carried the way to a new note; the floating button carries it now.
+test("the floating button makes a note", async () => {
+  const app = await open("./notes-fixture.tsx", { width: 1180, height: 820 });
+  expect(app.texts()).not.toContain("Без названия");
+  await app.press("label:Новая заметка");
+  expect(app.texts()).toContain("Без названия");
+});

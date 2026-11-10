@@ -36,7 +36,17 @@ setNotes(library);
 // The page asks the host for its notes when it opens; here the answer is the
 // same library, as if it had just arrived.
 bindNoteCommands({
-  create() {},
+  create() {
+    library.unshift({
+      id: "note-new",
+      title: "",
+      doc: { type: "doc", content: [{ type: "paragraph" }] },
+      text: "",
+      createdAt: "2026-11-10T10:00:00.000Z",
+      updatedAt: "2026-11-10T10:00:00.000Z",
+    });
+    setNotes([...library]);
+  },
   save() {},
   remove() {},
   reload() { setNotes(library); },
