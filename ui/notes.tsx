@@ -8,10 +8,8 @@ import {
   chain,
   command,
   createRichEditor,
-  exitSuggestion,
+  deleteRange,
   insertTable,
-  replaceSuggestion,
-  suggestion,
 } from "nsh/base";
 import type { RichCommand, RichEditorRef, RichEditorSession } from "nsh/base";
 import type { ViewRef } from "nsh";
@@ -161,7 +159,9 @@ const pageTall = signal(0);
 /// A note was just asked for: the one that turns up next opens by itself.
 let openingNew = false;
 let editor: RichEditorSession | null = null;
-let keyTaker: RichEditorPlugin | null = null;
+/// The editor's plugin that takes the list's keys while it is open. The app's
+/// `keymap` never sees an arrow: the text field has it first.
+let slashKeys: RichEditorPlugin | null = null;
 let asked = false;
 
 export function bindNoteCommands(next: NoteCommands) {
@@ -269,12 +269,13 @@ function schedulePaint() {
 function open(note: Note | null) {
   editor?.dispose();
   editor = null;
-  keyTaker = null;
-  slashOpen.set(false);
+  closeSlash();
+  slashIndex.set(0);
   if (note) {
-    const taker = new RichEditorPlugin("slash-keys");
-    taker.captureKeys(["ArrowUp", "ArrowDown", "Enter", "Tab", "Escape"], (key) => onSlashKey(key));
-    const made = makeEditor(note, taker);
+    const keys = new RichEditorPlugin("slash-keys");
+    keys.captureKeys(["ArrowUp", "ArrowDown", "Enter", "Tab", "Escape"], (key) => onSlashKey(key));
+    const made = makeEditor(note, keys);
+    slashKeys = keys;
     made.on("selectionUpdate", () => {
       syncCodeLanguage();
     });
@@ -285,10 +286,11 @@ function open(note: Note | null) {
       // menu every other try.
       syncSlash();
       scheduleOutline();
-      schedulePaint();
+      // Colouring a page of ten thousand blocks on every keystroke is what
+      // made typing stutter: the code is painted while the caret is in it.
+      if (codeBlockPos() !== null) schedulePaint();
     });
     editor = made;
-    keyTaker = taker;
     // What is on disk already: a caret move must not look like an edit and
     // send the library back through the host.
     savedBody = JSON.stringify(made.getJSON());
@@ -306,7 +308,7 @@ function open(note: Note | null) {
 
 /// The editor for a note: its document when the schema takes it, an empty one
 /// otherwise, so a broken note still opens.
-function makeEditor(note: Note, taker: RichEditorPlugin): RichEditorSession {
+function makeEditor(note: Note, keys: RichEditorPlugin): RichEditorSession {
   const options = (content: unknown) => ({
     extensions: [
       StarterKit.configure({
@@ -323,7 +325,7 @@ function makeEditor(note: Note, taker: RichEditorPlugin): RichEditorSession {
       }),
       TableKit.configure({}),
     ],
-    plugins: [suggestion({ key: "slash", char: "/", allowSpaces: false }), taker, highlight],
+    plugins: [keys, highlight],
     content: content as never,
     format: "json" as const,
   });
@@ -429,37 +431,71 @@ function headingsEnd(doc: unknown): number {
   return Math.max(1, pos - 1);
 }
 
+/// The `/query` typed right before the caret: where it starts, where it ends,
+/// and what follows the slash. Read from the text itself, so a transaction the
+/// plugin state has not caught up with cannot hide the list.
+type SlashMatch = { from: number; to: number; query: string };
+
+let slashRange: SlashMatch | null = null;
+
+function slashMatch(): SlashMatch | null {
+  const live = editor;
+  if (!live) return null;
+  const selection = live.selection as { type?: string; anchor?: number; head?: number } | null;
+  const at = selection?.anchor;
+  const head = selection?.head ?? at;
+  // A cursor, not a selection: the list belongs where the user types.
+  if (selection?.type !== "text" || typeof at !== "number" || at !== head) return null;
+  // The document's text up to the caret, blocks apart: a block's own start is
+  // not always a position the resolver gives back.
+  const before = live.textBetween(0, at, "\n");
+  // A block's own start or a space before the slash: the same place Tiptap
+  // would offer its list, and the only place a slash is not just a character.
+  const found = /(?:^|\s)\/([^\s/]*)$/.exec(before);
+  if (!found) return null;
+  const query = found[1] ?? "";
+  return { from: at - (query.length + 1), to: at, query };
+}
+
+/// Puts the list by the caret: page coordinates, less the page's own corner.
+function placeSlash(pos: number) {
+  const live = editor;
+  const anchor = menuAnchor;
+  if (!live || !anchor) return;
+  const page = live.pageCoordsAtPos(pos) as Point | null;
+  if (!page) return;
+  void anchor.measure().then((box) => {
+    if (!box) return;
+    const x = page.x - box.pagePosition.x;
+    const y = page.y - box.pagePosition.y;
+    // The caret sits at the bottom edge as the editor follows it: below it
+    // there is no room for the list, so the list goes above.
+    const below = y + 24;
+    const above = y - SLASH_MENU_HEIGHT - 8;
+    slashLeft.set(Math.max(0, x));
+    slashTop.set(below + SLASH_MENU_HEIGHT <= box.bounds.size.height ? below : Math.max(0, above));
+  });
+}
+
 function syncSlash() {
-  const state = editor?.suggestion("slash");
-  if (!editor || !state || !state.active) {
+  const match = slashMatch();
+  console.log("SYNC", JSON.stringify((editor?.selection as { anchor?: number } | null)?.anchor), match ? match.query : "-");
+  if (!match) {
     closeSlash();
     return;
   }
-  slashQuery.set((state.query ?? "").trim().toLowerCase());
+  slashRange = match;
+  slashQuery.set(match.query.toLowerCase());
   if (!slashOpen()) {
-    slashOpen.set(true);
     slashIndex.set(0);
+    slashOpen.set(true);
+    bindSlashKeys();
+    // Once, on opening: every later keystroke would measure the page again
+    // for a list that has not moved.
+    placeSlash(match.from);
   }
   const count = filtered(slashQuery()).length;
   if (slashIndex() > count - 1) slashIndex.set(0);
-  if (keyTaker) keyTaker.capturing = true;
-  // Page coordinates, less the anchor's own: the editor reports document
-  // coordinates, and a scrolled page put the menu far from the caret.
-  const page = editor.pageCoordsAtPos(state.range.from) as Point | null;
-  const anchor = menuAnchor;
-  if (page && anchor) {
-    void anchor.measure().then((box) => {
-      if (!box) return;
-      const x = page.x - box.pagePosition.x;
-      const y = page.y - box.pagePosition.y;
-      // The caret sits at the bottom edge as the editor follows it: below it
-      // there is no room for the list, so the list goes above.
-      const below = y + 24;
-      const above = y - SLASH_MENU_HEIGHT - 8;
-      slashLeft.set(Math.max(0, x));
-      slashTop.set(below + SLASH_MENU_HEIGHT <= box.bounds.size.height ? below : Math.max(0, above));
-    });
-  }
 }
 
 function filtered(query: string): SlashItem[] {
@@ -470,10 +506,10 @@ function filtered(query: string): SlashItem[] {
 /// The keys the list takes while it is open: the arrows move, Enter and Tab
 /// pick, Escape closes.
 function onSlashKey(key: string) {
+  console.log("SK", key, slashOpen());
   if (!slashOpen()) return;
   if (key === "Escape") {
     closeSlash();
-    editor?.run(exitSuggestion("slash"));
     return;
   }
   if (key === "Enter" || key === "Tab") {
@@ -490,14 +526,27 @@ function onSlashKey(key: string) {
 /// back together.
 function pick() {
   const item = filtered(slashQuery())[slashIndex()];
+  const range = slashRange;
   closeSlash();
-  if (!item || !editor) return;
-  editor.run(chain([replaceSuggestion("", "slash"), item.make()]));
+  if (!item || !editor || !range) return;
+  editor.run(chain([deleteRange({ from: range.from, to: range.to }), item.make()]));
 }
 
 function closeSlash() {
-  slashOpen.set(false);
-  if (keyTaker) keyTaker.capturing = false;
+  if (slashOpen()) console.log("CLOSE", String(new Error().stack).split("\n")[2]);
+  slashRange = null;
+  if (slashOpen()) slashOpen.set(false);
+  unbindSlashKeys();
+}
+
+/// The list's keys belong to it while it is open: the editor's own keymap
+/// would otherwise move the caret under a list that is the app's.
+function bindSlashKeys() {
+  if (slashKeys) slashKeys.capturing = true;
+}
+
+function unbindSlashKeys() {
+  if (slashKeys) slashKeys.capturing = false;
 }
 
 function select(note: Note | null) {
