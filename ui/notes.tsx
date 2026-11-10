@@ -633,6 +633,9 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
   const colors = props.colors;
   const wash = surfaceWash(props.dark, 0.07);
   const note = selected();
+  // The session is a plain module variable: a hot reload drops it, while the
+  // chosen note stays. Open the note again instead of showing a blank page.
+  if (note && !editor) open(note);
   const enter = createMotion({
     enter: {
       keyframes: [{ opacity: 0, translateY: 8 }, { opacity: 1, translateY: 0 }],
@@ -671,7 +674,7 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
             class="min-h-0 flex-1"
             placeholder="Пишите. Слэш открывает блоки: заголовок, список, таблица…"
             accessibilityLabel="Текст заметки"
-            styles={documentStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad())}
+            styles={noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad())}
           />
           : <View class="h-full" />}</Each>
         {slashOpen() && <View class="absolute rounded-lg border" style={{ left: slashLeft(), top: slashTop(), width: 264, backgroundColor: colors.card, borderColor: colors.border, paddingTop: 4, paddingBottom: 4 }}>
@@ -727,6 +730,18 @@ function outlineRails(colors: ThemeColors, dark: boolean) {
 /// The document's scale, taken from AnyType's blocks: body 16 on 24, headings
 /// 28/22/18 with air above them, code and tables at 14. It is what makes the
 /// page read as a page and not as a form.
+/// The same inputs give the same object: a fresh one on every render made the
+/// editor take its styles again for no reason at all.
+let documentStylesCache: { key: string; styles: unknown } | null = null;
+
+function noteStyles(colors: ThemeColors, dark: boolean, minHeight: number, pad: number) {
+  const key = `${dark}|${minHeight}|${pad}|${colors.background}|${colors.foreground}|${colors.muted}|${colors.border}`;
+  if (documentStylesCache?.key !== key) {
+    documentStylesCache = { key, styles: documentStyles(colors, dark, minHeight, pad) };
+  }
+  return documentStylesCache.styles as ReturnType<typeof documentStyles>;
+}
+
 function documentStyles(colors: ThemeColors, dark: boolean, minHeight: number, pad: number) {
   return {
     // The page's text fills at least the room it is in: a press below the last
