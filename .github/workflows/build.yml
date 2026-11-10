@@ -196,7 +196,9 @@ jobs:
           sudo mkdir -p /opt/android-sdk/cmdline-tools
           sudo unzip -q /tmp/cmdline-tools.zip -d /opt/android-sdk/cmdline-tools
           sudo mv /opt/android-sdk/cmdline-tools/cmdline-tools /opt/android-sdk/cmdline-tools/latest
-          yes | sudo /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null
+          # `yes` exits on SIGPIPE once sdkmanager has read enough: that is not
+          # a failure, and `pipefail` would treat it as one.
+          (yes | sudo /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null) || true
           sudo /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" "build-tools;35.0.0" "ndk;$NDK_VERSION" > /dev/null
           echo "ANDROID_HOME=/opt/android-sdk" >> "$GITHUB_ENV"
