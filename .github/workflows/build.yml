@@ -260,12 +260,13 @@ jobs:
           KEY_PASSWORD: ${{ secrets.ATLAS_ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
+          version="${RELEASE_VERSION:-$(python -c 'import json; print(json.load(open("ui/nsh.json"))["version"])')}"
           build=$(python -c 'import json; print(json.load(open("ui/nsh.json"))["build"])')
           nsh package --target android ui/Mobile.tsx \
             --keystore /opt/atlas-keystore.jks \
             --key-alias "$ATLAS_KEY_ALIAS" \
             --keystore-password "$KEY_PASSWORD" \
-            --app-version "$RELEASE_VERSION" \
+            --app-version "$version" \
             --build "$build" \
             -o dist
           ls -la dist
