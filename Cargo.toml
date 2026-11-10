@@ -1,6 +1,6 @@
 [package]
 name = "atlas"
-version = "0.0.3"
+version = "0.0.2"
 edition = "2021"
 description = "Atlas desktop client for Mundus using GPUI and NSH"
 publish = false
