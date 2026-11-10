@@ -229,6 +229,12 @@ jobs:
           cargo build --release -p nsh-cli --bin nsh
           echo "NSH_RUNTIME=/opt/nsh-runtime" >> "$GITHUB_ENV"
           echo "/opt/nsh/target/release" >> "$GITHUB_PATH"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: UI dependencies
+        # nsh.json points the theme at node_modules: the bundler needs it.
+        run: npm ci --omit=dev
       - name: Release keystore
         env:
           KEYSTORE: ${{ secrets.ATLAS_ANDROID_KEYSTORE_BASE64 }}
