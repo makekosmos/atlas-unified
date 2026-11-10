@@ -23,3 +23,6 @@ ui/app.json
 
 # dev scratch
 .dev-*
+
+# The app writes its own log through a stored Windows path; keep the tree clean.
+*atlas-life.log

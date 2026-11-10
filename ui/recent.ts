@@ -2,9 +2,12 @@ import { signal, Storage } from "nsh";
 
 /// What the sidebar shows under the widgets: the last things opened, newest
 /// first. It is the app's own memory of the session, not a fact about the data,
-/// so it lives in the app's storage and never in Engine.
+/// so it lives in the app's storage and never in Engine. Pages stay out: the
+/// list answers "which note was that", not "which tab was I on".
 
-export type RecentKind = "note" | "page" | "game";
+/// Only things a person opens in particular: a note, a game. A widget's page
+/// is a way in, not a thing, so it never lands here.
+export type RecentKind = "note" | "game";
 
 export type RecentItem = { kind: RecentKind; id: string; title: string; at: number };
 
@@ -54,7 +57,7 @@ function readJson(value: string | null): RecentItem[] {
     return parsed.filter((item): item is RecentItem => {
       if (!item || typeof item !== "object") return false;
       const entry = item as Partial<RecentItem>;
-      return (entry.kind === "note" || entry.kind === "page" || entry.kind === "game") && typeof entry.id === "string" && typeof entry.title === "string";
+      return (entry.kind === "note" || entry.kind === "game") && typeof entry.id === "string" && typeof entry.title === "string";
     }).slice(0, RECENT_LIMIT);
   } catch {
     return [];

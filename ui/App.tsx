@@ -9,12 +9,12 @@ import { cycleShortcut, shortcutOptions, shortcuts } from "./app-shortcuts";
 import { previewThemes } from "./themes";
 import type { JournalEntry, JournalVoice, Note, Route, Snapshot } from "./state";
 import { JournalPage, markJournalArriving } from "./JournalPage";
-import { bindNoteCommands, notes, NotesPage, openNoteById, setNotes } from "./notes";
+import { addNote, bindNoteCommands, notes, NotesPage, openNoteById, setNotes } from "./notes";
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
 import { GamesLibrary, GamesSettings, livePrograms } from "./games";
 import { SettingsPage as SettingsPageScroll, WidgetsSection } from "./settings";
 import { DevelopersSection } from "./dev-settings";
-import { loadRecent, recent, rememberRecent } from "./recent";
+import { loadRecent, recent } from "./recent";
 import { loadWidgets, widgetOn } from "./widgets";
 import type { ProgramUsage } from "./games";
 import { SIDEBAR_WIDTH, TITLEBAR_HEIGHT, TitlebarOverlay, animateSidebar, sidebarPaneWidth, shellFill, RecentRow, SidebarRow } from "./chrome";
@@ -27,6 +27,9 @@ const hosted = isSnapshot(initialValue);
 const initial = hosted ? initialValue : fallback;
 const snapshot = signal(initial);
 const route = signal<Route>(initial.route);
+/// The host's first snapshot carries the route the window opens on; after it
+/// the page is the UI's, and an echoed route would only undo a click.
+let routeReady = false;
 const addTaskOpen = signal(false);
 const newTaskTitle = signal("");
 const sidebarVisible = signal(true);
@@ -55,9 +58,9 @@ function persistPreviewSnapshot() {
   if (hosted) return;
   persistPreview({ journalEntries: snapshot().journalEntries, todos: snapshot().todos });
 }
-const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[]; notes: Note[]; voiceLevel: { level: number }; voiceRecorded: JournalVoice & Record<string, unknown>; voicePlayed: Record<string, never>; voiceFailed: { reason: string }; usage: ProgramUsage[]; picked: string[]; games: unknown; discovered: unknown; imported: unknown; launched: unknown; metadata: unknown }>("atlas.bridge", {
+const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[]; notes: Note[]; notesCreated: Note; voiceLevel: { level: number }; voiceRecorded: JournalVoice & Record<string, unknown>; voicePlayed: Record<string, never>; voiceFailed: { reason: string }; usage: ProgramUsage[]; picked: string[]; games: unknown; discovered: unknown; imported: unknown; launched: unknown; metadata: unknown }>("atlas.bridge", {
   props: ["route"],
-  events: ["state", "navigate", "journal", "notes", "voiceLevel", "voiceRecorded", "voicePlayed", "voiceFailed", "usage", "picked", "games", "discovered", "imported", "launched", "metadata"],
+  events: ["state", "navigate", "journal", "notes", "notesCreated", "voiceLevel", "voiceRecorded", "voicePlayed", "voiceFailed", "usage", "picked", "games", "discovered", "imported", "launched", "metadata"],
 });
 
 function iconForNavigation(id: string): IconName | "gamepad" | "file" {
@@ -269,16 +272,12 @@ function App() {
   const changeRoute = (target: string) => {
     if (!isRoute(target)) return;
     route.set(target);
-    const page = pageNavigation.find((item) => item.id === target);
-    if (page) rememberRecent({ kind: "page", id: target, title: page.label });
   };
   const openRecentEntry = (entry: { kind: string; id: string; title: string }) => {
     if (entry.kind === "note") {
       openNoteById(entry.id);
       changeRoute("notes");
-      return;
     }
-    if (isRoute(entry.id)) changeRoute(entry.id);
   };
   return (
     <View class="relative h-full w-full" style={{ backgroundColor: snapshot().colors.background }}>
@@ -296,7 +295,12 @@ function App() {
           }}
         route={route()}
         onState={(next) => {
-          route.set(next.route);
+          // The page is the UI's own state: the host echoes it back a frame
+          // late, and taking the echo would unmount the page it names.
+          if (!routeReady) {
+            routeReady = true;
+            route.set(next.route);
+          }
           const appearance = next.appearance ?? snapshot().appearance;
           snapshot.set({
             ...next,
@@ -308,6 +312,7 @@ function App() {
         }}
         onJournal={(entries) => snapshot.set({ ...snapshot(), journalEntries: entries })}
         onNotes={(next) => setNotes(next)}
+        onNotesCreated={(note) => addNote(note as Note)}
         onVoiceLevel={(event) => voiceLevel.set(event.level)}
         onVoiceRecorded={(voice) => {
           voiceRecording.set(false);

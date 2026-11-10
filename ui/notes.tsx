@@ -54,6 +54,16 @@ const CARD_RATIO = 264 / 236;
 const OUTLINE_LIMIT = 50;
 /// Beyond five columns a card stops reading as a page.
 const CARD_MAX_COLUMNS = 5;
+/// How many cards stagger in on the first paint: a card that scrolls into view
+/// later arrives with the frame, not after a delay of its own.
+const ENTER_STAGGER_CARDS = 11;
+
+/// How long a card waits before it fades in: the first screen staggers, and a
+/// card that the list mounts while scrolling does not wait at all — a card at
+/// index 105 used to arrive three seconds after the finger.
+export function cardDelay(index: number): number {
+  return Math.max(0, Math.min(index, ENTER_STAGGER_CARDS)) * 32;
+}
 /// Below this width the library is a list of rows, the way a phone shows it.
 const COMPACT_LIBRARY = 560;
 const GRID_PAD = 24;
@@ -111,6 +121,18 @@ let asked = false;
 
 export function bindNoteCommands(next: NoteCommands) {
   commands = next;
+}
+
+/// A note the host made: the library gains it, and the request that asked for
+/// it opens it. A created note comes back alone, so the library is not resent.
+export function addNote(note: Note) {
+  loading.set(false);
+  const id = text(note.id);
+  notes.set([note, ...notes().filter((item) => text(item.id) !== id)]);
+  if (openingNew) {
+    openingNew = false;
+    select(note);
+  }
 }
 
 export function setNotes(next: Note[]) {
@@ -476,6 +498,7 @@ function libraryGrid(items: readonly Note[], colors: ThemeColors, dark: boolean)
     each={rows}
     keyExtractor={(row: Note[]) => "row:" + (row[0] ? text(row[0].id) : "empty")}
     estimatedItemSize={rowHeight}
+    testID="notes-grid"
     class="min-h-0 flex-1"
     contentStyle={{ paddingLeft: GRID_PAD, paddingRight: GRID_PAD, paddingTop: 4, paddingBottom: 32 }}
   >
@@ -566,7 +589,7 @@ function NoteCard(props: { note: Note; index: number; width: number; colors: The
     enter: {
       keyframes: [{ opacity: 0, translateY: 10 }, { opacity: 1, translateY: 0 }],
       duration: 260,
-      delay: props.index * 32,
+      delay: cardDelay(props.index),
       easing: Easing.bezier(0.16, 1, 0.3, 1),
     },
   });
@@ -629,9 +652,14 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
         <SharedIcon name="trash" size={14} color={colors.muted} />
       </View>
     </View>
-    <View class="relative min-h-0 flex-1 flex-row justify-center" onLayout={(event) => { pageRoom.set(event.bounds.size.width); pageTall.set(event.bounds.size.height); }}>
-    <View class="min-h-0 flex-col" style={{ width: Math.min(PAGE_MAX, Math.max(280, pageRoom() - pagePad() * 2)), height: "100%", paddingLeft: pagePad(), paddingRight: pagePad(), paddingTop: 4 }}>
-      <Input value={draftTitle()} onChange={(event) => editTitle(event.value)} placeholder="Заголовок" accessibilityLabel="Заголовок заметки" class={compact() ? "w-full text-[28px] font-bold" : "w-full text-[34px] font-bold"} style={{ color: colors.foreground, backgroundColor: "transparent", paddingTop: 2, paddingBottom: 12, lineHeight: 42 }} />
+    {/* The sheet is the page, not the column: the scroll view takes the whole
+        width, so its indicator sits at the page's edge, and the text is inset
+        to the column's width instead. */}
+    <View class="relative min-h-0 flex-1" onLayout={(event) => { pageRoom.set(event.bounds.size.width); pageTall.set(event.bounds.size.height); }}>
+    <View class="min-h-0 flex-col" style={{ height: "100%", paddingTop: 4 }}>
+      <View style={{ paddingLeft: pagePad(), paddingRight: pagePad() }}>
+        <Input value={draftTitle()} onChange={(event) => editTitle(event.value)} placeholder="Заголовок" accessibilityLabel="Заголовок заметки" class={compact() ? "w-full text-[28px] font-bold" : "w-full text-[34px] font-bold"} style={{ color: colors.foreground, backgroundColor: "transparent", paddingTop: 2, paddingBottom: 12, lineHeight: 42 }} />
+      </View>
       {/* A press on the page below the text belongs to the text: the caret
           goes to the end, the way a word processor takes a click on the
           empty part of a sheet. */}
@@ -643,7 +671,7 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
             class="min-h-0 flex-1"
             placeholder="Пишите. Слэш открывает блоки: заголовок, список, таблица…"
             accessibilityLabel="Текст заметки"
-            styles={documentStyles(colors, props.dark, Math.max(0, pageTall() - 150))}
+            styles={documentStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad())}
           />
           : <View class="h-full" />}</Each>
         {slashOpen() && <View class="absolute rounded-lg border" style={{ left: slashLeft(), top: slashTop(), width: 264, backgroundColor: colors.card, borderColor: colors.border, paddingTop: 4, paddingBottom: 4 }}>
@@ -654,15 +682,20 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
         </View>}
       </View>
     </View>
-    {outlineRails(colors, props.dark)}
+    <View class="absolute top-0 bottom-0" style={{ right: Math.max(2, pagePad() - 34) }}>
+      {outlineRails(colors, props.dark)}
+    </View>
     </View>
   </View>;
 }
 
-/// The page's side margin: a phone spends its width on the text.
+/// The page's side margin: on a phone it is a phone's margin, on a wide page
+/// the text keeps a column and the margin takes the rest.
 function pagePad() {
   const room = pageRoom();
-  return compact() ? 16 : PAGE_PAD;
+  if (!(room > 0)) return PAGE_PAD;
+  if (compact()) return 16;
+  return Math.max((room - PAGE_MAX) / 2, PAGE_PAD / 2);
 }
 
 /// The rails: one short mark per heading, longer the higher the heading. A
@@ -694,11 +727,13 @@ function outlineRails(colors: ThemeColors, dark: boolean) {
 /// The document's scale, taken from AnyType's blocks: body 16 on 24, headings
 /// 28/22/18 with air above them, code and tables at 14. It is what makes the
 /// page read as a page and not as a form.
-function documentStyles(colors: ThemeColors, dark: boolean, minHeight: number) {
+function documentStyles(colors: ThemeColors, dark: boolean, minHeight: number, pad: number) {
   return {
     // The page's text fills at least the room it is in: a press below the last
     // line lands on the editable area, and the caret goes where writing goes.
-    content: { color: colors.foreground, backgroundColor: "transparent", paddingTop: 2, paddingBottom: 120, minHeight },
+    // The side margins keep the text in its column while the scroll view keeps
+    // the page's whole width.
+    content: { color: colors.foreground, backgroundColor: "transparent", paddingTop: 2, paddingBottom: 120, paddingLeft: pad, paddingRight: pad, minHeight },
     placeholder: { color: colors.muted },
     caret: { backgroundColor: colors.accent },
     nodes: {

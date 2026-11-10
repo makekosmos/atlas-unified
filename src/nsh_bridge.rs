@@ -340,27 +340,43 @@ fn start_notes_bridge(context: ComponentContext, demo: bool) -> NotesChannel {
         thread::spawn(move || {
             let mut created = 0usize;
             while let Ok(request) = requests.recv() {
+                // Only a change to what the library holds goes back over the
+                // bridge: a save's text is already on screen, and a library of
+                // a hundred thousand notes is twenty megabytes to send again.
+                let mut fresh = None;
                 match request {
                     NotesRequest::Create(title, doc) => {
                         created += 1;
                         let id = format!("demo:note-{created}");
-                        notes.insert(0, Note::demo_doc(&id, &title, &doc, ""));
+                        let note = Note::demo_doc(&id, &title, &doc, "");
+                        fresh = Some(note.clone());
+                        notes.insert(0, note);
                     }
                     NotesRequest::Save(id, title, doc) => {
                         if let Some(note) = notes.iter_mut().find(|note| note.id == id) {
                             let updated_at = note.updated_at.clone();
                             *note = Note::demo_doc(&id, &title, &doc, &updated_at);
                         }
+                        continue;
                     }
-                    NotesRequest::Delete(id) => notes.retain(|note| note.id != id),
-                    NotesRequest::Reload => {}
+                    NotesRequest::Delete(id) => {
+                        notes.retain(|note| note.id != id);
+                        continue;
+                    }
+                    NotesRequest::Reload => {
+                        emit_notes(&demo_context, &notes);
+                        continue;
+                    }
                     NotesRequest::Stress(count) => {
                         notes = demo_notes();
                         notes.splice(0..0, stress_notes(count));
                     }
                     NotesRequest::Reset => notes = demo_notes(),
                 }
-                emit_notes(&demo_context, &notes);
+                match fresh {
+                    Some(note) => demo_context.emit("notesCreated", note_json(&note)),
+                    None => emit_notes(&demo_context, &notes),
+                }
             }
         });
         return (sender, None, reload_pending);
@@ -378,9 +394,16 @@ fn start_notes_bridge(context: ComponentContext, demo: bool) -> NotesChannel {
         let mut notes = engine.notes_list().unwrap_or_default();
         emit_notes(&context, &notes);
         while let Ok(request) = requests.recv() {
+            // A save sends back the note it saved, not the library around it: a
+            // library of a hundred thousand notes is twenty megabytes, and the
+            // text on screen is already the text that was saved.
+            let mut created = None;
             match request {
                 NotesRequest::Create(title, doc) => match engine.notes_create(&title, &doc) {
-                    Ok(note) => notes.push(note),
+                    Ok(note) => {
+                        created = Some(note.clone());
+                        notes.push(note);
+                    }
                     Err(error) => eprintln!("[atlas-notes] create failed: {error}"),
                 },
                 NotesRequest::Save(id, title, doc) => {
@@ -397,6 +420,7 @@ fn start_notes_bridge(context: ComponentContext, demo: bool) -> NotesChannel {
                         },
                         None => eprintln!("[atlas-notes] save failed: note is no longer visible"),
                     }
+                    continue;
                 }
                 NotesRequest::Stress(_) | NotesRequest::Reset => {
                     eprintln!("[atlas-notes] load tests only run in the demo store")
@@ -419,7 +443,9 @@ fn start_notes_bridge(context: ComponentContext, demo: bool) -> NotesChannel {
                     .cmp(&left.updated_at)
                     .then(left.id.cmp(&right.id))
             });
-            emit_notes(&context, &notes);
+            if let Some(note) = created {
+                context.emit("notesCreated", note_json(&note));
+            }
         }
     });
     (sender, Some(subscription), reload_pending)
@@ -428,18 +454,19 @@ fn start_notes_bridge(context: ComponentContext, demo: bool) -> NotesChannel {
 fn emit_notes(context: &ComponentContext, notes: &[Note]) {
     context.emit(
         "notes",
-        json!(notes
-            .iter()
-            .map(|note| json!({
-                "id": note.id,
-                "title": note.title,
-                "doc": note.doc,
-                "text": note.text,
-                "createdAt": note.created_at,
-                "updatedAt": note.updated_at
-            }))
-            .collect::<Vec<_>>()),
+        json!(notes.iter().map(note_json).collect::<Vec<_>>()),
     );
+}
+
+fn note_json(note: &Note) -> Value {
+    json!({
+        "id": note.id,
+        "title": note.title,
+        "doc": note.doc,
+        "text": note.text,
+        "createdAt": note.created_at,
+        "updatedAt": note.updated_at
+    })
 }
 
 /// Notes the demo screen shows; nothing is stored. Twelve of them, so the
@@ -681,6 +708,10 @@ fn long_demo_doc() -> Value {
 impl NativeComponent for AtlasBridge {
     fn render(&mut self, _window: &mut Window, cx: &mut App) -> Option<gpui::AnyElement> {
         if self.subscription.is_none() {
+            // The workers tell the screen what they hold once, when they start;
+            // a screen that loads after that hears nothing. Ask for the day's
+            // entries again, so a reloaded page is never blank.
+            let _ = self.journal_commands.send(JournalRequest::Reload);
             let context = self.context.clone();
             let route = self.route.clone();
             self.subscription = Some(cx.observe(&self.agenda, move |agenda, cx| {
