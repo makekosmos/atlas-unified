@@ -16,7 +16,9 @@ test("the library draws the cards with their previews", async () => {
 test("a card opens the note, and its headings become the rails", async () => {
   const app = await open("./notes-fixture.tsx", { width: 1180, height: 820 });
   await app.press("label:Заметка 1");
-  expect(app.texts()).toContain("Заметки");
+  // The way back and the note's name sit in the window's title bar, which a
+  // page fixture does not draw: the rails are what this page owns.
+  expect(app.texts()).toContain("Раздел");
   // Two headings, so two marks; each one carries its heading's text, and a
   // press on a mark moves the caret to that heading.
   await app.press("label:Раздел");

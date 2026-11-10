@@ -9,7 +9,7 @@ import { cycleShortcut, shortcutOptions, shortcuts } from "./app-shortcuts";
 import { previewThemes } from "./themes";
 import type { JournalEntry, JournalVoice, Note, Route, Snapshot } from "./state";
 import { JournalPage, markJournalArriving } from "./JournalPage";
-import { addNote, bindNoteCommands, notes, NotesPage, openNoteById, setNotes } from "./notes";
+import { addNote, bindNoteCommands, closeOpenNote, hasOpenNote, notes, NotesPage, openNoteById, openNoteTitle, removeOpenNote, renameOpenNote, setNotes } from "./notes";
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
 import { GamesLibrary, GamesSettings, livePrograms } from "./games";
 import { SettingsPage as SettingsPageScroll, WidgetsSection } from "./settings";
@@ -388,6 +388,11 @@ function App() {
         dark={dark}
         showAddGame={route() === "games" && widgetOn("games")} pageInset={sidebarPaneWidth()}
         dimmed={addTaskOpen() || gameLibrary.addOpen() || pickedExes().length > 1}
+        noteActive={route() === "notes" && hasOpenNote()}
+        noteTitle={route() === "notes" ? openNoteTitle() : ""}
+        onRenameNote={renameOpenNote}
+        onCloseNote={closeOpenNote}
+        onDeleteNote={removeOpenNote}
         onToggleSidebar={toggleSidebar}
         onAddGame={gameLibrary.openAddDialog}
         onChrome={(command) => askEngine(command)}

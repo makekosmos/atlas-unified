@@ -1,4 +1,5 @@
 import { LayoutAnimation, Text, View, signal } from "nsh";
+import { Input } from "nsh/base";
 import { titleBar } from "nsh/desktop";
 import { platform } from "os";
 import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
@@ -169,8 +170,14 @@ export function TitlebarOverlay(props: {
   showAddGame?: boolean;
   dimmed?: boolean;
   pageInset?: number;
+  /// The open note's name: it takes the bar's middle in place of the page.
+  noteTitle?: string;
+  noteActive?: boolean;
   onToggleSidebar: () => void;
   onAddGame?: () => void;
+  onRenameNote?: (value: string) => void;
+  onCloseNote?: () => void;
+  onDeleteNote?: () => void;
   onChrome: (command: string) => void;
 }) {
   const controls = titleBar();
@@ -191,6 +198,18 @@ export function TitlebarOverlay(props: {
     </View>
     {props.showAddGame && <View onPress={() => props.onAddGame?.()} role="button" accessibilityLabel="Добавить игру" class="absolute items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ top: titlebarControlTop(28), right: addGameRight, width: 28, height: 28, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
       <SharedIcon name="plus" size={16} color={props.colors.muted} />
+    </View>}
+    {props.noteActive && <View class="absolute flex-row items-center" desktop={{ windowDrag: false }} style={{ left: (props.pageInset ?? 0) + 8, right: controlsRight + 8, top: titlebarControlTop(26), height: 26, gap: 6 }}>
+      <View onPress={() => props.onCloseNote?.()} role="button" accessibilityLabel="К списку заметок" class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} desktop={{ windowDrag: false }} style={{ height: 24, paddingLeft: 8, paddingRight: 10, gap: 3, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
+        <Text class="text-[15px]" style={{ color: props.colors.muted }}>‹</Text>
+        <Text class="text-[12px]" style={{ color: props.colors.muted }}>Заметки</Text>
+      </View>
+      <View class="flex-1 items-center">
+        <Input value={props.noteTitle ?? ""} onChange={(event) => props.onRenameNote?.(event.value)} placeholder="Заголовок" accessibilityLabel="Заголовок заметки" class="text-center text-[13px] font-semibold" style={{ width: 320, color: props.colors.foreground, backgroundColor: "transparent", paddingTop: 0, paddingBottom: 0, lineHeight: 18 }} />
+      </View>
+      <View onPress={() => props.onDeleteNote?.()} role="button" accessibilityLabel="Удалить заметку" class="items-center justify-center" hoverStyle={{ backgroundColor: wash }} desktop={{ windowDrag: false }} style={{ width: 26, height: 24, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
+        <SharedIcon name="trash" size={13} color={props.colors.muted} />
+      </View>
     </View>}
     {drawCaptions && <View class="absolute right-0 top-0 flex-row" desktop={{ windowDrag: false }} style={{ height: TITLEBAR_HEIGHT }}>
       <View onPress={() => props.onChrome("window.minimize")} role="button" accessibilityLabel="Свернуть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowMin" color={props.colors.foreground} size={12} /></View>

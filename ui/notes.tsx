@@ -14,6 +14,7 @@ import {
   suggestion,
 } from "nsh/base";
 import type { RichCommand, RichEditorRef, RichEditorSession } from "nsh/base";
+import type { ViewRef } from "nsh";
 import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
 import { colorAlpha, surfaceWash } from "./chrome";
@@ -40,6 +41,9 @@ const idleCommands: NoteCommands = { create() {}, save() {}, remove() {}, reload
 let commands: NoteCommands = idleCommands;
 /// The editor's handle, for putting the caret where a press asked for it.
 let editorRef: RichEditorRef | null = null;
+/// Where the slash menu is placed against: page coordinates are measured
+/// from this view's own corner.
+let menuAnchor: ViewRef | null = null;
 /// The note's headings, in document order, with where they start.
 const outline = signal<OutlineMark[]>([]);
 let outlineTimer: ReturnType<typeof setTimeout> | null = null;
@@ -78,6 +82,10 @@ const PAGE_PAD = 40;
 /// How many of the note's blocks its card shows.
 const PREVIEW_BLOCKS = 14;
 /// What the slash menu offers: the blocks the contract of `core.note` allows.
+/// Enough of the list to stand for it while placing it: a full list of eleven
+/// rows fits, and a longer one scrolls.
+const SLASH_MENU_HEIGHT = 320;
+
 const SLASH_ITEMS: SlashItem[] = [
   { id: "text", label: "Текст", hint: "обычный абзац", make: () => command("setParagraph") },
   { id: "h1", label: "Заголовок 1", hint: "крупный раздел", make: () => command("setHeading", { level: 1 }) },
@@ -179,8 +187,6 @@ function open(note: Note | null) {
       // time once the update is applied is what keeps `/` from opening the
       // menu every other try.
       syncSlash();
-      queueMicrotask(syncSlash);
-      requestAnimationFrame(() => syncSlash());
       scheduleOutline();
     });
     editor = made;
@@ -337,10 +343,22 @@ function syncSlash() {
   const count = filtered(slashQuery()).length;
   if (slashIndex() > count - 1) slashIndex.set(0);
   if (keyTaker) keyTaker.capturing = true;
-  const coords = editor.coordsAtPos(state.range.from) as Point | null;
-  if (coords && typeof coords.x === "number" && typeof coords.y === "number") {
-    slashTop.set(coords.y + 24);
-    slashLeft.set(coords.x);
+  // Page coordinates, less the anchor's own: the editor reports document
+  // coordinates, and a scrolled page put the menu far from the caret.
+  const page = editor.pageCoordsAtPos(state.range.from) as Point | null;
+  const anchor = menuAnchor;
+  if (page && anchor) {
+    void anchor.measure().then((box) => {
+      if (!box) return;
+      const x = page.x - box.pagePosition.x;
+      const y = page.y - box.pagePosition.y;
+      // The caret sits at the bottom edge as the editor follows it: below it
+      // there is no room for the list, so the list goes above.
+      const below = y + 24;
+      const above = y - SLASH_MENU_HEIGHT - 8;
+      slashLeft.set(Math.max(0, x));
+      slashTop.set(below + SLASH_MENU_HEIGHT <= box.bounds.size.height ? below : Math.max(0, above));
+    });
   }
 }
 
@@ -384,12 +402,21 @@ function closeSlash() {
 
 function select(note: Note | null) {
   flushSave();
+  applyPreview();
   selectedId.set(note ? text(note.id) : null);
   draftTitle.set(note ? text(note.title) : "");
   dirty.set(false);
   open(note);
   if (note) rememberRecent({ kind: "note", id: text(note.id), title: text(note.title).trim() || "Без названия" });
 }
+
+/// The open note's name, for the window's title bar.
+export const openNoteTitle = () => (selectedId() ? draftTitle() : "");
+/// Whether a note is open, so the title bar names it instead of the page.
+export const hasOpenNote = () => selectedId() !== null;
+export const renameOpenNote = (value: string) => editTitle(value);
+export const closeOpenNote = () => closeNote();
+export const removeOpenNote = () => removeNote();
 
 /// Opens a note from elsewhere in the app, the sidebar's recent list first.
 export function openNoteById(id: string) {
@@ -413,6 +440,9 @@ function scheduleSave() {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(flushSave, SAVE_DELAY_MS);
 }
+
+/// A saved note's library copy, applied when the page is left.
+let pendingPreview: { id: string; title: string; text: string } | null = null;
 
 /// The document and title as they were last written: a revision fires on a
 /// caret move too, and saving then would refresh the whole library.
@@ -438,12 +468,23 @@ function flushSave() {
   savedBody = serialized;
   savedTitle = title;
   dirty.set(false);
-  notes.set(notes().map((item) => (text(item.id) === text(note.id) ? { ...item, title, text: body } : item)));
   commands.save(text(note.id), title, doc);
+  // The library's copy waits: writing it here re-renders the page under the
+  // editor, and the editor loses the caret (the slash menu never opens after a
+  // save). It lands when the page is left.
+  pendingPreview = { id: text(note.id), title, text: body };
+}
+
+function applyPreview() {
+  if (!pendingPreview) return;
+  const { id, title, text: body } = pendingPreview;
+  pendingPreview = null;
+  notes.set(notes().map((item) => (text(item.id) === id ? { ...item, title, text: body } : item)));
 }
 
 function createNote() {
   flushSave();
+  applyPreview();
   openingNew = true;
   commands.create("", null);
 }
@@ -451,6 +492,7 @@ function createNote() {
 /// Back to the library: the page is one screen, so leaving it is a step back.
 function closeNote() {
   flushSave();
+  applyPreview();
   selectedId.set(null);
   draftTitle.set("");
   open(null);
@@ -676,19 +718,6 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
     },
   });
   return <View class="min-h-0 flex-1 flex-col" style={enter.style}>
-    <View class="flex-row items-center" style={{ height: 52, paddingLeft: GRID_PAD - 8, paddingRight: GRID_PAD - 8, gap: 8 }}>
-      <View onPress={closeNote} role="button" accessibilityLabel="К списку заметок" class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: 28, paddingLeft: 8, paddingRight: 12, gap: 3, borderRadius: 9, cursor: "pointer" }}>
-        <Text class="text-[16px]" style={{ color: colors.muted }}>‹</Text>
-        <Text class="text-[13px]" style={{ color: colors.muted }}>Заметки</Text>
-      </View>
-      {/* The note's name sits in the title bar, over the page it names. */}
-      <View class="min-w-0 flex-1 items-center">
-        <Input value={draftTitle()} onChange={(event) => editTitle(event.value)} placeholder="Заголовок" accessibilityLabel="Заголовок заметки" class="w-full text-center text-[15px] font-semibold" style={{ color: colors.foreground, backgroundColor: "transparent", paddingTop: 0, paddingBottom: 0, lineHeight: 20 }} />
-      </View>
-      <View onPress={removeNote} role="button" accessibilityLabel="Удалить заметку" class="items-center justify-center rounded-md" hoverStyle={{ backgroundColor: wash }} style={{ width: 26, height: 26, cursor: "pointer" }}>
-        <SharedIcon name="trash" size={14} color={colors.muted} />
-      </View>
-    </View>
     {/* The sheet is the page, not the column: the scroll view takes the whole
         width, so its indicator sits at the page's edge, and the text is inset
         to the column's width instead. */}
@@ -697,7 +726,7 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
       {/* A press on the page below the text belongs to the text: the caret
           goes to the end, the way a word processor takes a click on the
           empty part of a sheet. */}
-      <View class="relative min-h-0 flex-1" onPress={caretToEnd} testID="note-page-space">
+      <View class="relative min-h-0 flex-1" ref={(node) => { menuAnchor = node; }} onPress={caretToEnd} testID="note-page-space">
         <Each of={[{ stamp: editorVersion() }]} key={((row: { stamp: number }) => row.stamp) as any}>{(row) => editor
           ? <RichEditor
             editor={editor}
