@@ -5,8 +5,9 @@ import { expect, open, test } from "nsh/test";
 
 test("the library draws the cards with their previews", async () => {
   const app = await open("./notes-fixture.tsx", { width: 1180, height: 820 });
+  // The page is named, not counted.
   expect(app.texts()).toContain("Заметки");
-  expect(app.texts()).toContain("24 шт.");
+  expect(app.texts()).not.toContain("24 шт.");
   expect(app.texts()).toContain("Заметка 1");
   // A card carries its note's first blocks, not only its title.
   expect(app.texts()).toContain("Текст заметки 1");
@@ -46,7 +47,7 @@ test("a thousand notes show the cards near the viewport, not the whole list", as
   const started = Date.now();
   const app = await open("./notes-fixture-many.tsx", { width: 1180, height: 820 });
   const spent = Date.now() - started;
-  expect(app.texts()).toContain("1000 шт.");
+  expect(app.texts()).toContain("Заметки");
   expect(app.texts()).toContain("Заметка 1");
   // The list is virtualized: the last card waits for its scroll.
   expect(app.texts()).not.toContain("Заметка 1000");

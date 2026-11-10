@@ -175,7 +175,12 @@ function open(note: Note | null) {
     const made = makeEditor(note, taker);
     made.on("revision", () => {
       scheduleSave();
+      // The suggestion state lands with the transaction: reading it a second
+      // time once the update is applied is what keeps `/` from opening the
+      // menu every other try.
       syncSlash();
+      queueMicrotask(syncSlash);
+      requestAnimationFrame(() => syncSlash());
       scheduleOutline();
     });
     editor = made;
@@ -489,13 +494,12 @@ function LibraryView(props: { colors: ThemeColors; dark: boolean; onBack?: () =>
   return <View class="min-h-0 flex-1 flex-col">
     <View class="flex-row items-center" style={{ height: 54, paddingLeft: compact() ? 12 : GRID_PAD, paddingRight: compact() ? 12 : GRID_PAD - 6, gap: 10 }}>
       {compact() && props.onBack
-        ? <View onPress={props.onBack} role="button" accessibilityLabel="Назад" class="flex-row items-center" style={{ gap: 2, cursor: "pointer" }}>
-          <Text class="text-[22px]" style={{ color: colors.accent }}>‹</Text>
-          <Text class="text-[16px]" style={{ color: colors.accent }}>Назад</Text>
+        ? <View onPress={props.onBack} role="button" accessibilityLabel="Назад" class="items-center justify-center" style={{ width: 24, height: 28, cursor: "pointer" }}>
+          <Text class="text-[20px]" style={{ color: colors.accent }}>‹</Text>
         </View>
         : null}
-      {compact() ? null : <Text class="text-[17px] font-semibold" style={{ color: colors.foreground }}>Заметки</Text>}
-      <Text class="text-[12px] flex-1" style={{ color: colors.muted }}>{notes().length > 0 ? `${notes().length} шт.` : ""}</Text>
+      {/* The page's name stays put: this screen is the library, not a count. */}
+      <Text class="text-[17px] font-semibold flex-1" style={{ color: colors.foreground }}>Заметки</Text>
       <View onPress={createNote} role="button" accessibilityLabel="Новая заметка" class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: 28, paddingLeft: 10, paddingRight: 12, gap: 6, borderRadius: 9, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, cursor: "pointer" }}>
         <SharedIcon name="plus" size={13} color={colors.foreground} />
         <Text class="text-[13px]" style={{ color: colors.foreground }}>Новая заметка</Text>
@@ -677,8 +681,10 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
         <Text class="text-[16px]" style={{ color: colors.muted }}>‹</Text>
         <Text class="text-[13px]" style={{ color: colors.muted }}>Заметки</Text>
       </View>
-      <View class="flex-1" />
-      <Text class="text-[12px]" style={{ color: colors.muted }}>{stamp(note?.updatedAt)}</Text>
+      {/* The note's name sits in the title bar, over the page it names. */}
+      <View class="min-w-0 flex-1 items-center">
+        <Input value={draftTitle()} onChange={(event) => editTitle(event.value)} placeholder="Заголовок" accessibilityLabel="Заголовок заметки" class="w-full text-center text-[15px] font-semibold" style={{ color: colors.foreground, backgroundColor: "transparent", paddingTop: 0, paddingBottom: 0, lineHeight: 20 }} />
+      </View>
       <View onPress={removeNote} role="button" accessibilityLabel="Удалить заметку" class="items-center justify-center rounded-md" hoverStyle={{ backgroundColor: wash }} style={{ width: 26, height: 26, cursor: "pointer" }}>
         <SharedIcon name="trash" size={14} color={colors.muted} />
       </View>
@@ -688,9 +694,6 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
         to the column's width instead. */}
     <View class="relative min-h-0 flex-1" onLayout={(event) => { pageRoom.set(event.bounds.size.width); pageTall.set(event.bounds.size.height); }}>
     <View class="min-h-0 flex-col" style={{ height: "100%", paddingTop: 4 }}>
-      <View style={{ paddingLeft: pagePad(), paddingRight: pagePad() }}>
-        <Input value={draftTitle()} onChange={(event) => editTitle(event.value)} placeholder="Заголовок" accessibilityLabel="Заголовок заметки" class={compact() ? "w-full text-[28px] font-bold" : "w-full text-[34px] font-bold"} style={{ color: colors.foreground, backgroundColor: "transparent", paddingTop: 2, paddingBottom: 12, lineHeight: 42 }} />
-      </View>
       {/* A press on the page below the text belongs to the text: the caret
           goes to the end, the way a word processor takes a click on the
           empty part of a sheet. */}
