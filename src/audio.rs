@@ -260,7 +260,9 @@ impl Recorder {
         })
     }
 
-    /// 0..=100, refreshed about fifty times a second.
+    /// 0..=100, refreshed about fifty times a second. The UI reads
+    /// `level_flag`; a test asks the recorder itself.
+    #[allow(dead_code)]
     pub fn level(&self) -> u16 {
         self.capture.level.load(Ordering::Relaxed)
     }
@@ -270,6 +272,8 @@ impl Recorder {
         self.capture.level.clone()
     }
 
+    /// How long the recording has run.
+    #[allow(dead_code)]
     pub fn elapsed_ms(&self) -> u32 {
         self.started.elapsed().as_millis().min(u32::MAX as u128) as u32
     }
@@ -310,7 +314,7 @@ fn start_stream(capture: Arc<Capture>) -> Result<cpal::Stream, String> {
         .map_err(|error| format!("microphone settings refused: {error}"))?;
     let channels = supported.channels() as usize;
     let rate = supported.sample_rate();
-    let config: cpal::StreamConfig = supported.clone().into();
+    let config: cpal::StreamConfig = supported.into();
 
     let resample = Arc::new(Mutex::new(Linear::new(rate, SAMPLE_RATE)));
     let shared = capture.clone();
@@ -452,10 +456,14 @@ fn open_output(pcm: Arc<Vec<i16>>, stop: Arc<AtomicBool>) -> Result<(), String> 
         .map_err(|error| format!("speaker settings refused: {error}"))?;
     let channels = supported.channels() as usize;
     let rate = supported.sample_rate();
-    let config: cpal::StreamConfig = supported.clone().into();
+    let config: cpal::StreamConfig = supported.into();
     let mut resample = Linear::new(SAMPLE_RATE, rate);
     let mono: Vec<f32> = resample
-        .run(&pcm.iter().map(|s| *s as f32 / i16::MAX as f32).collect::<Vec<_>>())
+        .run(
+            &pcm.iter()
+                .map(|s| *s as f32 / i16::MAX as f32)
+                .collect::<Vec<_>>(),
+        )
         .into_iter()
         .map(|s| s as f32 / i16::MAX as f32)
         .collect();
@@ -512,7 +520,10 @@ mod tests {
         let pcm = tone(60_000);
         let packets = encode(&pcm, &mut encoder().unwrap()).unwrap();
         let bytes: usize = packets.iter().map(Vec::len).sum();
-        println!("one minute: {bytes} bytes, base64 {}", bytes.div_ceil(3) * 4);
+        println!(
+            "one minute: {bytes} bytes, base64 {}",
+            bytes.div_ceil(3) * 4
+        );
         assert!(bytes < 200_000, "a minute took {bytes} bytes");
         assert!(bytes > 60_000, "a minute took {bytes} bytes");
     }
@@ -567,21 +578,27 @@ mod tests {
         );
         assert!(clip.duration_ms >= 1000, "recorded {} ms", clip.duration_ms);
         assert!(!clip.packets.is_empty());
-        assert_eq!(decode(&clip.packets).unwrap().len(), clip.packets.len() * FRAME_SAMPLES);
+        assert_eq!(
+            decode(&clip.packets).unwrap().len(),
+            clip.packets.len() * FRAME_SAMPLES
+        );
     }
 
     #[test]
     fn a_broken_blob_is_refused() {
         assert!(Clip::from_bytes(b"nope").is_err());
-        assert!(Clip::from_bytes(
-            &Clip {
-                duration_ms: 0,
-                peaks: vec![],
-                packets: vec![],
-            }
-            .to_bytes()
-        )
-        .is_ok(), "an empty clip is valid");
+        assert!(
+            Clip::from_bytes(
+                &Clip {
+                    duration_ms: 0,
+                    peaks: vec![],
+                    packets: vec![],
+                }
+                .to_bytes()
+            )
+            .is_ok(),
+            "an empty clip is valid"
+        );
         let mut bytes = Clip {
             duration_ms: 120,
             peaks: vec![1, 2],

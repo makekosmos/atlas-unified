@@ -22,6 +22,25 @@ pub struct JournalEntry {
     snapshot: Value,
 }
 
+impl JournalEntry {
+    /// An entry the demo screen shows; nothing is stored.
+    pub fn demo(id: &str, text: &str, created_at: &str) -> Self {
+        Self {
+            id: id.to_owned(),
+            text: text.to_owned(),
+            created_at: created_at.to_owned(),
+            updated_at: created_at.to_owned(),
+            voice: None,
+            snapshot: Value::Null,
+        }
+    }
+}
+
+/// The current time as an RFC 3339 stamp in UTC, the shape Engine writes.
+pub fn now_iso() -> String {
+    chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
+}
+
 impl Engine {
     /// Entries under either note type: `objects.list` takes one `typeId`.
     pub fn journal_list(&self) -> Result<Vec<JournalEntry>, EngineError> {
@@ -149,7 +168,7 @@ impl Engine {
         }
     }
 
-    fn snapshot(&self, id: &str) -> Result<Value, EngineError> {
+    pub(super) fn snapshot(&self, id: &str) -> Result<Value, EngineError> {
         self.rpc(ops::OBJECTS_SNAPSHOT, json!({"id": id}))
     }
 

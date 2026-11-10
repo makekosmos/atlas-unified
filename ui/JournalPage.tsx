@@ -1,11 +1,9 @@
-import { Clipboard, createMotion, effect, Easing, Image, LayoutAnimation, PanResponder, Scroll, signal, Text, View, nativeComponent } from "nsh";
+import { Clipboard, createMotion, effect, Easing, Image, LayoutAnimation, Scroll, signal, Text, View, nativeComponent } from "nsh";
 import { Input } from "nsh/base";
 import { Menu } from "nsh/desktop";
-import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
-import { JournalCalendar } from "./JournalCalendar";
-import { GhostButton, SolidButton, animatePanes, colorAlpha, hoverWash, surfaceWash } from "./chrome";
-import { buildJournalDays, closestJournalDay, formatJournalDay, formatJournalStamp } from "./journal-model";
+import { GhostButton, SolidButton, colorAlpha } from "./chrome";
+import { buildJournalDays, formatJournalDay, formatJournalStamp } from "./journal-model";
 import type { JournalEntry } from "./state";
 import { accentMark, journalBubble } from "./themes";
 
@@ -88,12 +86,6 @@ function leaveJournalDates() {
   journalDateShown.set(null);
 }
 
-export const journalCalendarOpen = signal(false);
-const NativeCalendarToggle = nativeComponent<{ expanded: boolean; label: string }, { press: Record<string, never> }>("atlas.journalCalendarToggle", {
-  props: ["expanded", "label"],
-  events: ["press"],
-});
-const journalCalendarWidth = signal(260);
 const journalDraft = signal("");
 const journalDraftContentHeight = signal(COMPOSER_LINE);
 const journalFocused = signal(false);
@@ -102,10 +94,6 @@ const journalCaret = signal({ x: COMPOSER_PAD_X, y: COMPOSER_PAD_Y, height: COMP
 const journalCaretOn = signal(true);
 const journalCaretTick = signal(0);
 const journalScrollY = signal(0);
-const journalCalendarMinWidth = 220;
-const journalCalendarMaxWidth = 420;
-const journalCalendarResizeHovered = signal(false);
-const journalCalendarResizeActive = signal(false);
 const editingJournalId = signal<string | null>(null);
 const editingJournalText = signal("");
 const arrivingId = signal<string | null>(null);
@@ -343,7 +331,6 @@ export function JournalPage(props: {
   onStartRecording(): void;
   onStopRecording(): void;
   onPlayVoice(entry: JournalEntry): void;
-  nativeCalendarButton: boolean;
   titlebarInset: number;
   dark: boolean;
 }) {
@@ -362,25 +349,6 @@ export function JournalPage(props: {
     journalScrollY.set(next);
     composerScrollRef?.scrollTo({ y: next, animated: false });
   };
-  let pageWidth = 0;
-  let resizeStartWidth = journalCalendarWidth();
-  const resizeCalendar = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onPanResponderGrant: () => {
-      resizeStartWidth = journalCalendarWidth();
-      journalCalendarResizeActive.set(true);
-    },
-    onPanResponderMove: (_, gesture) => {
-      const maxWidth = pageWidth > 0
-        ? Math.max(journalCalendarMinWidth, Math.min(journalCalendarMaxWidth, pageWidth * 0.42))
-        : journalCalendarMaxWidth;
-      journalCalendarWidth.set(Math.max(journalCalendarMinWidth, Math.min(maxWidth, resizeStartWidth - gesture.dx)));
-    },
-    onPanResponderRelease: () => journalCalendarResizeActive.set(false),
-    onPanResponderTerminate: () => journalCalendarResizeActive.set(false),
-    onPanResponderTerminationRequest: () => false,
-  });
-  const dayOffsets = new Map<string, number>();
   const groups = () => buildJournalDays(props.entries());
   effect(() => {
     const entries = props.entries();
@@ -433,26 +401,13 @@ export function JournalPage(props: {
     journalCaretTick.update((n) => n + 1);
     composerRef?.focus();
   };
-  const jumpToDay = (key: string) => {
-    const target = closestJournalDay(groups(), key);
-    if (journalCalendarOpen()) toggleJournalCalendar();
-    if (target?.kind === "dated") {
-      const offset = dayOffsets.get(target.key);
-      if (offset !== undefined) feedRef?.scrollTo({ y: Math.max(0, offset - 12), animated: true });
-    }
-  };
 
-  return <View onLayout={(e) => { pageWidth = e.bounds.size.width; }} onPress={claimJournalComposer} class="min-h-0 flex-1 flex-row overflow-hidden">
-    <View class="relative min-w-0 flex-1 flex-col items-center">
-      {props.nativeCalendarButton
-        ? <NativeCalendarToggle expanded={journalCalendarOpen()} label={journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь"} onPress={toggleJournalCalendar} accessibilityLabel={journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь"} class="absolute right-4 z-10 h-8 w-8" style={{ top: props.titlebarInset + 16 }} />
-        : props.titlebarInset === 0 && <View onPress={toggleJournalCalendar} role="button" accessibilityLabel={journalCalendarOpen() ? "Скрыть календарь" : "Показать календарь"} accessibilityState={{ selected: journalCalendarOpen() }} class="absolute z-10 items-center justify-center" hoverStyle={{ backgroundColor: surfaceWash(props.dark, 0.11) }} style={{ top: 16, right: 16, width: 28, height: 28, borderRadius: 6, cursor: "pointer", backgroundColor: journalCalendarOpen() ? surfaceWash(props.dark, 0.09) : "transparent" }}>
-            <SharedIcon name="sidebar" size={16} color={journalCalendarOpen() ? props.colors.foreground : props.colors.muted} />
-          </View>}
+  return <View onPress={claimJournalComposer} class="min-h-0 flex-1 overflow-hidden">
+    <View class="relative min-h-0 flex-1 flex-col items-center">
       <View class="relative min-h-0 w-full flex-1">
       <Scroll ref={(node) => { feedRef = node; }} onLayout={(e) => feedBox.set({ width: e.bounds.size.width, height: e.bounds.size.height })} contentStyle={{ flexGrow: 1 }} class="min-h-0 w-full flex-1 pb-4">
         <View onMouseLeave={leaveJournalDates} class="mx-auto justify-end" style={{ width: threadSpan(), minHeight: feedBox().height, paddingTop: props.titlebarInset + 16, paddingLeft: FEED_PAD, paddingRight: FEED_PAD }}>
-        <Each of={groups()} key={((group: { key: string }) => group.key) as any}>{(group) => <View onLayout={(e) => { dayOffsets.set(group().key, e.bounds.origin.y); }} class="mb-4">
+        <Each of={groups()} key={((group: { key: string }) => group.key) as any}>{(group) => <View class="mb-4">
           <Text class="mb-3 text-center text-[12px]" style={{ color: props.colors.muted }}>{formatJournalDay(group())}</Text>
           <Each of={group().entries} key={((entry: JournalEntry) => entry.id) as any}>{(entry) => <JournalBubble entry={entry()} arriving={arrivingId() === entry().id} colors={props.colors} dark={props.dark} playing={props.playing() === entry().id} onPlay={props.onPlayVoice} onUpdate={props.onUpdate} onDelete={props.onDelete} />}</Each>
         </View>}</Each>
@@ -500,16 +455,5 @@ export function JournalPage(props: {
         </View>
       </View>
     </View>
-    <View class="relative h-full shrink-0 overflow-hidden" style={{ width: journalCalendarOpen() ? journalCalendarWidth() : 0 }}>
-      <View class="h-full border-l" style={{ width: journalCalendarWidth(), paddingTop: props.titlebarInset, backgroundColor: surfaceWash(props.dark), borderColor: journalCalendarResizeHovered() || journalCalendarResizeActive() ? props.colors.muted : props.colors.border, transitionProperty: "borderColor", transitionDuration: 150, transitionTimingFunction: "ease-out" }}>
-        <JournalCalendar width={journalCalendarWidth()} framed={false} resizeHovered={false} groups={groups()} colors={props.colors} dark={props.dark} onSelect={jumpToDay} />
-      </View>
-      {journalCalendarOpen() && <View {...resizeCalendar.panHandlers} role="button" accessibilityLabel="Изменить ширину календаря" onMouseEnter={() => journalCalendarResizeHovered.set(true)} onMouseLeave={() => journalCalendarResizeHovered.set(false)} class="absolute top-0 bottom-0 z-10 w-5" style={{ left: -10, cursor: "col-resize" }} />}
-    </View>
   </View>;
-}
-
-export function toggleJournalCalendar() {
-  animatePanes();
-  journalCalendarOpen.update((open) => !open);
 }

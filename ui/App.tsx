@@ -7,12 +7,17 @@ import navigation from "./navigation.json";
 import { fallback, isRoute, isSnapshot, resolveAppearanceColors } from "./state";
 import { cycleShortcut, shortcutOptions, shortcuts } from "./app-shortcuts";
 import { previewThemes } from "./themes";
-import type { JournalEntry, JournalVoice, Route, Snapshot } from "./state";
-import { JournalPage, journalCalendarOpen, markJournalArriving, toggleJournalCalendar } from "./JournalPage";
+import type { JournalEntry, JournalVoice, Note, Route, Snapshot } from "./state";
+import { JournalPage, markJournalArriving } from "./JournalPage";
+import { bindNoteCommands, notes, NotesPage, openNoteById, setNotes } from "./notes";
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
-import { ExtensionsPage, GamesLibrary, GamesSettings, gamesOn, livePrograms, loadGamePrefs } from "./games";
+import { GamesLibrary, GamesSettings, livePrograms } from "./games";
+import { SettingsPage as SettingsPageScroll, WidgetsSection } from "./settings";
+import { DevelopersSection } from "./dev-settings";
+import { loadRecent, recent, rememberRecent } from "./recent";
+import { loadWidgets, widgetOn } from "./widgets";
 import type { ProgramUsage } from "./games";
-import { SIDEBAR_WIDTH, TITLEBAR_HEIGHT, TitlebarOverlay, animateSidebar, sidebarPaneWidth, shellFill, SidebarRow } from "./chrome";
+import { SIDEBAR_WIDTH, TITLEBAR_HEIGHT, TitlebarOverlay, animateSidebar, sidebarPaneWidth, shellFill, RecentRow, SidebarRow } from "./chrome";
 import { loadPreview, persistPreview } from "./preview";
 import { gameLibrary } from "./game-library";
 import { Modal, ModalGhost } from "./modal";
@@ -33,7 +38,12 @@ const voicePlaying = signal<string | null>(null);
 let voiceStartedAt = 0;
 const pickedExes = signal<string[]>([]);
 const pickSource = signal("manual");
-loadGamePrefs();
+/// The sidebar's page list. A component body runs once, so the list a
+/// setting hides lives in a signal the effect below keeps current.
+const pageNavigation = navigation.filter((item) => !item.footer);
+const visiblePages = signal(pageNavigation);
+loadWidgets();
+loadRecent();
 if (!hosted) {
   void loadPreview().then((saved) => {
     if (!saved) return;
@@ -45,14 +55,15 @@ function persistPreviewSnapshot() {
   if (hosted) return;
   persistPreview({ journalEntries: snapshot().journalEntries, todos: snapshot().todos });
 }
-const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[]; voiceLevel: { level: number }; voiceRecorded: JournalVoice & Record<string, unknown>; voicePlayed: Record<string, never>; voiceFailed: { reason: string }; usage: ProgramUsage[]; picked: string[]; games: unknown; discovered: unknown; imported: unknown; launched: unknown; metadata: unknown }>("atlas.bridge", {
+const Bridge = nativeComponent<{ route: Route }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[]; notes: Note[]; voiceLevel: { level: number }; voiceRecorded: JournalVoice & Record<string, unknown>; voicePlayed: Record<string, never>; voiceFailed: { reason: string }; usage: ProgramUsage[]; picked: string[]; games: unknown; discovered: unknown; imported: unknown; launched: unknown; metadata: unknown }>("atlas.bridge", {
   props: ["route"],
-  events: ["state", "navigate", "journal", "voiceLevel", "voiceRecorded", "voicePlayed", "voiceFailed", "usage", "picked", "games", "discovered", "imported", "launched", "metadata"],
+  events: ["state", "navigate", "journal", "notes", "voiceLevel", "voiceRecorded", "voicePlayed", "voiceFailed", "usage", "picked", "games", "discovered", "imported", "launched", "metadata"],
 });
 
-function iconForNavigation(id: string): IconName | "gamepad" {
+function iconForNavigation(id: string): IconName | "gamepad" | "file" {
   switch (id) {
     case "journal": return "logbook";
+    case "notes": return "file";
     case "tasks": return "week";
     case "games": return "gamepad";
     default: return "settings";
@@ -214,7 +225,8 @@ effect(() => {
 });
 
 function SettingsPage() {
-  return <View>
+  return <SettingsPageScroll colors={snapshot().colors}>
+    <Text class="mb-6 text-[22px] font-semibold" style={{ color: snapshot().colors.foreground }}>Настройки</Text>
     <AtlasAppearanceSettings
       appearance={() => snapshot().appearance}
       editable={() => snapshot().appearanceEditable}
@@ -223,22 +235,50 @@ function SettingsPage() {
       onPatch={setAppearance}
       onChangeShortcut={cycleShortcut}
     />
-    <ExtensionsPage colors={snapshot().colors} />
-    {gamesOn() && <GamesSettings colors={snapshot().colors} />}
-  </View>;
+    <WidgetsSection colors={snapshot().colors} />
+    <DevelopersSection
+      colors={snapshot().colors}
+      dark={snapshot().appearance?.settings.mode !== "light"}
+      size={notes().length}
+      onStress={(count) => askEngine("notes.stress", { count })}
+      onReset={() => askEngine("notes.reset")}
+    />
+    {widgetOn("games") && <GamesSettings colors={snapshot().colors} />}
+  </SettingsPageScroll>;
 }
 
 function App() {
   effect(() => DesktopWindow.setTitleBar({ style: "hidden", height: TITLEBAR_HEIGHT }));
-  const primaryNavigation = navigation.filter((item) => !item.footer && (item.id !== "games" || gamesOn()));
+  // The sidebar lists the widgets that are on, in their order.
+  effect(() => visiblePages.set(pageNavigation.filter((item) => widgetOn(item.id as never))));
+  // A widget turned off takes its page with it; the app moves to the first one
+  // still on.
+  effect(() => {
+    const pages = visiblePages();
+    // Only a widget's page moves when its widget goes: the settings page is a
+    // footer row and is always reachable.
+    if (!pageNavigation.some((item) => item.id === route())) return;
+    if (pages.some((item) => item.id === route())) return;
+    const next = pages[0]?.id;
+    if (next) route.set(next as never);
+  });
   const footerNavigation = navigation.filter((item) => item.footer);
   const openNewTask = () => { newTaskTitle.set(""); addTaskOpen.set(true); };
   const shell = snapshot().chrome === "tsx";
   const dark = snapshot().appearance?.settings.mode !== "light";
   const changeRoute = (target: string) => {
     if (!isRoute(target)) return;
-    if (target !== "journal" && journalCalendarOpen()) toggleJournalCalendar();
     route.set(target);
+    const page = pageNavigation.find((item) => item.id === target);
+    if (page) rememberRecent({ kind: "page", id: target, title: page.label });
+  };
+  const openRecentEntry = (entry: { kind: string; id: string; title: string }) => {
+    if (entry.kind === "note") {
+      openNoteById(entry.id);
+      changeRoute("notes");
+      return;
+    }
+    if (isRoute(entry.id)) changeRoute(entry.id);
   };
   return (
     <View class="relative h-full w-full" style={{ backgroundColor: snapshot().colors.background }}>
@@ -247,6 +287,12 @@ function App() {
         ref={(node) => {
           commandRef = (name, args) => node.command(name, args);
           gameLibrary.bindCommand((name, args) => node.command(name, args));
+          bindNoteCommands({
+            create: (title, doc) => node.command("notes.create", { title, doc }),
+            save: (id, title, doc) => node.command("notes.save", { id, title, doc }),
+            remove: (id) => node.command("notes.delete", { id }),
+            reload: () => node.command("notes.reload"),
+          });
           }}
         route={route()}
         onState={(next) => {
@@ -261,6 +307,7 @@ function App() {
           });
         }}
         onJournal={(entries) => snapshot.set({ ...snapshot(), journalEntries: entries })}
+        onNotes={(next) => setNotes(next)}
         onVoiceLevel={(event) => voiceLevel.set(event.level)}
         onVoiceRecorded={(voice) => {
           voiceRecording.set(false);
@@ -282,8 +329,14 @@ function App() {
         <View class="relative box-border h-full" style={{ width: SIDEBAR_WIDTH, paddingTop: TITLEBAR_HEIGHT + 8, paddingBottom: 16, paddingLeft: 8, paddingRight: 8, backgroundColor: shellFill(snapshot().colors, dark) }}>
           <View onPressDown={() => askEngine("window.drag")} class="absolute left-0 right-0 top-0 bottom-0" />
           <View style={{ gap: 2, pointerEvents: "box-none" }}>
-            {primaryNavigation.map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
+            {visiblePages().map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
           </View>
+          {recent().length > 0 && <View class="mt-5" style={{ pointerEvents: "box-none" }}>
+            <Text class="mb-1 text-[11px] font-medium" style={{ color: snapshot().colors.muted, paddingLeft: 10 }}>Недавно открытые</Text>
+            <View style={{ gap: 1 }}>
+              {recent().map((entry) => <RecentRow entry={entry} colors={snapshot().colors} dark={dark} onPress={() => openRecentEntry(entry)} />)}
+            </View>
+          </View>}
           <View class="mt-auto mb-2" style={{ gap: 2, pointerEvents: "box-none" }}>
             {footerNavigation.map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
           </View>
@@ -303,15 +356,15 @@ function App() {
           onStartRecording={startRecording}
           onStopRecording={stopRecording}
           onPlayVoice={playVoice}
-          nativeCalendarButton={snapshot().chrome === "native"}
           titlebarInset={shell ? TITLEBAR_HEIGHT : 0}
           dark={dark}
         />}
+        {route() === "notes" && <NotesPage colors={snapshot().colors} dark={dark} titlebarInset={shell ? TITLEBAR_HEIGHT : 0} />}
         {route() === "tasks" && <View class="min-h-0 flex-1">
           <TaskPage />
           {shell && <View onPress={openNewTask} role="button" accessibilityLabel="Новая задача" class="absolute items-center justify-center rounded-full" hoverStyle={{ opacity: 0.85 }} style={{ right: 16, bottom: 16, width: 32, height: 32, backgroundColor: snapshot().colors.foreground, cursor: "pointer" }}><SharedIcon name="plus" size={16} color={snapshot().colors.background} /></View>}
         </View>}
-        {route() === "games" && gamesOn() && <View class="min-h-0 flex-1" style={{ paddingTop: shell ? TITLEBAR_HEIGHT : 0 }}>
+        {route() === "games" && widgetOn("games") && <View class="min-h-0 flex-1" style={{ paddingTop: shell ? TITLEBAR_HEIGHT : 0 }}>
           <GamesLibrary colors={snapshot().colors} pickedExes={pickedExes()} pickSource={pickSource()} onPick={(path) => askEngine("games.pick", { path })} onBrowse={() => { pickSource.set("manual"); askEngine("games.browse"); }} onBrowseFolder={() => { pickSource.set("folder"); askEngine("games.browse-folder"); }} onLaunch={(path) => askEngine("games.launch", { path })} onClearPick={() => { pickedExes.set([]); askEngine("games.clear-pick"); }} />
         </View>}
         {route() === "settings" && <View class="min-h-0 flex-1" style={{ paddingTop: shell ? TITLEBAR_HEIGHT : 0 }}><SettingsPage /></View>}
@@ -328,12 +381,9 @@ function App() {
       {shell && <TitlebarOverlay
         colors={snapshot().colors}
         dark={dark}
-        showCalendarToggle={route() === "journal"}
-        calendarOpen={journalCalendarOpen()}
-        showAddGame={route() === "games" && gamesOn()} pageInset={sidebarPaneWidth()}
+        showAddGame={route() === "games" && widgetOn("games")} pageInset={sidebarPaneWidth()}
         dimmed={addTaskOpen() || gameLibrary.addOpen() || pickedExes().length > 1}
         onToggleSidebar={toggleSidebar}
-        onToggleCalendar={toggleJournalCalendar}
         onAddGame={gameLibrary.openAddDialog}
         onChrome={(command) => askEngine(command)}
       />}

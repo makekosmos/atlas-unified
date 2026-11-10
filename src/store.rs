@@ -6,10 +6,12 @@ pub(crate) mod live;
 pub mod mapping;
 #[cfg(test)]
 mod mapping_tests;
+mod notes;
 mod ops;
 #[cfg(test)]
 mod payload_fixtures;
-pub use journal::JournalEntry;
+pub use journal::{now_iso, JournalEntry};
+pub use notes::Note;
 #[cfg(test)]
 mod journal_tests;
 mod projects;
@@ -20,10 +22,10 @@ mod restart_tests;
 #[cfg(test)]
 mod tests;
 mod transport;
-mod usage;
 #[cfg(test)]
 mod transport_tests;
 mod types;
+mod usage;
 
 use crate::model::Project;
 use crate::model::Todo;
@@ -39,6 +41,8 @@ pub struct Snapshot {
 
 /// Note types the journal screens read; the live watcher relays their changes.
 pub(crate) static JOURNAL_TYPES: &[&str] = &journal::NOTE_TYPES;
+/// The shared note type the notes screen reads and writes.
+pub(crate) static NOTE_TYPES: &[&str] = &notes::NOTE_TYPES;
 
 mod worker;
 pub use worker::{Command, Mutation, Reply, Worker};

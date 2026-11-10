@@ -95,6 +95,8 @@ impl Run {
         nsh_stage3::run(self, cx).await;
     }
 
+    /// Kept for the voice run the suite asks for by name.
+    #[allow(dead_code)]
     pub(super) async fn nsh_voice(&self, cx: &mut AsyncApp) {
         nsh_voice::run(self, cx).await;
     }

@@ -1,8 +1,8 @@
 #![windows_subsystem = "windows"]
 mod app;
-mod audio;
 mod appearance;
 mod assets;
+mod audio;
 mod brand;
 #[cfg(feature = "e2e")]
 mod e2e;
@@ -102,12 +102,14 @@ fn open_atlas_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Atlas
                     std::rc::Rc::new({
                         let agenda = agenda.clone();
                         move |context| {
-                            Box::new(nsh_bridge::AtlasBridge::new(
-                                context,
-                                agenda.clone(),
-                                demo,
-                            ))
+                            Box::new(nsh_bridge::AtlasBridge::new(context, agenda.clone(), demo))
                         }
+                    }),
+                );
+                view.register_component(
+                    "atlas.toggle",
+                    std::rc::Rc::new(|context| {
+                        Box::new(nsh_bridge::toggle::ToggleSwitch::new(context))
                     }),
                 );
                 view.register_component(

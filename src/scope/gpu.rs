@@ -36,8 +36,6 @@ impl Layout {
 
 const MAX_DOTS: usize = 2048;
 
-pub(crate) type SharedGpuScope = std::sync::Arc<std::sync::Mutex<GpuScopeRenderer>>;
-
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct Uniforms {
@@ -248,7 +246,13 @@ impl GpuScopeRenderer {
         let colors = palette(true, &pose, 1.0);
         let rgba = |color: [f32; 3]| [color[0], color[1], color[2], 1.0];
         // A field without a plate keeps the dots and their glow only.
-        let hide = |color: [f32; 4]| if layout.plate { color } else { [0.0, 0.0, 0.0, 0.0] };
+        let hide = |color: [f32; 4]| {
+            if layout.plate {
+                color
+            } else {
+                [0.0, 0.0, 0.0, 0.0]
+            }
+        };
         let uniforms = Uniforms {
             resolution: [width as f32, height as f32],
             backing_scale: layout.scale,

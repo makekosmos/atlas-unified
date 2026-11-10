@@ -256,6 +256,7 @@ pub use capture::{parse_project_mention, parse_quick_entry_capture};
 #[cfg(test)]
 pub use lists::{filter_idx, SmartList};
 pub use seed::new_todo;
+pub use seed::seed_journal;
 pub use seed::seed_todos;
 #[cfg(test)]
 pub(crate) use seed::todo;

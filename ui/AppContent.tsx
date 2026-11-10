@@ -3,7 +3,7 @@ import { Input } from "nsh/base";
 import { Dialog as SharedDialog, Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import type { Appearance, IconName } from "@makekosmos/imago-nsh";
 import navigation from "./navigation.json";
-import { JournalPage, journalCalendarOpen } from "./JournalPage";
+import { JournalPage } from "./JournalPage";
 import { MobileJournalPage, mobileJournalEditorOpen } from "./MobileJournalPage";
 import { ConnectionPage } from "./ConnectionPage";
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
@@ -25,11 +25,9 @@ interface AppContentProps {
   shortcuts: Shortcuts;
   taskDialogOpen: boolean;
   newTaskTitle: string;
-  calendarOpen: boolean;
   onChangeRoute(target: string): void;
   onBack(): void;
   onToggleSidebar(): void;
-  onToggleCalendar(): void;
   onCreateJournal(text: string, id: string): void;
   onUpdateJournal(id: string, text: string): void;
   onDeleteJournal(id: string): void;
@@ -123,7 +121,6 @@ export function AppContent(props: AppContentProps) {
           onCreate={props.onCreateJournal}
           onUpdate={props.onUpdateJournal}
           onDelete={props.onDeleteJournal}
-          nativeCalendarButton={props.snapshot.chrome === "native"}
           titlebarInset={shell() ? TITLEBAR_HEIGHT : 0}
           dark={dark()}
         />}
@@ -139,7 +136,7 @@ export function AppContent(props: AppContentProps) {
             onUpdate={(id, text) => command("journal.update", { id, text })}
             onDelete={(id) => command("journal.delete", { id })}
             onCopy={(text) => command("clipboard.copy", { text })}
-            nativeCalendarButton={false} mobile={true} />
+            mobile={true} />
         </View>}
         {props.route === "tasks" && <View class="min-h-0 flex-1">
           <TaskPage snapshot={props.snapshot} onCompleteTodo={props.onCompleteTodo} />
@@ -183,10 +180,7 @@ export function AppContent(props: AppContentProps) {
     {shell() && <TitlebarOverlay
       colors={props.snapshot.colors}
       dark={dark()}
-      showCalendarToggle={props.route === "journal"}
-      calendarOpen={props.calendarOpen}
       onToggleSidebar={props.onToggleSidebar}
-      onToggleCalendar={props.onToggleCalendar}
     />}
   </>;
 }

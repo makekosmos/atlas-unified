@@ -58,8 +58,11 @@ const COBALT_FOUNDRY: ThemeDef = ThemeDef {
 
 /// Cobalt Foundry first: `THEMES[0]` is the default scheme, the shared palettes
 /// follow unchanged.
-pub static THEMES: LazyLock<Vec<&'static ThemeDef>> =
-    LazyLock::new(|| std::iter::once(&COBALT_FOUNDRY).chain(SHARED_THEMES).collect());
+pub static THEMES: LazyLock<Vec<&'static ThemeDef>> = LazyLock::new(|| {
+    std::iter::once(&COBALT_FOUNDRY)
+        .chain(SHARED_THEMES)
+        .collect()
+});
 
 /// Theme palettes sent to TSX so settings previews and optimistic updates use
 /// the same colors as the native host.

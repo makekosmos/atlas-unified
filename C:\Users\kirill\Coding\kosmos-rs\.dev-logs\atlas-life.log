@@ -1,0 +1,65 @@
+SystemTime { tv_sec: 1794246003, tv_nsec: 376492000 } start
+SystemTime { tv_sec: 1794246196, tv_nsec: 993503000 } start
+SystemTime { tv_sec: 1794246510, tv_nsec: 652753000 } drag
+SystemTime { tv_sec: 1794247283, tv_nsec: 643280000 } start
+SystemTime { tv_sec: 1794247904, tv_nsec: 463215000 } start
+SystemTime { tv_sec: 1794247922, tv_nsec: 812806000 } start
+SystemTime { tv_sec: 1794248030, tv_nsec: 3135000 } start
+SystemTime { tv_sec: 1794248097, tv_nsec: 458281000 } start
+SystemTime { tv_sec: 1794249739, tv_nsec: 506727000 } drag
+SystemTime { tv_sec: 1794250177, tv_nsec: 677315000 } start
+SystemTime { tv_sec: 1794250261, tv_nsec: 222032000 } start
+SystemTime { tv_sec: 1794250892, tv_nsec: 5414000 } start
+SystemTime { tv_sec: 1794251014, tv_nsec: 72482000 } start
+SystemTime { tv_sec: 1794251190, tv_nsec: 151240000 } start
+SystemTime { tv_sec: 1794251411, tv_nsec: 181243000 } start
+SystemTime { tv_sec: 1794251488, tv_nsec: 116497000 } drag
+SystemTime { tv_sec: 1794251494, tv_nsec: 499476000 } drag
+SystemTime { tv_sec: 1794253512, tv_nsec: 276543000 } start
+SystemTime { tv_sec: 1794254421, tv_nsec: 51533000 } start
+SystemTime { tv_sec: 1794254632, tv_nsec: 300112000 } start
+SystemTime { tv_sec: 1794254712, tv_nsec: 986605000 } start
+SystemTime { tv_sec: 1794255079, tv_nsec: 631120000 } start
+SystemTime { tv_sec: 1794255198, tv_nsec: 276042000 } start
+SystemTime { tv_sec: 1794255238, tv_nsec: 585147000 } start
+SystemTime { tv_sec: 1794255274, tv_nsec: 178000 } start
+SystemTime { tv_sec: 1794255343, tv_nsec: 238337000 } start
+SystemTime { tv_sec: 1794255405, tv_nsec: 234621000 } start
+SystemTime { tv_sec: 1794255441, tv_nsec: 555748000 } start
+SystemTime { tv_sec: 1794255503, tv_nsec: 642006000 } start
+SystemTime { tv_sec: 1794255550, tv_nsec: 228001000 } start
+SystemTime { tv_sec: 1794255595, tv_nsec: 135866000 } start
+SystemTime { tv_sec: 1794255645, tv_nsec: 504195000 } start
+SystemTime { tv_sec: 1794255686, tv_nsec: 543968000 } start
+SystemTime { tv_sec: 1794255763, tv_nsec: 665679000 } start
+SystemTime { tv_sec: 1794255804, tv_nsec: 658741000 } start
+SystemTime { tv_sec: 1794255848, tv_nsec: 501043000 } start
+SystemTime { tv_sec: 1794255942, tv_nsec: 702138000 } start
+SystemTime { tv_sec: 1794255981, tv_nsec: 164586000 } start
+SystemTime { tv_sec: 1794256023, tv_nsec: 197029000 } start
+SystemTime { tv_sec: 1794256060, tv_nsec: 581557000 } start
+SystemTime { tv_sec: 1794256098, tv_nsec: 784956000 } start
+SystemTime { tv_sec: 1794256158, tv_nsec: 227804000 } start
+SystemTime { tv_sec: 1794256196, tv_nsec: 429813000 } start
+SystemTime { tv_sec: 1794256343, tv_nsec: 951055000 } start
+SystemTime { tv_sec: 1794256354, tv_nsec: 820167000 } should_close allow=true age=10
+SystemTime { tv_sec: 1794256356, tv_nsec: 751696000 } should_close allow=true age=12
+SystemTime { tv_sec: 1794256357, tv_nsec: 151520000 } should_close allow=true age=13
+SystemTime { tv_sec: 1794256357, tv_nsec: 334861000 } should_close allow=true age=13
+SystemTime { tv_sec: 1794256357, tv_nsec: 486559000 } should_close allow=true age=13
+SystemTime { tv_sec: 1794256396, tv_nsec: 392474000 } start
+SystemTime { tv_sec: 1794256564, tv_nsec: 791578000 } start
+SystemTime { tv_sec: 1794256774, tv_nsec: 380306000 } start
+SystemTime { tv_sec: 1794257290, tv_nsec: 872111000 } start
+SystemTime { tv_sec: 1794257373, tv_nsec: 20014000 } start
+SystemTime { tv_sec: 1794257437, tv_nsec: 954518000 } start
+SystemTime { tv_sec: 1794258094, tv_nsec: 314343000 } drag
+SystemTime { tv_sec: 1794258094, tv_nsec: 647606000 } drag
+SystemTime { tv_sec: 1794258948, tv_nsec: 395768000 } drag
+SystemTime { tv_sec: 1794259179, tv_nsec: 110025000 } start
+SystemTime { tv_sec: 1794259253, tv_nsec: 335956000 } start
+SystemTime { tv_sec: 1794259523, tv_nsec: 835468000 } drag
+SystemTime { tv_sec: 1794259591, tv_nsec: 307132000 } start
+SystemTime { tv_sec: 1794259643, tv_nsec: 539235000 } start
+SystemTime { tv_sec: 1794262667, tv_nsec: 190749000 } start
+SystemTime { tv_sec: 1794263459, tv_nsec: 406077000 } start

@@ -1,9 +1,10 @@
 //! HEX Dot Scope recording model, ported from anomalyco/hex's `dot_scope`.
 //! The GPU-only Rune compositor is adapted to the existing GPUI popup.
 
+pub mod gpu;
+#[allow(clippy::module_inception)]
 mod scope;
 mod spring;
-pub mod gpu;
 
 pub use scope::*;
 

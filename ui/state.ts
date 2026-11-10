@@ -1,8 +1,10 @@
 import type { Appearance, ThemeColors } from "@makekosmos/imago-nsh";
 import { previewThemes, systemAccent } from "./themes";
 
-export type Route = "journal" | "tasks" | "games" | "settings";
+export type Route = "journal" | "notes" | "tasks" | "games" | "settings";
 export type Todo = { id: string; title: string; is_completed: boolean; scheduled_date?: string; notes?: string };
+/** A note: Markdown text of a `core.note` object, owned by the host. */
+export type Note = { id: string; title: string; doc: unknown; text: string; createdAt: string; updatedAt: string };
 /** A voice note: Opus in base64, plus what the bubble draws. */
 export type JournalVoice = { durationMs: number; peaks: number[]; data: string };
 export type JournalEntry = { id: string; text: string; createdAt: string; voice?: JournalVoice };
@@ -34,7 +36,7 @@ export function isSnapshot(value: unknown): value is Snapshot {
 }
 
 export function isRoute(value: unknown): value is Route {
-  return value === "journal" || value === "tasks" || value === "games" || value === "settings";
+  return value === "journal" || value === "notes" || value === "tasks" || value === "games" || value === "settings";
 }
 
 function isTodo(value: unknown): value is Todo {

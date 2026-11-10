@@ -9,9 +9,17 @@ use serde_json::{json, Value};
 
 use crate::store::Engine;
 
-use super::{choose_metadata, discovery, emit_library, enrich_candidate, import_candidates, is_exe, override_image, Request};
+use super::{
+    choose_metadata, discovery, emit_library, enrich_candidate, import_candidates, is_exe,
+    override_image, Request,
+};
 
 type EventSender = Sender<(String, Value)>;
+
+/// The demo run keeps its games in memory: three cards, no real files.
+fn demo_mode() -> bool {
+    std::env::var("ATLAS_DEMO").as_deref() == Ok("1")
+}
 
 pub(in crate::nsh_bridge) fn start_worker(
     emit: impl Fn(&str, Value) + Send + 'static,
@@ -29,6 +37,10 @@ pub(in crate::nsh_bridge) fn start_worker(
             match request {
                 Request::Load => {
                     let events = events.clone();
+                    if demo_mode() {
+                        send_event(&events, "games", json!(super::store::demo_cards()));
+                        continue;
+                    }
                     emit_library(&engine, &|event, value| send_event(&events, event, value));
                 }
                 Request::Discover => {
@@ -56,9 +68,17 @@ pub(in crate::nsh_bridge) fn start_worker(
                             let engine = Engine::with_timeout(Duration::from_secs(90));
                             for candidate in pending_metadata {
                                 let result = enrich_candidate(&engine, &candidate);
-                                let event = result.as_ref().map(|value| value.clone()).unwrap_or_else(|error| json!({"status":"error","error":error}));
-                                send_event(&events, "metadata", json!({"exePath":candidate.exe_path,"result":event}));
-                                emit_library(&engine, &|name, value| send_event(&events, name, value));
+                                let event = result.clone().unwrap_or_else(
+                                    |error| json!({"status":"error","error":error}),
+                                );
+                                send_event(
+                                    &events,
+                                    "metadata",
+                                    json!({"exePath":candidate.exe_path,"result":event}),
+                                );
+                                emit_library(&engine, &|name, value| {
+                                    send_event(&events, name, value)
+                                });
                             }
                         });
                     }
@@ -68,8 +88,14 @@ pub(in crate::nsh_bridge) fn start_worker(
                     thread::spawn(move || {
                         let engine = Engine::with_timeout(Duration::from_secs(90));
                         let result = choose_metadata(&engine, &choice);
-                        let event = result.as_ref().map(|value| value.clone()).unwrap_or_else(|error| json!({"status":"error","error":error}));
-                        send_event(&events, "metadata", json!({"exePath":choice.exe_path,"result":event}));
+                        let event = result
+                            .clone()
+                            .unwrap_or_else(|error| json!({"status":"error","error":error}));
+                        send_event(
+                            &events,
+                            "metadata",
+                            json!({"exePath":choice.exe_path,"result":event}),
+                        );
                         emit_library(&engine, &|name, value| send_event(&events, name, value));
                     });
                 }
@@ -78,8 +104,14 @@ pub(in crate::nsh_bridge) fn start_worker(
                     thread::spawn(move || {
                         let engine = Engine::with_timeout(Duration::from_secs(30));
                         let result = override_image(&engine, &image);
-                        let event = result.as_ref().map(|value| value.clone()).unwrap_or_else(|error| json!({"status":"error","error":error}));
-                        send_event(&events, "metadata", json!({"exePath":image.exe_path,"result":event}));
+                        let event = result
+                            .clone()
+                            .unwrap_or_else(|error| json!({"status":"error","error":error}));
+                        send_event(
+                            &events,
+                            "metadata",
+                            json!({"exePath":image.exe_path,"result":event}),
+                        );
                         emit_library(&engine, &|name, value| send_event(&events, name, value));
                     });
                 }
@@ -156,6 +188,27 @@ mod tests {
     use std::{error::Error, fs};
 
     use super::selected_manual_exes;
+
+    /// The demo library is what the games page draws without an Engine: three
+    /// cards, each with what the grid and the details dialog read.
+    #[test]
+    fn the_demo_library_has_three_complete_cards() {
+        let cards = super::super::store::demo_cards();
+        assert_eq!(cards.len(), 3);
+        for card in &cards {
+            assert!(card["id"]
+                .as_str()
+                .is_some_and(|id| id.starts_with("demo:")));
+            assert!(card["title"]
+                .as_str()
+                .is_some_and(|title| !title.is_empty()));
+            assert!(card["exePath"]
+                .as_str()
+                .is_some_and(|path| !path.is_empty()));
+        }
+        assert_eq!(cards[0]["metadataStatus"], "ready");
+        assert_eq!(cards[2]["metadataStatus"], "pending");
+    }
 
     #[test]
     fn manual_picker_accepts_one_existing_exe_but_rejects_folders_and_other_files(

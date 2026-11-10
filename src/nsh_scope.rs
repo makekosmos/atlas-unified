@@ -123,7 +123,11 @@ impl AtlasScope {
         } else {
             -55.0 + self.level * 40.0
         };
-        let stage = if self.done { Stage::Done } else { Stage::Recording };
+        let stage = if self.done {
+            Stage::Done
+        } else {
+            Stage::Recording
+        };
         self.scope.advance(
             dt,
             Frame {
@@ -186,10 +190,7 @@ impl NativeComponent for AtlasScope {
 
     fn placed(&mut self, bounds: Option<gpui::Bounds<gpui::Pixels>>) {
         if let Some(bounds) = bounds {
-            let size = (
-                f32::from(bounds.size.width),
-                f32::from(bounds.size.height),
-            );
+            let size = (f32::from(bounds.size.width), f32::from(bounds.size.height));
             if size != self.size {
                 self.size = size;
                 self.image = None;
@@ -197,13 +198,7 @@ impl NativeComponent for AtlasScope {
         }
     }
 
-    fn set_prop(
-        &mut self,
-        name: &str,
-        value: Option<&Value>,
-        _window: &mut Window,
-        _cx: &mut App,
-    ) {
+    fn set_prop(&mut self, name: &str, value: Option<&Value>, _window: &mut Window, _cx: &mut App) {
         match name {
             "level" => {
                 self.level = value

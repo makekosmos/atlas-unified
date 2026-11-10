@@ -4,8 +4,8 @@
 
 use std::f32::consts::{PI, TAU};
 
-use super::{fixed_level, AutoLevel, Processing, Tuning};
 use super::spring::{Spec, Spring, REDUCED_FADE};
+use super::{fixed_level, AutoLevel, Processing, Tuning};
 
 const STEP: f32 = 1.0 / 240.0;
 const HISTORY: usize = 512;
@@ -518,6 +518,7 @@ impl Scope {
     }
 
     /// Whether the scope has faded out after being hidden.
+    #[allow(dead_code)]
     pub fn settled(&self) -> bool {
         self.opacity.target == 0.0 && self.opacity.x < 0.002
     }

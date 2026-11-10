@@ -5,7 +5,6 @@ export type JournalDayGroup =
   | { kind: "invalid"; key: string; label: string; entries: JournalEntry[] };
 
 const monthNamesInDate = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
-const monthNamesShort = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 const weekdays = ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"];
 
 function localDayKey(date: Date) {
@@ -58,32 +57,3 @@ export function formatJournalStamp(createdAt: string, _now = new Date()) {
   return `${hours}:${minutes}`;
 }
 
-export type CalendarDay = { key: string; date: Date; count: number; period: string };
-
-export function buildCalendarDays(groups: readonly JournalDayGroup[], now = new Date()): CalendarDay[] {
-  const counts = new Map(groups.flatMap((group) => group.kind === "dated" ? [[group.key, group.entries.length] as const] : []));
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const dated = groups.filter((group) => group.kind === "dated");
-  const oldest = dated.reduce((date, group) => group.kind === "dated" && group.date < date ? group.date : date, today);
-  const start = dated.length ? new Date(oldest.getFullYear(), oldest.getMonth(), oldest.getDate() - 40) : new Date(today.getFullYear(), today.getMonth(), today.getDate() - 40);
-  const days: CalendarDay[] = [];
-  for (const date = today; date >= start; date.setDate(date.getDate() - 1)) {
-    const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const key = localDayKey(day);
-    const weekLabel = day.getDay() === 0 || day.valueOf() === today.valueOf();
-    const period = weekLabel ? `${monthNamesShort[day.getMonth()]} ${day.getFullYear()}` : "";
-    days.push({ key, date: day, count: counts.get(key) ?? 0, period });
-  }
-  return days;
-}
-
-export function closestJournalDay(groups: readonly JournalDayGroup[], key: string): JournalDayGroup | undefined {
-  const [year, month, day] = key.split("-").map(Number);
-  const target = new Date(year, month - 1, day, 12).valueOf();
-  return groups.reduce<JournalDayGroup | undefined>((closest, group) => {
-    if (group.kind !== "dated") return closest;
-    if (!closest || closest.kind !== "dated") return group;
-    const distance = Math.abs(group.date.valueOf() - target);
-    return distance < Math.abs(closest.date.valueOf() - target) ? group : closest;
-  }, undefined);
-}

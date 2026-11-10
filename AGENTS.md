@@ -41,7 +41,21 @@ Atlas desktop app на GPUI и NSH (задачи и календарь) для M
 cargo run                                   # против живого Engine
 MUNDUS_DATA_DIR=<dir> cargo run             # другая папка данных
 ATLAS_DEMO=1 cargo run                     # без Engine
+pnpm demo                                  # демо + hot reload UI (nsh dev)
 ```
+
+`pnpm demo` (`scripts/demo-dev.mjs`) поднимает `nsh dev --server-only` в `ui/`
+на порту 8790, если порт свободен, и запускает Atlas с `ATLAS_DEMO=1` и
+`ATLAS_NSH_DEV_SERVER`; выход из Atlas гасит сервер, поднятый скриптом.
+Флаги: `--restart` (перезапустить dev-сервер), `--no-server` (сервер уже
+поднят вручную), `--port N`, `--release`.
+Логи: `.dev-logs/atlas-nsh-server.log`.
+
+CLI `nsh` должен совпадать по версии с `nsh-base`, который линкует хост
+(сейчас 0.4.0): старый CLI не знает компонентов вроде `RichEditor` и падает
+на «`nsh/base` has no export». Скрипт берёт `~/.nsh-0.4.0/bin/nsh`, если он
+есть, иначе `nsh` из `PATH`; путь можно задать через `NSH_BIN`.
+`ATLAS_ROUTE=notes` открывает окно сразу на нужной странице.
 
 Engine берётся из `makekosmos/cortex`: `pnpm run dev -- --engine-only` в корне
 cortex (общая папка данных — `--data-dir DIR`, тот же `DIR` отдай приложению).

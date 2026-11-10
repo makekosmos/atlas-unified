@@ -3,7 +3,7 @@ import type { Appearance } from "@makekosmos/imago-nsh";
 import { canNavigateToRoute, resolveAppearanceColors } from "./state";
 import { previewThemes } from "./themes";
 import { mobileThemes } from "./mobile-themes";
-import type { JournalEntry, Route, Snapshot } from "./state";
+import type { JournalEntry, Note, Route, Snapshot } from "./state";
 
 interface AtlasBridgeProps {
   route: Route;
@@ -15,14 +15,15 @@ interface AtlasBridgeProps {
   onSnapshot(snapshot: Snapshot): void;
   onSidebarVisible(visible: boolean): void;
   onJournal(entries: JournalEntry[]): void;
+  onNotes(notes: Note[]): void;
   onNavigate(route: string): void;
   onConnection(connection: NonNullable<Snapshot["connection"]>): void;
   onBack(): void;
 }
 
-const Bridge = nativeComponent<{ route: Route; canHandleBack: boolean }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[]; connection: NonNullable<Snapshot["connection"]>; back: Record<string, never> }>("atlas.bridge", {
+const Bridge = nativeComponent<{ route: Route; canHandleBack: boolean }, { state: Snapshot; navigate: { route: Route }; journal: JournalEntry[]; notes: Note[]; connection: NonNullable<Snapshot["connection"]>; back: Record<string, never> }>("atlas.bridge", {
   props: ["route", "canHandleBack"],
-  events: ["state", "navigate", "journal", "connection", "back"],
+  events: ["state", "navigate", "journal", "notes", "connection", "back"],
 });
 
 let mobileJournalRequested = false;
@@ -61,6 +62,7 @@ export function AtlasBridge(props: AtlasBridgeProps) {
       }
     }}
     onJournal={props.onJournal}
+    onNotes={props.onNotes}
     onNavigate={(event) => props.onNavigate(event.route)}
     onConnection={props.onConnection}
     onBack={props.onBack}

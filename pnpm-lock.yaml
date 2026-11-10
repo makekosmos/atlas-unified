@@ -9,15 +9,15 @@ importers:
   .:
     dependencies:
       '@makekosmos/imago-nsh':
-        specifier: github:makekosmos/imago#feat/native-sidebar
-        version: https://codeload.github.com/makekosmos/imago/tar.gz/38b61af907dbc4032291386f91b75cfb0d8a154c
+        specifier: github:makekosmos/imago#d9186fab4dda30bd528fd5d6dbda843424b0ed78
+        version: https://codeload.github.com/makekosmos/imago/tar.gz/d9186fab4dda30bd528fd5d6dbda843424b0ed78
 
 packages:
 
-  '@makekosmos/imago-nsh@https://codeload.github.com/makekosmos/imago/tar.gz/38b61af907dbc4032291386f91b75cfb0d8a154c':
-    resolution: {gitHosted: true, integrity: sha512-TOdzs55oWt47aTEe18urRiAJASVlTC+o3j277W9JODJEEmirzI7GoW8UGBlguV4U5opWulTqYOiQxIOibLYcdA==, tarball: https://codeload.github.com/makekosmos/imago/tar.gz/38b61af907dbc4032291386f91b75cfb0d8a154c}
+  '@makekosmos/imago-nsh@https://codeload.github.com/makekosmos/imago/tar.gz/d9186fab4dda30bd528fd5d6dbda843424b0ed78':
+    resolution: {gitHosted: true, integrity: sha512-vYsssLb/cG+1BlHpyjOHZAq0xlSpgWHyIFLJ9jaONitel4YSQTNQiGgHTQwL5bBdgTDZkVnOX3d0U3CTWGHT+A==, tarball: https://codeload.github.com/makekosmos/imago/tar.gz/d9186fab4dda30bd528fd5d6dbda843424b0ed78}
     version: 0.1.0
 
 snapshots:
 
-  '@makekosmos/imago-nsh@https://codeload.github.com/makekosmos/imago/tar.gz/38b61af907dbc4032291386f91b75cfb0d8a154c': {}
+  '@makekosmos/imago-nsh@https://codeload.github.com/makekosmos/imago/tar.gz/d9186fab4dda30bd528fd5d6dbda843424b0ed78': {}

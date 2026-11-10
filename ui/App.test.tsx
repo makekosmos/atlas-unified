@@ -2,7 +2,7 @@ import { expect, open, test } from "nsh/test";
 import { voiceBarHeight } from "./JournalPage";
 import { SIDEBAR_HIDE_MS, SIDEBAR_MOTION_MS, SIDEBAR_OPEN_MS, SIDEBAR_WIDTH, animateSidebar, drawsCaptionButtons, navInk, sidebarFrame, sidebarWidthAt, titlebarControlTop } from "./chrome";
 import { composerFadeEdges, journalDateDelay } from "./JournalPage";
-import { buildCalendarDays, buildJournalDays, closestJournalDay, formatJournalDay, formatJournalStamp } from "./journal-model";
+import { buildJournalDays, formatJournalDay, formatJournalStamp } from "./journal-model";
 import { fallback, resolveAppearanceColors } from "./state";
 import { journalBubble } from "./themes";
 
@@ -32,22 +32,6 @@ test("groups journal bubbles by date and omits the current year", () => {
   expect(formatJournalDay(groups[1], new Date(2025, 11, 31))).toEqual("вторник, 23 декабря");
 });
 
-test("shows recent journal days in reverse chronological order with entry counts", () => {
-  const groups = buildJournalDays([{ id: "one", text: "запись", createdAt: new Date(2025, 11, 23, 9).toISOString() }]);
-  const days = buildCalendarDays(groups, new Date(2025, 11, 24, 12));
-  expect(days[0].key).toEqual("2025-12-24");
-  expect(days[1].key).toEqual("2025-12-23");
-  expect(days[1].count).toEqual(1);
-});
-
-test("chooses the closest dated group for an empty calendar day", () => {
-  const groups = buildJournalDays([
-    { id: "before", text: "до", createdAt: new Date(2025, 11, 23, 9).toISOString() },
-    { id: "after", text: "после", createdAt: new Date(2025, 11, 27, 9).toISOString() },
-  ]);
-  expect(closestJournalDay(groups, "2025-12-26")?.key).toEqual("2025-12-27");
-});
-
 test("keeps macOS traffic lights and leaves page names out of the titlebar", async () => {
   const app = await open("./App.tsx", { platform: "macos", width: 1200, height: 800 });
   expect(app.texts()).toContain("Дневник");
@@ -69,11 +53,10 @@ test("draws caption buttons on Windows and Linux only when the system reserves n
   expect(drawsCaptionButtons("windows", 108)).toEqual(false);
 });
 
-test("opens the journal timeline and closes it from the titlebar control", async () => {
+test("shows the journal without a calendar pane", async () => {
   const app = await open("./App.tsx", { width: 1100, clock: { time: new Date(2026, 9, 26) } });
-  await app.press("Показать календарь");
-  expect(app.texts()).toContain("Окт 2026");
-  await app.press("Скрыть календарь");
+  expect(app.texts()).not.toContain("Показать календарь");
+  expect(app.texts()).not.toContain("Скрыть календарь");
   expect(app.texts()).not.toContain("Окт 2026");
 });
 
@@ -194,15 +177,6 @@ test("routes to the all-tasks screen", async () => {
   const app = await open("./App.tsx");
   await app.press("Задачи");
   expect(app.texts()).toContain("Задач пока нет");
-});
-
-test("closes the journal calendar and its toggle outside the journal", async () => {
-  const app = await open("./App.tsx");
-  await app.press("Показать календарь");
-  expect(app.texts()).toContain("Окт 2026");
-  await app.press("Задачи");
-  expect(app.texts()).not.toContain("Окт 2026");
-  expect(app.texts()).not.toContain("Показать календарь");
 });
 
 test("keeps appearance settings and configurable keyboard shortcuts", async () => {

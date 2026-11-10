@@ -1,11 +1,11 @@
 #[path = "games_discovery.rs"]
 mod discovery;
-#[path = "games_worker.rs"]
-mod worker;
 #[path = "games_metadata.rs"]
 mod metadata;
 #[path = "games_store.rs"]
 mod store;
+#[path = "games_worker.rs"]
+mod worker;
 use metadata::{choose_metadata, enrich_candidate, override_image};
 use store::{emit_library, import_candidates, is_exe};
 pub(super) use worker::start_worker;
@@ -129,12 +129,14 @@ fn pick_paths(cx: &mut App, folder: bool, requests: Sender<Request>, context: Co
         files: !folder,
         directories: folder,
         multiple: false,
-        prompt: Some(if folder {
-            "Выберите папку с игрой"
-        } else {
-            "Выберите exe-файл игры"
-        }
-        .into()),
+        prompt: Some(
+            if folder {
+                "Выберите папку с игрой"
+            } else {
+                "Выберите exe-файл игры"
+            }
+            .into(),
+        ),
     });
     cx.spawn(async move |_cx| match receiver.await {
         Ok(Ok(Some(paths))) => {
@@ -173,10 +175,17 @@ pub(super) fn enqueue(requests: &Sender<Request>, name: &str, args: &Value) -> R
         "games.import" | "games.import-legacy" => {
             let request = serde_json::from_value::<ImportRequest>(args.clone())
                 .map_err(|error| format!("Некорректный список игр: {error}"))?;
-            Request::Import { candidates: request.candidates, legacy: name == "games.import-legacy" }
+            Request::Import {
+                candidates: request.candidates,
+                legacy: name == "games.import-legacy",
+            }
         }
-        "games.metadata.choose" => Request::MetadataChoice(serde_json::from_value(args.clone()).map_err(|error| error.to_string())?),
-        "games.metadata.set-image" => Request::ImageOverride(serde_json::from_value(args.clone()).map_err(|error| error.to_string())?),
+        "games.metadata.choose" => Request::MetadataChoice(
+            serde_json::from_value(args.clone()).map_err(|error| error.to_string())?,
+        ),
+        "games.metadata.set-image" => Request::ImageOverride(
+            serde_json::from_value(args.clone()).map_err(|error| error.to_string())?,
+        ),
         _ => return Ok(()),
     };
     requests.send(request).map_err(|error| error.to_string())

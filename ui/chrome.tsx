@@ -166,13 +166,10 @@ export function drawsCaptionButtons(os: string, reservedRight: number) {
 export function TitlebarOverlay(props: {
   colors: ThemeColors;
   dark: boolean;
-  showCalendarToggle: boolean;
-  calendarOpen: boolean;
   showAddGame?: boolean;
   dimmed?: boolean;
   pageInset?: number;
   onToggleSidebar: () => void;
-  onToggleCalendar: () => void;
   onAddGame?: () => void;
   onChrome: (command: string) => void;
 }) {
@@ -182,8 +179,8 @@ export function TitlebarOverlay(props: {
   const drawCaptions = drawsCaptionButtons(os, controls.right);
   const captionWidth = drawCaptions ? CAPTION_BUTTON_WIDTH * 3 : controls.right;
   const sidebarLeft = macos ? Math.max(controls.left, CLUSTER_START_MACOS) : Math.max(controls.left, CLUSTER_START);
-  const calendarRight = captionWidth + TRAILING_INSET;
-  const addGameRight = calendarRight + (props.showCalendarToggle ? 34 : 0);
+  const controlsRight = captionWidth + TRAILING_INSET;
+  const addGameRight = controlsRight;
   const wash = hoverWash(props.dark);
   return <View class="absolute left-0 right-0 top-0 z-20" style={{ height: controls.height || TITLEBAR_HEIGHT }} desktop={{ windowDrag: true }}>
     <View class="absolute top-0 bottom-0" style={{ left: props.pageInset ?? 0, right: 0, backgroundColor: props.colors.background, pointerEvents: "none" }} />
@@ -192,9 +189,6 @@ export function TitlebarOverlay(props: {
     <View onPress={props.onToggleSidebar} role="button" accessibilityLabel="Боковая панель" class="absolute items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ top: titlebarControlTop(24), left: sidebarLeft, width: 24, height: 24, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
       <SharedIcon name="sidebar" size={16} color={props.colors.muted} />
     </View>
-    {props.showCalendarToggle && <View onPress={props.onToggleCalendar} role="button" accessibilityLabel={props.calendarOpen ? "Скрыть календарь" : "Показать календарь"} accessibilityState={{ selected: props.calendarOpen }} class="absolute items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: surfaceWash(props.dark, 0.11) }} style={{ top: titlebarControlTop(28), right: calendarRight, width: 28, height: 28, borderRadius: CONTROL_RADIUS, cursor: "pointer", backgroundColor: props.calendarOpen ? surfaceWash(props.dark, 0.09) : "transparent" }}>
-      <SharedIcon name="sidebar" size={16} color={props.calendarOpen ? props.colors.foreground : props.colors.muted} />
-    </View>}
     {props.showAddGame && <View onPress={() => props.onAddGame?.()} role="button" accessibilityLabel="Добавить игру" class="absolute items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ top: titlebarControlTop(28), right: addGameRight, width: 28, height: 28, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
       <SharedIcon name="plus" size={16} color={props.colors.muted} />
     </View>}
@@ -208,7 +202,7 @@ export function TitlebarOverlay(props: {
 
 export function SidebarRow(props: {
   label: string;
-  icon: IconName | "gamepad";
+  icon: IconName | "gamepad" | "file";
   selected: boolean;
   dark: boolean;
   colors: ThemeColors;
@@ -216,10 +210,24 @@ export function SidebarRow(props: {
 }) {
   const wash = hoverWash(props.dark);
   return <View onPress={props.onPress} role="button" accessibilityState={{ selected: props.selected }} desktop={{ windowDrag: false }} class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: NAV_ROW_HEIGHT, gap: 10, paddingLeft: 10, paddingRight: 10, borderRadius: NAV_ROW_RADIUS, backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent", cursor: "pointer" }}>
-    {props.icon === "gamepad"
-      ? <Glyph name="gamepad" size={16} color={props.colors.foreground} />
+    {props.icon === "gamepad" || props.icon === "file"
+      ? <Glyph name={props.icon} size={16} color={props.colors.foreground} />
       : <SharedIcon name={props.icon} size={16} color={props.colors.foreground} />}
     <Text class="text-[14px]" style={{ color: props.colors.foreground, fontWeight: 500, lineHeight: 20 }}>{props.label}</Text>
+  </View>;
+}
+
+/// A row under the widgets: something opened not long ago. Quieter than a
+/// widget: smaller text, no icon, and no selection mark.
+export function RecentRow(props: {
+  entry: { kind: string; id: string; title: string };
+  colors: ThemeColors;
+  dark: boolean;
+  onPress: () => void;
+}) {
+  const wash = hoverWash(props.dark);
+  return <View onPress={props.onPress} role="button" accessibilityLabel={props.entry.title} class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: NAV_ROW_HEIGHT - 6, paddingLeft: 10, paddingRight: 10, borderRadius: NAV_ROW_RADIUS, cursor: "pointer" }}>
+    <Text class="text-[12px]" style={{ color: props.colors.muted, lineHeight: 18 }}>{props.entry.title}</Text>
   </View>;
 }
 
