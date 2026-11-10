@@ -76,6 +76,10 @@ export function cardDelay(index: number): number {
 }
 /// Below this width the library is a list of rows, the way a phone shows it.
 const COMPACT_LIBRARY = 560;
+/// Room under the last row for the floating button: it sits over the page, so
+/// the page ends above it rather than behind it.
+const LIBRARY_BOTTOM = 104;
+
 const GRID_PAD = 24;
 /// The note itself opens as one column, not as a pane: the text keeps a
 /// readable measure however wide the window is.
@@ -651,9 +655,9 @@ function LibraryView(props: { colors: ThemeColors; dark: boolean; onBack?: () =>
     </View>
     {/* Out of the header and over the page: the one thing a card list always
         offers stays within reach of the thumb and of the last row. */}
-    <View onPress={createNote} role="button" accessibilityLabel="Новая заметка" class="absolute flex-row items-center" hoverStyle={{ opacity: 0.92 }} style={{ right: compact() ? 16 : 24, bottom: 24, height: 40, paddingLeft: 14, paddingRight: 18, gap: 8, borderRadius: 20, backgroundColor: colors.accent, cursor: "pointer", boxShadow: cardShadow(props.dark) }}>
-      <SharedIcon name="plus" size={15} color={colors.background} />
-      <Text class="text-[13px] font-medium" style={{ color: colors.background }}>Новая заметка</Text>
+    <View onPress={createNote} role="button" accessibilityLabel="Новая заметка" class="absolute flex-row items-center justify-center" hoverStyle={{ backgroundColor: surfaceWash(props.dark, 0.1) }} style={{ left: "50%", marginLeft: -92, bottom: 24, width: 184, height: 40, gap: 8, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, cursor: "pointer", boxShadow: cardShadow(props.dark) }}>
+      <SharedIcon name="plus" size={15} color={colors.foreground} />
+      <Text class="text-[13px] font-medium" style={{ color: colors.foreground }}>Новая заметка</Text>
     </View>
   </View>;
 }
@@ -673,7 +677,7 @@ function libraryGrid(items: readonly Note[], colors: ThemeColors, dark: boolean)
     estimatedItemSize={rowHeight}
     testID="notes-grid"
     class="min-h-0 flex-1"
-    contentStyle={{ paddingLeft: GRID_PAD, paddingRight: GRID_PAD, paddingTop: 4, paddingBottom: 32 }}
+    contentStyle={{ paddingLeft: GRID_PAD, paddingRight: GRID_PAD, paddingTop: 4, paddingBottom: LIBRARY_BOTTOM }}
   >
     {(row: () => Note[], rowIndex: () => number) => <View class="flex-row" style={{ gap: CARD_GAP, paddingBottom: CARD_GAP }}>
       {row().map((note, index) => <NoteCard note={note} index={rowIndex() * columns + index} width={cardWidth} colors={colors} dark={dark} />)}
@@ -729,7 +733,7 @@ function libraryList(items: readonly Note[], colors: ThemeColors, dark: boolean)
     keyExtractor={(note: Note) => "note:" + text(note.id)}
     estimatedItemSize={78}
     class="min-h-0 flex-1"
-    contentStyle={{ paddingLeft: 12, paddingRight: 12, paddingTop: 4, paddingBottom: 32 }}
+    contentStyle={{ paddingLeft: 12, paddingRight: 12, paddingTop: 4, paddingBottom: LIBRARY_BOTTOM }}
   >
     {(note: () => Note) => {
       const item = note();
