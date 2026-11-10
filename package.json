@@ -2,7 +2,8 @@
   "name": "atlas-nsh-ui",
   "private": true,
   "scripts": {
-    "demo": "node scripts/demo-dev.mjs"
+    "demo": "node scripts/demo-dev.mjs",
+    "shot": "node scripts/shot.mjs"
   },
   "dependencies": {
     "@makekosmos/imago-nsh": "github:makekosmos/imago#d9186fab4dda30bd528fd5d6dbda843424b0ed78"

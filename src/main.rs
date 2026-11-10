@@ -22,7 +22,9 @@ use imago_nsh::{Bundle, NshApp};
 
 /// `ATLAS_OFFSCREEN=1` parks the window far outside the desktop so automated
 /// soak runs (FPS/scroll benchmarks) don't pop a window on the user's screen.
-/// DWM still composes it, so frame pacing stays representative.
+/// DWM still composes it, so frame pacing stays representative. The window
+/// never takes the focus either: the person keeps the keyboard and the front
+/// window while an agent drives the app behind them.
 fn window_bounds(cx: &mut App) -> Bounds<gpui::Pixels> {
     if offscreen() {
         gpui::bounds(
@@ -50,6 +52,7 @@ const WINDOW_TITLE: &str = "Atlas";
 fn atlas_window_options(cx: &mut App) -> WindowOptions {
     WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(window_bounds(cx))),
+        focus: !offscreen(),
         // Windows adaptive pacing owns the background cap and input wakeup.
         // A second focus-only cap would throttle unfocused interaction.
         inactive_frame_interval: if cfg!(target_os = "windows")

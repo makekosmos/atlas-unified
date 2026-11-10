@@ -6,6 +6,8 @@
 //   pnpm demo --no-server     # не трогать сервер, только приложение
 //   pnpm demo --port 8800     # другой порт dev-сервера
 //   pnpm demo --release       # release-сборка Atlas
+//   pnpm demo --offscreen     # окно вне экрана и без фокуса: агент снимает его,
+//                             # а человек продолжает работать за своими окнами
 //
 // Приложение получает ATLAS_DEMO=1 и ATLAS_NSH_DEV_SERVER: Engine не нужен,
 // ничего не сохраняется. ATLAS_ROUTE открывает окно на другой странице
@@ -28,10 +30,10 @@ const uiDir = join(root, "ui");
 const logsDir = join(root, ".dev-logs");
 const isWindows = process.platform === "win32";
 const usage =
-    "использование: pnpm demo [--restart] [--no-server] [--port N] [--release]";
+    "использование: pnpm demo [--restart] [--no-server] [--port N] [--release] [--offscreen]";
 
 function parseArgs(argv) {
-    const options = { port: 8790, restart: false, server: true, release: false };
+    const options = { port: 8790, restart: false, server: true, release: false, offscreen: false };
     // pnpm иногда передаёт разделитель `--` как обычный аргумент.
     const args = argv[0] === "--" ? argv.slice(1) : argv;
     for (let index = 0; index < args.length; index += 1) {
@@ -39,6 +41,7 @@ function parseArgs(argv) {
         if (arg === "--restart") options.restart = true;
         else if (arg === "--no-server") options.server = false;
         else if (arg === "--release") options.release = true;
+        else if (arg === "--offscreen") options.offscreen = true;
         else if (arg === "--port") options.port = Number(args[++index]);
         else if (arg.startsWith("--port=")) options.port = Number(arg.slice(7));
         else if (arg === "--help" || arg === "-h") throw new Error(usage);
@@ -153,10 +156,13 @@ function stopDevServer(child) {
 function runAtlas(options) {
     const env = childEnv();
     env.ATLAS_DEMO = "1";
+    // Окно в стороне от рабочего стола: фокус, клавиатура и мышь остаются
+    // у человека. Снимок окна при этом настоящий (`screencapture -l`).
+    if (options.offscreen) env.ATLAS_OFFSCREEN = "1";
     env.ATLAS_NSH_DEV_SERVER = `ws://127.0.0.1:${options.port}/ws`;
     const args = ["run", "--bin", "atlas"];
     if (options.release) args.push("--release");
-    log(`Atlas: ATLAS_DEMO=1 ATLAS_NSH_DEV_SERVER=${env.ATLAS_NSH_DEV_SERVER}`);
+    log(`Atlas: ATLAS_DEMO=1 ATLAS_NSH_DEV_SERVER=${env.ATLAS_NSH_DEV_SERVER}${options.offscreen ? " ATLAS_OFFSCREEN=1" : ""}`);
     const startedAt = Date.now();
     const child = spawn("cargo", args, { cwd: root, env, stdio: "inherit", shell: isWindows });
     child.on("exit", (code, signal) => {
