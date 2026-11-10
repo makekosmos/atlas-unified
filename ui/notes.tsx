@@ -18,6 +18,8 @@ import type { ViewRef } from "nsh";
 import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
 import { colorAlpha, surfaceWash } from "./chrome";
+import { languageOf, scan, tokenColors } from "./highlight";
+import type { TokenKind } from "./highlight";
 import { forgetRecent, rememberRecent } from "./recent";
 import type { Note } from "./state";
 
@@ -104,6 +106,10 @@ export const notes = signal<Note[]>([]);
 /// The editor is made again for every note, and the view with it: the component
 /// takes its session once, when it is made.
 const editorVersion = signal(0);
+/// The plugin the code block's colours are handed to.
+const highlight = new RichEditorPlugin("highlight");
+/// The theme the code colours were picked for, so a switch repaints them.
+let paintedDark = true;
 const selectedId = signal<string | null>(null);
 const draftTitle = signal("");
 const dirty = signal(false);
@@ -170,6 +176,51 @@ function text(value: unknown): string {
   return String(value);
 }
 
+/// Walks the document counting positions the way the editor does, and marks the
+/// words inside its code blocks.
+function paintNodes(nodes: unknown[], from: number, palette: Record<TokenKind, string>, out: { from: number; to: number; kind: string; attrs: { class: string } }[]): number {
+  let at = from;
+  for (const node of nodes as { type?: string; text?: string; attrs?: { language?: string }; content?: unknown[] }[]) {
+    const kind = node?.type;
+    if (kind === "text") {
+      at += String(node.text ?? "").length;
+      continue;
+    }
+    if (kind === "codeBlock") {
+      const body = (Array.isArray(node.content) ? node.content : []).map((child) => String((child as { text?: string })?.text ?? "")).join("");
+      for (const token of scan(body, languageOf(node?.attrs?.language))) {
+        // The view takes a decoration's `class`, not its style: the colour is
+        // a Tailwind arbitrary value, as everywhere else in the app.
+        out.push({ from: at + 1 + token.from, to: at + 1 + token.to, kind: "inline", attrs: { class: `text-[${palette[token.kind]}]` } });
+      }
+      at += body.length + 2;
+      continue;
+    }
+    if (Array.isArray(node?.content)) {
+      at = paintNodes(node.content, at + 1, palette, out) + 1;
+      continue;
+    }
+    at += 1;
+  }
+  return at;
+}
+
+/// Colours the code blocks of the open note, once its text has settled.
+function paintCode() {
+  const live = editor;
+  if (!live) return;
+  const marks: { from: number; to: number; kind: string; attrs: { class: string } }[] = [];
+  const doc = live.getJSON() as { content?: unknown[] };
+  paintNodes(doc.content ?? [], 0, tokenColors(paintedDark), marks);
+  live.setDecorations("highlight", marks as never);
+}
+
+let paintTimer: ReturnType<typeof setTimeout> | null = null;
+function schedulePaint() {
+  if (paintTimer) clearTimeout(paintTimer);
+  paintTimer = setTimeout(paintCode, 60);
+}
+
 /// Opens a note: a new editor with that note's document, then the view that
 /// shows it.
 function open(note: Note | null) {
@@ -188,6 +239,7 @@ function open(note: Note | null) {
       // menu every other try.
       syncSlash();
       scheduleOutline();
+      schedulePaint();
     });
     editor = made;
     keyTaker = taker;
@@ -198,6 +250,7 @@ function open(note: Note | null) {
     // The rails come from the note's own document: the session's copy is the
     // same one, and this way they are there on the first frame.
     outline.set(headingsOf(documentOf(note.doc)));
+    paintCode();
   } else {
     outline.set([]);
   }
@@ -223,7 +276,7 @@ function makeEditor(note: Note, taker: RichEditorPlugin): RichEditorSession {
       }),
       TableKit.configure({}),
     ],
-    plugins: [suggestion({ key: "slash", char: "/", allowSpaces: false }), taker],
+    plugins: [suggestion({ key: "slash", char: "/", allowSpaces: false }), taker, highlight],
     content: content as never,
     format: "json" as const,
   });
@@ -713,6 +766,11 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
   // The session is a plain module variable: a reload of the module drops it,
   // while the chosen note stays. Open the note again instead of a blank page.
   if (note && !editor) open(note);
+  // A theme switch repaints the code: the colours are picked for the surface.
+  if (paintedDark !== props.dark) {
+    paintedDark = props.dark;
+    queueMicrotask(paintCode);
+  }
   const enter = createMotion({
     enter: {
       keyframes: [{ opacity: 0, translateY: 8 }, { opacity: 1, translateY: 0 }],

@@ -27,6 +27,8 @@ const hosted = isSnapshot(initialValue);
 const initial = hosted ? initialValue : fallback;
 const snapshot = signal(initial);
 const route = signal<Route>(initial.route);
+/// The note a demo run was asked to open, done once, after the first list.
+let startNoteOpened = false;
 /// The host's first snapshot carries the route the window opens on; after it
 /// the page is the UI's, and an echoed route would only undo a click.
 let routeReady = false;
@@ -312,7 +314,16 @@ function App() {
           });
         }}
         onJournal={(entries) => snapshot.set({ ...snapshot(), journalEntries: entries })}
-        onNotes={(next) => setNotes(next)}
+        onNotes={(next) => {
+          setNotes(next);
+          // A demo run names the note it opens on: the screen cannot take a
+          // click from a script, and a screenshot needs one page.
+          const first = (snapshot() as { openNote?: string | null }).openNote;
+          if (first && !startNoteOpened) {
+            startNoteOpened = true;
+            openNoteById(first);
+          }
+        }}
         onNotesCreated={(note) => addNote(note as Note)}
         onVoiceLevel={(event) => voiceLevel.set(event.level)}
         onVoiceRecorded={(voice) => {

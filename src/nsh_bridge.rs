@@ -99,6 +99,15 @@ pub(crate) fn initial_snapshot(agenda: &Atlas) -> Value {
 /// The page the window opens on: `ATLAS_ROUTE` for a demo run that has to start
 /// somewhere else (the demo screen cannot be clicked from a script), the
 /// journal otherwise.
+/// The note a demo run opens on: `ATLAS_NOTE` names it, so a screenshot can be
+/// taken of one page without a click the script cannot make.
+fn start_note() -> Option<String> {
+    match std::env::var("ATLAS_NOTE") {
+        Ok(note) if !note.trim().is_empty() => Some(note),
+        _ => None,
+    }
+}
+
 fn start_route() -> String {
     match std::env::var("ATLAS_ROUTE") {
         Ok(route) if !route.trim().is_empty() => route,
@@ -141,6 +150,7 @@ fn snapshot(agenda: &Atlas, route: &str) -> Value {
         .unwrap_or(palette.accent);
     json!({
         "route": route,
+        "openNote": start_note(),
         "title": title,
         "todos": todos,
         "journalEntries": [],
@@ -617,6 +627,34 @@ fn demo_notes() -> Vec<Note> {
             }),
             "2026-11-05T14:00:00.000Z",
         ),
+        Note::demo_doc(
+            "demo:code",
+            "Код: языки",
+            &json!({
+                "type": "doc",
+                "content": [
+                    {"type": "paragraph", "content": [{"type": "text", "text": "Одна заметка, семь языков: так видно, как красится код. Блок без языка остаётся простым."}]},
+                    {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": "Rust"}]},
+                    {"type": "codeBlock", "attrs": {"language": "rust"}, "content": [{"type": "text", "text": "use std::collections::HashMap;\n\n/// Считает слова: ключ — слово, значение — сколько раз.\npub fn count_words(text: &str) -> HashMap<String, usize> {\n    let mut counts = HashMap::new();\n    for word in text.split_whitespace() {\n        *counts.entry(word.to_lowercase()).or_insert(0) += 1;\n    }\n    counts\n}\n\nfn main() {\n    let counts = count_words(\"раз два раз\");\n    assert_eq!(counts[\"раз\"], 2);\n    println!(\"{counts:?}\");\n}"}]},
+                    {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": "TypeScript"}]},
+                    {"type": "codeBlock", "attrs": {"language": "ts"}, "content": [{"type": "text", "text": "type Note = { id: string; title: string; tags: string[] };\n\nconst byTag = (notes: Note[], tag: string): Note[] =>\n  notes.filter((note) => note.tags.includes(tag));\n\nexport function titles(notes: Note[]): string[] {\n  // Пустое имя не показываем.\n  return notes.map((note) => note.title.trim()).filter(Boolean);\n}"}]},
+                    {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": "Python"}]},
+                    {"type": "codeBlock", "attrs": {"language": "python"}, "content": [{"type": "text", "text": "from dataclasses import dataclass\n\n@dataclass\nclass Block:\n    kind: str\n    text: str = \"\"\n\ndef headings(blocks: list[Block]) -> list[str]:\n    # Только заголовки, по порядку.\n    return [b.text for b in blocks if b.kind == \"heading\"]"}]},
+                    {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": "JSON"}]},
+                    {"type": "codeBlock", "attrs": {"language": "json"}, "content": [{"type": "text", "text": "{\n  \"id\": \"demo:code\",\n  \"title\": \"Код: языки\",\n  \"pinned\": true,\n  \"tags\": [\"пример\", \"код\"],\n  \"size\": 1280\n}"}]},
+                    {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": "Bash"}]},
+                    {"type": "codeBlock", "attrs": {"language": "bash"}, "content": [{"type": "text", "text": "#!/bin/sh\nset -euo pipefail\n\nfor file in notes/*.md; do\n  echo \"читаю $file\"   # каждый файл\n  wc -l \"$file\"\ndone"}]},
+                    {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": "SQL"}]},
+                    {"type": "codeBlock", "attrs": {"language": "sql"}, "content": [{"type": "text", "text": "SELECT n.id, n.title, COUNT(t.id) AS tags\nFROM notes AS n\nLEFT JOIN tags AS t ON t.note_id = n.id\nWHERE n.updated_at > '2026-01-01'\nGROUP BY n.id, n.title\nORDER BY tags DESC\nLIMIT 20;"}]},
+                    {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": "HTML и CSS"}]},
+                    {"type": "codeBlock", "attrs": {"language": "html"}, "content": [{"type": "text", "text": "<article class=\"card\" data-id=\"demo:code\">\n  <h2>Код: языки</h2>\n  <p>Одна заметка, семь языков.</p>\n</article>"}]},
+                    {"type": "codeBlock", "attrs": {"language": "css"}, "content": [{"type": "text", "text": ".card {\n  display: flex;\n  padding: 16px;\n  border-radius: 12px;\n  background: #17181c; /* тёмный фон */\n}\n\n.card h2 {\n  font-size: 17px;\n  color: #e6e6e6;\n}"}]},
+                    {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": "Без языка"}]},
+                    {"type": "codeBlock", "content": [{"type": "text", "text": "обычный текст\nбез подсветки\nи с отступами"}]}
+                ]
+            }),
+            "2026-11-10T09:00:00.000Z",
+        ),
         Note::demo(
             "demo:quotes",
             "Цитаты",
@@ -981,7 +1019,7 @@ mod demo_tests {
     #[test]
     fn demo_notes_cover_every_screen() {
         let notes = demo_notes();
-        assert_eq!(notes.len(), 12);
+        assert_eq!(notes.len(), 13);
         assert!(notes.iter().any(|note| !note.title.is_empty()));
         let long = notes
             .iter()
