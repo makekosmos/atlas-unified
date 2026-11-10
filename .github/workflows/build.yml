@@ -181,8 +181,12 @@ jobs:
         with:
           python-version: '3.12'
       - name: Apply release version
-        if: needs.prepare.outputs.release == 'true'
-        run: python scripts/release.py set "$RELEASE_VERSION"
+        run: |
+          set -euo pipefail
+          # A push plans no release: the crate's version stands, and the bundle
+          # still carries the number a release would give it.
+          version="${RELEASE_VERSION:-$(python -c 'import tomllib; print(tomllib.load(open("Cargo.toml","rb"))["package"]["version"])')}"
+          python scripts/release.py set "$version"
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -200,7 +204,7 @@ jobs:
           # a failure, and `pipefail` would treat it as one.
           (yes | sudo /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null) || true
           sudo /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-            "platform-tools" "build-tools;35.0.0" "ndk;$NDK_VERSION" > /dev/null
+            "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;$NDK_VERSION" > /dev/null
           echo "ANDROID_HOME=/opt/android-sdk" >> "$GITHUB_ENV"
           echo "ANDROID_NDK_HOME=/opt/android-sdk/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=/opt/android-sdk" >> "$GITHUB_ENV"
