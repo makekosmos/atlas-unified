@@ -133,11 +133,21 @@ jobs:
         shell: pwsh
         run: |
           choco install nsis --no-progress -y
+          # NSIS resolves relative paths against the script's own folder: give
+          # it absolute ones.
+          # A push carries no release version: the crate's own is the truth.
+          $version = $env:RELEASE_VERSION
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"' | Select-Object -First 1).Matches[0].Groups[1].Value
+          }
+          $exe = Join-Path $PWD "target\$env:BUILD_TARGET\release\atlas.exe"
+          $out = Join-Path $PWD "dist\Atlas-Setup.exe"
+          if (-not (Test-Path $exe)) { throw "no binary at $exe" }
           & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" `
-            /DVERSION="$env:RELEASE_VERSION" `
-            /DEXE="target\$env:BUILD_TARGET\release\atlas.exe" `
-            /DOUT="dist\Atlas-Setup.exe" `
-            scripts\atlas.nsi
+            /DVERSION="$version" `
+            /DEXE="$exe" `
+            /DOUT="$out" `
+            (Join-Path $PWD "scripts\atlas.nsi")
           if (-not (Test-Path dist\Atlas-Setup.exe)) { throw "NSIS produced no installer" }
       - uses: actions/upload-artifact@v7
         with:
@@ -171,6 +181,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Apply release version
+        if: needs.prepare.outputs.release == 'true'
         run: python scripts/release.py set "$RELEASE_VERSION"
       - uses: actions/setup-java@v6
         with:
