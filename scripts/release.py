@@ -38,6 +38,13 @@ def next_version(current, previous, changed):
     return f"{major}.{minor}.{patch + 1}"
 
 
+def app_version_code(version):
+    """The Android build number: it only ever grows, and 0.0.1 shipped as 3, so
+    the offset keeps every later build above what a phone already has."""
+    major, minor, patch = version_tuple(version)
+    return major * 1_000_000 + minor * 1_000 + patch + 10
+
+
 def set_version(version, root=Path(".")):
     version_tuple(version)
     manifest_path, lock_path = root / "Cargo.toml", root / "Cargo.lock"
@@ -59,6 +66,15 @@ def set_version(version, root=Path(".")):
     assert next(p for p in tomllib.loads(lock)["package"] if p["name"] == package)["version"] == version
     manifest_path.write_text(manifest, encoding="utf-8", newline="\n")
     lock_path.write_text(lock, encoding="utf-8", newline="\n")
+    # The phone app carries its own version and build number: a phone refuses an
+    # APK whose number is not above the one it installed, so these move with the
+    # release like the crate's.
+    nsh_path = root / "ui" / "nsh.json"
+    if nsh_path.exists():
+        bundle = json.loads(nsh_path.read_text("utf-8"))
+        bundle["version"] = version
+        bundle["build"] = app_version_code(version)
+        nsh_path.write_text(json.dumps(bundle, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 def plan():
@@ -139,6 +155,13 @@ def package(target):
         subprocess.run(["codesign", "--force", "--deep", "--sign", "-", str(app)], check=True)
         with tarfile.open(dist / f"{name}.tar.gz", "w:gz") as archive:
             archive.add(app, arcname=app.name)
+        # The disk image is what a person downloads and drags to Applications:
+        # a tarball of a bundle hides that the bundle is the app.
+        subprocess.run(
+            ["hdiutil", "create", "-volname", "Atlas", "-srcfolder", str(app),
+             "-ov", "-format", "UDZO", str(dist / f"{name}.dmg")],
+            check=True, capture_output=True,
+        )
     else:
         with tarfile.open(dist / f"{name}.tar.gz", "w:gz") as archive:
             archive.add(binary, arcname=binary.name)

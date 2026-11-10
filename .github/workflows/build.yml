@@ -128,12 +128,128 @@ jobs:
         run: cargo build --locked --release --bin atlas --target "$BUILD_TARGET"
       - name: Package
         run: python scripts/release.py package "$BUILD_TARGET"
+      - name: Installer (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install nsis --no-progress -y
+          & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" `
+            /DVERSION="$env:RELEASE_VERSION" `
+            /DEXE="target\$env:BUILD_TARGET\release\atlas.exe" `
+            /DOUT="dist\Atlas-Setup.exe" `
+            scripts\atlas.nsi
+          if (-not (Test-Path dist\Atlas-Setup.exe)) { throw "NSIS produced no installer" }
       - uses: actions/upload-artifact@v7
         with:
           name: atlas-${{ matrix.target }}
           path: |
             dist/*.zip
             dist/*.tar.gz
+            dist/*.dmg
+            dist/*.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  android:
+    name: Build (android)
+    needs: prepare
+    if: needs.prepare.outputs.release != 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+      # The phone bundle is built from nsh's own runtime: pinned, so a new nsh
+      # commit cannot change the app under us.
+      NSH_REV: 1894697155685ef5b8669e51406ce0f6aa710bbd
+      NDK_VERSION: 27.2.12479018
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Apply release version
+        run: python scripts/release.py set "$RELEASE_VERSION"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK and NDK
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          curl -sSLo /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          sudo mkdir -p /opt/android-sdk/cmdline-tools
+          sudo unzip -q /tmp/cmdline-tools.zip -d /opt/android-sdk/cmdline-tools
+          sudo mv /opt/android-sdk/cmdline-tools/cmdline-tools /opt/android-sdk/cmdline-tools/latest
+          yes | sudo /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null
+          sudo /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" "build-tools;35.0.0" "ndk;$NDK_VERSION" > /dev/null
+          echo "ANDROID_HOME=/opt/android-sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_HOME=/opt/android-sdk/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=/opt/android-sdk" >> "$GITHUB_ENV"
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add aarch64-linux-android armv7-linux-androideabi
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: android
+          save-if: ${{ github.event_name != 'pull_request' }}
+      - name: nsh runtime
+        run: |
+          set -euo pipefail
+          git clone --quiet https://github.com/longbridge/nsh.git /opt/nsh
+          git -C /opt/nsh checkout --quiet "$NSH_REV"
+          cd /opt/nsh
+          cargo xtask android --release --abi arm64-v8a --abi armeabi-v7a --abi x86_64
+          mkdir -p /opt/nsh-runtime/android
+          ln -s /opt/nsh/target/android/release /opt/nsh-runtime/android/release
+          cargo build --release -p nsh-cli --bin nsh
+          echo "NSH_RUNTIME=/opt/nsh-runtime" >> "$GITHUB_ENV"
+          echo "/opt/nsh/target/release" >> "$GITHUB_PATH"
+      - name: Release keystore
+        env:
+          KEYSTORE: ${{ secrets.ATLAS_ANDROID_KEYSTORE_BASE64 }}
+          KEY_PASSWORD: ${{ secrets.ATLAS_ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE:-}" ]; then
+            echo "ATLAS_ANDROID_KEYSTORE_BASE64 is not set: the APK would be signed with a debug key and would not install over 0.0.1" >&2
+            exit 1
+          fi
+          echo "$KEYSTORE" | base64 -d > /opt/atlas-keystore.jks
+          # The alias is whatever the keystore holds: reading it beats asking
+          # for one more secret that nobody wrote down.
+          alias=$(keytool -list -keystore /opt/atlas-keystore.jks -storepass "$KEY_PASSWORD" 2>/dev/null \
+            | awk -F, '/PrivateKeyEntry/ {print $1; exit}')
+          if [ -z "$alias" ]; then
+            echo "the keystore holds no private key entry" >&2
+            exit 1
+          fi
+          echo "ATLAS_KEY_ALIAS=$alias" >> "$GITHUB_ENV"
+      - name: APK
+        env:
+          KEY_PASSWORD: ${{ secrets.ATLAS_ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          build=$(python -c 'import json; print(json.load(open("ui/nsh.json"))["build"])')
+          nsh package --target android ui/Mobile.tsx \
+            --keystore /opt/atlas-keystore.jks \
+            --key-alias "$ATLAS_KEY_ALIAS" \
+            --keystore-password "$KEY_PASSWORD" \
+            --app-version "$RELEASE_VERSION" \
+            --build "$build" \
+            -o dist
+          ls -la dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: atlas-android
+          path: dist/*.apk
           if-no-files-found: error
           retention-days: 7
 

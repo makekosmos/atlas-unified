@@ -45,12 +45,22 @@ def test_release():
         lock = 'version = 4\n\n[[package]]\nname = "atlas"\nversion = "0.1.0"\n\n[[package]]\nname = "example"\nversion = "0.1.0"\n'
         (root / "Cargo.toml").write_text(manifest, encoding="utf-8")
         (root / "Cargo.lock").write_text(lock, encoding="utf-8")
+        (root / "ui").mkdir()
+        (root / "ui" / "nsh.json").write_text(
+            json.dumps({"name": "Atlas", "version": "0.1.0", "build": 5}), encoding="utf-8"
+        )
         set_version("1.0.0", root)
         parsed = tomllib.loads((root / "Cargo.toml").read_text("utf-8"))
         assert parsed["package"]["version"] == "1.0.0"
         assert parsed["dependencies"]["example"]["version"] == "0.1.0"
         packages = tomllib.loads((root / "Cargo.lock").read_text("utf-8"))["package"]
         assert [p["version"] for p in packages] == ["1.0.0", "0.1.0"]
+        # The phone app's own version and build number follow the release: a
+        # phone refuses an APK whose build is not above the installed one.
+        bundle = json.loads((root / "ui" / "nsh.json").read_text("utf-8"))
+        assert bundle["version"] == "1.0.0"
+        assert bundle["build"] == 1_000_010
+        assert bundle["name"] == "Atlas"
         set_version("1.0.0", root)  # Idempotent across matrix jobs and reruns.
         before = (root / "Cargo.toml").read_bytes()
         (root / "Cargo.lock").write_text('version = 4\n', encoding="utf-8")
