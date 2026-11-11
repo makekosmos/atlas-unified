@@ -1,4 +1,4 @@
-import { createMotion, Easing, effect, List, signal, Text, View } from "nsh";
+import { Clipboard, Image, createMotion, Easing, effect, List, Scroll, signal, Text, View } from "nsh";
 import {
   Input,
   RichEditor,
@@ -10,12 +10,16 @@ import {
   createRichEditor,
   deleteRange,
   insertTable,
+  setNodeAttribute,
 } from "nsh/base";
+import Mono from "./fonts/IBMPlexMono-Regular.ttf";
 import type { RichCommand, RichEditorRef, RichEditorSession } from "nsh/base";
 import type { ViewRef } from "nsh";
 import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
+import { Menu } from "nsh/desktop";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
 import { colorAlpha, surfaceWash } from "./chrome";
+import { Glyph } from "./glyph";
 import { languageOf, scan, tokenColors } from "./highlight";
 import type { TokenKind } from "./highlight";
 import { forgetRecent, rememberRecent } from "./recent";
@@ -77,6 +81,8 @@ const COMPACT_LIBRARY = 560;
 /// Room under the last row for the floating button: it sits over the page, so
 /// the page ends above it rather than behind it.
 const LIBRARY_BOTTOM = 104;
+/// Code is read by its columns. The face is the one the app already ships
+/// (IBM Plex Mono), registered by importing the file.
 
 const GRID_PAD = 24;
 /// The note itself opens as one column, not as a pane: the text keeps a
@@ -108,11 +114,54 @@ export const notes = signal<Note[]>([]);
 /// The editor is made again for every note, and the view with it: the component
 /// takes its session once, when it is made.
 const editorVersion = signal(0);
-/// The language of the code block the caret sits in, named in the title bar:
-/// a block of code says what it is without a word inside it.
-const codeLanguage = signal("");
-const codeBlockPos = signal<number | null>(null);
-export const openCodeLanguage = () => codeLanguage();
+
+/// Two overlapping sheets: the copy button on a code block.
+const COPY_ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect x='8.5' y='8.5' width='11' height='11' rx='2' stroke='%23000' stroke-width='1.6'/%3E%3Cpath d='M6.5 15.5H5.2A2.2 2.2 0 0 1 3 13.3V5.2A2.2 2.2 0 0 1 5.2 3h8.1A2.2 2.2 0 0 1 15.5 5.2V6.5' stroke='%23000' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E";
+
+/// One code block as the page draws it. `node` is the position before the
+/// block (what `pageNodeRect` and the language attribute take). `pos` is its
+/// first character.
+type CodeBlock = { node: number; pos: number; language: string; text: string };
+
+/// A block's size in the editor's positions: a text is its letters, a leaf is
+/// one, and every other block is its content plus the two positions around it.
+function blockSize(node: unknown): number {
+  const block = node as { text?: string; content?: unknown[] } | null;
+  if (!block) return 1;
+  if (typeof block.text === "string") return block.text.length;
+  if (!Array.isArray(block.content)) return 1;
+  let size = 2;
+  for (const child of block.content) size += blockSize(child);
+  return size;
+}
+
+/// The fence name as the menu and the scanner share it. A plain fence stays
+/// empty, so the block says «Простой текст» instead of the fence's own word.
+function shownLanguage(named: string): string {
+  const known = languageOf(named);
+  if (known) return known;
+  const key = named.trim().toLowerCase();
+  if (!key || key === "text" || key === "plaintext" || key === "plain" || key === "txt") return "";
+  return named.trim();
+}
+
+/// The code blocks of a document, in order.
+export function codeBlocksOf(doc: unknown): CodeBlock[] {
+  const root = doc as { content?: unknown[] } | null;
+  if (!root || !Array.isArray(root.content)) return [];
+  const found: CodeBlock[] = [];
+  let pos = 0;
+  for (const node of root.content) {
+    const block = node as { type?: string; attrs?: { language?: string | null }; content?: { text?: string }[] };
+    if (block.type === "codeBlock") {
+      const named = typeof block.attrs?.language === "string" ? block.attrs.language : "";
+      const text = (block.content ?? []).map((child) => child?.text ?? "").join("");
+      found.push({ node: pos, pos: pos + 1, language: shownLanguage(named), text });
+    }
+    pos += blockSize(node);
+  }
+  return found;
+}
 
 /// The languages the app knows, as a menu names them.
 export const codeLanguages: [string, string][] = [
@@ -121,14 +170,29 @@ export const codeLanguages: [string, string][] = [
   ["html", "HTML"], ["css", "CSS"], ["markdown", "Markdown"], ["", "Простой текст"],
 ];
 
-/// Names the block under the caret: the same attribute the scanner reads.
-export function pickCodeLanguage(language: string) {
+/// What the block's corner says: a known language by its name, anything else
+/// by the fence's own word.
+export function languageLabel(name: string): string {
+  const found = codeLanguages.find(([value]) => value === name);
+  return found ? found[1] : (name || "Простой текст");
+}
+
+/// Names a code block: the same attribute the scanner reads.
+export function pickCodeLanguage(language: string, node: number) {
   const live = editor;
-  const pos = codeBlockPos();
-  if (!live || pos === null) return;
-  live.setNodeAttribute(pos, "language", language);
+  if (!live) return;
+  live.run(setNodeAttribute(node, "language", language));
   paintCode();
-  syncCodeLanguage();
+}
+
+const copiedId = signal<number | null>(null);
+let copiedTimer: ReturnType<typeof setTimeout> | null = null;
+
+function copyBlock(text: string, id: number) {
+  void Clipboard.writeText(text);
+  copiedId.set(id);
+  if (copiedTimer) clearTimeout(copiedTimer);
+  copiedTimer = setTimeout(() => { copiedId.set(null); copiedTimer = null; }, 1400);
 }
 
 /// The plugin the code block's colours are handed to.
@@ -163,6 +227,34 @@ let editor: RichEditorSession | null = null;
 /// `keymap` never sees an arrow: the text field has it first.
 let slashKeys: RichEditorPlugin | null = null;
 let asked = false;
+/// A note with a code block is drawn as a column of pieces: prose stays in an
+/// editor, and each code block is a card (a flex header, then the code). The
+/// rich editor has no slot for a row inside a code block, so the card is the
+/// row. A note with no code stays one editor, which is what scrolling and the
+/// slash menu are built on.
+type Seg = {
+  id: number;
+  kind: "prose" | "code";
+  session: RichEditorSession;
+  keys: RichEditorPlugin;
+  paint: RichEditorPlugin | null;
+};
+type Group = { kind: "prose"; nodes: unknown[] } | { kind: "code"; node: unknown };
+let segments: Seg[] = [];
+let segSerial = 0;
+/// Bumped when the sessions are replaced, so a listener from the previous
+/// ones returns without touching a disposed editor.
+let epoch = 0;
+let split = false;
+const codeLayout = signal(false);
+const segmentList = signal<{ id: number; kind: "prose" | "code" }[]>([]);
+const bodyRev = signal(0);
+const segRefs = new Map<number, RichEditorRef>();
+let wantFocus: number | null = null;
+let reshaping = false;
+let splitTimer: ReturnType<typeof setTimeout> | null = null;
+let reshapeTimer: ReturnType<typeof setTimeout> | null = null;
+let reshapeRuns = 0;
 
 export function bindNoteCommands(next: NoteCommands) {
   commands = next;
@@ -232,29 +324,24 @@ function paintNodes(nodes: unknown[], from: number, palette: Record<TokenKind, s
   return at;
 }
 
-/// Reads the language of the block under the caret, for the title bar.
-function syncCodeLanguage() {
-  const live = editor;
-  if (!live) {
-    codeLanguage.set("");
-    return;
-  }
-  const found = live.findParentNode("codeBlock") as { pos?: number; node?: { attrs?: { language?: string } } } | null;
-  // A press on the title bar's badge takes the focus off the editor for a
-  // moment: the last block stays the one the menu renames.
-  if (typeof found?.pos === "number") codeBlockPos.set(found.pos);
-  const named = found?.node?.attrs?.language;
-  const known = named ? languageOf(named) : "";
-  codeLanguage.set(known || (named ? String(named) : ""));
-}
-
 /// Colours the code blocks of the open note, once its text has settled.
 function paintCode() {
+  const palette = tokenColors(paintedDark);
+  if (split) {
+    for (const seg of segments) {
+      if (!seg.paint) continue;
+      const marks: { from: number; to: number; kind: string; attrs: { class: string } }[] = [];
+      const doc = seg.session.getJSON() as { content?: unknown[] };
+      paintNodes(doc.content ?? [], 0, palette, marks);
+      seg.session.setDecorations(seg.paint.key, marks as never);
+    }
+    return;
+  }
   const live = editor;
   if (!live) return;
   const marks: { from: number; to: number; kind: string; attrs: { class: string } }[] = [];
   const doc = live.getJSON() as { content?: unknown[] };
-  paintNodes(doc.content ?? [], 0, tokenColors(paintedDark), marks);
+  paintNodes(doc.content ?? [], 0, palette, marks);
   live.setDecorations("highlight", marks as never);
 }
 
@@ -264,74 +351,293 @@ function schedulePaint() {
   paintTimer = setTimeout(paintCode, 60);
 }
 
-/// Opens a note: a new editor with that note's document, then the view that
-/// shows it.
-function open(note: Note | null) {
-  editor?.dispose();
+function editorExtensions() {
+  return [
+    StarterKit.configure({
+      heading: { levels: [1, 2, 3] },
+      // Markdown's blocks and marks: a task list is `- [ ]`, which the
+      // document keeps as a `checked` attribute. The rest — text alignment,
+      // highlight, sub- and superscript — has no Markdown spelling and stays
+      // off.
+      highlight: false,
+      subscript: false,
+      superscript: false,
+      textStyle: false,
+      textAlign: false,
+    }),
+    TableKit.configure({}),
+  ];
+}
+
+function docOf(nodes: unknown[]): unknown {
+  return { type: "doc", content: nodes.length ? nodes : [{ type: "paragraph" }] };
+}
+
+function hasCodeBlock(doc: unknown): boolean {
+  const content = (doc as { content?: { type?: string }[] } | null)?.content;
+  return Array.isArray(content) && content.some((node) => node?.type === "codeBlock");
+}
+
+function groupsOf(doc: unknown): Group[] {
+  const content = (doc as { content?: unknown[] } | null)?.content;
+  const nodes = Array.isArray(content) ? content : [];
+  const groups: Group[] = [];
+  let prose: unknown[] = [];
+  const flush = () => {
+    if (!prose.length) return;
+    groups.push({ kind: "prose", nodes: prose });
+    prose = [];
+  };
+  for (const node of nodes) {
+    if ((node as { type?: string })?.type === "codeBlock") {
+      flush();
+      groups.push({ kind: "code", node });
+    } else prose.push(node);
+  }
+  flush();
+  if (!groups.length) groups.push({ kind: "prose", nodes: [{ type: "paragraph" }] });
+  return groups;
+}
+
+function groupKinds(doc: unknown): string {
+  return groupsOf(doc).map((group) => group.kind).join(",");
+}
+
+/// The note as one document: the single editor, or the pieces joined back.
+function currentDoc(): unknown {
+  if (!split) return editor ? editor.getJSON() : docOf([]);
+  const content: unknown[] = [];
+  for (const seg of segments) {
+    const doc = seg.session.getJSON() as { content?: unknown[] };
+    content.push(...(doc.content ?? []));
+  }
+  return docOf(content);
+}
+
+function currentText(): string {
+  if (!split) return editor ? editor.getText() : "";
+  return segments.map((seg) => seg.session.getText()).filter((part) => part.length > 0).join("\n");
+}
+
+function codeOrdinal(doc: unknown, pos: number): number {
+  const content = (doc as { content?: unknown[] }).content ?? [];
+  let at = 0;
+  let ordinal = 0;
+  for (const node of content) {
+    const size = blockSize(node);
+    if ((node as { type?: string }).type === "codeBlock") {
+      if (pos >= at && pos <= at + size) return ordinal;
+      ordinal += 1;
+    }
+    at += size;
+  }
+  return Math.max(0, ordinal - 1);
+}
+
+function shapeDrifted(): boolean {
+  return groupKinds(currentDoc()) !== segments.map((seg) => seg.kind).join(",");
+}
+
+function activeCodeOrdinal(): number {
+  const index = segments.findIndex((seg) => seg.session === editor);
+  if (index < 0 || segments[index].kind !== "code") return -1;
+  return segments.slice(0, index + 1).filter((seg) => seg.kind === "code").length - 1;
+}
+
+function retireSeg(seg: Seg) {
+  try { seg.session.dispose(); } catch { /* already gone */ }
+  try { seg.keys.dispose(); } catch { /* already gone */ }
+  try { seg.paint?.dispose(); } catch { /* already gone */ }
+  segRefs.delete(seg.id);
+}
+
+function bindSeg(session: RichEditorSession, epochAt: number) {
+  session.on("revision", () => {
+    if (epoch !== epochAt || reshaping) return;
+    if (!segments.some((seg) => seg.session === session)) return;
+    editor = session;
+    const seg = segments.find((item) => item.session === session);
+    if (seg?.kind === "prose") slashKeys = seg.keys;
+    scheduleSave();
+    syncSlash();
+    scheduleOutline();
+    if (seg?.kind === "code" || session.findParentNode("codeBlock")) schedulePaint();
+    bodyRev.set(bodyRev() + 1);
+    if (split && shapeDrifted()) scheduleReshape();
+  });
+}
+
+function createSeg(group: Group): Seg {
+  const id = ++segSerial;
+  const keys = new RichEditorPlugin(`slash-${id}`);
+  keys.captureKeys(["ArrowUp", "ArrowDown", "Enter", "Tab", "Escape"], (key) => onSlashKey(key));
+  const paint = group.kind === "code" ? new RichEditorPlugin(`paint-${id}`) : null;
+  const content = group.kind === "code" ? docOf([group.node]) : docOf(group.nodes);
+  const plugins = paint ? [keys, paint] : [keys];
+  const epochAt = epoch;
+  const make = (body: unknown) => createRichEditor({
+    extensions: editorExtensions(),
+    plugins,
+    content: body as never,
+    format: "json",
+  });
+  let session: RichEditorSession;
+  try {
+    session = make(content);
+  } catch {
+    session = make(docOf([{ type: "paragraph" }]));
+  }
+  bindSeg(session, epochAt);
+  return { id, kind: group.kind, session, keys, paint };
+}
+
+/// Replaces the open editors with one session per run of prose and per code
+/// block. `focusOrdinal` is the code block the caret was in, so typing
+/// continues there.
+function becomeSplit(doc: unknown, focusOrdinal: number) {
+  epoch += 1;
+  reshaping = true;
+  if (splitTimer) { clearTimeout(splitTimer); splitTimer = null; }
+  if (reshapeTimer) { clearTimeout(reshapeTimer); reshapeTimer = null; }
+  const retiring = segments.slice();
+  const retiringSingle = editor && !retiring.some((seg) => seg.session === editor) ? editor : null;
+  let groups = groupsOf(doc);
+  let built = groups.map((group) => createSeg(group));
+  const flat = docOf(built.flatMap((seg) => ((seg.session.getJSON() as { content?: unknown[] }).content ?? [])));
+  if (groupKinds(flat) !== groups.map((group) => group.kind).join(",")) {
+    for (const seg of built) retireSeg(seg);
+    groups = groupsOf(flat);
+    built = groups.map((group) => createSeg(group));
+  }
+  segments = built;
+  split = true;
+  codeLayout.set(true);
+  const codes = built.filter((seg) => seg.kind === "code");
+  const focus = focusOrdinal >= 0 ? codes[focusOrdinal] ?? null : null;
+  const active = focus ?? built.find((seg) => seg.kind === "prose") ?? built[0] ?? null;
+  editor = active?.session ?? null;
+  slashKeys = active?.kind === "prose" ? active.keys : (built.find((seg) => seg.kind === "prose")?.keys ?? null);
+  wantFocus = focus?.id ?? null;
+  segmentList.set(built.map((seg) => ({ id: seg.id, kind: seg.kind })));
+  reshaping = false;
+  for (const seg of retiring) retireSeg(seg);
+  if (retiringSingle) {
+    try { retiringSingle.dispose(); } catch { /* already gone */ }
+  }
+  paintCode();
+}
+
+function scheduleSplit(ordinal: number) {
+  if (splitTimer || split) return;
+  const epochAt = epoch;
+  splitTimer = setTimeout(() => {
+    splitTimer = null;
+    if (epoch !== epochAt || !editor || split) return;
+    const doc = editor.getJSON();
+    if (!hasCodeBlock(doc)) return;
+    becomeSplit(doc, ordinal);
+  }, 0);
+}
+
+function scheduleReshape() {
+  if (reshapeTimer || reshapeRuns > 8) return;
+  const epochAt = epoch;
+  reshapeTimer = setTimeout(() => {
+    reshapeTimer = null;
+    if (epoch !== epochAt || !split || reshaping) return;
+    if (!shapeDrifted()) return;
+    reshapeRuns += 1;
+    becomeSplit(currentDoc(), activeCodeOrdinal());
+  }, 0);
+}
+
+function teardownEditors() {
+  epoch += 1;
+  reshaping = true;
+  if (splitTimer) { clearTimeout(splitTimer); splitTimer = null; }
+  if (reshapeTimer) { clearTimeout(reshapeTimer); reshapeTimer = null; }
+  reshapeRuns = 0;
+  if (paintTimer) { clearTimeout(paintTimer); paintTimer = null; }
+  const retiring = segments.slice();
+  const single = editor && !retiring.some((seg) => seg.session === editor) ? editor : null;
+  segments = [];
   editor = null;
+  slashKeys = null;
+  split = false;
+  wantFocus = null;
+  segRefs.clear();
+  codeLayout.set(false);
+  segmentList.set([]);
+  copiedId.set(null);
+  for (const seg of retiring) retireSeg(seg);
+  if (single) {
+    try { single.dispose(); } catch { /* already gone */ }
+  }
+  reshaping = false;
+}
+
+/// Opens a note: one editor when the note has no code, a column of cards
+/// when it does.
+function open(note: Note | null) {
+  teardownEditors();
   closeSlash();
   slashIndex.set(0);
   if (note) {
-    const keys = new RichEditorPlugin("slash-keys");
-    keys.captureKeys(["ArrowUp", "ArrowDown", "Enter", "Tab", "Escape"], (key) => onSlashKey(key));
-    const made = makeEditor(note, keys);
-    slashKeys = keys;
-    made.on("selectionUpdate", () => {
-      syncCodeLanguage();
-    });
-    made.on("revision", () => {
-      scheduleSave();
-      // The suggestion state lands with the transaction: reading it a second
-      // time once the update is applied is what keeps `/` from opening the
-      // menu every other try.
-      syncSlash();
-      scheduleOutline();
-      // Colouring a page of ten thousand blocks on every keystroke is what
-      // made typing stutter: the code is painted while the caret is in it.
-      if (codeBlockPos() !== null) schedulePaint();
-    });
-    editor = made;
+    const doc = documentOf(note.doc);
+    if (hasCodeBlock(doc)) becomeSplit(doc, -1);
+    else mountSingle(doc);
     // What is on disk already: a caret move must not look like an edit and
     // send the library back through the host.
-    savedBody = JSON.stringify(made.getJSON());
+    savedBody = JSON.stringify(currentDoc());
     savedTitle = text(note.title);
     // The rails come from the note's own document: the session's copy is the
     // same one, and this way they are there on the first frame.
-    outline.set(headingsOf(documentOf(note.doc)));
+    outline.set(headingsOf(doc));
     paintCode();
-    syncCodeLanguage();
   } else {
     outline.set([]);
   }
   editorVersion.set(editorVersion() + 1);
 }
 
-/// The editor for a note: its document when the schema takes it, an empty one
+/// One editor for the whole note. A code block inserted later becomes a card.
+function mountSingle(doc: unknown) {
+  const epochAt = epoch;
+  const keys = new RichEditorPlugin("slash-keys");
+  keys.captureKeys(["ArrowUp", "ArrowDown", "Enter", "Tab", "Escape"], (key) => onSlashKey(key));
+  const made = makeEditor(doc, keys);
+  slashKeys = keys;
+  made.on("revision", () => {
+    if (epoch !== epochAt || editor !== made) return;
+    scheduleSave();
+    // The suggestion state lands with the transaction: reading it a second
+    // time once the update is applied is what keeps `/` from opening the
+    // menu every other try.
+    syncSlash();
+    scheduleOutline();
+    // Colouring a page of ten thousand blocks on every keystroke is what
+    // made typing stutter: the code is painted while the caret is in it.
+    if (made.findParentNode("codeBlock")) schedulePaint();
+    if (hasCodeBlock(made.getJSON())) {
+      const parent = made.findParentNode("codeBlock") as { pos?: number } | null;
+      scheduleSplit(codeOrdinal(made.getJSON(), parent?.pos ?? 0));
+    }
+  });
+  editor = made;
+}
+
+/// The editor for a document when the schema takes it, an empty one
 /// otherwise, so a broken note still opens.
-function makeEditor(note: Note, keys: RichEditorPlugin): RichEditorSession {
+function makeEditor(doc: unknown, keys: RichEditorPlugin): RichEditorSession {
   const options = (content: unknown) => ({
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-        // Markdown's blocks and marks: a task list is `- [ ]`, which the
-        // document keeps as a `checked` attribute. The rest — text alignment,
-        // highlight, sub- and superscript — has no Markdown spelling and stays
-        // off.
-        highlight: false,
-        subscript: false,
-        superscript: false,
-        textStyle: false,
-        textAlign: false,
-      }),
-      TableKit.configure({}),
-    ],
+    extensions: editorExtensions(),
     plugins: [keys, highlight],
     content: content as never,
     format: "json" as const,
   });
   try {
-    return createRichEditor(options(documentOf(note.doc)));
-  } catch (error) {
+    return createRichEditor(options(doc));
+  } catch {
     return createRichEditor(options(documentOf(null)));
   }
 }
@@ -401,8 +707,8 @@ function scheduleOutline() {
   if (outlineTimer) clearTimeout(outlineTimer);
   outlineTimer = setTimeout(() => {
     outlineTimer = null;
-    if (!editor) return;
-    const next = headingsOf(editor.getJSON());
+    if (!editor && !split) return;
+    const next = headingsOf(currentDoc());
     const current = outline();
     // A caret move fires a revision too: only a changed outline re-renders.
     const same = next.length === current.length && next.every((mark, index) => {
@@ -415,6 +721,16 @@ function scheduleOutline() {
 
 /// Puts the caret at the end of the note: what a press below the text means.
 function caretToEnd() {
+  if (split && segments.length) {
+    const last = segments[segments.length - 1];
+    const ref = segRefs.get(last.id);
+    if (!ref) return;
+    editor = last.session;
+    if (last.kind === "prose") slashKeys = last.keys;
+    ref.focus();
+    ref.setSelection(headingsEnd(last.session.getJSON()), headingsEnd(last.session.getJSON()));
+    return;
+  }
   if (!editor || !editorRef) return;
   const end = headingsEnd(editor.getJSON());
   editorRef.focus();
@@ -479,7 +795,6 @@ function placeSlash(pos: number) {
 
 function syncSlash() {
   const match = slashMatch();
-  console.log("SYNC", JSON.stringify((editor?.selection as { anchor?: number } | null)?.anchor), match ? match.query : "-");
   if (!match) {
     closeSlash();
     return;
@@ -506,7 +821,6 @@ function filtered(query: string): SlashItem[] {
 /// The keys the list takes while it is open: the arrows move, Enter and Tab
 /// pick, Escape closes.
 function onSlashKey(key: string) {
-  console.log("SK", key, slashOpen());
   if (!slashOpen()) return;
   if (key === "Escape") {
     closeSlash();
@@ -533,7 +847,6 @@ function pick() {
 }
 
 function closeSlash() {
-  if (slashOpen()) console.log("CLOSE", String(new Error().stack).split("\n")[2]);
   slashRange = null;
   if (slashOpen()) slashOpen.set(false);
   unbindSlashKeys();
@@ -607,10 +920,10 @@ function flushSave() {
   }
   if (!dirty()) return;
   const note = selected();
-  if (!note || !editor) return;
+  if (!note || (!editor && !split)) return;
   const title = draftTitle().trim() || "Без названия";
-  const doc = editor.getJSON();
-  const body = editor.getText();
+  const doc = currentDoc();
+  const body = currentText();
   const serialized = JSON.stringify(doc);
   if (serialized === savedBody && title === savedTitle) {
     dirty.set(false);
@@ -855,6 +1168,166 @@ function EmptyLibrary(props: { colors: ThemeColors }) {
 
 /// The note itself, across the content's width: a back chip, the title, then
 /// one column of text with the rails of its headings on the right.
+function codeFields(id: number, rev?: number): { language: string; text: string } {
+  void rev;
+  const seg = segments.find((item) => item.id === id);
+  const content = (seg?.session.getJSON() as { content?: { type?: string; attrs?: { language?: string | null }; content?: { text?: string }[] }[] } | undefined)?.content ?? [];
+  const block = content.find((node) => node?.type === "codeBlock") ?? content[0];
+  const named = typeof block?.attrs?.language === "string" ? block.attrs.language : "";
+  const text = (block?.content ?? []).map((child) => child?.text ?? "").join("");
+  return { language: shownLanguage(named), text };
+}
+
+function setCodeLanguage(id: number, language: string) {
+  const seg = segments.find((item) => item.id === id && item.kind === "code");
+  if (!seg) return;
+  const content = (seg.session.getJSON() as { content?: { type?: string }[] }).content ?? [];
+  let pos = 0;
+  for (const node of content) {
+    if (node?.type === "codeBlock") break;
+    pos += blockSize(node);
+  }
+  seg.session.run(setNodeAttribute(pos, "language", language));
+  paintCode();
+}
+
+function codeLanguageMenu(id: number, at: Point) {
+  void Menu.popup(codeLanguages.map(([value, label]) => ({ label, onSelect: () => setCodeLanguage(id, value) })), at);
+}
+
+function attachRef(id: number, ref: RichEditorRef | null) {
+  if (!ref) {
+    segRefs.delete(id);
+    return;
+  }
+  segRefs.set(id, ref);
+  if (wantFocus !== id) return;
+  wantFocus = null;
+  try {
+    ref.focus();
+    // Only an empty block is put at its start. A block that already has
+    // text keeps the caret the session opened with.
+    if (!codeFields(id).text) ref.setSelection(1, 1);
+  } catch {
+    // The session already has a caret. Typing still lands in the block.
+  }
+}
+
+const TEXT_BLOCKS = new Set(["paragraph", "heading", "listItem", "bulletList", "orderedList", "blockquote", "codeBlock", "table", "tableRow", "taskList", "taskItem"]);
+
+function plainOf(node: unknown): string {
+  const block = node as { type?: string; text?: string; content?: unknown[] } | null;
+  if (!block) return "";
+  if (typeof block.text === "string") return block.text;
+  if (!Array.isArray(block.content)) return "";
+  const blocky = block.content.some((child) => TEXT_BLOCKS.has(String((child as { type?: string })?.type ?? "")));
+  return block.content.map(plainOf).filter((part) => part.length > 0).join(blocky ? "\n" : "");
+}
+
+function wrappedLines(text: string, width: number, font: number): number {
+  const per = Math.max(8, Math.floor(Math.max(40, width) / (font * 0.62)));
+  let lines = 0;
+  for (const line of (text || " ").split("\n")) lines += Math.max(1, Math.ceil(line.length / per));
+  return lines;
+}
+
+function pieceWidth(room: number): number {
+  const pad = room > 0 ? (room < COMPACT_LIBRARY ? 16 : Math.max((room - PAGE_MAX) / 2, PAGE_PAD / 2)) : PAGE_PAD;
+  return Math.max(220, (room > 0 ? room : 720) - pad * 2);
+}
+
+/// The prose piece is as tall as its text. The editor's own scroll collapses
+/// when the piece has no height of its own, so the height is the lines.
+function proseBoxHeight(id: number, room: number, rev?: number): number {
+  void rev;
+  const seg = segments.find((item) => item.id === id);
+  if (!seg) return 48;
+  const width = pieceWidth(room);
+  const content = (seg.session.getJSON() as { content?: { type?: string; attrs?: { level?: number }; content?: unknown[] }[] }).content ?? [];
+  let height = 8;
+  for (const node of content) {
+    const type = node?.type;
+    const level = node?.attrs?.level ?? 1;
+    if (type === "heading") {
+      const line = level === 1 ? 32 : level === 2 ? 28 : 26;
+      const above = level === 1 ? 22 : 12;
+      height += above + wrappedLines(plainOf(node), width, line > 26 ? 28 : 18) * line + 6;
+    } else if (type === "horizontalRule") height += 40;
+    else if (type === "table") height += 40 * Math.max(1, (node.content ?? []).length) + 16;
+    else if (type === "bulletList" || type === "orderedList" || type === "blockquote") height += 12 + wrappedLines(plainOf(node), width - 32, 16) * 24;
+    else height += 8 + wrappedLines(plainOf(node), width, 16) * 24;
+  }
+  return Math.max(36, Math.ceil(height + 20));
+}
+
+function codeBoxHeight(text: string, room: number): number {
+  const per = Math.max(8, Math.floor(Math.max(80, pieceWidth(room) - 28) / 8));
+  const lines = (text.length ? text : " ").split("\n").reduce((count, line) => count + Math.max(1, Math.ceil(line.length / per)), 0);
+  return 12 + 14 + lines * 21 + 10;
+}
+
+/// A code block as shadcn draws it: a header row, then the code. The row is
+/// flex, so the language stays on the left and copy on the right without a
+/// measured overlay.
+function CodeCard(props: { id: number; colors: ThemeColors; dark: boolean; wash: string }) {
+  const seg = segments.find((item) => item.id === props.id);
+  if (!seg) return <View />;
+  return <View style={{ marginTop: 10, marginBottom: 10, borderRadius: 10, borderWidth: 1, borderColor: props.colors.border, backgroundColor: surfaceWash(props.dark, 0.06), overflow: "hidden" }}>
+    <View class="flex-row items-center justify-between" style={{ height: 36, paddingLeft: 12, paddingRight: 4, borderBottomWidth: 1, borderColor: props.colors.border }}>
+      <View onPress={(event) => codeLanguageMenu(props.id, event.pagePosition)} role="button" accessibilityLabel={languageLabel(codeFields(props.id, bodyRev()).language)} hoverStyle={{ backgroundColor: props.wash }} style={{ height: 26, paddingLeft: 8, paddingRight: 8, borderRadius: 6, cursor: "pointer", justifyContent: "center" }}>
+        <Text class="text-[12px] font-medium" style={{ color: props.colors.muted }}>{languageLabel(codeFields(props.id, bodyRev()).language)}</Text>
+      </View>
+      <View onPress={() => copyBlock(codeFields(props.id).text, props.id)} role="button" accessibilityLabel="Скопировать" class="items-center justify-center" hoverStyle={{ backgroundColor: props.wash }} style={{ width: 28, height: 28, borderRadius: 6, cursor: "pointer" }}>
+        {copiedId() === props.id
+          ? <Glyph name="check" size={14} color={props.colors.foreground} />
+          : <Image src={COPY_ICON} style={{ width: 14, height: 14, tintColor: props.colors.muted }} />}
+      </View>
+    </View>
+    <RichEditor
+      editor={seg.session}
+      ref={(ref) => attachRef(props.id, ref)}
+      accessibilityLabel="Код"
+      style={{ height: codeBoxHeight(codeFields(props.id, bodyRev()).text, pageRoom()) }}
+      styles={codeStyles(props.colors, props.dark)}
+    />
+  </View>;
+}
+
+function ProsePiece(props: { id: number; colors: ThemeColors; dark: boolean }) {
+  const seg = segments.find((item) => item.id === props.id);
+  if (!seg) return <View />;
+  return <RichEditor
+    editor={seg.session}
+    ref={(ref) => attachRef(props.id, ref)}
+    accessibilityLabel="Текст заметки"
+    placeholder={segmentList()[0]?.id === props.id ? "Пишите. Слэш открывает блоки: заголовок, список, таблица…" : undefined}
+    style={{ height: proseBoxHeight(props.id, pageRoom(), bodyRev()) }}
+    styles={noteStyles(props.colors, props.dark, 0, 0, true)}
+  />;
+}
+
+function SplitNote(props: { colors: ThemeColors; dark: boolean; wash: string }) {
+  // The sheet is pinned to the page. A flex-1 scroll inside a percentage-height
+  // column collapses, and then the cards are gone while the rails stay.
+  return <Scroll class="min-h-0 flex-1" contentStyle={{ paddingTop: 2, paddingBottom: 120, paddingLeft: pagePad(), paddingRight: pagePad() }}>
+    <Each of={segmentList()} key={((row: { id: number; kind: "prose" | "code" }) => String(row.id)) as any}>{(row) => {
+      const item = row();
+      return item.kind === "code"
+        ? <CodeCard id={item.id} colors={props.colors} dark={props.dark} wash={props.wash} />
+        : <ProsePiece id={item.id} colors={props.colors} dark={props.dark} />;
+    }}</Each>
+  </Scroll>;
+}
+
+function slashMenu(colors: ThemeColors, wash: string) {
+  return <View class="absolute rounded-lg border" style={{ left: slashLeft(), top: slashTop(), width: 264, backgroundColor: colors.card, borderColor: colors.border, paddingTop: 4, paddingBottom: 4 }}>
+    {filtered(slashQuery()).map((item, index) => <View onPress={() => { slashIndex.set(index); pick(); }} role="button" accessibilityLabel={item.label} class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: 28, paddingLeft: 10, paddingRight: 10, gap: 8, cursor: "pointer", backgroundColor: index === slashIndex() ? wash : "transparent" }}>
+      <Text class="text-[13px] flex-1" style={{ color: colors.foreground }}>{item.label}</Text>
+      <Text class="text-[11px]" style={{ color: colors.muted }}>{item.hint}</Text>
+    </View>)}
+  </View>;
+}
+
 function NoteView(props: { colors: ThemeColors; dark: boolean }) {
   const colors = props.colors;
   const wash = surfaceWash(props.dark, 0.07);
@@ -879,27 +1352,24 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
         width, so its indicator sits at the page's edge, and the text is inset
         to the column's width instead. */}
     <View class="relative min-h-0 flex-1" onLayout={(event) => { pageRoom.set(event.bounds.size.width); pageTall.set(event.bounds.size.height); }}>
-    <View class="min-h-0 flex-col" style={{ height: "100%", paddingTop: 4 }}>
+    <View class="min-h-0 flex-col" style={{ height: pageTall() > 0 ? pageTall() : undefined, paddingTop: 4 }}>
       {/* A press on the page below the text belongs to the text: the caret
           goes to the end, the way a word processor takes a click on the
           empty part of a sheet. */}
-      <View class="relative min-h-0 flex-1" ref={(node) => { menuAnchor = node; }} onPress={caretToEnd} testID="note-page-space">
-        <Each of={[{ stamp: editorVersion() }]} key={((row: { stamp: number }) => row.stamp) as any}>{(row) => editor
-          ? <RichEditor
-            editor={editor}
-            ref={(ref) => { editorRef = ref; }}
-            class="min-h-0 flex-1"
-            placeholder="Пишите. Слэш открывает блоки: заголовок, список, таблица…"
-            accessibilityLabel="Текст заметки"
-            styles={noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad())}
-          />
-          : <View class="h-full" />}</Each>
-        {slashOpen() && <View class="absolute rounded-lg border" style={{ left: slashLeft(), top: slashTop(), width: 264, backgroundColor: colors.card, borderColor: colors.border, paddingTop: 4, paddingBottom: 4 }}>
-          {filtered(slashQuery()).map((item, index) => <View onPress={() => { slashIndex.set(index); pick(); }} role="button" accessibilityLabel={item.label} class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: 28, paddingLeft: 10, paddingRight: 10, gap: 8, cursor: "pointer", backgroundColor: index === slashIndex() ? wash : "transparent" }}>
-            <Text class="text-[13px] flex-1" style={{ color: colors.foreground }}>{item.label}</Text>
-            <Text class="text-[11px]" style={{ color: colors.muted }}>{item.hint}</Text>
-          </View>)}
-        </View>}
+      <View class="relative min-h-0 flex-1 overflow-hidden" ref={(node) => { menuAnchor = node; }} onPress={caretToEnd} testID="note-page-space">
+        {codeLayout()
+          ? <SplitNote colors={colors} dark={props.dark} wash={wash} />
+          : <Each of={[{ stamp: editorVersion() }]} key={((row: { stamp: number }) => row.stamp) as any}>{(row) => editor
+            ? <RichEditor
+              editor={editor}
+              ref={(ref) => { editorRef = ref; }}
+              class="min-h-0 flex-1"
+              placeholder="Пишите. Слэш открывает блоки: заголовок, список, таблица…"
+              accessibilityLabel="Текст заметки"
+              styles={noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad(), false)}
+            />
+            : <View class="h-full" />}</Each>}
+        {slashOpen() && slashMenu(colors, wash)}
       </View>
     </View>
     <View class="absolute top-0 bottom-0" style={{ right: RAIL_INSET }}>
@@ -929,6 +1399,17 @@ function outlineRails(colors: ThemeColors, dark: boolean) {
   return <View class="h-full items-end justify-center" style={{ width: RAIL_WIDTH, gap: 3 }}>
     {marks.map((mark) => <View
       onPress={() => {
+        if (split) {
+          const found = segmentAt(mark.pos);
+          const ref = found ? segRefs.get(found.id) : null;
+          const seg = found ? segments.find((item) => item.id === found.id) : null;
+          if (!found || !ref || !seg) return;
+          editor = seg.session;
+          if (seg.kind === "prose") slashKeys = seg.keys;
+          ref.focus();
+          ref.setSelection(found.local, found.local);
+          return;
+        }
         if (!editor || !editorRef) return;
         editorRef.focus();
         editorRef.setSelection(mark.pos, mark.pos);
@@ -951,21 +1432,57 @@ function outlineRails(colors: ThemeColors, dark: boolean) {
 /// editor take its styles again for no reason at all.
 let documentStylesCache: { key: string; styles: unknown } | null = null;
 
-function noteStyles(colors: ThemeColors, dark: boolean, minHeight: number, pad: number) {
-  const key = `${dark}|${minHeight}|${pad}|${colors.background}|${colors.foreground}|${colors.muted}|${colors.border}`;
+/// Where a heading mark falls once the note is several editors: the same
+/// counting `headingsOf` uses, started again inside the piece.
+function segmentAt(markPos: number): { id: number; local: number } | null {
+  let pos = 1;
+  for (let index = 0; index < segments.length; index += 1) {
+    const seg = segments[index];
+    const start = pos;
+    const doc = seg.session.getJSON() as { content?: unknown[] };
+    for (const node of doc.content ?? []) pos += nodeSize(node);
+    if (markPos < pos || index === segments.length - 1) return { id: seg.id, local: markPos - (start - 1) };
+  }
+  return null;
+}
+
+function noteStyles(colors: ThemeColors, dark: boolean, minHeight: number, pad: number, piece = false) {
+  const key = `${piece}|${dark}|${minHeight}|${pad}|${colors.background}|${colors.foreground}|${colors.muted}|${colors.border}`;
   if (documentStylesCache?.key !== key) {
-    documentStylesCache = { key, styles: documentStyles(colors, dark, minHeight, pad) };
+    documentStylesCache = { key, styles: documentStyles(colors, dark, minHeight, pad, piece) };
   }
   return documentStylesCache.styles as ReturnType<typeof documentStyles>;
 }
 
-function documentStyles(colors: ThemeColors, dark: boolean, minHeight: number, pad: number) {
+let codeStylesCache: { key: string; styles: unknown } | null = null;
+
+function codeStyles(colors: ThemeColors, dark: boolean) {
+  const key = `${dark}|${colors.foreground}|${colors.accent}|${colors.muted}`;
+  if (codeStylesCache?.key !== key) {
+    codeStylesCache = {
+      key,
+      styles: {
+        content: { color: colors.foreground, backgroundColor: "transparent", paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0, minHeight: 0 },
+        placeholder: { color: colors.muted },
+        caret: { backgroundColor: colors.accent },
+        nodes: {
+          codeBlock: { fontFamily: Mono, fontSize: 13, lineHeight: 21, paddingTop: 12, paddingBottom: 14, paddingLeft: 14, paddingRight: 14, marginTop: 0, marginBottom: 0, backgroundColor: "transparent" },
+          paragraph: { fontFamily: Mono, fontSize: 13, lineHeight: 21, marginTop: 0, marginBottom: 0 },
+        },
+        marks: {},
+      },
+    };
+  }
+  return codeStylesCache.styles as ReturnType<typeof documentStyles>;
+}
+
+function documentStyles(colors: ThemeColors, dark: boolean, minHeight: number, pad: number, piece = false) {
   return {
     // The page's text fills at least the room it is in: a press below the last
     // line lands on the editable area, and the caret goes where writing goes.
     // The side margins keep the text in its column while the scroll view keeps
-    // the page's whole width.
-    content: { color: colors.foreground, backgroundColor: "transparent", paddingTop: 2, paddingBottom: 120, paddingLeft: pad, paddingRight: pad, minHeight },
+    // the page's whole width. A piece sits in the column's own padding.
+    content: { color: colors.foreground, backgroundColor: "transparent", paddingTop: piece ? 0 : 2, paddingBottom: piece ? 4 : 120, paddingLeft: piece ? 0 : pad, paddingRight: piece ? 0 : pad, minHeight: piece ? 0 : minHeight },
     placeholder: { color: colors.muted },
     caret: { backgroundColor: colors.accent },
     nodes: {
@@ -977,14 +1494,14 @@ function documentStyles(colors: ThemeColors, dark: boolean, minHeight: number, p
       bulletList: { marginTop: 2, marginBottom: 4, paddingLeft: 6 },
       orderedList: { marginTop: 2, marginBottom: 4, paddingLeft: 6 },
       listItem: { fontSize: 16, lineHeight: 24 },
-      codeBlock: { fontSize: 14, lineHeight: 22, padding: 16, marginTop: 6, marginBottom: 6, borderRadius: 8, backgroundColor: surfaceWash(dark, 0.08) },
+      codeBlock: { fontFamily: Mono, fontSize: 13, lineHeight: 21, paddingTop: 12, paddingBottom: 12, paddingLeft: 14, paddingRight: 14, marginTop: piece ? 0 : 6, marginBottom: piece ? 0 : 6, borderRadius: piece ? 0 : 8, backgroundColor: piece ? "transparent" : surfaceWash(dark, 0.08) },
       horizontalRule: { marginTop: 18, marginBottom: 18, borderColor: colors.border },
       table: { marginTop: 6, marginBottom: 6 },
       tableCell: { fontSize: 14, lineHeight: 22, padding: 8, borderColor: colors.border },
       tableHeader: { fontSize: 14, lineHeight: 22, padding: 8, fontWeight: "bold", backgroundColor: surfaceWash(dark, 0.05) },
     },
     marks: {
-      code: { fontSize: 14, color: colors.foreground, backgroundColor: surfaceWash(dark, 0.08) },
+      code: { fontFamily: Mono, fontSize: 14, color: colors.foreground, backgroundColor: surfaceWash(dark, 0.08) },
       link: { color: colors.accent, textDecorationLine: "underline" },
     },
   } as const;
@@ -1049,7 +1566,7 @@ function PreviewLine(props: { block: PreviewBlock; colors: ThemeColors }) {
   }
   const scale = block.kind === "heading" ? PREVIEW_SIZES[`h${Math.min(Math.max(block.level, 1), 3)}`] ?? PREVIEW_SIZES.h1 : PREVIEW_SIZES[block.kind] ?? PREVIEW_SIZES.text;
   const ink = block.kind === "heading" ? colors.foreground : colorAlpha(colors.foreground, 0.62);
-  return <Text class="w-full" style={{ fontSize: scale.size, lineHeight: scale.line, fontWeight: scale.weight, color: ink, marginTop: scale.gap, paddingLeft: block.kind === "item" ? 9 : 0 }}>{block.kind === "item" ? `• ${block.text}` : block.text}</Text>;
+  return <Text class="w-full" style={{ fontSize: scale.size, lineHeight: scale.line, fontWeight: scale.weight, fontFamily: block.kind === "code" ? Mono : undefined, color: ink, marginTop: scale.gap, paddingLeft: block.kind === "item" ? 9 : 0 }}>{block.kind === "item" ? `• ${block.text}` : block.text}</Text>;
 }
 
 /// A sheet's shadow: barely there in the light theme, a lifted edge in the dark.

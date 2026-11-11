@@ -173,9 +173,6 @@ export function TitlebarOverlay(props: {
   /// The open note's name: it takes the bar's middle in place of the page.
   noteTitle?: string;
   noteActive?: boolean;
-  /// The language of the code block the caret sits in, named in the bar.
-  codeLanguage?: string;
-  onPickLanguage?: (at: { x: number; y: number }) => void;
   onToggleSidebar: () => void;
   onAddGame?: () => void;
   onRenameNote?: (value: string) => void;
@@ -206,15 +203,14 @@ export function TitlebarOverlay(props: {
       <Text class="text-[15px]" style={{ color: props.colors.muted }}>‹</Text>
       <Text class="text-[12px]" style={{ color: props.colors.muted }}>Заметки</Text>
     </View>}
-    {props.noteActive && <View class="absolute items-center" desktop={{ windowDrag: false }} style={{ left: "50%", top: titlebarControlTop(26), height: 26, width: 340, marginLeft: -170 }}>
-      <Input value={props.noteTitle ?? ""} onChange={(event) => props.onRenameNote?.(event.value)} placeholder="Заголовок" accessibilityLabel="Заголовок заметки" class="text-center text-[13px] font-semibold" style={{ width: 340, color: props.colors.foreground, backgroundColor: "transparent", paddingTop: 0, paddingBottom: 0, lineHeight: 18 }} />
+    {/* The page's middle, from the sidebar's edge to the window's edge. The
+        name is centred in the field, so a short title sits on that middle. */}
+    {props.noteActive && <View class="absolute flex-row items-center justify-center" pointerEvents="box-none" desktop={{ windowDrag: false }} style={{ left: props.pageInset ?? 0, right: 0, top: titlebarControlTop(26), height: 26 }}>
+      <Input value={props.noteTitle ?? ""} onChange={(event) => props.onRenameNote?.(event.value)} placeholder="Заголовок" accessibilityLabel="Заголовок заметки" class="text-center text-[13px] font-semibold" style={{ width: 360, maxWidth: "70%", textAlign: "center", color: props.colors.foreground, backgroundColor: "transparent", paddingTop: 0, paddingBottom: 0, paddingLeft: 8, paddingRight: 8, lineHeight: 18 }} />
     </View>}
     {props.noteActive && <View onPress={() => props.onDeleteNote?.()} role="button" accessibilityLabel="Удалить заметку" class="absolute items-center justify-center" hoverStyle={{ backgroundColor: wash }} desktop={{ windowDrag: false }} style={{ right: controlsRight + 8, top: titlebarControlTop(24), width: 26, height: 24, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
       <SharedIcon name="trash" size={13} color={props.colors.muted} />
     </View>}
-    {props.noteActive && props.codeLanguage ? <View onPress={(event) => props.onPickLanguage?.(event.pagePosition)} role="button" accessibilityLabel={`Язык блока: ${props.codeLanguage}`} class="absolute flex-row items-center justify-center" hoverStyle={{ backgroundColor: wash }} desktop={{ windowDrag: false }} style={{ right: controlsRight + 40, top: titlebarControlTop(26), height: 20, paddingLeft: 8, paddingRight: 8, gap: 4, borderRadius: 6, borderWidth: 1, backgroundColor: props.colors.card, borderColor: props.colors.border, cursor: "pointer" }}>
-      <Text class="text-[11px]" style={{ color: props.colors.muted }}>{props.codeLanguage}</Text>
-    </View> : null}
     {drawCaptions && <View class="absolute right-0 top-0 flex-row" desktop={{ windowDrag: false }} style={{ height: TITLEBAR_HEIGHT }}>
       <View onPress={() => props.onChrome("window.minimize")} role="button" accessibilityLabel="Свернуть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowMin" color={props.colors.foreground} size={12} /></View>
       <View onPress={() => props.onChrome("window.zoom")} role="button" accessibilityLabel="Развернуть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowMax" color={props.colors.foreground} size={12} /></View>

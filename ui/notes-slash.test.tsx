@@ -28,6 +28,27 @@ test("a slash works with the page scrolled to the end", async () => {
   expect(app.texts()).not.toContain("Заголовок 1");
 });
 
+// A code block wears its language on the top left and a copy button on the
+// top right. The name opens the list of languages.
+test("a code block names its language and copies from its corner", async () => {
+  const app = await open("./notes-fixture.tsx", { width: 1180, height: 820, platform: "macos" });
+  await app.press("label:Заметка 2");
+  await app.press("label:Текст заметки");
+  await app.keyboard.press("mod+ArrowDown");
+  await app.keyboard.press("enter");
+  await app.keyboard.press("/");
+  await app.press("label:Код");
+  await app.waitFor("text:Простой текст");
+  await app.keyboard.press("f");
+  await app.keyboard.press("n");
+  await app.press("label:Скопировать");
+  expect(app.clipboard()).toContain("fn");
+  await app.press("label:Простой текст");
+  expect(app.menu()?.map((item) => item.label)).toContain("Rust");
+  await app.chooseMenuItem("Rust");
+  await app.waitFor("text:Rust");
+});
+
 // Saving used to re-render the page under the editor and drop its focus, so
 // the next slash went nowhere. A pause past the save delay proves it stays.
 test("a slash still opens after the note has been saved", async () => {

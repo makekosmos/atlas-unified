@@ -1,3 +1,7 @@
+import { createRichEditor } from "nsh/base";
+import { StarterKit } from "nsh/base";
+import { TableKit } from "nsh/base";
+import { codeBlocksOf } from "./notes";
 import { expect, test } from "nsh/test";
 import { languageOf, scan, tokenColors } from "./highlight";
 
@@ -71,5 +75,33 @@ test("every token kind has a colour in both themes", () => {
 test("every language the menu offers is one the scanner reads", () => {
   for (const name of ["rust", "ts", "js", "python", "json", "bash", "sql", "go", "html", "css", "markdown"]) {
     expect(languageOf(name)).toEqual(name === "js" || name === "ts" ? name : name);
+  }
+});
+
+// A block's badge needs its first character's position and its text.
+test("code blocks are found with their position and language", () => {
+  const doc = {
+    type: "doc",
+    content: [
+      { type: "paragraph", content: [{ type: "text", text: "hi" }] },
+      { type: "codeBlock", attrs: { language: "rust" }, content: [{ type: "text", text: "fn main() {}" }] },
+    ],
+  };
+  expect(codeBlocksOf(doc)).toEqual([{ node: 4, pos: 5, language: "rust", text: "fn main() {}" }]);
+});
+
+// The editor's schema takes a picture inside a paragraph: that is the shape a
+// pasted image has to take, not a block of its own.
+test("the schema takes an image inside a paragraph", () => {
+  const session = createRichEditor({
+    extensions: [StarterKit.configure({}), TableKit.configure({})],
+    content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "image", attrs: { src: "data:image/png;base64,iVBORw0KGgo=", alt: "x" } }] }] } as never,
+    format: "json",
+  });
+  try {
+    const doc = session.getJSON();
+    expect(JSON.stringify(doc)).toContain("\"image\"");
+  } finally {
+    session.dispose();
   }
 });
