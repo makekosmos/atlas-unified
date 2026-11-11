@@ -825,16 +825,21 @@ function slashMatch(): SlashMatch | null {
 }
 
 /// Puts the list by the caret: page coordinates, less the page's own corner.
+/// A split page holds one editor per segment, and their own caret
+/// coordinates are read against the page of the whole note, so the segment's
+/// own corner is what places the list when the note is split.
 function placeSlash(pos: number) {
   const live = editor;
   const anchor = menuAnchor;
   if (!live || !anchor) return;
+  const seg = slashSeg !== null ? segRefs.get(slashSeg) : null;
+  const segBox = seg ? seg.node.measure() : Promise.resolve(null);
   const page = live.pageCoordsAtPos(pos) as Point | null;
-  if (!page) return;
-  void anchor.measure().then((box) => {
+  if (!page && !seg) return;
+  void Promise.all([anchor.measure(), segBox]).then(([box, piece]) => {
     if (!box) return;
-    const x = page.x - box.pagePosition.x;
-    const y = page.y - box.pagePosition.y;
+    const x = piece ? piece.pagePosition.x - box.pagePosition.x : (page as Point).x - box.pagePosition.x;
+    const y = piece ? piece.pagePosition.y - box.pagePosition.y + 30 : (page as Point).y - box.pagePosition.y;
     // The caret sits at the bottom edge as the editor follows it: below it
     // there is no room for the list, so the list goes above.
     const below = y + 24;
@@ -845,15 +850,21 @@ function placeSlash(pos: number) {
 }
 
 function syncSlash() {
+  // A split page has an editor per segment, and the ones the list is not in
+  // take transactions of their own: they neither move nor close the list.
+  if (slashOpen() && slashSession && editor !== slashSession) return;
   const match = slashMatch();
   if (!match) {
     closeSlash();
     return;
   }
   slashRange = match;
-  slashQuery.set(usForm(match.query));
+  // While the list is open its query comes from its own keys: the text holds
+  // the slash and nothing else, and reading it again would empty the query.
   if (!slashOpen()) {
+    slashQuery.set(usForm(match.query));
     slashIndex.set(0);
+    slashSession = editor;
     slashSeg = segmentAt(match.from)?.id ?? null;
     slashOpen.set(true);
     bindSlashKeys();
@@ -908,6 +919,7 @@ function closeSlash(discard = false) {
   const live = editor;
   slashRange = null;
   slashSeg = null;
+  slashSession = null;
   const wasOpen = slashOpen();
   if (wasOpen) slashOpen.set(false);
   unbindSlashKeysNow();
@@ -941,6 +953,12 @@ const SLASH_TYPE_KEYS = [
 ];
 
 let unbindSlashKeys: (() => void) | null = null;
+/// The view that holds the keyboard while the list is open: a view, not a text
+/// field, so the keys reach the app's keymap instead of a caret.
+let slashFocus: ViewRef | null = null;
+/// The editor the list was opened from: the other editors of a split page
+/// report revisions of their own, and those must not close the list.
+let slashSession: RichEditorSession | null = null;
 /// Set while the list itself takes the keyboard away: the editor hears a blur
 /// of the app's own making, which must not close the list it just opened.
 let slashHold = false;
@@ -950,10 +968,13 @@ let slashHold = false;
 /// the editor has let go; the caret comes back when the list closes.
 function bindSlashKeys() {
   if (unbindSlashKeys) return;
-  const seg = slashSeg;
-  const ref = seg !== null ? segRefs.get(seg) : editorRef;
+  // Every editor of the page lets go, not just the caret's: a blur moves the
+  // focus on to the next one, and the list's keys would land in its text.
   slashHold = true;
-  ref?.blur();
+  editorRef?.blur();
+  for (const ref of segRefs.values()) ref.blur();
+  // The keys go to a view of the list's own: a caret would take them back.
+  slashFocus?.focus();
   const bindings: Record<string, () => void> = {
     up: () => onSlashKey("ArrowUp"),
     down: () => onSlashKey("ArrowDown"),
@@ -1423,6 +1444,7 @@ function ProsePiece(props: { id: number; colors: ThemeColors; dark: boolean }) {
       // the keyboard off while the list has it.
       if (!slashOpen()) return;
       if (slashHold) { slashHold = false; return; }
+      if (seg.session !== slashSession) return;
       closeSlash();
     }}
     style={{ height: proseBoxHeight(props.id, pageRoom(), bodyRev()) }}
@@ -1433,14 +1455,22 @@ function ProsePiece(props: { id: number; colors: ThemeColors; dark: boolean }) {
 function SplitNote(props: { colors: ThemeColors; dark: boolean; wash: string }) {
   // The sheet is pinned to the page. A flex-1 scroll inside a percentage-height
   // column collapses, and then the cards are gone while the rails stay.
-  return <Scroll class="min-h-0 flex-1" contentStyle={{ paddingTop: 2, paddingBottom: 120, paddingLeft: pagePad(), paddingRight: pagePad() }}>
+  return <View class="relative min-h-0 flex-1" ref={(node) => { menuAnchor = node; }}>
+  <Scroll class="min-h-0 flex-1" contentStyle={{ paddingTop: 2, paddingBottom: 120, paddingLeft: pagePad(), paddingRight: pagePad() }}>
     <Each of={segmentList()} key={((row: { id: number; kind: "prose" | "code" }) => String(row.id)) as any}>{(row) => {
       const item = row();
       return item.kind === "code"
         ? <CodeCard id={item.id} colors={props.colors} dark={props.dark} wash={props.wash} />
         : <ProsePiece id={item.id} colors={props.colors} dark={props.dark} />;
     }}</Each>
-  </Scroll>;
+  </Scroll>
+  </View>;
+}
+
+/// The keyboard the list keeps while it is open: invisible, takes no presses,
+/// and does not type, so every key reaches the keymap.
+function slashKeyboard() {
+  return <View ref={(node) => { slashFocus = node; }} focusable style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />;
 }
 
 function slashMenu(colors: ThemeColors, wash: string) {
@@ -1492,15 +1522,17 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
               accessibilityLabel="Текст заметки"
               onPasteFiles={(event) => { pastePictures(event.paste, editor as RichEditorSession); }}
               onBlur={() => {
-      // The blur the list asked for is not a leave: the caret's editor keeps
-      // the keyboard off while the list has it.
-      if (!slashOpen()) return;
-      if (slashHold) { slashHold = false; return; }
-      closeSlash();
-    }}
+                // The blur the list asked for is not a leave: the caret's editor
+                // keeps the keyboard off while the list has it.
+                if (!slashOpen()) return;
+                if (slashHold) { slashHold = false; return; }
+                if (editor !== slashSession) return;
+                closeSlash();
+              }}
               styles={noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad(), false)}
             />
             : <View class="h-full" />}</Each>}
+        {slashOpen() && slashKeyboard()}
         {slashOpen() && slashMenu(colors, wash)}
       </View>
     </View>

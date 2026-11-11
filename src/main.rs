@@ -7,6 +7,8 @@ mod brand;
 #[cfg(feature = "e2e")]
 mod e2e;
 mod games;
+#[cfg(target_os = "macos")]
+mod macos_menu;
 mod model;
 mod nsh_bridge;
 mod nsh_host;
@@ -15,7 +17,9 @@ mod palettes;
 mod scope;
 mod store;
 mod win_chrome;
-use gpui::{px, size, App, AppContext, Bounds, Styled, WindowBounds, WindowOptions};
+use gpui::{
+    actions, px, size, App, AppContext, Bounds, KeyBinding, Styled, WindowBounds, WindowOptions,
+};
 #[cfg(target_os = "windows")]
 use gpui_fast_backend as _;
 use imago_nsh::{Bundle, NshApp};
@@ -48,6 +52,18 @@ use app::Atlas;
 use assets::font_bytes;
 
 const WINDOW_TITLE: &str = "Atlas";
+
+actions!(atlas, [Quit]);
+
+/// ⌘Q has to end the process. The menu carries the same item for the pointer,
+/// but the window takes the key first, so the key has its own way out.
+fn install_quit_key(cx: &mut App) {
+    cx.bind_keys([
+        KeyBinding::new("cmd-q", Quit, None),
+        KeyBinding::new("ctrl-q", Quit, None),
+    ]);
+    cx.on_action(|_: &Quit, cx: &mut App| cx.quit());
+}
 
 fn atlas_window_options(cx: &mut App) -> WindowOptions {
     WindowOptions {
@@ -173,7 +189,12 @@ fn main() {
             .add_fonts(font_bytes())
             .expect("failed to load embedded fonts");
 
+        install_quit_key(cx);
         let (window, agenda) = open_atlas_window(cx);
+        // After the window exists: AppKit draws the menu bar for the app, and
+        // the items it carries (⌘Q, ⌘W, ⌘H) are the system's own.
+        #[cfg(target_os = "macos")]
+        macos_menu::install();
         #[cfg(feature = "e2e")]
         if e2e::requested() {
             e2e::run(window, agenda, cx);
