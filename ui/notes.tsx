@@ -14,9 +14,6 @@ import {
 } from "nsh/base";
 import Mono from "./fonts/IBMPlexMono-Regular.ttf";
 import type { RichCommand, RichEditorPastedFiles, RichEditorRef, RichEditorSession } from "nsh/base";
-import { mkdir, writeFile } from "fs/promises";
-import { homedir, platform } from "os";
-import process from "process";
 import type { ViewRef } from "nsh";
 import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import { Menu } from "nsh/desktop";
@@ -180,58 +177,49 @@ export function languageLabel(name: string): string {
   return found ? found[1] : (name || "Простой текст");
 }
 
-/// Where a pasted picture lives: the app's own folder, so a note's picture is
-/// still there after the app restarts, and one the app may write to.
-function mediaDir(): string {
-  if (process.dataDir) return `${process.dataDir}/media`;
-  const home = homedir();
-  const kind = platform();
-  if (kind === "macos") return `${home}/Library/Application Support/com.mundus.atlas/media`;
-  if (kind === "windows") return `${home}/AppData/Roaming/com.mundus.atlas/media`;
-  return `${home}/.local/share/com.mundus.atlas/media`;
-}
+/// The picture as the note keeps it: the bytes themselves, in a `data:` URI.
+/// A picture beside the note in a file of its own would be smaller, but the
+/// note is what travels: copied to another machine or backed up, it still
+/// shows its pictures. The bytes gross by a third in base64, so a picture
+/// larger than the limit is left out rather than making the note unwieldy.
+const PICTURE_LIMIT = 4 * 1024 * 1024;
 
-let pictureSerial = 0;
-
-/// Writes the bytes of a pasted picture and gives the URL the editor shows it
-/// by. A picture the disk refuses leaves the note as it was: nothing is
-/// inserted that could not be shown.
-async function savePicture(file: { name: string; data: Uint8Array }): Promise<string | null> {
-  // A write holds at most 8 MiB: a bigger picture is refused before the disk
-  // hears of it, so nothing is inserted that could not be shown.
-  if (file.data.byteLength > 8 * 1024 * 1024) {
-    console.log("[atlas-notes] picture is larger than 8 MiB:", file.name);
+function pictureUri(file: { name: string; mime: string; data: Uint8Array }): string | null {
+  if (file.data.byteLength > PICTURE_LIMIT) {
+    console.log("[atlas-notes] picture is larger than 4 MiB:", file.name);
     return null;
   }
-  const dot = file.name.lastIndexOf(".");
-  const ext = dot > 0 ? file.name.slice(dot + 1).toLowerCase() : "png";
-  const dir = mediaDir();
-  pictureSerial += 1;
-  const name = `picture-${Date.now().toString(36)}-${pictureSerial}.${ext}`;
-  const path = `${dir}/${name}`;
+  const mime = file.mime && file.mime.startsWith("image/") ? file.mime : "image/png";
+  return `data:${mime};base64,${Buffer.from(file.data).toString("base64")}`;
+}
+
+/// How wide a pasted picture shows: the page's measure, so a screenshot does
+/// not run off the edge of the sheet it lands on.
+const PICTURE_WIDTH = 520;
+
+/// The picture at the caret, as wide as the page reads and as tall as its own
+/// proportions make it. A node that takes no width keeps its natural size.
+function insertPicture(session: RichEditorSession, src: string) {
+  session.run(command("setImage", { src }));
   try {
-    await mkdir(dir, { recursive: true });
-    await writeFile(path, file.data);
-    return `file://${path}`;
-  } catch (error) {
-    console.log("[atlas-notes] picture not saved:", String(error));
-    return null;
+    const found = session.findParentNode("image") as { pos?: number } | null;
+    if (typeof found?.pos === "number") session.run(setNodeAttribute(found.pos, "width", PICTURE_WIDTH));
+  } catch {
+    /* A node without a width shows at its natural size, which is fine. */
   }
 }
-
-const PICTURE_FILE = /\.(png|jpe?g|gif|webp|heic)$/i;
 
 /// Puts the pasted pictures into the note, one after another, where the caret
 /// was. Files that are not pictures are left alone: the editor inserts nothing
 /// for them, and neither does the app yet.
-async function pastePictures(pasted: RichEditorPastedFiles, session: RichEditorSession) {
+function pastePictures(pasted: RichEditorPastedFiles, session: RichEditorSession) {
   for (const file of pasted.files) {
     if (!file.mime || !file.mime.startsWith("image/")) continue;
-    const src = await savePicture(file);
-    if (src) session.run(command("setImage", { src }));
+    const src = pictureUri(file);
+    if (src) insertPicture(session, src);
   }
   for (const uri of pasted.uris) {
-    if (PICTURE_FILE.test(uri)) session.run(command("setImage", { src: uri }));
+    if (PICTURE_FILE.test(uri)) insertPicture(session, uri);
   }
 }
 
@@ -1429,7 +1417,7 @@ function ProsePiece(props: { id: number; colors: ThemeColors; dark: boolean }) {
     ref={(ref) => attachRef(props.id, ref)}
     accessibilityLabel="Текст заметки"
     placeholder={segmentList()[0]?.id === props.id ? "Пишите. Слэш открывает блоки: заголовок, список, таблица…" : undefined}
-    onPasteFiles={(event) => { void pastePictures(event.paste, seg.session); }}
+    onPasteFiles={(event) => { pastePictures(event.paste, seg.session); }}
     onBlur={() => {
       // The blur the list asked for is not a leave: the caret's editor keeps
       // the keyboard off while the list has it.
@@ -1502,7 +1490,7 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
               class="min-h-0 flex-1"
               placeholder="Пишите. Слэш открывает блоки: заголовок, список, таблица…"
               accessibilityLabel="Текст заметки"
-              onPasteFiles={(event) => { void pastePictures(event.paste, editor as RichEditorSession); }}
+              onPasteFiles={(event) => { pastePictures(event.paste, editor as RichEditorSession); }}
               onBlur={() => {
       // The blur the list asked for is not a leave: the caret's editor keeps
       // the keyboard off while the list has it.
