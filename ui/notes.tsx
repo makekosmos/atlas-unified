@@ -935,6 +935,8 @@ function focusCaret() {
   if (split) {
     const seg = segments.find((item) => item.session === editor);
     if (seg) segRefs.get(seg.id)?.focus();
+    // The caret's session may be retired by a reshape that has not mounted the
+    // new editors yet: their own refs take the keyboard when they do.
     return;
   }
   editorRef?.focus();
@@ -951,6 +953,9 @@ const SLASH_TYPE_KEYS = [
 ];
 
 let unbindSlashKeys: (() => void) | null = null;
+/// Set while the list itself takes the keyboard away: the editor hears a blur
+/// of the app's own making, which must not close the list it just opened.
+let slashHold = false;
 
 /// The list takes the keyboard from the caret's editor. A focused text field
 /// keeps the arrows and Enter for the caret, so the list hears them only after
@@ -959,6 +964,7 @@ function bindSlashKeys() {
   if (unbindSlashKeys) return;
   const seg = slashSeg;
   const ref = seg !== null ? segRefs.get(seg) : editorRef;
+  slashHold = true;
   ref?.blur();
   const bindings: Record<string, () => void> = {
     up: () => onSlashKey("ArrowUp"),
@@ -1424,6 +1430,13 @@ function ProsePiece(props: { id: number; colors: ThemeColors; dark: boolean }) {
     accessibilityLabel="Текст заметки"
     placeholder={segmentList()[0]?.id === props.id ? "Пишите. Слэш открывает блоки: заголовок, список, таблица…" : undefined}
     onPasteFiles={(event) => { void pastePictures(event.paste, seg.session); }}
+    onBlur={() => {
+      // The blur the list asked for is not a leave: the caret's editor keeps
+      // the keyboard off while the list has it.
+      if (!slashOpen()) return;
+      if (slashHold) { slashHold = false; return; }
+      closeSlash();
+    }}
     style={{ height: proseBoxHeight(props.id, pageRoom(), bodyRev()) }}
     styles={noteStyles(props.colors, props.dark, 0, 0, true)}
   />;
@@ -1490,6 +1503,13 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
               placeholder="Пишите. Слэш открывает блоки: заголовок, список, таблица…"
               accessibilityLabel="Текст заметки"
               onPasteFiles={(event) => { void pastePictures(event.paste, editor as RichEditorSession); }}
+              onBlur={() => {
+      // The blur the list asked for is not a leave: the caret's editor keeps
+      // the keyboard off while the list has it.
+      if (!slashOpen()) return;
+      if (slashHold) { slashHold = false; return; }
+      closeSlash();
+    }}
               styles={noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad(), false)}
             />
             : <View class="h-full" />}</Each>}

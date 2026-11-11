@@ -105,3 +105,18 @@ test("Escape drops the slash and the caret types again", async () => {
   await app.type("label:Текст заметки", "!");
   expect(app.texts().join("")).toContain("!");
 });
+
+// A click somewhere else closes the list: while it is open its keys belong to
+// it, and a list left open would keep them from the page.
+test("a press outside the list closes it", async () => {
+  const app = await open("./notes-fixture.tsx", { width: 1180, height: 820 });
+  await app.press("label:Заметка 2");
+  await app.type("label:Текст заметки", "/");
+  await app.wait(300);
+  expect(app.texts()).toContain("Список");
+  await app.press("id:note-page-space");
+  await app.wait(400);
+  expect(app.texts()).not.toContain("Список");
+  await app.type("label:Текст заметки", "!");
+  expect(app.texts().join("")).toContain("!");
+});
