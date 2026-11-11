@@ -62,7 +62,12 @@ pub(crate) fn install() {
     app.setMainMenu(Some(&main));
 }
 
-fn item(mtm: MainThreadMarker, title: &str, action: Option<Sel>, key: &str) -> Retained<NSMenuItem> {
+fn item(
+    mtm: MainThreadMarker,
+    title: &str,
+    action: Option<Sel>,
+    key: &str,
+) -> Retained<NSMenuItem> {
     unsafe {
         NSMenuItem::initWithTitle_action_keyEquivalent(
             NSMenuItem::alloc(mtm),

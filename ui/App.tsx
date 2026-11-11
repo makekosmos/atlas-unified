@@ -242,13 +242,13 @@ function SettingsPage() {
       onChangeShortcut={cycleShortcut}
     />
     <WidgetsSection colors={snapshot().colors} />
-    <DevelopersSection
+    {snapshot().demo ? <DevelopersSection
       colors={snapshot().colors}
       dark={snapshot().appearance?.settings.mode !== "light"}
       size={notes().length}
       onStress={(count) => askEngine("notes.stress", { count })}
       onReset={() => askEngine("notes.reset")}
-    />
+    /> : null}
     {widgetOn("games") && <GamesSettings colors={snapshot().colors} />}
   </SettingsPageScroll>;
 }

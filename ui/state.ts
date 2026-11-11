@@ -9,7 +9,7 @@ export type Note = { id: string; title: string; doc: unknown; text: string; crea
 export type JournalVoice = { durationMs: number; peaks: number[]; data: string };
 export type JournalEntry = { id: string; text: string; createdAt: string; voice?: JournalVoice };
 export type AtlasTheme = { key: string; name: string; light: ThemeColors; dark: ThemeColors };
-export type Snapshot = { route: Route; title: string; todos: Todo[]; journalEntries: JournalEntry[]; version: string; appearance?: Appearance; appearanceEditable: boolean; themes: AtlasTheme[]; colors: ThemeColors; sidebarVisible: boolean; chrome: "native" | "tsx" };
+export type Snapshot = { route: Route; title: string; todos: Todo[]; journalEntries: JournalEntry[]; version: string; appearance?: Appearance; appearanceEditable: boolean; themes: AtlasTheme[]; colors: ThemeColors; sidebarVisible: boolean; chrome: "native" | "tsx"; demo?: boolean };
 
 export const fallback: Snapshot = { route: "journal", title: "Дневник", todos: [], journalEntries: [], version: "", appearance: { settings: { mode: "dark", light_theme: "cobalt-foundry", dark_theme: "cobalt-foundry", accent_source: "theme", material: "default", font_size: 13, font_family: "Inter" }, policy: { following: false }, capabilities: { materials: ["default", "frosted", "mica"], wallpaper_accent: false } }, appearanceEditable: false, themes: previewThemes, colors: previewThemes[0].dark, sidebarVisible: true, chrome: "tsx" };
 

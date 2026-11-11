@@ -303,6 +303,9 @@ let reshapeRuns = 0;
 
 export function bindNoteCommands(next: NoteCommands) {
   commands = next;
+  // The page asks during its first render, before this bind. That ask hits
+  // the idle commands, so the real ones ask again.
+  if (asked) commands.reload();
 }
 
 /// A note the host made: the library gains it, and the request that asked for
@@ -320,18 +323,32 @@ export function addNote(note: Note) {
 export function setNotes(next: Note[]) {
   loading.set(false);
   const before = new Set(notes().map((note) => text(note.id)));
-  notes.set(next);
   if (openingNew) {
+    notes.set(next);
     const fresh = next.find((note) => !before.has(text(note.id)));
     if (fresh) {
       openingNew = false;
       select(fresh);
-      return;
     }
+    return;
   }
+  // A reload of the same library must not touch the open page: each new array
+  // re-runs the page, and its entrance plays again.
+  if (sameLibrary(notes(), next)) return;
+  notes.set(next);
   const current = selectedId();
   if (current && next.some((note) => text(note.id) === current)) return;
   if (current) closeNote();
+}
+
+function sameLibrary(left: readonly Note[], right: readonly Note[]): boolean {
+  if (left.length !== right.length) return false;
+  for (let index = 0; index < left.length; index += 1) {
+    if (text(left[index].id) !== text(right[index].id)) return false;
+    if (text(left[index].updatedAt) !== text(right[index].updatedAt)) return false;
+    if (text(left[index].title) !== text(right[index].title)) return false;
+  }
+  return true;
 }
 
 /// Ids and titles cross the host boundary as values of their own type, so they
@@ -1000,9 +1017,13 @@ function unbindSlashKeysNow() {
 }
 
 function select(note: Note | null) {
+  const id = note ? text(note.id) : null;
+  // The host reports the new note twice, as the created note and as the list.
+  // Opening the one already on screen tears the editor down and builds it again.
+  if (id && id === selectedId() && editor) return;
   flushSave();
   applyPreview();
-  selectedId.set(note ? text(note.id) : null);
+  selectedId.set(id);
   draftTitle.set(note ? text(note.title) : "");
   dirty.set(false);
   open(note);
@@ -1482,25 +1503,40 @@ function slashMenu(colors: ThemeColors, wash: string) {
   </View>;
 }
 
-function NoteView(props: { colors: ThemeColors; dark: boolean }) {
-  const colors = props.colors;
-  const wash = surfaceWash(props.dark, 0.07);
-  const note = selected();
-  // The session is a plain module variable: a reload of the module drops it,
-  // while the chosen note stays. Open the note again instead of a blank page.
-  if (note && !editor) open(note);
-  // A theme switch repaints the code: the colours are picked for the surface.
-  if (paintedDark !== props.dark) {
-    paintedDark = props.dark;
-    queueMicrotask(paintCode);
-  }
-  const enter = createMotion({
+/// One entrance per open note. The page function runs again when the library
+/// arrives, and a new motion would fade the page in from nothing each time.
+let noteEnterId = "";
+let noteEnter: ReturnType<typeof createMotion> | null = null;
+
+function noteEntrance(id: string) {
+  if (noteEnter && noteEnterId === id) return noteEnter;
+  noteEnterId = id;
+  noteEnter = createMotion({
     enter: {
       keyframes: [{ opacity: 0, translateY: 8 }, { opacity: 1, translateY: 0 }],
       duration: 220,
       easing: Easing.bezier(0.16, 1, 0.3, 1),
     },
   });
+  return noteEnter;
+}
+
+function NoteView(props: { colors: ThemeColors; dark: boolean }) {
+  const colors = props.colors;
+  const wash = surfaceWash(props.dark, 0.07);
+  const id = selectedId() ?? "";
+  // The session is a plain module variable: a reload of the module drops it,
+  // while the chosen note stays. Open the note again instead of a blank page.
+  if (id && !editor) {
+    const note = notes().find((item) => text(item.id) === id);
+    if (note) open(note);
+  }
+  // A theme switch repaints the code: the colours are picked for the surface.
+  if (paintedDark !== props.dark) {
+    paintedDark = props.dark;
+    queueMicrotask(paintCode);
+  }
+  const enter = noteEntrance(id);
   return <View class="min-h-0 flex-1 flex-col" style={enter.style}>
     {/* The sheet is the page, not the column: the scroll view takes the whole
         width, so its indicator sits at the page's edge, and the text is inset

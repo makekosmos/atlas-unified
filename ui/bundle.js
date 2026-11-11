@@ -2400,6 +2400,7 @@ let reshapeTimer = null;
 let reshapeRuns = 0;
 function bindNoteCommands(next) {
 	commands = next;
+	if (asked) commands.reload();
 }
 function addNote(note) {
 	loading.set(false);
@@ -2413,18 +2414,29 @@ function addNote(note) {
 function setNotes(next) {
 	loading.set(false);
 	const before = new Set(notes().map((note) => text$1(note.id)));
-	notes.set(next);
 	if (openingNew) {
+		notes.set(next);
 		const fresh = next.find((note) => !before.has(text$1(note.id)));
 		if (fresh) {
 			openingNew = false;
 			select(fresh);
-			return;
 		}
+		return;
 	}
+	if (sameLibrary(notes(), next)) return;
+	notes.set(next);
 	const current = selectedId();
 	if (current && next.some((note) => text$1(note.id) === current)) return;
 	if (current) closeNote();
+}
+function sameLibrary(left, right) {
+	if (left.length !== right.length) return false;
+	for (let index = 0; index < left.length; index += 1) {
+		if (text$1(left[index].id) !== text$1(right[index].id)) return false;
+		if (text$1(left[index].updatedAt) !== text$1(right[index].updatedAt)) return false;
+		if (text$1(left[index].title) !== text$1(right[index].title)) return false;
+	}
+	return true;
 }
 function text$1(value) {
 	return String(value);
@@ -3050,9 +3062,11 @@ function unbindSlashKeysNow() {
 	}
 }
 function select(note) {
+	const id = note ? text$1(note.id) : null;
+	if (id && id === selectedId() && editor) return;
 	flushSave();
 	applyPreview();
-	selectedId.set(note ? text$1(note.id) : null);
+	selectedId.set(id);
 	draftTitle.set(note ? text$1(note.title) : "");
 	dirty.set(false);
 	open(note);
@@ -3920,16 +3934,12 @@ function slashMenu(colors, wash) {
 		return __nsh_hv50;
 	})();
 }
-function NoteView(props) {
-	const colors = props.colors;
-	const wash = surfaceWash(props.dark, .07);
-	const note = selected();
-	if (note && !editor) open(note);
-	if (paintedDark !== props.dark) {
-		paintedDark = props.dark;
-		queueMicrotask(paintCode);
-	}
-	const enter = createMotion({ enter: {
+let noteEnterId = "";
+let noteEnter = null;
+function noteEntrance(id) {
+	if (noteEnter && noteEnterId === id) return noteEnter;
+	noteEnterId = id;
+	noteEnter = createMotion({ enter: {
 		keyframes: [{
 			opacity: 0,
 			translateY: 8
@@ -3940,6 +3950,21 @@ function NoteView(props) {
 		duration: 220,
 		easing: Easing.bezier(.16, 1, .3, 1)
 	} });
+	return noteEnter;
+}
+function NoteView(props) {
+	const colors = props.colors;
+	const wash = surfaceWash(props.dark, .07);
+	const id = selectedId() ?? "";
+	if (id && !editor) {
+		const note = notes().find((item) => text$1(item.id) === id);
+		if (note) open(note);
+	}
+	if (paintedDark !== props.dark) {
+		paintedDark = props.dark;
+		queueMicrotask(paintCode);
+	}
+	const enter = noteEntrance(id);
 	return (() => {
 		const __nsh_hv54 = element("view");
 		prop(__nsh_hv54, "class", "min-h-0 flex-1 flex-col");
@@ -4425,12 +4450,12 @@ const WIDGETS = [
 		description: "Библиотека игр и время в них"
 	}
 ];
-/** Every widget on, the way a fresh install starts. */
+/** What a fresh install shows: the journal and the notes. Tasks and games stay off until a person turns them on. */
 const ALL_WIDGETS = {
 	journal: true,
 	notes: true,
-	tasks: true,
-	games: true
+	tasks: false,
+	games: false
 };
 const STORAGE_KEY = "mundus.atlas.widgets.v1";
 const shown = signal({ ...ALL_WIDGETS });
@@ -7061,7 +7086,7 @@ function SettingsPage() {
 				component(WidgetsSection, { get colors() {
 					return snapshot().colors;
 				} }),
-				component(DevelopersSection, {
+				() => snapshot().demo ? component(DevelopersSection, {
 					get colors() {
 						return snapshot().colors;
 					},
@@ -7073,7 +7098,7 @@ function SettingsPage() {
 					},
 					onStress: (count) => askEngine("notes.stress", { count }),
 					onReset: () => askEngine("notes.reset")
-				}),
+				}) : null,
 				() => widgetOn("games") && component(GamesSettings, { get colors() {
 					return snapshot().colors;
 				} })

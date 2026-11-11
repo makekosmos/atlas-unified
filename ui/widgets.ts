@@ -15,8 +15,8 @@ export const WIDGETS: Widget[] = [
   { id: "games", label: "Игры", description: "Библиотека игр и время в них" },
 ];
 
-/** Every widget on, the way a fresh install starts. */
-export const ALL_WIDGETS: Record<WidgetId, boolean> = { journal: true, notes: true, tasks: true, games: true };
+/** What a fresh install shows: the journal and the notes. Tasks and games stay off until a person turns them on. */
+export const ALL_WIDGETS: Record<WidgetId, boolean> = { journal: true, notes: true, tasks: false, games: false };
 
 const STORAGE_KEY = "mundus.atlas.widgets.v1";
 const shown = signal<Record<WidgetId, boolean>>({ ...ALL_WIDGETS });

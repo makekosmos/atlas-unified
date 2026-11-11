@@ -167,7 +167,8 @@ fn snapshot(agenda: &Atlas, route: &str) -> Value {
             "card": color(palette.card),
         },
         "sidebarVisible": agenda.sidebar_visible,
-        "chrome": "tsx"
+        "chrome": "tsx",
+        "demo": agenda.demo
     })
 }
 
@@ -401,7 +402,13 @@ fn start_notes_bridge(context: ComponentContext, demo: bool) -> NotesChannel {
     let pending = reload_pending.clone();
     thread::spawn(move || {
         let engine = Engine::default();
-        let mut notes = engine.notes_list().unwrap_or_default();
+        let mut notes = match engine.notes_list() {
+            Ok(notes) => notes,
+            Err(error) => {
+                eprintln!("[atlas-notes] list failed: {error}");
+                Vec::new()
+            }
+        };
         emit_notes(&context, &notes);
         while let Ok(request) = requests.recv() {
             // A save sends back the note it saved, not the library around it: a
@@ -444,7 +451,13 @@ fn start_notes_bridge(context: ComponentContext, demo: bool) -> NotesChannel {
                 },
                 NotesRequest::Reload => {
                     pending.store(false, Ordering::Release);
-                    notes = engine.notes_list().unwrap_or(notes);
+                    notes = match engine.notes_list() {
+                        Ok(notes) => notes,
+                        Err(error) => {
+                            eprintln!("[atlas-notes] list failed: {error}");
+                            notes
+                        }
+                    };
                 }
             }
             notes.sort_by(|left, right| {
@@ -454,7 +467,13 @@ fn start_notes_bridge(context: ComponentContext, demo: bool) -> NotesChannel {
                     .then(left.id.cmp(&right.id))
             });
             if let Some(note) = created {
+                // The created note is enough. The list behind it would open the
+                // page a second time.
                 context.emit("notesCreated", note_json(&note));
+            } else {
+                // The page asks again after it mounts. The first list can leave
+                // before that ask is heard, so a reload has to send the list too.
+                emit_notes(&context, &notes);
             }
         }
     });

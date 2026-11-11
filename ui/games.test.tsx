@@ -70,7 +70,7 @@ test("keeps the search result on screen when every found game is already in the 
 });
 
 test("closes the add dialog from the backdrop and stays open on presses inside", async () => {
-  const app = await open("./App.tsx", { platform: "windows", width: 1100, height: 800 });
+  const app = await open("./widgets-on-fixture.tsx", { platform: "windows", width: 1100, height: 800 });
   await app.press("Игры");
   await app.press("Добавить игру");
   expect(app.texts()).toContain("Найти автоматически");
@@ -81,7 +81,7 @@ test("closes the add dialog from the backdrop and stays open on presses inside",
 });
 
 test("opens the add dialog with the three ways to add games and does not scan by itself", async () => {
-  const app = await open("./App.tsx", { platform: "windows", width: 1100, height: 800 });
+  const app = await open("./widgets-on-fixture.tsx", { platform: "windows", width: 1100, height: 800 });
   await app.press("Игры");
   expect(app.texts()).not.toContain("Все");
   expect(app.texts()).not.toContain("Скрытые");

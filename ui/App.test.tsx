@@ -9,7 +9,9 @@ import { journalBubble } from "./themes";
 test("shows the shared Atlas navigation and journal composer", async () => {
   const app = await open("./App.tsx");
   expect(app.texts()).toContain("Дневник");
-  expect(app.texts()).toContain("Задачи");
+  expect(app.texts()).toContain("Заметки");
+  expect(app.texts()).not.toContain("Задачи");
+  expect(app.texts()).not.toContain("Игры");
   expect(app.texts()).toContain("Настройки");
   expect(app.texts()).not.toContain("О приложении");
   expect(app.texts()).toContain("Записей пока нет");
@@ -97,7 +99,7 @@ test("types into the journal composer from the keyboard", async () => {
   const app = await open("./App.tsx");
   await app.keyboard.press("a");
   expect(app.value("Новая запись в дневник")).toEqual("a");
-  await app.press("Задачи");
+  await app.press("Заметки");
   await app.press("Дневник");
   await app.keyboard.press("b");
   expect(app.value("Новая запись в дневник")).toEqual("ab");
@@ -165,7 +167,7 @@ test("keeps preview journal entries without the engine", async () => {
 });
 
 test("adds a task in preview without the engine", async () => {
-  const app = await open("./App.tsx");
+  const app = await open("./widgets-on-fixture.tsx");
   await app.press("Задачи");
   await app.press("Новая задача");
   await app.type("Название задачи", "купить хлеб");
@@ -174,7 +176,7 @@ test("adds a task in preview without the engine", async () => {
   await app.waitUntil(() => app.storage()["mundus.atlas.preview.v1"]?.includes("купить хлеб") === true);
 });
 test("routes to the all-tasks screen", async () => {
-  const app = await open("./App.tsx");
+  const app = await open("./widgets-on-fixture.tsx");
   await app.press("Задачи");
   expect(app.texts()).toContain("Задач пока нет");
 });
