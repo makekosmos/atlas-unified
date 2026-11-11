@@ -5,7 +5,21 @@
   "build": 1,
   "capabilities": {
     "host": [],
-    "clipboard": true
+    "clipboard": true,
+    "fs": {
+      "read": [
+        "${dataDir}",
+        "${homeDir}/Library/Application Support/com.mundus.atlas",
+        "${homeDir}/AppData/Roaming/com.mundus.atlas",
+        "${homeDir}/.local/share/com.mundus.atlas"
+      ],
+      "write": [
+        "${dataDir}",
+        "${homeDir}/Library/Application Support/com.mundus.atlas",
+        "${homeDir}/AppData/Roaming/com.mundus.atlas",
+        "${homeDir}/.local/share/com.mundus.atlas"
+      ]
+    }
   },
   "theme": "../node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/theme.json"
 }

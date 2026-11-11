@@ -1,4 +1,4 @@
-import { Clipboard, Image, createMotion, Easing, effect, List, Scroll, signal, Text, View } from "nsh";
+import { Clipboard, Image, createMotion, Easing, effect, keymap, List, Scroll, signal, Text, View } from "nsh";
 import {
   Input,
   RichEditor,
@@ -13,7 +13,10 @@ import {
   setNodeAttribute,
 } from "nsh/base";
 import Mono from "./fonts/IBMPlexMono-Regular.ttf";
-import type { RichCommand, RichEditorRef, RichEditorSession } from "nsh/base";
+import type { RichCommand, RichEditorPastedFiles, RichEditorRef, RichEditorSession } from "nsh/base";
+import { mkdir, writeFile } from "fs/promises";
+import { homedir, platform } from "os";
+import process from "process";
 import type { ViewRef } from "nsh";
 import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import { Menu } from "nsh/desktop";
@@ -38,7 +41,7 @@ type NoteCommands = {
   reload(): void;
 };
 
-type SlashItem = { id: string; label: string; hint: string; make: () => RichCommand };
+type SlashItem = { id: string; label: string; hint: string; keys: string; make: () => RichCommand };
 type Point = { x: number; y: number };
 
 const idleCommands: NoteCommands = { create() {}, save() {}, remove() {}, reload() {} };
@@ -97,17 +100,17 @@ const PREVIEW_BLOCKS = 14;
 const SLASH_MENU_HEIGHT = 320;
 
 const SLASH_ITEMS: SlashItem[] = [
-  { id: "text", label: "Текст", hint: "обычный абзац", make: () => command("setParagraph") },
-  { id: "h1", label: "Заголовок 1", hint: "крупный раздел", make: () => command("setHeading", { level: 1 }) },
-  { id: "h2", label: "Заголовок 2", hint: "раздел", make: () => command("setHeading", { level: 2 }) },
-  { id: "h3", label: "Заголовок 3", hint: "подраздел", make: () => command("setHeading", { level: 3 }) },
-  { id: "bullet", label: "Список", hint: "маркированный", make: () => command("toggleBulletList") },
-  { id: "ordered", label: "Нумерация", hint: "нумерованный список", make: () => command("toggleOrderedList") },
-  { id: "task", label: "Чек-лист", hint: "задачи с галочками", make: () => command("toggleTaskList") },
-  { id: "quote", label: "Цитата", hint: "выделить блок", make: () => command("toggleBlockquote") },
-  { id: "code", label: "Код", hint: "блок кода", make: () => command("toggleCodeBlock") },
-  { id: "table", label: "Таблица", hint: "3 на 3 с заголовком", make: () => insertTable({ rows: 3, cols: 3, withHeaderRow: true }) },
-  { id: "rule", label: "Разделитель", hint: "горизонтальная линия", make: () => command("setHorizontalRule") },
+  { id: "text", label: "Текст", hint: "обычный абзац", keys: "text paragraph p", make: () => command("setParagraph") },
+  { id: "h1", label: "Заголовок 1", hint: "крупный раздел", keys: "heading h1", make: () => command("setHeading", { level: 1 }) },
+  { id: "h2", label: "Заголовок 2", hint: "раздел", keys: "heading h2", make: () => command("setHeading", { level: 2 }) },
+  { id: "h3", label: "Заголовок 3", hint: "подраздел", keys: "heading h3", make: () => command("setHeading", { level: 3 }) },
+  { id: "bullet", label: "Список", hint: "маркированный", keys: "list bullet ul", make: () => command("toggleBulletList") },
+  { id: "ordered", label: "Нумерация", hint: "нумерованный список", keys: "ordered list ol number", make: () => command("toggleOrderedList") },
+  { id: "task", label: "Чек-лист", hint: "задачи с галочками", keys: "task todo check", make: () => command("toggleTaskList") },
+  { id: "quote", label: "Цитата", hint: "выделить блок", keys: "quote blockquote", make: () => command("toggleBlockquote") },
+  { id: "code", label: "Код", hint: "блок кода", keys: "code", make: () => command("toggleCodeBlock") },
+  { id: "table", label: "Таблица", hint: "3 на 3 с заголовком", keys: "table", make: () => insertTable({ rows: 3, cols: 3, withHeaderRow: true }) },
+  { id: "rule", label: "Разделитель", hint: "горизонтальная линия", keys: "divider rule hr line", make: () => command("setHorizontalRule") },
 ];
 
 export const notes = signal<Note[]>([]);
@@ -177,6 +180,61 @@ export function languageLabel(name: string): string {
   return found ? found[1] : (name || "Простой текст");
 }
 
+/// Where a pasted picture lives: the app's own folder, so a note's picture is
+/// still there after the app restarts, and one the app may write to.
+function mediaDir(): string {
+  if (process.dataDir) return `${process.dataDir}/media`;
+  const home = homedir();
+  const kind = platform();
+  if (kind === "macos") return `${home}/Library/Application Support/com.mundus.atlas/media`;
+  if (kind === "windows") return `${home}/AppData/Roaming/com.mundus.atlas/media`;
+  return `${home}/.local/share/com.mundus.atlas/media`;
+}
+
+let pictureSerial = 0;
+
+/// Writes the bytes of a pasted picture and gives the URL the editor shows it
+/// by. A picture the disk refuses leaves the note as it was: nothing is
+/// inserted that could not be shown.
+async function savePicture(file: { name: string; data: Uint8Array }): Promise<string | null> {
+  // A write holds at most 8 MiB: a bigger picture is refused before the disk
+  // hears of it, so nothing is inserted that could not be shown.
+  if (file.data.byteLength > 8 * 1024 * 1024) {
+    console.log("[atlas-notes] picture is larger than 8 MiB:", file.name);
+    return null;
+  }
+  const dot = file.name.lastIndexOf(".");
+  const ext = dot > 0 ? file.name.slice(dot + 1).toLowerCase() : "png";
+  const dir = mediaDir();
+  pictureSerial += 1;
+  const name = `picture-${Date.now().toString(36)}-${pictureSerial}.${ext}`;
+  const path = `${dir}/${name}`;
+  try {
+    await mkdir(dir, { recursive: true });
+    await writeFile(path, file.data);
+    return `file://${path}`;
+  } catch (error) {
+    console.log("[atlas-notes] picture not saved:", String(error));
+    return null;
+  }
+}
+
+const PICTURE_FILE = /\.(png|jpe?g|gif|webp|heic)$/i;
+
+/// Puts the pasted pictures into the note, one after another, where the caret
+/// was. Files that are not pictures are left alone: the editor inserts nothing
+/// for them, and neither does the app yet.
+async function pastePictures(pasted: RichEditorPastedFiles, session: RichEditorSession) {
+  for (const file of pasted.files) {
+    if (!file.mime || !file.mime.startsWith("image/")) continue;
+    const src = await savePicture(file);
+    if (src) session.run(command("setImage", { src }));
+  }
+  for (const uri of pasted.uris) {
+    if (PICTURE_FILE.test(uri)) session.run(command("setImage", { src: uri }));
+  }
+}
+
 /// Names a code block: the same attribute the scanner reads.
 export function pickCodeLanguage(language: string, node: number) {
   const live = editor;
@@ -223,9 +281,9 @@ const pageTall = signal(0);
 /// A note was just asked for: the one that turns up next opens by itself.
 let openingNew = false;
 let editor: RichEditorSession | null = null;
-/// The editor's plugin that takes the list's keys while it is open. The app's
-/// `keymap` never sees an arrow: the text field has it first.
-let slashKeys: RichEditorPlugin | null = null;
+/// The segment whose editor owns the caret while the list is open, so the
+/// caret comes back to it when the list closes.
+let slashSeg: number | null = null;
 let asked = false;
 /// A note with a code block is drawn as a column of pieces: prose stays in an
 /// editor, and each code block is a card (a flex header, then the code). The
@@ -236,7 +294,6 @@ type Seg = {
   id: number;
   kind: "prose" | "code";
   session: RichEditorSession;
-  keys: RichEditorPlugin;
   paint: RichEditorPlugin | null;
 };
 type Group = { kind: "prose"; nodes: unknown[] } | { kind: "code"; node: unknown };
@@ -446,7 +503,6 @@ function activeCodeOrdinal(): number {
 
 function retireSeg(seg: Seg) {
   try { seg.session.dispose(); } catch { /* already gone */ }
-  try { seg.keys.dispose(); } catch { /* already gone */ }
   try { seg.paint?.dispose(); } catch { /* already gone */ }
   segRefs.delete(seg.id);
 }
@@ -457,7 +513,6 @@ function bindSeg(session: RichEditorSession, epochAt: number) {
     if (!segments.some((seg) => seg.session === session)) return;
     editor = session;
     const seg = segments.find((item) => item.session === session);
-    if (seg?.kind === "prose") slashKeys = seg.keys;
     scheduleSave();
     syncSlash();
     scheduleOutline();
@@ -469,11 +524,9 @@ function bindSeg(session: RichEditorSession, epochAt: number) {
 
 function createSeg(group: Group): Seg {
   const id = ++segSerial;
-  const keys = new RichEditorPlugin(`slash-${id}`);
-  keys.captureKeys(["ArrowUp", "ArrowDown", "Enter", "Tab", "Escape"], (key) => onSlashKey(key));
   const paint = group.kind === "code" ? new RichEditorPlugin(`paint-${id}`) : null;
   const content = group.kind === "code" ? docOf([group.node]) : docOf(group.nodes);
-  const plugins = paint ? [keys, paint] : [keys];
+  const plugins = paint ? [paint] : [];
   const epochAt = epoch;
   const make = (body: unknown) => createRichEditor({
     extensions: editorExtensions(),
@@ -488,7 +541,7 @@ function createSeg(group: Group): Seg {
     session = make(docOf([{ type: "paragraph" }]));
   }
   bindSeg(session, epochAt);
-  return { id, kind: group.kind, session, keys, paint };
+  return { id, kind: group.kind, session, paint };
 }
 
 /// Replaces the open editors with one session per run of prose and per code
@@ -516,7 +569,6 @@ function becomeSplit(doc: unknown, focusOrdinal: number) {
   const focus = focusOrdinal >= 0 ? codes[focusOrdinal] ?? null : null;
   const active = focus ?? built.find((seg) => seg.kind === "prose") ?? built[0] ?? null;
   editor = active?.session ?? null;
-  slashKeys = active?.kind === "prose" ? active.keys : (built.find((seg) => seg.kind === "prose")?.keys ?? null);
   wantFocus = focus?.id ?? null;
   segmentList.set(built.map((seg) => ({ id: seg.id, kind: seg.kind })));
   reshaping = false;
@@ -562,7 +614,6 @@ function teardownEditors() {
   const single = editor && !retiring.some((seg) => seg.session === editor) ? editor : null;
   segments = [];
   editor = null;
-  slashKeys = null;
   split = false;
   wantFocus = null;
   segRefs.clear();
@@ -603,10 +654,7 @@ function open(note: Note | null) {
 /// One editor for the whole note. A code block inserted later becomes a card.
 function mountSingle(doc: unknown) {
   const epochAt = epoch;
-  const keys = new RichEditorPlugin("slash-keys");
-  keys.captureKeys(["ArrowUp", "ArrowDown", "Enter", "Tab", "Escape"], (key) => onSlashKey(key));
-  const made = makeEditor(doc, keys);
-  slashKeys = keys;
+  const made = makeEditor(doc);
   made.on("revision", () => {
     if (epoch !== epochAt || editor !== made) return;
     scheduleSave();
@@ -628,10 +676,10 @@ function mountSingle(doc: unknown) {
 
 /// The editor for a document when the schema takes it, an empty one
 /// otherwise, so a broken note still opens.
-function makeEditor(doc: unknown, keys: RichEditorPlugin): RichEditorSession {
+function makeEditor(doc: unknown): RichEditorSession {
   const options = (content: unknown) => ({
     extensions: editorExtensions(),
-    plugins: [keys, highlight],
+    plugins: [highlight],
     content: content as never,
     format: "json" as const,
   });
@@ -726,7 +774,6 @@ function caretToEnd() {
     const ref = segRefs.get(last.id);
     if (!ref) return;
     editor = last.session;
-    if (last.kind === "prose") slashKeys = last.keys;
     ref.focus();
     ref.setSelection(headingsEnd(last.session.getJSON()), headingsEnd(last.session.getJSON()));
     return;
@@ -745,6 +792,22 @@ function headingsEnd(doc: unknown): number {
   // The last position inside the document, where typing continues the last
   // block rather than starting a new one after it.
   return Math.max(1, pos - 1);
+}
+
+/// The letters of the Russian layout, as the US keys that type them: a keymap
+/// names keys by the US layout on every layout, so `/заг` arrives as `pfu`.
+const US_OF_RU: Record<string, string> = {
+  "й": "q", "ц": "w", "у": "e", "к": "r", "т": "t", "н": "y", "г": "u",
+  "ш": "i", "щ": "o", "з": "p", "х": "[", "ъ": "]", "ф": "a", "ы": "s",
+  "в": "d", "а": "f", "п": "g", "р": "h", "о": "j", "л": "k", "д": "l",
+  "ж": ";", "э": "'", "я": "z", "ч": "x", "с": "c", "м": "v", "и": "b",
+  "т": "n", "ь": "m", "б": ",", "ю": ".", "ё": "`",
+};
+
+/// A word as the keys that type it on a Russian keyboard: `Заголовок` and a
+/// typed `pfu…` become one string, so the list filters on either layout.
+function usForm(text: string): string {
+  return Array.from(text.toLowerCase()).map((letter) => US_OF_RU[letter] ?? letter).join("");
 }
 
 /// The `/query` typed right before the caret: where it starts, where it ends,
@@ -800,9 +863,10 @@ function syncSlash() {
     return;
   }
   slashRange = match;
-  slashQuery.set(match.query.toLowerCase());
+  slashQuery.set(usForm(match.query));
   if (!slashOpen()) {
     slashIndex.set(0);
+    slashSeg = segmentAt(match.from)?.id ?? null;
     slashOpen.set(true);
     bindSlashKeys();
     // Once, on opening: every later keystroke would measure the page again
@@ -815,7 +879,7 @@ function syncSlash() {
 
 function filtered(query: string): SlashItem[] {
   if (!query) return SLASH_ITEMS;
-  return SLASH_ITEMS.filter((item) => item.label.toLowerCase().includes(query) || item.id.includes(query));
+  return SLASH_ITEMS.filter((item) => usForm(item.label).includes(query) || item.keys.includes(query));
 }
 
 /// The keys the list takes while it is open: the arrows move, Enter and Tab
@@ -823,7 +887,7 @@ function filtered(query: string): SlashItem[] {
 function onSlashKey(key: string) {
   if (!slashOpen()) return;
   if (key === "Escape") {
-    closeSlash();
+    closeSlash(true);
     return;
   }
   if (key === "Enter" || key === "Tab") {
@@ -844,22 +908,80 @@ function pick() {
   closeSlash();
   if (!item || !editor || !range) return;
   editor.run(chain([deleteRange({ from: range.from, to: range.to }), item.make()]));
+  // The block may have split the page into segments, whose editors mount after
+  // this run: the caret's keyboard is claimed once they are there.
+  setTimeout(focusCaret, 0);
 }
 
-function closeSlash() {
+/// Closes the list and gives the keyboard back to the caret. `discard` drops
+/// the `/query` as well: Escape cancels the typing, not just the list.
+function closeSlash(discard = false) {
+  const range = slashRange;
+  const live = editor;
   slashRange = null;
-  if (slashOpen()) slashOpen.set(false);
-  unbindSlashKeys();
+  slashSeg = null;
+  const wasOpen = slashOpen();
+  if (wasOpen) slashOpen.set(false);
+  unbindSlashKeysNow();
+  focusCaret();
+  if (discard && wasOpen && range && live) {
+    live.run(deleteRange({ from: range.from, to: range.to }));
+  }
 }
 
-/// The list's keys belong to it while it is open: the editor's own keymap
-/// would otherwise move the caret under a list that is the app's.
+/// The caret's keyboard, whichever editor holds it: the page's own, or the
+/// segment whose session the caret is in.
+function focusCaret() {
+  if (split) {
+    const seg = segments.find((item) => item.session === editor);
+    if (seg) segRefs.get(seg.id)?.focus();
+    return;
+  }
+  editorRef?.focus();
+}
+
+/// Keys that type into the list's own query while the list has the keyboard.
+/// A keymap names keys by the US layout's characters on every layout, so the
+/// same physical key that types `з` on a Russian keyboard arrives as `p`; the
+/// list reads both through `usForm`.
+const SLASH_TYPE_KEYS = [
+  "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+  "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "minus",
+];
+
+let unbindSlashKeys: (() => void) | null = null;
+
+/// The list takes the keyboard from the caret's editor. A focused text field
+/// keeps the arrows and Enter for the caret, so the list hears them only after
+/// the editor has let go; the caret comes back when the list closes.
 function bindSlashKeys() {
-  if (slashKeys) slashKeys.capturing = true;
+  if (unbindSlashKeys) return;
+  const seg = slashSeg;
+  const ref = seg !== null ? segRefs.get(seg) : editorRef;
+  ref?.blur();
+  const bindings: Record<string, () => void> = {
+    up: () => onSlashKey("ArrowUp"),
+    down: () => onSlashKey("ArrowDown"),
+    enter: () => onSlashKey("Enter"),
+    tab: () => onSlashKey("Tab"),
+    escape: () => onSlashKey("Escape"),
+    backspace: () => { slashQuery.set(slashQuery().slice(0, -1)); slashIndex.set(0); },
+  };
+  for (const key of SLASH_TYPE_KEYS) {
+    bindings[key] = () => {
+      slashQuery.set(slashQuery() + (key === "minus" ? "-" : key));
+      slashIndex.set(0);
+    };
+  }
+  unbindSlashKeys = keymap.bind(bindings);
 }
 
-function unbindSlashKeys() {
-  if (slashKeys) slashKeys.capturing = false;
+function unbindSlashKeysNow() {
+  if (unbindSlashKeys) {
+    unbindSlashKeys();
+    unbindSlashKeys = null;
+  }
 }
 
 function select(note: Note | null) {
@@ -1301,6 +1423,7 @@ function ProsePiece(props: { id: number; colors: ThemeColors; dark: boolean }) {
     ref={(ref) => attachRef(props.id, ref)}
     accessibilityLabel="Текст заметки"
     placeholder={segmentList()[0]?.id === props.id ? "Пишите. Слэш открывает блоки: заголовок, список, таблица…" : undefined}
+    onPasteFiles={(event) => { void pastePictures(event.paste, seg.session); }}
     style={{ height: proseBoxHeight(props.id, pageRoom(), bodyRev()) }}
     styles={noteStyles(props.colors, props.dark, 0, 0, true)}
   />;
@@ -1366,6 +1489,7 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
               class="min-h-0 flex-1"
               placeholder="Пишите. Слэш открывает блоки: заголовок, список, таблица…"
               accessibilityLabel="Текст заметки"
+              onPasteFiles={(event) => { void pastePictures(event.paste, editor as RichEditorSession); }}
               styles={noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad(), false)}
             />
             : <View class="h-full" />}</Each>}
@@ -1405,7 +1529,6 @@ function outlineRails(colors: ThemeColors, dark: boolean) {
           const seg = found ? segments.find((item) => item.id === found.id) : null;
           if (!found || !ref || !seg) return;
           editor = seg.session;
-          if (seg.kind === "prose") slashKeys = seg.keys;
           ref.focus();
           ref.setSelection(found.local, found.local);
           return;
