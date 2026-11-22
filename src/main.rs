@@ -53,16 +53,36 @@ use assets::font_bytes;
 
 const WINDOW_TITLE: &str = "Atlas";
 
-actions!(atlas, [Quit]);
+actions!(atlas, [Quit, CloseWindow, MinimizeWindow, HideApp]);
 
-/// ⌘Q has to end the process. The menu carries the same item for the pointer,
-/// but the window takes the key first, so the key has its own way out.
-fn install_quit_key(cx: &mut App) {
+/// Standard macOS/desktop window shortcuts. The GPUI window sees keys before
+/// AppKit's menu bar, so these bindings ensure ⌘Q, ⌘W, ⌘M and ⌘H always work.
+fn install_window_keys(cx: &mut App) {
     cx.bind_keys([
         KeyBinding::new("cmd-q", Quit, None),
         KeyBinding::new("ctrl-q", Quit, None),
+        KeyBinding::new("cmd-w", CloseWindow, None),
+        KeyBinding::new("cmd-m", MinimizeWindow, None),
+        KeyBinding::new("cmd-h", HideApp, None),
     ]);
     cx.on_action(|_: &Quit, cx: &mut App| cx.quit());
+    cx.on_action(|_: &HideApp, cx: &mut App| cx.hide());
+    cx.on_action(|_: &MinimizeWindow, cx: &mut App| {
+        if let Some(handle) = cx.active_window() {
+            let _ = handle.update(cx, |_, window, _| window.minimize_window());
+        }
+    });
+    cx.on_action(|_: &CloseWindow, cx: &mut App| {
+        #[cfg(target_os = "macos")]
+        {
+            let _ = cx;
+            macos_menu::perform_close_key_window();
+        }
+        #[cfg(not(target_os = "macos"))]
+        if let Some(handle) = cx.active_window() {
+            let _ = handle.update(cx, |_, window, _| window.remove_window());
+        }
+    });
 }
 
 fn atlas_window_options(cx: &mut App) -> WindowOptions {
@@ -85,14 +105,13 @@ fn atlas_window_options(cx: &mut App) -> WindowOptions {
             // minimize and zoom stop being the system's buttons.
             title: None,
             appears_transparent: true,
-            // Leave AppKit to place the buttons. A custom
-            // traffic_light_position moves the views by hand and on
-            // macOS 27 that keeps the pre-Tahoe flat lights.
-            traffic_light_position: None,
+            // Inset symmetrically from the corner so the 14pt lights align
+            // vertically (center y = 21pt) with the sidebar toggle button.
+            traffic_light_position: Some(gpui::point(px(14.), px(14.))),
         }),
-        // Zeron claims the titlebar strip. Otherwise AppKit zooms the window
-        // on a double click anywhere in that band, including the sidebar
-        // buttons that sit on the traffic-light line.
+        // Atlas claims the titlebar strip so interactive controls sit on the
+        // traffic-light line without AppKit double-click delay; empty bar
+        // double-clicks route to `window.titlebar_double_click()`.
         app_owns_titlebar_drag: true,
         ..Default::default()
     }
@@ -183,13 +202,23 @@ fn main() {
         win_chrome::trace("start: another Atlas is already running");
         return;
     }
-    gpui::application().run(|cx: &mut App| {
+    // NSH 0.6 defaults to nsh/base's core part only (for Rust-only apps);
+    // JS hosts register the full nsh/base set so RichEditor, Popover, etc. load.
+    nsh_platform_gpui::set_ui_sets(vec![imago_nsh::nsh_base_registry()]);
+    let app = gpui::application();
+    app.on_reopen(|cx: &mut App| {
+        if cx.windows().is_empty() {
+            let _ = open_atlas_window(cx);
+        }
+        cx.activate(true);
+    });
+    app.run(|cx: &mut App| {
         gpui_component::init(cx);
         cx.text_system()
             .add_fonts(font_bytes())
             .expect("failed to load embedded fonts");
 
-        install_quit_key(cx);
+        install_window_keys(cx);
         let (window, agenda) = open_atlas_window(cx);
         // After the window exists: AppKit draws the menu bar for the app, and
         // the items it carries (⌘Q, ⌘W, ⌘H) are the system's own.

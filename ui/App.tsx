@@ -1,6 +1,6 @@
 import { effect, host, mount, Scroll, signal, Text, View, nativeComponent, keymap } from "nsh";
 import { Input } from "nsh/base";
-import { Window as DesktopWindow } from "nsh/desktop";
+import { currentWindow } from "nsh/desktop";
 import { Icon as SharedIcon, Button as SharedButton } from "@makekosmos/imago-nsh";
 import type { Appearance, IconName } from "@makekosmos/imago-nsh";
 import navigation from "./navigation.json";
@@ -9,7 +9,7 @@ import { cycleShortcut, shortcutOptions, shortcuts } from "./app-shortcuts";
 import { previewThemes } from "./themes";
 import type { JournalEntry, JournalVoice, Note, Route, Snapshot } from "./state";
 import { JournalPage, markJournalArriving } from "./JournalPage";
-import { addNote, bindNoteCommands, closeOpenNote, createOpenNote, hasOpenNote, notes, NotesPage, openNoteById, openNoteTitle, removeOpenNote, renameOpenNote, setNotes } from "./notes";
+import { addNote, bindNoteCommands, closeOpenNote, createOpenNote, hasOpenNote, leaveOpenNote, notes, NotesPage, openNoteById, openNoteId, openNoteTitle, removeOpenNote, renameOpenNote, resumeOpenNote, setNotes } from "./notes";
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
 import { GamesLibrary, GamesSettings, livePrograms } from "./games";
 import { SettingsPage as SettingsPageScroll, WidgetsSection } from "./settings";
@@ -254,7 +254,7 @@ function SettingsPage() {
 }
 
 function App() {
-  effect(() => DesktopWindow.setTitleBar({ style: "hidden", height: TITLEBAR_HEIGHT }));
+  effect(() => currentWindow().set({ titleBar: { style: "hidden", height: TITLEBAR_HEIGHT } }));
   // The sidebar lists the widgets that are on, in their order.
   effect(() => visiblePages.set(pageNavigation.filter((item) => widgetOn(item.id as never))));
   // A widget turned off takes its page with it; the app moves to the first one
@@ -274,7 +274,22 @@ function App() {
   const dark = snapshot().appearance?.settings.mode !== "light";
   const changeRoute = (target: string) => {
     if (!isRoute(target)) return;
+    const prev = route();
+    if (prev === "notes" && target !== "notes") leaveOpenNote();
     route.set(target);
+    if (prev !== "notes" && target === "notes") resumeOpenNote();
+  };
+  const selectSidebarPage = (target: string) => {
+    if (target === "notes" && route() === "notes" && hasOpenNote()) {
+      closeOpenNote();
+      return;
+    }
+    changeRoute(target);
+  };
+  const activeRecentNote = () => {
+    if (route() !== "notes") return false;
+    const id = openNoteId();
+    return id !== null && recent().some((entry) => entry.kind === "note" && entry.id === id);
   };
   const openRecentEntry = (entry: { kind: string; id: string; title: string }) => {
     if (entry.kind === "note") {
@@ -344,14 +359,14 @@ function App() {
       <View class="h-full w-full flex-row">
       {shell && <View class="h-full shrink-0 overflow-hidden" style={{ width: sidebarPaneWidth() }}>
         <View class="relative box-border h-full" style={{ width: SIDEBAR_WIDTH, paddingTop: TITLEBAR_HEIGHT + 8, paddingBottom: 16, paddingLeft: 8, paddingRight: 8, backgroundColor: shellFill(snapshot().colors, dark) }}>
-          <View onPressDown={() => askEngine("window.drag")} class="absolute left-0 right-0 top-0 bottom-0" />
+          <View onPressDown={() => askEngine("window.drag")} class="absolute left-0 right-0 bottom-0" style={{ top: TITLEBAR_HEIGHT }} />
           <View style={{ gap: 2, pointerEvents: "box-none" }}>
-            {visiblePages().map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id} dark={dark} colors={snapshot().colors} onPress={() => changeRoute(item.id)} />)}
+            {visiblePages().map((item) => <SidebarRow label={item.label} icon={iconForNavigation(item.id)} selected={route() === item.id && !(item.id === "notes" && activeRecentNote())} dark={dark} colors={snapshot().colors} onPress={() => selectSidebarPage(item.id)} />)}
           </View>
           {recent().length > 0 && <View class="mt-5" style={{ pointerEvents: "box-none" }}>
             <Text class="mb-1 text-[11px] font-medium" style={{ color: snapshot().colors.muted, paddingLeft: 10 }}>Недавно открытые</Text>
             <View style={{ gap: 1 }}>
-              {recent().map((entry) => <RecentRow entry={entry} colors={snapshot().colors} dark={dark} onPress={() => openRecentEntry(entry)} />)}
+              {recent().map((entry) => <RecentRow entry={entry} selected={entry.kind === "note" && route() === "notes" && openNoteId() === entry.id} colors={snapshot().colors} dark={dark} onPress={() => openRecentEntry(entry)} />)}
             </View>
           </View>}
           <View class="mt-auto mb-2" style={{ gap: 2, pointerEvents: "box-none" }}>
@@ -400,6 +415,7 @@ function App() {
         dark={dark}
         showAddGame={route() === "games" && widgetOn("games")} pageInset={sidebarPaneWidth()}
         dimmed={addTaskOpen() || gameLibrary.addOpen() || pickedExes().length > 1}
+        fadeBackdrop={route() === "journal"}
         noteActive={route() === "notes" && hasOpenNote()}
         noteTitle={route() === "notes" ? openNoteTitle() : ""}
         onRenameNote={renameOpenNote}

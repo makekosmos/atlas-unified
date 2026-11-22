@@ -22,8 +22,12 @@ import { colorAlpha, surfaceWash } from "./chrome";
 import { Glyph } from "./glyph";
 import { languageOf, scan, tokenColors } from "./highlight";
 import type { TokenKind } from "./highlight";
-import { forgetRecent, rememberRecent } from "./recent";
+import { commitRecent, forgetRecent, stageRecent } from "./recent";
+import { NotesOutlineRail, activeOutlineIndex } from "./notes-outline";
+import type { OutlineMark } from "./notes-outline";
 import type { Note } from "./state";
+
+export type { OutlineMark };
 
 /// Notes are rich text: one editing surface, no source and no preview. The
 /// document the editor holds is what Engine stores in `contentJson` of a
@@ -50,7 +54,15 @@ let editorRef: RichEditorRef | null = null;
 let menuAnchor: ViewRef | null = null;
 /// The note's headings, in document order, with where they start.
 const outline = signal<OutlineMark[]>([]);
+const activeOutlinePos = signal(0);
 let outlineTimer: ReturnType<typeof setTimeout> | null = null;
+let outlineSyncTimer: ReturnType<typeof setTimeout> | null = null;
+let outlineSettleTimer: ReturnType<typeof setTimeout> | null = null;
+let splitScrollRef: { scrollTo: (options: { y?: number; animated?: boolean }) => void } | undefined;
+let splitScrollY = 0;
+let pageTopY = 48;
+let pinnedOutlinePos: number | null = null;
+let pinnedScrollY = 0;
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 const SAVE_DELAY_MS = 700;
 /// The library's grid: the card's smallest width, the air between cards, and
@@ -58,12 +70,6 @@ const SAVE_DELAY_MS = 700;
 const CARD_MIN = 196;
 const CARD_GAP = 16;
 const CARD_RATIO = 264 / 236;
-/// How many heading marks the rails show, as AnyType's table of contents does.
-const OUTLINE_LIMIT = 50;
-/// The outline hugs the window's right edge the way AnyType does: a narrow
-/// strip of marks, close enough that the pointer finds them without aiming.
-const RAIL_INSET = 12;
-const RAIL_WIDTH = 22;
 /// Beyond five columns a card stops reading as a page.
 const CARD_MAX_COLUMNS = 5;
 /// How many cards stagger in on the first paint: a card that scrolls into view
@@ -283,10 +289,14 @@ type Seg = {
   kind: "prose" | "code";
   session: RichEditorSession;
   paint: RichEditorPlugin | null;
+  painted: string;
+  paintRevs: Set<number>;
 };
 type Group = { kind: "prose"; nodes: unknown[] } | { kind: "code"; node: unknown };
 let segments: Seg[] = [];
 let segSerial = 0;
+let singlePainted = "";
+const singlePaintRevs = new Set<number>();
 /// Bumped when the sessions are replaced, so a listener from the previous
 /// ones returns without touching a disposed editor.
 let epoch = 0;
@@ -295,6 +305,9 @@ const codeLayout = signal(false);
 const segmentList = signal<{ id: number; kind: "prose" | "code" }[]>([]);
 const bodyRev = signal(0);
 const segRefs = new Map<number, RichEditorRef>();
+const segHeights = new Map<number, number>();
+const segTops = new Map<number, number>();
+const segHeightRev = signal(0);
 let wantFocus: number | null = null;
 let reshaping = false;
 let splitTimer: ReturnType<typeof setTimeout> | null = null;
@@ -392,19 +405,27 @@ function paintCode() {
   if (split) {
     for (const seg of segments) {
       if (!seg.paint) continue;
-      const marks: { from: number; to: number; kind: string; attrs: { class: string } }[] = [];
       const doc = seg.session.getJSON() as { content?: unknown[] };
+      const sig = `${paintedDark}|${JSON.stringify(doc)}`;
+      if (seg.painted === sig) continue;
+      const marks: { from: number; to: number; kind: string; attrs: { class: string } }[] = [];
       paintNodes(doc.content ?? [], 0, palette, marks);
       seg.session.setDecorations(seg.paint.key, marks as never);
+      seg.painted = sig;
+      seg.paintRevs.add(seg.session.revision);
     }
     return;
   }
   const live = editor;
   if (!live) return;
-  const marks: { from: number; to: number; kind: string; attrs: { class: string } }[] = [];
   const doc = live.getJSON() as { content?: unknown[] };
+  const sig = `${paintedDark}|${JSON.stringify(doc)}`;
+  if (singlePainted === sig) return;
+  const marks: { from: number; to: number; kind: string; attrs: { class: string } }[] = [];
   paintNodes(doc.content ?? [], 0, palette, marks);
   live.setDecorations("highlight", marks as never);
+  singlePainted = sig;
+  singlePaintRevs.add(live.revision);
 }
 
 let paintTimer: ReturnType<typeof setTimeout> | null = null;
@@ -413,10 +434,10 @@ function schedulePaint() {
   paintTimer = setTimeout(paintCode, 60);
 }
 
-function editorExtensions() {
+function editorExtensions(trailing = true) {
   return [
     StarterKit.configure({
-      heading: { levels: [1, 2, 3] },
+      heading: { levels: [1, 2, 3, 4, 5, 6] },
       // Markdown's blocks and marks: a task list is `- [ ]`, which the
       // document keeps as a `checked` attribute. The rest — text alignment,
       // highlight, sub- and superscript — has no Markdown spelling and stays
@@ -426,6 +447,11 @@ function editorExtensions() {
       superscript: false,
       textStyle: false,
       textAlign: false,
+      // Split-note pieces hold one run (e.g. a lone codeBlock card). Letting
+      // TrailingNode append a phantom paragraph on the first transaction
+      // (including syntax-highlight setDecorations) mutates the doc, trips
+      // shapeDrifted(), rebuilds the split note, and hijacks focus/scroll.
+      ...(trailing ? {} : { trailingNode: false }),
     }),
     TableKit.configure({}),
   ];
@@ -510,18 +536,23 @@ function retireSeg(seg: Seg) {
   try { seg.session.dispose(); } catch { /* already gone */ }
   try { seg.paint?.dispose(); } catch { /* already gone */ }
   segRefs.delete(seg.id);
+  segHeights.delete(seg.id);
+  segTops.delete(seg.id);
 }
 
 function bindSeg(session: RichEditorSession, epochAt: number) {
-  session.on("revision", () => {
+  session.on("revision", (event) => {
     if (epoch !== epochAt || reshaping) return;
-    if (!segments.some((seg) => seg.session === session)) return;
-    editor = session;
     const seg = segments.find((item) => item.session === session);
+    if (!seg) return;
+    // Our own syntax-highlight decoration transaction must not overwrite the
+    // active segment, hijack focus, or schedule another paint pass.
+    if (typeof event?.revision === "number" && seg.paintRevs.delete(event.revision)) return;
+    editor = session;
     scheduleSave();
     syncSlash();
     scheduleOutline();
-    if (seg?.kind === "code" || session.findParentNode("codeBlock")) schedulePaint();
+    if (seg.kind === "code" || session.findParentNode("codeBlock")) schedulePaint();
     bodyRev.set(bodyRev() + 1);
     if (split && shapeDrifted()) scheduleReshape();
   });
@@ -534,7 +565,7 @@ function createSeg(group: Group): Seg {
   const plugins = paint ? [paint] : [];
   const epochAt = epoch;
   const make = (body: unknown) => createRichEditor({
-    extensions: editorExtensions(),
+    extensions: editorExtensions(false),
     plugins,
     content: body as never,
     format: "json",
@@ -546,7 +577,7 @@ function createSeg(group: Group): Seg {
     session = make(docOf([{ type: "paragraph" }]));
   }
   bindSeg(session, epochAt);
-  return { id, kind: group.kind, session, paint };
+  return { id, kind: group.kind, session, paint, painted: "", paintRevs: new Set<number>() };
 }
 
 /// Replaces the open editors with one session per run of prose and per code
@@ -613,6 +644,8 @@ function teardownEditors() {
   reshaping = true;
   if (splitTimer) { clearTimeout(splitTimer); splitTimer = null; }
   if (reshapeTimer) { clearTimeout(reshapeTimer); reshapeTimer = null; }
+  if (outlineSyncTimer) { clearTimeout(outlineSyncTimer); outlineSyncTimer = null; }
+  if (outlineSettleTimer) { clearTimeout(outlineSettleTimer); outlineSettleTimer = null; }
   reshapeRuns = 0;
   if (paintTimer) { clearTimeout(paintTimer); paintTimer = null; }
   const retiring = segments.slice();
@@ -620,8 +653,15 @@ function teardownEditors() {
   segments = [];
   editor = null;
   split = false;
+  splitScrollY = 0;
+  pinnedOutlinePos = null;
+  pinnedScrollY = 0;
   wantFocus = null;
+  singlePainted = "";
+  singlePaintRevs.clear();
   segRefs.clear();
+  segHeights.clear();
+  segTops.clear();
   codeLayout.set(false);
   segmentList.set([]);
   copiedId.set(null);
@@ -648,10 +688,13 @@ function open(note: Note | null) {
     savedTitle = text(note.title);
     // The rails come from the note's own document: the session's copy is the
     // same one, and this way they are there on the first frame.
-    outline.set(headingsOf(doc));
+    const marks = headingsOf(doc);
+    outline.set(marks);
+    activeOutlinePos.set(marks[0]?.pos ?? 0);
     paintCode();
   } else {
     outline.set([]);
+    activeOutlinePos.set(0);
   }
   editorVersion.set(editorVersion() + 1);
 }
@@ -660,8 +703,9 @@ function open(note: Note | null) {
 function mountSingle(doc: unknown) {
   const epochAt = epoch;
   const made = makeEditor(doc);
-  made.on("revision", () => {
+  made.on("revision", (event) => {
     if (epoch !== epochAt || editor !== made) return;
+    if (typeof event?.revision === "number" && singlePaintRevs.delete(event.revision)) return;
     scheduleSave();
     // The suggestion state lands with the transaction: reading it a second
     // time once the update is applied is what keeps `/` from opening the
@@ -707,10 +751,6 @@ function documentOf(doc: unknown): unknown {
   }
 }
 
-/// One heading as the rails show it: how deep, what it says, and where it
-/// starts in the document's positions.
-export type OutlineMark = { level: number; text: string; pos: number };
-
 /// The headings of a document, in order, with their positions. A position is
 /// what the editor's selection takes: a node starts after its content and one
 /// position per block, so the marks need the sizes of the blocks before them.
@@ -718,7 +758,7 @@ export type OutlineMark = { level: number; text: string; pos: number };
 /// Markdown spelling is the check that it stays Markdown's shape.
 export function markdownOf(doc: unknown): string {
   const session = createRichEditor({
-    extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3] } }), TableKit.configure({})],
+    extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] } }), TableKit.configure({})],
     content: documentOf(doc) as never,
     format: "json",
   });
@@ -738,7 +778,7 @@ export function headingsOf(doc: unknown): OutlineMark[] {
     const block = node as { type?: string; attrs?: { level?: number }; content?: { text?: string }[] };
     if (block.type === "heading" && Array.isArray(block.content)) {
       const text = block.content.map((child) => child?.text ?? "").join("").trim();
-      marks.push({ level: Math.min(3, Math.max(1, block.attrs?.level ?? 1)), text, pos: pos + 1 });
+      marks.push({ level: Math.min(6, Math.max(1, block.attrs?.level ?? 1)), text, pos: pos + 1 });
     }
     pos += nodeSize(node);
   }
@@ -768,8 +808,198 @@ function scheduleOutline() {
       const old = current[index];
       return mark.pos === old.pos && mark.text === old.text && mark.level === old.level;
     });
-    if (!same) outline.set(next);
+    if (!same) {
+      outline.set(next);
+      if (!next.some((mark) => mark.pos === activeOutlinePos())) {
+        activeOutlinePos.set(next[0]?.pos ?? 0);
+      }
+    }
   }, 320);
+}
+
+/// Real ProseMirror positions for each heading in `doc`, matching `headingsOf`
+/// one-to-one by index without `nodeSize` drift on long documents.
+function headingPmLocations(doc: unknown): { nodePos: number; textPos: number }[] {
+  const root = doc as { content?: unknown[] } | null;
+  if (!root || !Array.isArray(root.content)) return [];
+  const out: { nodePos: number; textPos: number }[] = [];
+  let pos = 0;
+  for (const node of root.content) {
+    const block = node as { type?: string; content?: unknown[] };
+    if (block.type === "heading" && Array.isArray(block.content)) {
+      out.push({ nodePos: pos, textPos: pos + 1 });
+    }
+    pos += blockSize(node);
+  }
+  return out;
+}
+
+function splitHeadingLocations(): { segId: number; session: RichEditorSession; nodePos: number; textPos: number }[] {
+  const out: { segId: number; session: RichEditorSession; nodePos: number; textPos: number }[] = [];
+  for (const seg of segments) {
+    if (seg.kind !== "prose") continue;
+    for (const loc of headingPmLocations(seg.session.getJSON())) {
+      out.push({ segId: seg.id, session: seg.session, nodePos: loc.nodePos, textPos: loc.textPos });
+    }
+  }
+  return out;
+}
+
+function outlineThreshold() {
+  return Math.max(96, Math.round(pageTall() * 0.36));
+}
+
+function syncOutlineFromCaret(segId: number | null, localPos: number) {
+  const marks = outline();
+  if (marks.length < 2) return;
+  if (split && segId !== null) {
+    const segOrder = segments.findIndex((seg) => seg.id === segId);
+    if (segOrder < 0) return;
+    const locs = splitHeadingLocations();
+    const count = Math.min(marks.length, locs.length);
+    if (!count) return;
+    let active = 0;
+    for (let index = 0; index < count; index += 1) {
+      const locOrder = segments.findIndex((seg) => seg.id === locs[index].segId);
+      if (locOrder < segOrder || (locOrder === segOrder && locs[index].nodePos <= localPos)) {
+        active = index;
+      } else {
+        break;
+      }
+    }
+    if (activeOutlinePos() !== marks[active].pos) activeOutlinePos.set(marks[active].pos);
+    return;
+  }
+  if (!editor) return;
+  const locs = headingPmLocations(editor.getJSON());
+  const count = Math.min(marks.length, locs.length);
+  if (!count) return;
+  const active = activeOutlineIndex(locs.slice(0, count).map((loc) => loc.nodePos), localPos);
+  if (activeOutlinePos() !== marks[active].pos) activeOutlinePos.set(marks[active].pos);
+}
+
+function syncOutlineFromViewport() {
+  if (pinnedOutlinePos !== null) return;
+  const marks = outline();
+  if (marks.length < 2) return;
+  const threshold = outlineThreshold();
+  if (split) {
+    const locs = splitHeadingLocations();
+    const count = Math.min(marks.length, locs.length);
+    if (!count) return;
+    const ys: (number | null)[] = [];
+    for (let index = 0; index < count; index += 1) {
+      const loc = locs[index];
+      const segTop = segTops.get(loc.segId);
+      if (typeof segTop !== "number") {
+        ys.push(null);
+        continue;
+      }
+      let localY = 0;
+      try {
+        const rect = (loc.session.nodeRect(loc.nodePos) ?? loc.session.coordsAtPos(loc.textPos)) as Point | null;
+        if (rect && typeof rect.y === "number") localY = rect.y;
+      } catch {
+        // Stale position while a reshape or edit settles.
+      }
+      ys.push(segTop + localY);
+    }
+    if (!ys.some((y) => y !== null)) return;
+    const active = activeOutlineIndex(ys, splitScrollY + threshold);
+    if (activeOutlinePos() !== marks[active].pos) activeOutlinePos.set(marks[active].pos);
+    return;
+  }
+  if (!editor) return;
+  const locs = headingPmLocations(editor.getJSON());
+  const count = Math.min(marks.length, locs.length);
+  if (!count) return;
+  const ys: (number | null)[] = [];
+  for (let index = 0; index < count; index += 1) {
+    const loc = locs[index];
+    let y: number | null = null;
+    try {
+      const rect = (editor.pageNodeRect(loc.nodePos) ?? editor.pageCoordsAtPos(loc.textPos)) as Point | null;
+      if (rect && typeof rect.y === "number") y = rect.y;
+    } catch {
+      // Stale position during edit.
+    }
+    ys.push(y);
+  }
+  if (!ys.some((y) => y !== null)) return;
+  const active = activeOutlineIndex(ys, pageTopY + threshold);
+  if (activeOutlinePos() !== marks[active].pos) activeOutlinePos.set(marks[active].pos);
+}
+
+function scheduleOutlineSync() {
+  if (outlineSyncTimer) return;
+  outlineSyncTimer = setTimeout(() => {
+    outlineSyncTimer = null;
+    syncOutlineFromViewport();
+  }, 60);
+}
+
+function onSplitScroll(y: number) {
+  splitScrollY = y;
+  if (pinnedOutlinePos !== null && !outlineSettleTimer && Math.abs(y - pinnedScrollY) > 24) {
+    pinnedOutlinePos = null;
+  }
+  scheduleOutlineSync();
+}
+
+function onSingleWheel() {
+  if (split || outline().length < 2) return;
+  pinnedOutlinePos = null;
+  syncOutlineFromViewport();
+  scheduleOutlineSync();
+  if (outlineSettleTimer) clearTimeout(outlineSettleTimer);
+  outlineSettleTimer = setTimeout(() => {
+    outlineSettleTimer = null;
+    syncOutlineFromViewport();
+  }, 220);
+}
+
+function jumpToOutline(mark: OutlineMark) {
+  const marks = outline();
+  const index = marks.findIndex((item) => item.pos === mark.pos);
+  if (index < 0) return;
+  activeOutlinePos.set(mark.pos);
+  pinnedOutlinePos = mark.pos;
+  pinnedScrollY = splitScrollY;
+  if (outlineSettleTimer) clearTimeout(outlineSettleTimer);
+  outlineSettleTimer = setTimeout(() => {
+    outlineSettleTimer = null;
+    pinnedScrollY = splitScrollY;
+  }, 450);
+
+  if (split) {
+    const loc = splitHeadingLocations()[index];
+    if (!loc) return;
+    const segTop = segTops.get(loc.segId);
+    if (typeof segTop === "number" && splitScrollRef) {
+      let localY = 0;
+      try {
+        const rect = (loc.session.nodeRect(loc.nodePos) ?? loc.session.coordsAtPos(loc.textPos)) as Point | null;
+        if (rect && typeof rect.y === "number") localY = rect.y;
+      } catch {
+        // Fall back to segment top.
+      }
+      const targetY = Math.max(0, Math.round(segTop + localY - Math.max(40, pageTall() * 0.14)));
+      pinnedScrollY = targetY;
+      splitScrollRef.scrollTo({ y: targetY, animated: true });
+    }
+    const ref = segRefs.get(loc.segId);
+    if (ref) {
+      editor = loc.session;
+      ref.focus();
+      ref.setSelection(loc.textPos, loc.textPos);
+    }
+    return;
+  }
+  if (!editor || !editorRef) return;
+  const loc = headingPmLocations(editor.getJSON())[index];
+  const targetPos = loc ? loc.textPos : mark.pos;
+  editorRef.focus();
+  editorRef.setSelection(targetPos, targetPos);
 }
 
 /// Puts the caret at the end of the note: what a press below the text means.
@@ -872,7 +1102,7 @@ function syncSlash() {
   if (slashOpen() && slashSession && editor !== slashSession) return;
   const match = slashMatch();
   if (!match) {
-    closeSlash();
+    if (slashOpen()) closeSlash();
     return;
   }
   slashRange = match;
@@ -940,7 +1170,9 @@ function closeSlash(discard = false) {
   const wasOpen = slashOpen();
   if (wasOpen) slashOpen.set(false);
   unbindSlashKeysNow();
-  focusCaret();
+  // Return the keyboard only when the list had taken it: otherwise every
+  // unrelated revision steals focus and scrolls the page to that segment.
+  if (wasOpen) focusCaret();
   if (discard && wasOpen && range && live) {
     live.run(deleteRange({ from: range.from, to: range.to }));
   }
@@ -1016,6 +1248,13 @@ function unbindSlashKeysNow() {
   }
 }
 
+function currentRecentEntry() {
+  const id = selectedId();
+  if (!id) return null;
+  const title = draftTitle().trim() || text(selected()?.title ?? "").trim() || "Без названия";
+  return { kind: "note" as const, id, title };
+}
+
 function select(note: Note | null) {
   const id = note ? text(note.id) : null;
   // The host reports the new note twice, as the created note and as the list.
@@ -1023,15 +1262,19 @@ function select(note: Note | null) {
   if (id && id === selectedId() && editor) return;
   flushSave();
   applyPreview();
-  selectedId.set(id);
+  const leaving = currentRecentEntry();
+  if (leaving && leaving.id !== id) commitRecent(leaving);
   draftTitle.set(note ? text(note.title) : "");
   dirty.set(false);
   open(note);
-  if (note) rememberRecent({ kind: "note", id: text(note.id), title: text(note.title).trim() || "Без названия" });
+  selectedId.set(id);
+  if (note) stageRecent({ kind: "note", id: text(note.id), title: text(note.title).trim() || "Без названия" });
 }
 
 /// The open note's name, for the window's title bar.
 export const openNoteTitle = () => (selectedId() ? draftTitle() : "");
+/// The open note's id, so the sidebar can highlight it.
+export const openNoteId = () => selectedId();
 /// Whether a note is open, so the title bar names it instead of the page.
 export const hasOpenNote = () => selectedId() !== null;
 export const renameOpenNote = (value: string) => editTitle(value);
@@ -1039,6 +1282,20 @@ export const closeOpenNote = () => closeNote();
 export const removeOpenNote = () => removeNote();
 /// A new note straight from the keyboard, the way the floating button does it.
 export const createOpenNote = () => createNote();
+
+/// Commits the open note to the top of the recent list when leaving its page.
+export function leaveOpenNote() {
+  flushSave();
+  applyPreview();
+  const current = currentRecentEntry();
+  if (current) commitRecent(current);
+}
+
+/// Re-stages an already-open note when returning to the notes route.
+export function resumeOpenNote() {
+  const current = currentRecentEntry();
+  if (current) stageRecent(current);
+}
 
 /// Opens a note from elsewhere in the app, the sidebar's recent list first.
 export function openNoteById(id: string) {
@@ -1113,8 +1370,7 @@ function createNote() {
 
 /// Back to the library: the page is one screen, so leaving it is a step back.
 function closeNote() {
-  flushSave();
-  applyPreview();
+  leaveOpenNote();
   selectedId.set(null);
   draftTitle.set("");
   open(null);
@@ -1394,34 +1650,47 @@ function pieceWidth(room: number): number {
   return Math.max(220, (room > 0 ? room : 720) - pad * 2);
 }
 
-/// The prose piece is as tall as its text. The editor's own scroll collapses
-/// when the piece has no height of its own, so the height is the lines.
+function updateSegHeight(id: number, height: number) {
+  const rounded = Math.max(24, Math.ceil(height));
+  if (segHeights.get(id) === rounded) return;
+  segHeights.set(id, rounded);
+  segHeightRev.update((n) => n + 1);
+}
+
+function measuredSegHeight(id: number, fallbackHeight: number) {
+  void segHeightRev();
+  return segHeights.get(id) ?? fallbackHeight;
+}
+
+/// Initial height estimate for a prose piece before RichEditor reports its
+/// exact laid-out height via `onContentSizeChange`.
 function proseBoxHeight(id: number, room: number, rev?: number): number {
   void rev;
   const seg = segments.find((item) => item.id === id);
-  if (!seg) return 48;
+  if (!seg) return 32;
   const width = pieceWidth(room);
   const content = (seg.session.getJSON() as { content?: { type?: string; attrs?: { level?: number }; content?: unknown[] }[] }).content ?? [];
-  let height = 8;
+  let height = 0;
   for (const node of content) {
     const type = node?.type;
     const level = node?.attrs?.level ?? 1;
     if (type === "heading") {
-      const line = level === 1 ? 32 : level === 2 ? 28 : 26;
-      const above = level === 1 ? 22 : 12;
-      height += above + wrappedLines(plainOf(node), width, line > 26 ? 28 : 18) * line + 6;
-    } else if (type === "horizontalRule") height += 40;
-    else if (type === "table") height += 40 * Math.max(1, (node.content ?? []).length) + 16;
-    else if (type === "bulletList" || type === "orderedList" || type === "blockquote") height += 12 + wrappedLines(plainOf(node), width - 32, 16) * 24;
+      const line = level === 1 ? 36 : level === 2 ? 30 : level === 3 ? 26 : level === 4 ? 24 : level === 5 ? 22 : 20;
+      const above = level === 1 ? 32 : level === 2 ? 26 : level === 3 ? 20 : level === 4 ? 16 : level === 5 ? 14 : 12;
+      const below = level === 1 ? 8 : level === 2 ? 6 : level <= 4 ? 4 : 2;
+      height += above + wrappedLines(plainOf(node), width, line > 26 ? 26 : 18) * line + below;
+    } else if (type === "horizontalRule") height += 38;
+    else if (type === "table") height += 40 * Math.max(1, (node.content ?? []).length) + 12;
+    else if (type === "bulletList" || type === "orderedList" || type === "blockquote") height += 10 + wrappedLines(plainOf(node), width - 32, 16) * 24;
     else height += 8 + wrappedLines(plainOf(node), width, 16) * 24;
   }
-  return Math.max(36, Math.ceil(height + 20));
+  return Math.max(28, Math.ceil(height));
 }
 
 function codeBoxHeight(text: string, room: number): number {
   const per = Math.max(8, Math.floor(Math.max(80, pieceWidth(room) - 28) / 8));
   const lines = (text.length ? text : " ").split("\n").reduce((count, line) => count + Math.max(1, Math.ceil(line.length / per)), 0);
-  return 12 + 14 + lines * 21 + 10;
+  return 12 + 14 + lines * 21;
 }
 
 /// A code block as shadcn draws it: a header row, then the code. The row is
@@ -1430,7 +1699,7 @@ function codeBoxHeight(text: string, room: number): number {
 function CodeCard(props: { id: number; colors: ThemeColors; dark: boolean; wash: string }) {
   const seg = segments.find((item) => item.id === props.id);
   if (!seg) return <View />;
-  return <View style={{ marginTop: 10, marginBottom: 10, borderRadius: 10, borderWidth: 1, borderColor: props.colors.border, backgroundColor: surfaceWash(props.dark, 0.06), overflow: "hidden" }}>
+  return <View style={{ marginTop: 4, marginBottom: 8, borderRadius: 10, borderWidth: 1, borderColor: props.colors.border, backgroundColor: surfaceWash(props.dark, 0.06), overflow: "hidden" }}>
     <View class="flex-row items-center justify-between" style={{ height: 36, paddingLeft: 12, paddingRight: 4, borderBottomWidth: 1, borderColor: props.colors.border }}>
       <View onPress={(event) => codeLanguageMenu(props.id, event.pagePosition)} role="button" accessibilityLabel={languageLabel(codeFields(props.id, bodyRev()).language)} hoverStyle={{ backgroundColor: props.wash }} style={{ height: 26, paddingLeft: 8, paddingRight: 8, borderRadius: 6, cursor: "pointer", justifyContent: "center" }}>
         <Text class="text-[12px] font-medium" style={{ color: props.colors.muted }}>{languageLabel(codeFields(props.id, bodyRev()).language)}</Text>
@@ -1445,7 +1714,9 @@ function CodeCard(props: { id: number; colors: ThemeColors; dark: boolean; wash:
       editor={seg.session}
       ref={(ref) => attachRef(props.id, ref)}
       accessibilityLabel="Код"
-      style={{ height: codeBoxHeight(codeFields(props.id, bodyRev()).text, pageRoom()) }}
+      onContentSizeChange={({ contentSize }) => updateSegHeight(props.id, Math.max(40, contentSize.height))}
+      onSelectionChange={({ selection }) => syncOutlineFromCaret(props.id, selection.from)}
+      style={{ height: measuredSegHeight(props.id, codeBoxHeight(codeFields(props.id, bodyRev()).text, pageRoom())) }}
       styles={codeStyles(props.colors, props.dark)}
     />
   </View>;
@@ -1459,6 +1730,8 @@ function ProsePiece(props: { id: number; colors: ThemeColors; dark: boolean }) {
     ref={(ref) => attachRef(props.id, ref)}
     accessibilityLabel="Текст заметки"
     placeholder={segmentList()[0]?.id === props.id ? "Пишите. Слэш открывает блоки: заголовок, список, таблица…" : undefined}
+    onContentSizeChange={({ contentSize }) => updateSegHeight(props.id, contentSize.height)}
+    onSelectionChange={({ selection }) => syncOutlineFromCaret(props.id, selection.from)}
     onPasteFiles={(event) => { pastePictures(event.paste, seg.session); }}
     onBlur={() => {
       // The blur the list asked for is not a leave: the caret's editor keeps
@@ -1468,7 +1741,7 @@ function ProsePiece(props: { id: number; colors: ThemeColors; dark: boolean }) {
       if (seg.session !== slashSession) return;
       closeSlash();
     }}
-    style={{ height: proseBoxHeight(props.id, pageRoom(), bodyRev()) }}
+    style={{ height: measuredSegHeight(props.id, proseBoxHeight(props.id, pageRoom(), bodyRev())) }}
     styles={noteStyles(props.colors, props.dark, 0, 0, true)}
   />;
 }
@@ -1477,13 +1750,16 @@ function SplitNote(props: { colors: ThemeColors; dark: boolean; wash: string }) 
   // The sheet is pinned to the page. A flex-1 scroll inside a percentage-height
   // column collapses, and then the cards are gone while the rails stay.
   return <View class="relative min-h-0 flex-1" ref={(node) => { menuAnchor = node; }}>
-  <Scroll class="min-h-0 flex-1" contentStyle={{ paddingTop: 2, paddingBottom: 120, paddingLeft: pagePad(), paddingRight: pagePad() }}>
+  <Scroll ref={(node) => { splitScrollRef = node; }} onScroll={(event) => onSplitScroll(event.offset.y)} class="min-h-0 flex-1" contentStyle={{ paddingTop: pageTopPad(), paddingBottom: 0, paddingLeft: pagePad(), paddingRight: pagePad() }}>
     <Each of={segmentList()} key={((row: { id: number; kind: "prose" | "code" }) => String(row.id)) as any}>{(row) => {
       const item = row();
-      return item.kind === "code"
-        ? <CodeCard id={item.id} colors={props.colors} dark={props.dark} wash={props.wash} />
-        : <ProsePiece id={item.id} colors={props.colors} dark={props.dark} />;
+      return <View onLayout={(event) => { segTops.set(item.id, event.bounds.origin.y); }}>
+        {item.kind === "code"
+          ? <CodeCard id={item.id} colors={props.colors} dark={props.dark} wash={props.wash} />
+          : <ProsePiece id={item.id} colors={props.colors} dark={props.dark} />}
+      </View>;
     }}</Each>
+    <View onPress={caretToEnd} testID="split-note-tail" style={{ height: 120 }} />
   </Scroll>
   </View>;
 }
@@ -1521,6 +1797,18 @@ function noteEntrance(id: string) {
   return noteEnter;
 }
 
+function onPageSpacePress() {
+  if (slashOpen()) {
+    closeSlash();
+    return;
+  }
+  // In a split note, side margins, gaps between cards, and code headers sit
+  // inside this wrapper: only the empty tail below the last block belongs to
+  // the end of the note, not every stray tap on the sheet.
+  if (split) return;
+  caretToEnd();
+}
+
 function NoteView(props: { colors: ThemeColors; dark: boolean }) {
   const colors = props.colors;
   const wash = surfaceWash(props.dark, 0.07);
@@ -1541,12 +1829,29 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
     {/* The sheet is the page, not the column: the scroll view takes the whole
         width, so its indicator sits at the page's edge, and the text is inset
         to the column's width instead. */}
-    <View class="relative min-h-0 flex-1" onLayout={(event) => { pageRoom.set(event.bounds.size.width); pageTall.set(event.bounds.size.height); }}>
+    <View
+      class="relative min-h-0 flex-1"
+      onLayout={(event) => {
+        pageRoom.set(event.bounds.size.width);
+        pageTall.set(event.bounds.size.height);
+        void menuAnchor?.measure().then((box) => {
+          if (box) pageTopY = box.pagePosition.y;
+        });
+      }}
+    >
     <View class="min-h-0 flex-col" style={{ height: pageTall() > 0 ? pageTall() : undefined, paddingTop: 4 }}>
       {/* A press on the page below the text belongs to the text: the caret
           goes to the end, the way a word processor takes a click on the
-          empty part of a sheet. */}
-      <View class="relative min-h-0 flex-1 overflow-hidden" ref={(node) => { menuAnchor = node; }} onPress={caretToEnd} testID="note-page-space">
+          empty part of a sheet. A split note puts that press target below its
+          last block inside the scroll view so margins, gaps, and code headers
+          never yank focus and scroll to the bottom. */}
+      <View
+        class="relative min-h-0 flex-1 overflow-hidden"
+        ref={(node) => { menuAnchor = node; }}
+        onPress={onPageSpacePress}
+        onWheel={onSingleWheel}
+        testID="note-page-space"
+      >
         {codeLayout()
           ? <SplitNote colors={colors} dark={props.dark} wash={wash} />
           : <Each of={[{ stamp: editorVersion() }]} key={((row: { stamp: number }) => row.stamp) as any}>{(row) => editor
@@ -1556,6 +1861,7 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
               class="min-h-0 flex-1"
               placeholder="Пишите. Слэш открывает блоки: заголовок, список, таблица…"
               accessibilityLabel="Текст заметки"
+              onSelectionChange={({ selection }) => syncOutlineFromCaret(null, selection.from)}
               onPasteFiles={(event) => { pastePictures(event.paste, editor as RichEditorSession); }}
               onBlur={() => {
                 // The blur the list asked for is not a leave: the caret's editor
@@ -1565,16 +1871,22 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
                 if (editor !== slashSession) return;
                 closeSlash();
               }}
-              styles={noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad(), false)}
+              styles={noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad(), false, pageTopPad())}
             />
             : <View class="h-full" />}</Each>}
         {slashOpen() && slashKeyboard()}
         {slashOpen() && slashMenu(colors, wash)}
       </View>
     </View>
-    <View class="absolute top-0 bottom-0" style={{ right: RAIL_INSET }}>
-      {outlineRails(colors, props.dark)}
-    </View>
+    <NotesOutlineRail
+      marks={outline}
+      activePos={activeOutlinePos}
+      colors={colors}
+      dark={props.dark}
+      maxHeight={() => Math.max(180, pageTall() - 80)}
+      onHoverOpen={syncOutlineFromViewport}
+      onSelect={jumpToOutline}
+    />
     </View>
   </View>;
 }
@@ -1588,45 +1900,18 @@ function pagePad() {
   return Math.max((room - PAGE_MAX) / 2, PAGE_PAD / 2);
 }
 
-/// The rails: one short mark per heading, longer the higher the heading. A
-/// press puts the caret at that heading, and the editor scrolls it into view.
-/// A page with fewer than two headings has no rails to draw.
-function outlineRails(colors: ThemeColors, dark: boolean) {
-  // AnyType draws at most fifty marks: a rail longer than the page stops
-  // pointing anywhere.
-  const marks = outline().slice(0, OUTLINE_LIMIT);
-  if (marks.length < 2) return null;
-  return <View class="h-full items-end justify-center" style={{ width: RAIL_WIDTH, gap: 3 }}>
-    {marks.map((mark) => <View
-      onPress={() => {
-        if (split) {
-          const found = segmentAt(mark.pos);
-          const ref = found ? segRefs.get(found.id) : null;
-          const seg = found ? segments.find((item) => item.id === found.id) : null;
-          if (!found || !ref || !seg) return;
-          editor = seg.session;
-          ref.focus();
-          ref.setSelection(found.local, found.local);
-          return;
-        }
-        if (!editor || !editorRef) return;
-        editorRef.focus();
-        editorRef.setSelection(mark.pos, mark.pos);
-      }}
-      role="button"
-      accessibilityLabel={mark.text || "Заголовок"}
-      class="items-end justify-center"
-      hoverStyle={{ backgroundColor: surfaceWash(dark, 0.06) }}
-      style={{ width: RAIL_WIDTH, height: 8, paddingRight: 3, borderRadius: 4, cursor: "pointer" }}
-    >
-      <View style={{ width: 14 / mark.level, height: 2, borderRadius: 2, backgroundColor: colors.muted }} />
-    </View>)}
-  </View>;
+/// Top breathing room inside the scrollable note (~34% of the page height) so
+/// writing starts comfortably down the sheet instead of hugged against the top
+/// bar, and scrolls away naturally as the note grows.
+function pageTopPad() {
+  const tall = pageTall();
+  if (!(tall > 0)) return compact() ? 96 : 240;
+  return Math.round(tall * 0.34);
 }
 
 /// The document's scale, taken from AnyType's blocks: body 16 on 24, headings
-/// 28/22/18 with air above them, code and tables at 14. It is what makes the
-/// page read as a page and not as a form.
+/// 28..14 with clear breathing room above and tighter rhythm below so each
+/// heading stays visually bound to its own section.
 /// The same inputs give the same object: a fresh one on every render made the
 /// editor take its styles again for no reason at all.
 let documentStylesCache: { key: string; styles: unknown } | null = null;
@@ -1645,10 +1930,10 @@ function segmentAt(markPos: number): { id: number; local: number } | null {
   return null;
 }
 
-function noteStyles(colors: ThemeColors, dark: boolean, minHeight: number, pad: number, piece = false) {
-  const key = `${piece}|${dark}|${minHeight}|${pad}|${colors.background}|${colors.foreground}|${colors.muted}|${colors.border}`;
+function noteStyles(colors: ThemeColors, dark: boolean, minHeight: number, pad: number, piece = false, topPad = 2) {
+  const key = `${piece}|${dark}|${minHeight}|${pad}|${topPad}|${colors.background}|${colors.foreground}|${colors.muted}|${colors.border}`;
   if (documentStylesCache?.key !== key) {
-    documentStylesCache = { key, styles: documentStyles(colors, dark, minHeight, pad, piece) };
+    documentStylesCache = { key, styles: documentStyles(colors, dark, minHeight, pad, piece, topPad) };
   }
   return documentStylesCache.styles as ReturnType<typeof documentStyles>;
 }
@@ -1675,20 +1960,23 @@ function codeStyles(colors: ThemeColors, dark: boolean) {
   return codeStylesCache.styles as ReturnType<typeof documentStyles>;
 }
 
-function documentStyles(colors: ThemeColors, dark: boolean, minHeight: number, pad: number, piece = false) {
+function documentStyles(colors: ThemeColors, dark: boolean, minHeight: number, pad: number, piece = false, topPad = 2) {
   return {
     // The page's text fills at least the room it is in: a press below the last
     // line lands on the editable area, and the caret goes where writing goes.
     // The side margins keep the text in its column while the scroll view keeps
     // the page's whole width. A piece sits in the column's own padding.
-    content: { color: colors.foreground, backgroundColor: "transparent", paddingTop: piece ? 0 : 2, paddingBottom: piece ? 4 : 120, paddingLeft: piece ? 0 : pad, paddingRight: piece ? 0 : pad, minHeight: piece ? 0 : minHeight },
+    content: { color: colors.foreground, backgroundColor: "transparent", paddingTop: piece ? 0 : topPad, paddingBottom: piece ? 0 : 120, paddingLeft: piece ? 0 : pad, paddingRight: piece ? 0 : pad, minHeight: piece ? 0 : minHeight },
     placeholder: { color: colors.muted },
     caret: { backgroundColor: colors.accent },
     nodes: {
       paragraph: { fontSize: 16, lineHeight: 24, marginTop: 2, marginBottom: 4 },
-      "heading[level=1]": { fontSize: 28, lineHeight: 32, fontWeight: "bold", marginTop: 22, marginBottom: 1 },
-      "heading[level=2]": { fontSize: 22, lineHeight: 28, fontWeight: "bold", marginTop: 12, marginBottom: 1 },
-      "heading[level=3]": { fontSize: 18, lineHeight: 26, fontWeight: "bold", marginTop: 12, marginBottom: 2 },
+      "heading[level=1]": { fontSize: 28, lineHeight: 36, fontWeight: "bold", marginTop: 32, marginBottom: 8 },
+      "heading[level=2]": { fontSize: 22, lineHeight: 30, fontWeight: "bold", marginTop: 26, marginBottom: 6 },
+      "heading[level=3]": { fontSize: 18, lineHeight: 26, fontWeight: "bold", marginTop: 20, marginBottom: 4 },
+      "heading[level=4]": { fontSize: 16, lineHeight: 24, fontWeight: "bold", marginTop: 16, marginBottom: 4 },
+      "heading[level=5]": { fontSize: 15, lineHeight: 22, fontWeight: "bold", marginTop: 14, marginBottom: 2 },
+      "heading[level=6]": { fontSize: 14, lineHeight: 20, fontWeight: "bold", marginTop: 12, marginBottom: 2 },
       blockquote: { paddingLeft: 28, marginTop: 6, marginBottom: 6, borderLeftWidth: 2, borderColor: colors.border },
       bulletList: { marginTop: 2, marginBottom: 4, paddingLeft: 6 },
       orderedList: { marginTop: 2, marginBottom: 4, paddingLeft: 6 },

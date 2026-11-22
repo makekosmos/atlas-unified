@@ -2,6 +2,7 @@
 //! a system move on Windows and use GPUI's window move elsewhere.
 use gpui::Window;
 
+#[cfg(windows)]
 pub(crate) fn trace(message: &str) {
     use std::io::Write;
     let line = format!("{:?} {message}\n", std::time::SystemTime::now());
@@ -15,12 +16,22 @@ pub(crate) fn trace(message: &str) {
     }
 }
 
+#[cfg(not(windows))]
+pub(crate) fn trace(_message: &str) {}
+
 pub(crate) fn drag(window: &Window) {
     trace("drag");
     #[cfg(windows)]
     drag_windows(window);
     #[cfg(not(windows))]
     window.start_window_move();
+}
+
+pub(crate) fn titlebar_double_click(window: &Window) {
+    #[cfg(target_os = "macos")]
+    window.titlebar_double_click();
+    #[cfg(not(target_os = "macos"))]
+    toggle_zoom(window);
 }
 
 pub(crate) fn toggle_zoom(window: &Window) {

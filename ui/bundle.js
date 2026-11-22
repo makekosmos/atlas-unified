@@ -1,11 +1,16 @@
 import { append, bindProp, component, each, element, font, insert, list, prop, setup, text } from "nsh:rt";
-import { Clipboard, Easing, LayoutAnimation, Storage, createMotion, effect, host, keymap, mount, nativeComponent, signal } from "nsh";
-import { Menu, Window, titleBar } from "nsh/desktop";
+import { Clipboard, Easing, LayoutAnimation, Storage, createMotion, effect, host, keymap, mount, nativeComponent, pixelRatio, signal } from "nsh";
+import { Menu, currentWindow, titleBar, windowState } from "nsh/desktop";
 import { platform } from "os";
 import { Popover, RichEditor, RichEditorPlugin, StarterKit, TableKit, chain, command, createRichEditor, deleteRange, insertTable, setNodeAttribute } from "nsh/base";
 
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+d9186fab4dda30bd528fd5d6dbda843424b0ed78/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
+//#region \0nsh-app
+setup(null, null, null, null, "{\"id\":\"com.mundus.atlas\",\"name\":\"Atlas\",\"version\":\"1.0.0\",\"build\":1,\"development\":true}");
+
+//#endregion
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+9dd5fc97ce2d6b94319606e354e4aa0dd15d4c33/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
 const icons = {
+	mundus: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20854%20841%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M848.85895%20312.15771C833.823%20246.3922%20789.67505%20200.34573%20750.2724%20209.29922C719.13416%20216.38741%20414.19922%20453.55243%20336.24701%20504.18228C403.00226%20439.42935%20679.25177%20166.39703%20693.11469%20137.61795C710.65662%20101.21774%20675.57306%2047.923195%20614.73621%2018.664467C553.89935%20-10.594261%20490.39661%20-4.8384075%20472.80139%2031.615091C458.93848%2060.394169%20320.19763%20399.6716%20311.18674%20492.19101C302.17584%20399.6716%20394.95541%2060.447464%20381.0925%2031.615091C363.5506%20-4.8384075%20299.99451%20-10.594261%20239.15767%2018.664467C178.32083%2047.923195%20143.23724%20101.21774%20160.77916%20137.61795C174.64207%20166.39703%20219.37186%20439.48267%20286.12711%20504.18228C208.12158%20453.55243%20134.75906%20216.38741%20103.62083%20209.29922C64.164856%20200.29243%2020.016878%20246.3389%205.0342722%20312.15771C-10.001652%20377.92322%209.7798576%20438.57248%2049.235832%20447.57925C80.374062%20454.66742%20187.75366%20543.08728%20279.99533%20531.3092C191.75259%20560.6745%2094.663284%20517.02222%2069.656731%20536.95441C38.038635%20562.16272%2046.516647%20625.37006%2088.638565%20678.13171C130.70715%20730.89337%20190.47778%20753.22388%20222.09589%20728.01556C247.10245%20708.08337%20249.01703%20632.46222%20297.32394%20553C265.2793%20640.29651%20304.74017%20735.79651%20304.74017%20767.77325C304.74017%20808.22388%20359.44498%20841%20427%20841C494.55502%20841%20549.2605%20808.22388%20549.2605%20767.77325C549.2605%20735.84979%20357.2009%20640.29651%20325.15625%20553C373.46317%20632.46222%20606.89819%20708.08337%20631.90472%20728.01556C663.52283%20753.22388%20723.29346%20730.89337%20765.36206%20678.13171C807.43066%20625.37006%20815.96136%20562.16272%20784.34326%20536.95441C759.33673%20517.02222%20430.72763%20560.6745%20342.48489%20531.3092C434.72656%20543.08728%20773.57263%20454.66742%20804.76416%20447.57925C844.22015%20438.57248%20864.00165%20377.97653%20848.9657%20312.15771L848.85895%20312.15771Z%22%20fill%3D%22currentColor%22%20fill-rule%3D%22nonzero%22%2F%3E%3C%2Fsvg%3E",
 	about: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
 	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
 	inbox: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M2.5%2012C2.5%207.52166%202.5%205.28249%203.89124%203.89124C5.28249%202.5%207.52166%202.5%2012%202.5C16.4783%202.5%2018.7175%202.5%2020.1088%203.89124C21.5%205.28249%2021.5%207.52166%2021.5%2012C21.5%2016.4783%2021.5%2018.7175%2020.1088%2020.1088C18.7175%2021.5%2016.4783%2021.5%2012%2021.5C7.52166%2021.5%205.28249%2021.5%203.89124%2020.1088C2.5%2018.7175%202.5%2016.4783%202.5%2012Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M21.5%2013.5H16.5743C15.7322%2013.5%2015.0706%2014.2036%2014.6995%2014.9472C14.2963%2015.7551%2013.4889%2016.5%2012%2016.5C10.5111%2016.5%209.70373%2015.7551%209.30054%2014.9472C8.92942%2014.2036%208.26777%2013.5%207.42566%2013.5H2.5%22%20stroke%3D%22currentColor%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
@@ -23,11 +28,30 @@ const icons = {
 	display: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M4%2011L4%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%2013L19%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%203L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.5%203L11.5%2013%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M4%203L4%205%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.5%2019L11.5%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M2%209.5C2%209.03406%202%208.80109%202.07612%208.61732C2.17761%208.37229%202.37229%208.17761%202.61732%208.07612C2.80109%208%203.03406%208%203.5%208H4.5C4.96594%208%205.19891%208%205.38268%208.07612C5.62771%208.17761%205.82239%208.37229%205.92388%208.61732C6%208.80109%206%209.03406%206%209.5C6%209.96594%206%2010.1989%205.92388%2010.3827C5.82239%2010.6277%205.62771%2010.8224%205.38268%2010.9239C5.19891%2011%204.96594%2011%204.5%2011H3.5C3.03406%2011%202.80109%2011%202.61732%2010.9239C2.37229%2010.8224%202.17761%2010.6277%202.07612%2010.3827C2%2010.1989%202%209.96594%202%209.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M17%2011.5C17%2011.0341%2017%2010.8011%2017.0761%2010.6173C17.1776%2010.3723%2017.3723%2010.1776%2017.6173%2010.0761C17.8011%2010%2018.0341%2010%2018.5%2010H19.5C19.9659%2010%2020.1989%2010%2020.3827%2010.0761C20.6277%2010.1776%2020.8224%2010.3723%2020.9239%2010.6173C21%2010.8011%2021%2011.0341%2021%2011.5C21%2011.9659%2021%2012.1989%2020.9239%2012.3827C20.8224%2012.6277%2020.6277%2012.8224%2020.3827%2012.9239C20.1989%2013%2019.9659%2013%2019.5%2013H18.5C18.0341%2013%2017.8011%2013%2017.6173%2012.9239C17.3723%2012.8224%2017.1776%2012.6277%2017.0761%2012.3827C17%2012.1989%2017%2011.9659%2017%2011.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M9.5%2014.5C9.5%2014.0341%209.5%2013.8011%209.57612%2013.6173C9.67761%2013.3723%209.87229%2013.1776%2010.1173%2013.0761C10.3011%2013%2010.5341%2013%2011%2013H12C12.4659%2013%2012.6989%2013%2012.8827%2013.0761C13.1277%2013.1776%2013.3224%2013.3723%2013.4239%2013.6173C13.5%2013.8011%2013.5%2014.0341%2013.5%2014.5C13.5%2014.9659%2013.5%2015.1989%2013.4239%2015.3827C13.3224%2015.6277%2013.1277%2015.8224%2012.8827%2015.9239C12.6989%2016%2012.4659%2016%2012%2016H11C10.5341%2016%2010.3011%2016%2010.1173%2015.9239C9.87229%2015.8224%209.67761%2015.6277%209.57612%2015.3827C9.5%2015.1989%209.5%2014.9659%209.5%2014.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A",
 	windowMin: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M6%2012h12%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E%0A",
 	windowMax: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Crect%20x%3D%226.5%22%20y%3D%226.5%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%221.5%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E%0A",
-	windowClose: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m6%206%2012%2012M18%206%206%2018%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A"
+	windowClose: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m6%206%2012%2012M18%206%206%2018%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A",
+	server: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%222.6%22%2F%3E%3Cpath%20d%3D%22M12%209.4c0-3.2%201.1-5.9%202.8-5.9%201.6%200%202.3%202.5.9%205.1%22%2F%3E%3Cpath%20d%3D%22M14.6%2012c3.2%200%205.9%201.1%205.9%202.8%200%201.6-2.5%202.3-5.1.9%22%2F%3E%3Cpath%20d%3D%22M12%2014.6c0%203.2-1.1%205.9-2.8%205.9-1.6%200-2.3-2.5-.9-5.1%22%2F%3E%3Cpath%20d%3D%22M9.4%2012c-3.2%200-5.9-1.1-5.9-2.8%200-1.6%202.5-2.3%205.1-.9%22%2F%3E%3C%2Fsvg%3E",
+	info: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%2F%3E%3Cpath%20d%3D%22M12%2011v6%22%2F%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%227.6%22%20r%3D%22.95%22%20fill%3D%22currentColor%22%20stroke%3D%22none%22%2F%3E%3C%2Fsvg%3E",
+	palette: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203a9%209%200%201%200%200%2018h1.5a2.1%202.1%200%200%200%200-4.2h-.6a1.9%201.9%200%200%201%200-3.8H16a5%205%200%200%200%205-5C21%205.3%2017%203%2012%203Z%22%2F%3E%3Ccircle%20cx%3D%227.8%22%20cy%3D%2210%22%20r%3D%221.1%22%20fill%3D%22currentColor%22%20stroke%3D%22none%22%2F%3E%3Ccircle%20cx%3D%2210.2%22%20cy%3D%226.8%22%20r%3D%221.1%22%20fill%3D%22currentColor%22%20stroke%3D%22none%22%2F%3E%3Ccircle%20cx%3D%2214.4%22%20cy%3D%226.6%22%20r%3D%221.1%22%20fill%3D%22currentColor%22%20stroke%3D%22none%22%2F%3E%3C%2Fsvg%3E",
+	apps: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223.5%22%20y%3D%223.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%222.2%22%2F%3E%3Crect%20x%3D%2213.5%22%20y%3D%223.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%222.2%22%2F%3E%3Crect%20x%3D%223.5%22%20y%3D%2213.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%222.2%22%2F%3E%3Crect%20x%3D%2213.5%22%20y%3D%2213.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%222.2%22%2F%3E%3C%2Fsvg%3E",
+	plug: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%203v5M15%203v5%22%2F%3E%3Cpath%20d%3D%22M6%208h12v3a6%206%200%200%201-6%206%206%206%200%200%201-6-6V8Z%22%2F%3E%3Cpath%20d%3D%22M12%2017v4%22%2F%3E%3C%2Fsvg%3E",
+	database: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cellipse%20cx%3D%2212%22%20cy%3D%226%22%20rx%3D%227.5%22%20ry%3D%223%22%2F%3E%3Cpath%20d%3D%22M4.5%206v6c0%201.66%203.36%203%207.5%203s7.5-1.34%207.5-3V6%22%2F%3E%3Cpath%20d%3D%22M4.5%2012v6c0%201.66%203.36%203%207.5%203s7.5-1.34%207.5-3v-6%22%2F%3E%3C%2Fsvg%3E",
+	pulse: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M2.5%2012h4l2-5%203%2010%202.5-6%201.5%203h6%22%2F%3E%3C%2Fsvg%3E",
+	monitor: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%222.5%22%20y%3D%224%22%20width%3D%2219%22%20height%3D%2212.5%22%20rx%3D%222.6%22%2F%3E%3Cpath%20d%3D%22M9%2020.5h6M12%2016.5v4%22%2F%3E%3C%2Fsvg%3E",
+	globe: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%2F%3E%3Cpath%20d%3D%22M3.2%209h17.6M3.2%2015h17.6%22%2F%3E%3Cpath%20d%3D%22M12%203a14%2014%200%200%201%200%2018a14%2014%200%200%201%200-18Z%22%2F%3E%3C%2Fsvg%3E",
+	key: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%228.2%22%20cy%3D%228.2%22%20r%3D%224.4%22%2F%3E%3Cpath%20d%3D%22M11.4%2011.4%2020%2020M17%2017l-2%202M14%2014l-2%202%22%2F%3E%3C%2Fsvg%3E",
+	chip: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%226.5%22%20y%3D%226.5%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222.6%22%2F%3E%3Cpath%20d%3D%22M10%203v3.5M14%203v3.5M10%2017.5V21M14%2017.5V21M3%2010h3.5M3%2014h3.5M17.5%2010H21M17.5%2014H21%22%2F%3E%3C%2Fsvg%3E",
+	gear: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223.1%22%2F%3E%3Cpath%20d%3D%22M19.4%2013.4a7.6%207.6%200%200%200%200-2.8l1.9-1.4-2-3.4-2.2%201a7.6%207.6%200%200%200-2.4-1.4L14.3%202.2H9.7l-.4%202.9a7.6%207.6%200%200%200-2.4%201.4l-2.2-1-2%203.4%201.9%201.4a7.6%207.6%200%200%200%200%202.8l-1.9%201.4%202%203.4%202.2-1a7.6%207.6%200%200%200%202.4%201.4l.4%202.9h4.6l.4-2.9a7.6%207.6%200%200%200%202.4-1.4l2.2%201%202-3.4-1.9-1.4Z%22%2F%3E%3C%2Fsvg%3E",
+	code: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%208.5%205%2012l4%203.5M15%208.5%2019%2012l-4%203.5%22%2F%3E%3C%2Fsvg%3E",
+	search: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2211%22%20cy%3D%2211%22%20r%3D%226.5%22%2F%3E%3Cpath%20d%3D%22M16%2016l4.4%204.4%22%2F%3E%3C%2Fsvg%3E",
+	power: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203v8%22%2F%3E%3Cpath%20d%3D%22M7.6%206.3a7.6%207.6%200%201%200%208.8%200%22%2F%3E%3C%2Fsvg%3E",
+	chevron: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9.5%206l6%206-6%206%22%2F%3E%3C%2Fsvg%3E",
+	refresh: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20%2011a8%208%200%201%200-2.7%207%22%2F%3E%3Cpath%20d%3D%22M20%204.6V11h-6.4%22%2F%3E%3C%2Fsvg%3E",
+	shield: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203%205%206v5.6c0%204.3%203%208%207%209.4%204-1.4%207-5.1%207-9.4V6l-7-3Z%22%2F%3E%3C%2Fsvg%3E",
+	external: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M13.5%204.5H20V11%22%2F%3E%3Cpath%20d%3D%22M20%204.5%2011.5%2013%22%2F%3E%3Cpath%20d%3D%22M18%2014v3.5a2.5%202.5%200%200%201-2.5%202.5H6a2.5%202.5%200%200%201-2.5-2.5V9A2.5%202.5%200%200%201%206%206.5h3.5%22%2F%3E%3C%2Fsvg%3E"
 };
 
 //#endregion
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+d9186fab4dda30bd528fd5d6dbda843424b0ed78/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+9dd5fc97ce2d6b94319606e354e4aa0dd15d4c33/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
 function Icon(props) {
 	return (() => {
 		const __nsh_hv0 = element("image");
@@ -82,6 +106,152 @@ function PageScroll(props) {
 		return __nsh_hv43;
 	})();
 }
+
+//#endregion
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+9dd5fc97ce2d6b94319606e354e4aa0dd15d4c33/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/palettes.ts
+/**
+* Cobalt Foundry: forged steel greys lit by a cobalt arc. The Manager wears it
+* as its signature scheme; every consumer may ship its own palettes next to
+* this one, and the shape is the same so a choice can travel between apps.
+*/
+const cobaltFoundry = {
+	background: "#090c15",
+	shell: "#0d1019",
+	card: "#101318",
+	raised: "#181c25",
+	input: "#1e222b",
+	border: "#1e222b",
+	foreground: "#ffffff",
+	muted: "#717580",
+	faint: "#8f9498",
+	accent: "#1784fc",
+	accentText: "#101318",
+	danger: "#e67b71",
+	dangerFill: "#3e1f24",
+	success: "#3fbf7f"
+};
+/** The same cobalt palette for a light room: pale steel, same arc. */
+const cobaltFoundryLight = {
+	background: "#f7f8fa",
+	shell: "#eff1f5",
+	card: "#ffffff",
+	raised: "#eef1f6",
+	border: "#dde2ea",
+	foreground: "#111820",
+	muted: "#5f6a7a",
+	faint: "#8c96a6",
+	accent: "#1f6df5",
+	accentText: "#ffffff",
+	danger: "#d5373c",
+	dangerFill: "#fdecec",
+	success: "#1f8a5b"
+};
+function palette(key, name, colors) {
+	return {
+		key,
+		name,
+		colors
+	};
+}
+const lightThemes = [
+	palette("merino-light", "Merino Light", {
+		...cobaltFoundryLight,
+		background: "#f5f3ef",
+		shell: "#eeeae4",
+		card: "#ffffff",
+		raised: "#f1ede7",
+		border: "#e0dad1",
+		foreground: "#221f1b",
+		muted: "#6b645b",
+		faint: "#948c82",
+		accent: "#2563eb",
+		accentText: "#ffffff"
+	}),
+	palette("alpine-milk", "Alpine Milk", {
+		...cobaltFoundryLight,
+		background: "#f7f9fb",
+		shell: "#eef2f7",
+		card: "#ffffff",
+		raised: "#eaf0f7",
+		border: "#dbe3ee",
+		foreground: "#152030",
+		muted: "#5b6a7d",
+		faint: "#8794a8",
+		accent: "#0f7bd4"
+	}),
+	palette("buttercream-diner", "Buttercream Diner", {
+		...cobaltFoundryLight,
+		background: "#fdf8ea",
+		shell: "#f8f0dc",
+		card: "#fffdf4",
+		raised: "#f7eed8",
+		border: "#eadfc2",
+		foreground: "#2a2113",
+		muted: "#736450",
+		faint: "#9c8f7c",
+		accent: "#d1622a",
+		danger: "#c2402f"
+	}),
+	palette("coastal-linen", "Coastal Linen", {
+		...cobaltFoundryLight,
+		background: "#f3f8f7",
+		shell: "#e9f2f1",
+		card: "#ffffff",
+		raised: "#e8f1f0",
+		border: "#d5e4e2",
+		foreground: "#132524",
+		muted: "#566a69",
+		faint: "#839796",
+		accent: "#0f9aa8",
+		success: "#149a72"
+	})
+];
+const darkThemes = [
+	palette("cinder-peak", "Cinder Peak", {
+		...cobaltFoundry,
+		background: "#121010",
+		shell: "#161313",
+		card: "#1c1818",
+		raised: "#241f1f",
+		border: "#2e2727",
+		foreground: "#f1eae7",
+		muted: "#a2968f",
+		faint: "#736762",
+		accent: "#f0743f",
+		danger: "#e5544b",
+		dangerFill: "#2b1614"
+	}),
+	palette("cobalt-foundry", "Cobalt Foundry", cobaltFoundry),
+	palette("ember-hollow", "Ember Hollow", {
+		...cobaltFoundry,
+		background: "#0e0c09",
+		shell: "#12100b",
+		card: "#191509",
+		raised: "#221c10",
+		border: "#2d2515",
+		foreground: "#f4ead6",
+		muted: "#a6987c",
+		faint: "#776b53",
+		accent: "#f2a03d",
+		danger: "#e2603f",
+		dangerFill: "#2a1a10",
+		success: "#9cbf4b"
+	}),
+	palette("heliotrope", "Heliotrope", {
+		...cobaltFoundry,
+		background: "#0c0a12",
+		shell: "#100d17",
+		card: "#16121f",
+		raised: "#1e1929",
+		border: "#291f38",
+		foreground: "#ece7f8",
+		muted: "#9a90b4",
+		faint: "#6d6488",
+		accent: "#b07cff",
+		danger: "#ef5d8b",
+		dangerFill: "#291322"
+	})
+];
 
 //#endregion
 //#region navigation.json
@@ -397,6 +567,7 @@ const CLUSTER_START = 10;
 const TRAILING_INSET = 6;
 const CAPTION_BUTTON_WIDTH = 36;
 const closeHovered = signal(false);
+const titleFocused = signal(false);
 const SIDEBAR_HIDE_MS = 150;
 const SIDEBAR_OPEN_MS = 100;
 const SIDEBAR_MOTION_MS = 150;
@@ -523,30 +694,25 @@ function TitlebarOverlay(props) {
 	const controlsRight = captionWidth + TRAILING_INSET;
 	const addGameRight = controlsRight;
 	const wash = hoverWash(props.dark);
+	const barHeight = controls.height || 38;
+	const dragLeft = macos ? Math.max(controls.left, 78) : 0;
 	return (() => {
 		const __nsh_hv0 = element("view");
 		prop(__nsh_hv0, "class", "absolute left-0 right-0 top-0 z-20");
-		bindProp(__nsh_hv0, "style", () => ({ height: controls.height || 38 }));
+		prop(__nsh_hv0, "style", { height: barHeight });
 		prop(__nsh_hv0, "desktop", { windowDrag: true });
-		const __nsh_hv1 = element("view");
-		prop(__nsh_hv1, "class", "absolute top-0 bottom-0");
-		bindProp(__nsh_hv1, "style", () => ({
-			left: props.pageInset ?? 0,
-			right: 0,
-			backgroundColor: props.colors.background,
-			pointerEvents: "none"
-		}));
-		const __nsh_hv3 = element("view");
-		prop(__nsh_hv3, "onPressDown", () => props.onChrome("window.drag"));
-		prop(__nsh_hv3, "class", "absolute left-0 right-0 top-0 bottom-0");
 		const __nsh_hv4 = element("view");
-		bindProp(__nsh_hv4, "onPress", () => props.onToggleSidebar);
-		prop(__nsh_hv4, "role", "button");
-		prop(__nsh_hv4, "accessibilityLabel", "Боковая панель");
-		prop(__nsh_hv4, "class", "absolute items-center justify-center");
-		prop(__nsh_hv4, "desktop", { windowDrag: false });
-		prop(__nsh_hv4, "hoverStyle", { backgroundColor: wash });
-		bindProp(__nsh_hv4, "style", () => ({
+		prop(__nsh_hv4, "onPressDown", (event) => props.onChrome((event?.clickCount ?? 1) >= 2 ? "window.titlebar-double-click" : "window.drag"));
+		prop(__nsh_hv4, "class", "absolute right-0 top-0 bottom-0");
+		prop(__nsh_hv4, "style", { left: dragLeft });
+		const __nsh_hv5 = element("view");
+		bindProp(__nsh_hv5, "onPress", () => props.onToggleSidebar);
+		prop(__nsh_hv5, "role", "button");
+		prop(__nsh_hv5, "accessibilityLabel", "Боковая панель");
+		prop(__nsh_hv5, "class", "absolute items-center justify-center");
+		prop(__nsh_hv5, "desktop", { windowDrag: false });
+		prop(__nsh_hv5, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv5, "style", () => ({
 			top: titlebarControlTop(24),
 			left: sidebarLeft,
 			width: 24,
@@ -554,37 +720,57 @@ function TitlebarOverlay(props) {
 			borderRadius: CONTROL_RADIUS,
 			cursor: "pointer"
 		}));
-		insert(__nsh_hv4, component(Icon, {
+		insert(__nsh_hv5, component(Icon, {
 			name: "sidebar",
 			size: 16,
 			get color() {
 				return props.colors.muted;
 			}
 		}));
-		append(__nsh_hv0, __nsh_hv1);
-		append(__nsh_hv0, __nsh_hv3);
 		append(__nsh_hv0, __nsh_hv4);
-		insert(__nsh_hv0, () => props.dimmed && (() => {
+		append(__nsh_hv0, __nsh_hv5);
+		insert(__nsh_hv0, [() => props.fadeBackdrop ? (() => {
+			const __nsh_hv1 = element("view");
+			prop(__nsh_hv1, "class", "absolute top-0");
+			bindProp(__nsh_hv1, "style", () => ({
+				left: props.pageInset ?? 0,
+				right: 0,
+				height: barHeight + 34,
+				backgroundImage: `linear-gradient(to bottom, ${props.colors.background} 0%, ${colorAlpha(props.colors.background, .94)} 34%, ${colorAlpha(props.colors.background, .58)} 66%, ${colorAlpha(props.colors.background, 0)} 100%)`,
+				pointerEvents: "none"
+			}));
+			return __nsh_hv1;
+		})() : (() => {
 			const __nsh_hv2 = element("view");
 			prop(__nsh_hv2, "class", "absolute top-0 bottom-0");
 			bindProp(__nsh_hv2, "style", () => ({
 				left: props.pageInset ?? 0,
 				right: 0,
-				backgroundColor: "#00000080",
+				backgroundColor: props.colors.background,
 				pointerEvents: "none"
 			}));
 			return __nsh_hv2;
-		})(), __nsh_hv3);
+		})(), () => props.dimmed && (() => {
+			const __nsh_hv3 = element("view");
+			prop(__nsh_hv3, "class", "absolute top-0 bottom-0");
+			bindProp(__nsh_hv3, "style", () => ({
+				left: props.pageInset ?? 0,
+				right: 0,
+				backgroundColor: "#00000080",
+				pointerEvents: "none"
+			}));
+			return __nsh_hv3;
+		})()], __nsh_hv4);
 		insert(__nsh_hv0, [
 			() => props.showAddGame && (() => {
-				const __nsh_hv5 = element("view");
-				prop(__nsh_hv5, "onPress", () => props.onAddGame?.());
-				prop(__nsh_hv5, "role", "button");
-				prop(__nsh_hv5, "accessibilityLabel", "Добавить игру");
-				prop(__nsh_hv5, "class", "absolute items-center justify-center");
-				prop(__nsh_hv5, "desktop", { windowDrag: false });
-				prop(__nsh_hv5, "hoverStyle", { backgroundColor: wash });
-				bindProp(__nsh_hv5, "style", () => ({
+				const __nsh_hv6 = element("view");
+				prop(__nsh_hv6, "onPress", () => props.onAddGame?.());
+				prop(__nsh_hv6, "role", "button");
+				prop(__nsh_hv6, "accessibilityLabel", "Добавить игру");
+				prop(__nsh_hv6, "class", "absolute items-center justify-center");
+				prop(__nsh_hv6, "desktop", { windowDrag: false });
+				prop(__nsh_hv6, "hoverStyle", { backgroundColor: wash });
+				bindProp(__nsh_hv6, "style", () => ({
 					top: titlebarControlTop(28),
 					right: addGameRight,
 					width: 28,
@@ -592,24 +778,27 @@ function TitlebarOverlay(props) {
 					borderRadius: CONTROL_RADIUS,
 					cursor: "pointer"
 				}));
-				insert(__nsh_hv5, component(Icon, {
+				insert(__nsh_hv6, component(Icon, {
 					name: "plus",
 					size: 16,
 					get color() {
 						return props.colors.muted;
 					}
 				}));
-				return __nsh_hv5;
+				return __nsh_hv6;
 			})(),
 			() => props.noteActive && (() => {
-				const __nsh_hv6 = element("view");
-				prop(__nsh_hv6, "onPress", () => props.onCloseNote?.());
-				prop(__nsh_hv6, "role", "button");
-				prop(__nsh_hv6, "accessibilityLabel", "К списку заметок");
-				prop(__nsh_hv6, "class", "absolute flex-row items-center");
-				prop(__nsh_hv6, "hoverStyle", { backgroundColor: wash });
-				prop(__nsh_hv6, "desktop", { windowDrag: false });
-				bindProp(__nsh_hv6, "style", () => ({
+				const __nsh_hv7 = element("view");
+				prop(__nsh_hv7, "onPress", () => {
+					titleFocused.set(false);
+					props.onCloseNote?.();
+				});
+				prop(__nsh_hv7, "role", "button");
+				prop(__nsh_hv7, "accessibilityLabel", "К списку заметок");
+				prop(__nsh_hv7, "class", "absolute flex-row items-center");
+				prop(__nsh_hv7, "hoverStyle", { backgroundColor: wash });
+				prop(__nsh_hv7, "desktop", { windowDrag: false });
+				bindProp(__nsh_hv7, "style", () => ({
 					left: (props.pageInset ?? 0) + 8,
 					top: titlebarControlTop(24),
 					height: 24,
@@ -619,40 +808,48 @@ function TitlebarOverlay(props) {
 					borderRadius: CONTROL_RADIUS,
 					cursor: "pointer"
 				}));
-				const __nsh_hv7 = element("text");
-				prop(__nsh_hv7, "class", "text-[15px]");
-				bindProp(__nsh_hv7, "style", () => ({ color: props.colors.muted }));
-				const __nsh_hv8 = text("‹");
+				const __nsh_hv8 = element("text");
+				prop(__nsh_hv8, "class", "text-[15px]");
+				bindProp(__nsh_hv8, "style", () => ({ color: props.colors.muted }));
+				const __nsh_hv9 = text("‹");
+				append(__nsh_hv8, __nsh_hv9);
+				const __nsh_hv10 = element("text");
+				prop(__nsh_hv10, "class", "text-[12px]");
+				bindProp(__nsh_hv10, "style", () => ({ color: props.colors.muted }));
+				const __nsh_hv11 = text("Заметки");
+				append(__nsh_hv10, __nsh_hv11);
 				append(__nsh_hv7, __nsh_hv8);
-				const __nsh_hv9 = element("text");
-				prop(__nsh_hv9, "class", "text-[12px]");
-				bindProp(__nsh_hv9, "style", () => ({ color: props.colors.muted }));
-				const __nsh_hv10 = text("Заметки");
-				append(__nsh_hv9, __nsh_hv10);
-				append(__nsh_hv6, __nsh_hv7);
-				append(__nsh_hv6, __nsh_hv9);
-				return __nsh_hv6;
+				append(__nsh_hv7, __nsh_hv10);
+				return __nsh_hv7;
 			})(),
 			() => props.noteActive && (() => {
-				const __nsh_hv11 = element("view");
-				prop(__nsh_hv11, "class", "absolute flex-row items-center justify-center");
-				prop(__nsh_hv11, "pointerEvents", "box-none");
-				prop(__nsh_hv11, "desktop", { windowDrag: false });
-				bindProp(__nsh_hv11, "style", () => ({
+				const __nsh_hv12 = element("view");
+				prop(__nsh_hv12, "class", "absolute flex-row items-center justify-center");
+				prop(__nsh_hv12, "desktop", { windowDrag: false });
+				bindProp(__nsh_hv12, "style", () => ({
 					left: props.pageInset ?? 0,
 					right: 0,
 					top: titlebarControlTop(26),
-					height: 26
+					height: 26,
+					pointerEvents: "box-none"
 				}));
-				const __nsh_hv12 = element("input");
-				bindProp(__nsh_hv12, "value", () => props.noteTitle ?? "");
-				prop(__nsh_hv12, "onChange", (event) => props.onRenameNote?.(event.value));
-				prop(__nsh_hv12, "placeholder", "Заголовок");
-				prop(__nsh_hv12, "accessibilityLabel", "Заголовок заметки");
-				prop(__nsh_hv12, "class", "text-center text-[13px] font-semibold");
-				bindProp(__nsh_hv12, "style", () => ({
+				const __nsh_hv13 = element("view");
+				prop(__nsh_hv13, "class", "relative items-center justify-center");
+				prop(__nsh_hv13, "style", {
 					width: 360,
 					maxWidth: "70%",
+					height: 26
+				});
+				const __nsh_hv17 = element("input");
+				bindProp(__nsh_hv17, "value", () => props.noteTitle ?? "");
+				prop(__nsh_hv17, "onChange", (event) => props.onRenameNote?.(event.value));
+				prop(__nsh_hv17, "onFocus", () => titleFocused.set(true));
+				prop(__nsh_hv17, "onBlur", () => titleFocused.set(false));
+				prop(__nsh_hv17, "accessibilityLabel", "Заголовок заметки");
+				prop(__nsh_hv17, "class", "text-center text-[13px] font-semibold");
+				bindProp(__nsh_hv17, "style", () => ({
+					width: "100%",
+					height: 26,
 					textAlign: "center",
 					color: props.colors.foreground,
 					backgroundColor: "transparent",
@@ -662,18 +859,37 @@ function TitlebarOverlay(props) {
 					paddingRight: 8,
 					lineHeight: 18
 				}));
-				append(__nsh_hv11, __nsh_hv12);
-				return __nsh_hv11;
+				append(__nsh_hv13, __nsh_hv17);
+				insert(__nsh_hv13, () => !(props.noteTitle ?? "") && !titleFocused() && (() => {
+					const __nsh_hv14 = element("view");
+					prop(__nsh_hv14, "class", "absolute left-0 right-0 top-0 bottom-0 items-center justify-center");
+					prop(__nsh_hv14, "style", { pointerEvents: "none" });
+					const __nsh_hv15 = element("text");
+					prop(__nsh_hv15, "class", "text-center text-[13px] font-semibold");
+					bindProp(__nsh_hv15, "style", () => ({
+						color: colorAlpha(props.colors.foreground, .5),
+						lineHeight: 18
+					}));
+					const __nsh_hv16 = text("Заголовок");
+					append(__nsh_hv15, __nsh_hv16);
+					append(__nsh_hv14, __nsh_hv15);
+					return __nsh_hv14;
+				})(), __nsh_hv17);
+				append(__nsh_hv12, __nsh_hv13);
+				return __nsh_hv12;
 			})(),
 			() => props.noteActive && (() => {
-				const __nsh_hv13 = element("view");
-				prop(__nsh_hv13, "onPress", () => props.onDeleteNote?.());
-				prop(__nsh_hv13, "role", "button");
-				prop(__nsh_hv13, "accessibilityLabel", "Удалить заметку");
-				prop(__nsh_hv13, "class", "absolute items-center justify-center");
-				prop(__nsh_hv13, "hoverStyle", { backgroundColor: wash });
-				prop(__nsh_hv13, "desktop", { windowDrag: false });
-				bindProp(__nsh_hv13, "style", () => ({
+				const __nsh_hv18 = element("view");
+				prop(__nsh_hv18, "onPress", () => {
+					titleFocused.set(false);
+					props.onDeleteNote?.();
+				});
+				prop(__nsh_hv18, "role", "button");
+				prop(__nsh_hv18, "accessibilityLabel", "Удалить заметку");
+				prop(__nsh_hv18, "class", "absolute items-center justify-center");
+				prop(__nsh_hv18, "hoverStyle", { backgroundColor: wash });
+				prop(__nsh_hv18, "desktop", { windowDrag: false });
+				bindProp(__nsh_hv18, "style", () => ({
 					right: controlsRight + 8,
 					top: titlebarControlTop(24),
 					width: 26,
@@ -681,83 +897,83 @@ function TitlebarOverlay(props) {
 					borderRadius: CONTROL_RADIUS,
 					cursor: "pointer"
 				}));
-				insert(__nsh_hv13, component(Icon, {
+				insert(__nsh_hv18, component(Icon, {
 					name: "trash",
 					size: 13,
 					get color() {
 						return props.colors.muted;
 					}
 				}));
-				return __nsh_hv13;
+				return __nsh_hv18;
 			})(),
 			() => drawCaptions && (() => {
-				const __nsh_hv14 = element("view");
-				prop(__nsh_hv14, "class", "absolute right-0 top-0 flex-row");
-				prop(__nsh_hv14, "desktop", { windowDrag: false });
-				prop(__nsh_hv14, "style", { height: 38 });
-				const __nsh_hv15 = element("view");
-				prop(__nsh_hv15, "onPress", () => props.onChrome("window.minimize"));
-				prop(__nsh_hv15, "role", "button");
-				prop(__nsh_hv15, "accessibilityLabel", "Свернуть окно");
-				prop(__nsh_hv15, "class", "items-center justify-center");
-				prop(__nsh_hv15, "desktop", { windowDrag: false });
-				prop(__nsh_hv15, "hoverStyle", { backgroundColor: wash });
-				prop(__nsh_hv15, "style", {
+				const __nsh_hv19 = element("view");
+				prop(__nsh_hv19, "class", "absolute right-0 top-0 flex-row");
+				prop(__nsh_hv19, "desktop", { windowDrag: false });
+				prop(__nsh_hv19, "style", { height: 38 });
+				const __nsh_hv20 = element("view");
+				prop(__nsh_hv20, "onPress", () => props.onChrome("window.minimize"));
+				prop(__nsh_hv20, "role", "button");
+				prop(__nsh_hv20, "accessibilityLabel", "Свернуть окно");
+				prop(__nsh_hv20, "class", "items-center justify-center");
+				prop(__nsh_hv20, "desktop", { windowDrag: false });
+				prop(__nsh_hv20, "hoverStyle", { backgroundColor: wash });
+				prop(__nsh_hv20, "style", {
 					width: CAPTION_BUTTON_WIDTH,
 					height: 38,
 					cursor: "pointer"
 				});
-				insert(__nsh_hv15, component(Icon, {
+				insert(__nsh_hv20, component(Icon, {
 					name: "windowMin",
 					get color() {
 						return props.colors.foreground;
 					},
 					size: 12
 				}));
-				const __nsh_hv16 = element("view");
-				prop(__nsh_hv16, "onPress", () => props.onChrome("window.zoom"));
-				prop(__nsh_hv16, "role", "button");
-				prop(__nsh_hv16, "accessibilityLabel", "Развернуть окно");
-				prop(__nsh_hv16, "class", "items-center justify-center");
-				prop(__nsh_hv16, "desktop", { windowDrag: false });
-				prop(__nsh_hv16, "hoverStyle", { backgroundColor: wash });
-				prop(__nsh_hv16, "style", {
+				const __nsh_hv21 = element("view");
+				prop(__nsh_hv21, "onPress", () => props.onChrome("window.zoom"));
+				prop(__nsh_hv21, "role", "button");
+				prop(__nsh_hv21, "accessibilityLabel", "Развернуть окно");
+				prop(__nsh_hv21, "class", "items-center justify-center");
+				prop(__nsh_hv21, "desktop", { windowDrag: false });
+				prop(__nsh_hv21, "hoverStyle", { backgroundColor: wash });
+				prop(__nsh_hv21, "style", {
 					width: CAPTION_BUTTON_WIDTH,
 					height: 38,
 					cursor: "pointer"
 				});
-				insert(__nsh_hv16, component(Icon, {
+				insert(__nsh_hv21, component(Icon, {
 					name: "windowMax",
 					get color() {
 						return props.colors.foreground;
 					},
 					size: 12
 				}));
-				const __nsh_hv17 = element("view");
-				prop(__nsh_hv17, "onPress", () => props.onChrome("window.close"));
-				prop(__nsh_hv17, "onMouseEnter", () => closeHovered.set(true));
-				prop(__nsh_hv17, "onMouseLeave", () => closeHovered.set(false));
-				prop(__nsh_hv17, "role", "button");
-				prop(__nsh_hv17, "accessibilityLabel", "Закрыть окно");
-				prop(__nsh_hv17, "class", "items-center justify-center");
-				prop(__nsh_hv17, "desktop", { windowDrag: false });
-				prop(__nsh_hv17, "hoverStyle", { backgroundColor: "#e81123" });
-				prop(__nsh_hv17, "style", {
+				const __nsh_hv22 = element("view");
+				prop(__nsh_hv22, "onPress", () => props.onChrome("window.close"));
+				prop(__nsh_hv22, "onMouseEnter", () => closeHovered.set(true));
+				prop(__nsh_hv22, "onMouseLeave", () => closeHovered.set(false));
+				prop(__nsh_hv22, "role", "button");
+				prop(__nsh_hv22, "accessibilityLabel", "Закрыть окно");
+				prop(__nsh_hv22, "class", "items-center justify-center");
+				prop(__nsh_hv22, "desktop", { windowDrag: false });
+				prop(__nsh_hv22, "hoverStyle", { backgroundColor: "#e81123" });
+				prop(__nsh_hv22, "style", {
 					width: CAPTION_BUTTON_WIDTH,
 					height: 38,
 					cursor: "pointer"
 				});
-				insert(__nsh_hv17, component(Icon, {
+				insert(__nsh_hv22, component(Icon, {
 					name: "windowClose",
 					get color() {
 						return closeHovered() ? "#ffffff" : props.colors.foreground;
 					},
 					size: 12
 				}));
-				append(__nsh_hv14, __nsh_hv15);
-				append(__nsh_hv14, __nsh_hv16);
-				append(__nsh_hv14, __nsh_hv17);
-				return __nsh_hv14;
+				append(__nsh_hv19, __nsh_hv20);
+				append(__nsh_hv19, __nsh_hv21);
+				append(__nsh_hv19, __nsh_hv22);
+				return __nsh_hv19;
 			})()
 		]);
 		return __nsh_hv0;
@@ -766,14 +982,14 @@ function TitlebarOverlay(props) {
 function SidebarRow(props) {
 	const wash = hoverWash(props.dark);
 	return (() => {
-		const __nsh_hv18 = element("view");
-		bindProp(__nsh_hv18, "onPress", () => props.onPress);
-		prop(__nsh_hv18, "role", "button");
-		bindProp(__nsh_hv18, "accessibilityState", () => ({ selected: props.selected }));
-		prop(__nsh_hv18, "desktop", { windowDrag: false });
-		prop(__nsh_hv18, "class", "flex-row items-center");
-		prop(__nsh_hv18, "hoverStyle", { backgroundColor: wash });
-		bindProp(__nsh_hv18, "style", () => ({
+		const __nsh_hv23 = element("view");
+		bindProp(__nsh_hv23, "onPress", () => props.onPress);
+		prop(__nsh_hv23, "role", "button");
+		bindProp(__nsh_hv23, "accessibilityState", () => ({ selected: props.selected }));
+		prop(__nsh_hv23, "desktop", { windowDrag: false });
+		prop(__nsh_hv23, "class", "flex-row items-center");
+		prop(__nsh_hv23, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv23, "style", () => ({
 			height: 40,
 			gap: 10,
 			paddingLeft: 10,
@@ -782,16 +998,16 @@ function SidebarRow(props) {
 			backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent",
 			cursor: "pointer"
 		}));
-		const __nsh_hv19 = element("text");
-		prop(__nsh_hv19, "class", "text-[14px]");
-		bindProp(__nsh_hv19, "style", () => ({
+		const __nsh_hv24 = element("text");
+		prop(__nsh_hv24, "class", "text-[14px]");
+		bindProp(__nsh_hv24, "style", () => ({
 			color: props.colors.foreground,
 			fontWeight: 500,
 			lineHeight: 20
 		}));
-		insert(__nsh_hv19, () => props.label);
-		append(__nsh_hv18, __nsh_hv19);
-		insert(__nsh_hv18, () => props.icon === "gamepad" || props.icon === "file" ? component(Glyph, {
+		insert(__nsh_hv24, () => props.label);
+		append(__nsh_hv23, __nsh_hv24);
+		insert(__nsh_hv23, () => props.icon === "gamepad" || props.icon === "file" ? component(Glyph, {
 			get name() {
 				return props.icon;
 			},
@@ -807,69 +1023,73 @@ function SidebarRow(props) {
 			get color() {
 				return props.colors.foreground;
 			}
-		}), __nsh_hv19);
-		return __nsh_hv18;
+		}), __nsh_hv24);
+		return __nsh_hv23;
 	})();
 }
 function RecentRow(props) {
 	const wash = hoverWash(props.dark);
 	return (() => {
-		const __nsh_hv20 = element("view");
-		bindProp(__nsh_hv20, "onPress", () => props.onPress);
-		prop(__nsh_hv20, "role", "button");
-		bindProp(__nsh_hv20, "accessibilityLabel", () => props.entry.title);
-		prop(__nsh_hv20, "class", "flex-row items-center");
-		prop(__nsh_hv20, "hoverStyle", { backgroundColor: wash });
-		prop(__nsh_hv20, "style", {
+		const __nsh_hv25 = element("view");
+		bindProp(__nsh_hv25, "onPress", () => props.onPress);
+		prop(__nsh_hv25, "role", "button");
+		bindProp(__nsh_hv25, "accessibilityLabel", () => props.entry.title);
+		bindProp(__nsh_hv25, "accessibilityState", () => ({ selected: Boolean(props.selected) }));
+		prop(__nsh_hv25, "desktop", { windowDrag: false });
+		prop(__nsh_hv25, "class", "flex-row items-center");
+		prop(__nsh_hv25, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv25, "style", () => ({
 			height: 34,
 			paddingLeft: 10,
 			paddingRight: 10,
 			borderRadius: NAV_ROW_RADIUS,
+			backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent",
 			cursor: "pointer"
-		});
-		const __nsh_hv21 = element("text");
-		prop(__nsh_hv21, "class", "text-[12px]");
-		bindProp(__nsh_hv21, "style", () => ({
-			color: props.colors.muted,
+		}));
+		const __nsh_hv26 = element("text");
+		prop(__nsh_hv26, "class", "text-[12px]");
+		bindProp(__nsh_hv26, "style", () => ({
+			color: props.selected ? props.colors.foreground : props.colors.muted,
+			fontWeight: props.selected ? 500 : 400,
 			lineHeight: 18
 		}));
-		insert(__nsh_hv21, () => props.entry.title);
-		append(__nsh_hv20, __nsh_hv21);
-		return __nsh_hv20;
+		insert(__nsh_hv26, () => props.entry.title);
+		append(__nsh_hv25, __nsh_hv26);
+		return __nsh_hv25;
 	})();
 }
 function GhostButton(props) {
 	return (() => {
-		const __nsh_hv22 = element("view");
-		bindProp(__nsh_hv22, "onPress", () => props.onPress);
-		prop(__nsh_hv22, "role", "button");
-		bindProp(__nsh_hv22, "accessibilityLabel", () => props.label);
-		prop(__nsh_hv22, "class", "items-center justify-center");
-		bindProp(__nsh_hv22, "hoverStyle", () => ({ backgroundColor: props.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }));
-		prop(__nsh_hv22, "style", {
+		const __nsh_hv27 = element("view");
+		bindProp(__nsh_hv27, "onPress", () => props.onPress);
+		prop(__nsh_hv27, "role", "button");
+		bindProp(__nsh_hv27, "accessibilityLabel", () => props.label);
+		prop(__nsh_hv27, "class", "items-center justify-center");
+		bindProp(__nsh_hv27, "hoverStyle", () => ({ backgroundColor: props.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }));
+		prop(__nsh_hv27, "style", {
 			height: 32,
 			paddingLeft: 12,
 			paddingRight: 12,
 			borderRadius: ROW_RADIUS,
 			cursor: "pointer"
 		});
-		const __nsh_hv23 = element("text");
-		bindProp(__nsh_hv23, "class", () => `text-[13px] hover:text-[${props.colors.foreground}]`);
-		bindProp(__nsh_hv23, "style", () => ({ color: props.colors.muted }));
-		insert(__nsh_hv23, () => props.label);
-		append(__nsh_hv22, __nsh_hv23);
-		return __nsh_hv22;
+		const __nsh_hv28 = element("text");
+		bindProp(__nsh_hv28, "class", () => `text-[13px] hover:text-[${props.colors.foreground}]`);
+		bindProp(__nsh_hv28, "style", () => ({ color: props.colors.muted }));
+		insert(__nsh_hv28, () => props.label);
+		append(__nsh_hv27, __nsh_hv28);
+		return __nsh_hv27;
 	})();
 }
 function SolidButton(props) {
 	return (() => {
-		const __nsh_hv24 = element("view");
-		bindProp(__nsh_hv24, "onPress", () => props.onPress);
-		prop(__nsh_hv24, "role", "button");
-		bindProp(__nsh_hv24, "accessibilityLabel", () => props.label);
-		prop(__nsh_hv24, "class", "items-center justify-center");
-		prop(__nsh_hv24, "hoverStyle", { opacity: .9 });
-		bindProp(__nsh_hv24, "style", () => ({
+		const __nsh_hv29 = element("view");
+		bindProp(__nsh_hv29, "onPress", () => props.onPress);
+		prop(__nsh_hv29, "role", "button");
+		bindProp(__nsh_hv29, "accessibilityLabel", () => props.label);
+		prop(__nsh_hv29, "class", "items-center justify-center");
+		prop(__nsh_hv29, "hoverStyle", { opacity: .9 });
+		bindProp(__nsh_hv29, "style", () => ({
 			height: 32,
 			paddingLeft: 12,
 			paddingRight: 12,
@@ -877,12 +1097,12 @@ function SolidButton(props) {
 			backgroundColor: props.background,
 			cursor: "pointer"
 		}));
-		const __nsh_hv25 = element("text");
-		prop(__nsh_hv25, "class", "text-[13px] font-medium");
-		bindProp(__nsh_hv25, "style", () => ({ color: props.foreground }));
-		insert(__nsh_hv25, () => props.label);
-		append(__nsh_hv24, __nsh_hv25);
-		return __nsh_hv24;
+		const __nsh_hv30 = element("text");
+		prop(__nsh_hv30, "class", "text-[13px] font-medium");
+		bindProp(__nsh_hv30, "style", () => ({ color: props.foreground }));
+		insert(__nsh_hv30, () => props.label);
+		append(__nsh_hv29, __nsh_hv30);
+		return __nsh_hv29;
 	})();
 }
 
@@ -973,19 +1193,26 @@ const DotScope = nativeComponent("atlas.scope", {
 	events: []
 });
 const MIC_ICON = "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M12%202C10.3431%202%209%203.34315%209%205V12C9%2013.6569%2010.3431%2015%2012%2015C13.6569%2015%2015%2013.6569%2015%2012V5C15%203.34315%2013.6569%202%2012%202Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%2011V12C19%2015.866%2015.866%2019%2012%2019C8.13401%2019%205%2015.866%205%2012V11%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12%2019V22%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E";
-const COMPOSER_RADIUS = 50;
+const COMPOSER_RADIUS = 25;
+const COMPOSER_EXPANDED_RADIUS = 18;
 const COMPOSER_COMPACT_HEIGHT = 49;
 /** The recording scope sits in its own compartment above the field. */
 const SCOPE_HEIGHT = 64;
 const SCOPE_RADIUS = 26;
 const COMPOSER_SEND = 31;
+const COMPOSER_BUTTON_INSET = 8;
+const COMPOSER_FONT = 15;
 const COMPOSER_LINE = 22;
 const COMPOSER_PAD_X = 16;
 const COMPOSER_PAD_Y = 12;
-const COMPOSER_MAX_CONTENT = 132;
-const COMPOSER_MAX_HEIGHT = 168;
-const CARET_WIDTH = 2;
-const CARET_BLINK_MS = 500;
+const COMPOSER_MAX_WINDOW_SHARE = .7;
+const COMPOSER_MAX_HEIGHT_FALLBACK = 168;
+/** Matches RichEditor's caret in notes (`nsh-base`: 1.5 pt wide, ~0.85 * asc+desc tall, 530 ms blink). */
+const CARET_WIDTH = 1.5;
+const CARET_HEIGHT = COMPOSER_FONT * 1.02;
+const CARET_BLINK_MS = 530;
+const COMPOSER_BOTTOM_MARGIN = 18;
+const COMPOSER_FEED_GAP = 14;
 const COMPOSER_FADE = 20;
 const BUBBLE_RADIUS = 18;
 const FEED_PAD = 16;
@@ -1040,20 +1267,82 @@ function leaveJournalDates() {
 	journalHoverId.set(null);
 	journalDateShown.set(null);
 }
+function createCaretState(initial) {
+	const focused = signal(false);
+	const selection = signal({
+		start: 0,
+		end: 0
+	});
+	const composing = signal(false);
+	const rect = signal(initial);
+	const on = signal(true);
+	const tick = signal(0);
+	const bump = () => {
+		on.set(true);
+		tick.update((n) => n + 1);
+	};
+	const place = (bounds) => {
+		const height = bounds.size.height;
+		if (height <= 0) return;
+		rect.set({
+			x: bounds.origin.x,
+			y: bounds.origin.y,
+			height
+		});
+		bump();
+	};
+	const active = () => {
+		const range = selection();
+		return focused() && (windowState()?.focused ?? true) && range.start === range.end && !composing();
+	};
+	const focus = () => {
+		focused.set(true);
+		bump();
+	};
+	const blur = () => {
+		focused.set(false);
+		selection.set({
+			start: 0,
+			end: 0
+		});
+		composing.set(false);
+	};
+	const reset = () => {
+		selection.set({
+			start: 0,
+			end: 0
+		});
+		composing.set(false);
+		rect.set(initial);
+		bump();
+	};
+	return {
+		focused,
+		selection,
+		composing,
+		rect,
+		on,
+		tick,
+		bump,
+		place,
+		active,
+		focus,
+		blur,
+		reset
+	};
+}
 const journalDraft = signal("");
 const journalDraftContentHeight = signal(COMPOSER_LINE);
-const journalFocused = signal(false);
-const journalSelection = signal({
-	start: 0,
-	end: 0
-});
-const journalCaret = signal({
+const composerCaret = createCaretState({
 	x: COMPOSER_PAD_X,
 	y: COMPOSER_PAD_Y,
 	height: COMPOSER_LINE
 });
-const journalCaretOn = signal(true);
-const journalCaretTick = signal(0);
+const editCaret = createCaretState({
+	x: 8,
+	y: 4,
+	height: COMPOSER_LINE
+});
 const journalScrollY = signal(0);
 const editingJournalId = signal(null);
 const editingJournalText = signal("");
@@ -1113,7 +1402,7 @@ let sendSeq = 0;
 let composerRef;
 let editFocus;
 function claimJournalComposer() {
-	if (editingJournalId()) return;
+	if (editingJournalId() || composerCaret.focused()) return;
 	composerRef?.focus();
 }
 function animateComposer() {
@@ -1125,8 +1414,15 @@ function animateComposer() {
 		}
 	});
 }
+function composerMaxHeight(windowHeight) {
+	if (windowHeight <= 0) return COMPOSER_MAX_HEIGHT_FALLBACK;
+	return Math.max(COMPOSER_COMPACT_HEIGHT, Math.round(windowHeight * COMPOSER_MAX_WINDOW_SHARE));
+}
+function composerMaxContent() {
+	return Math.max(COMPOSER_LINE, composerMaxHeight(feedBox().height) - 24);
+}
 function clampDraftHeight(height) {
-	return Math.round(Math.max(COMPOSER_LINE, Math.min(COMPOSER_MAX_CONTENT, height)));
+	return Math.round(Math.max(COMPOSER_LINE, Math.min(composerMaxContent(), height)));
 }
 function composerContentHeight() {
 	return Math.max(COMPOSER_LINE, journalDraftContentHeight());
@@ -1138,7 +1434,13 @@ function composerViewportHeight() {
 	return clampDraftHeight(composerContentHeight()) + 24;
 }
 function composerPillHeight() {
-	return Math.max(COMPOSER_COMPACT_HEIGHT, Math.min(COMPOSER_MAX_HEIGHT, composerViewportHeight()));
+	return Math.max(COMPOSER_COMPACT_HEIGHT, Math.min(composerMaxHeight(feedBox().height), composerViewportHeight()));
+}
+function composerMaxScroll() {
+	return Math.max(0, composerInputHeight() - composerViewportHeight());
+}
+function composerBottomInset() {
+	return composerPillHeight() + (scopeShown() ? scopeHeight() : 0) + COMPOSER_BOTTOM_MARGIN + COMPOSER_FEED_GAP;
 }
 function composerFadeEdges(content, viewport, scroll) {
 	const max = Math.max(0, content - viewport);
@@ -1160,23 +1462,56 @@ function composerFadeBottom() {
 function composerExpanded() {
 	return journalDraftContentHeight() > 23;
 }
-function placeCaret(bounds) {
-	const height = bounds.size.height;
-	if (height <= 0) return;
-	journalCaret.set({
-		x: bounds.origin.x,
-		y: bounds.origin.y,
+function composerCorners(expanded, scoped) {
+	const outer = expanded ? COMPOSER_EXPANDED_RADIUS : scoped ? SCOPE_RADIUS : COMPOSER_RADIUS;
+	return {
+		outer,
+		button: Math.min(Math.ceil(COMPOSER_SEND / 2), Math.max(8, outer - COMPOSER_BUTTON_INSET))
+	};
+}
+function composerCaretBox(caret, ratio) {
+	const dpr = Math.max(1, ratio);
+	const snap = (value) => Math.round(value * dpr) / dpr;
+	const width = Math.max(1 / dpr, snap(CARET_WIDTH));
+	const height = snap(Math.min(caret.height, CARET_HEIGHT));
+	const top = snap(caret.y + (caret.height - height) * .5);
+	return {
+		left: Math.max(0, snap(caret.x - width * .5)),
+		top,
+		width,
 		height
+	};
+}
+function EditorCaret(props) {
+	effect(() => {
+		if (!props.caret.active()) {
+			props.caret.on.set(false);
+			return;
+		}
+		props.caret.tick();
+		props.caret.on.set(true);
+		let timer = setTimeout(function step() {
+			props.caret.on.update((visible) => !visible);
+			timer = setTimeout(step, CARET_BLINK_MS);
+		}, CARET_BLINK_MS);
+		return () => clearTimeout(timer);
 	});
-	journalCaretOn.set(true);
-	journalCaretTick.update((n) => n + 1);
-}
-function composerSelecting() {
-	const range = journalSelection();
-	return range.start !== range.end;
-}
-function composerCaretShown() {
-	return journalFocused() && !composerSelecting() && journalCaretOn();
+	const box = () => composerCaretBox(props.caret.rect(), pixelRatio());
+	return (() => {
+		const __nsh_hv0 = element("view");
+		prop(__nsh_hv0, "class", "absolute");
+		bindProp(__nsh_hv0, "style", () => ({
+			pointerEvents: "none",
+			left: box().left,
+			top: box().top,
+			width: box().width,
+			height: box().height,
+			backgroundColor: props.color,
+			opacity: props.caret.active() && props.caret.on() ? 1 : 0,
+			zIndex: 1
+		}));
+		return __nsh_hv0;
+	})();
 }
 function animateSend() {
 	LayoutAnimation.configureNext({
@@ -1222,58 +1557,58 @@ function voiceBarHeight(peak) {
 function VoiceBubble(props) {
 	const voice = props.entry.voice;
 	return (() => {
-		const __nsh_hv0 = element("view");
-		prop(__nsh_hv0, "class", "flex-row items-center");
-		prop(__nsh_hv0, "style", {
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "class", "flex-row items-center");
+		prop(__nsh_hv1, "style", {
 			gap: 10,
 			height: 26
 		});
-		const __nsh_hv1 = element("view");
-		prop(__nsh_hv1, "onPress", () => props.onPlay(props.entry));
-		prop(__nsh_hv1, "role", "button");
-		bindProp(__nsh_hv1, "accessibilityLabel", () => props.playing ? "Остановить голосовую запись" : "Прослушать голосовую запись");
-		bindProp(__nsh_hv1, "accessibilityState", () => ({ selected: props.playing }));
-		prop(__nsh_hv1, "class", "shrink-0 items-center justify-center rounded-full");
-		prop(__nsh_hv1, "hoverStyle", { opacity: .8 });
-		prop(__nsh_hv1, "activeStyle", { opacity: .6 });
-		bindProp(__nsh_hv1, "style", () => ({
+		const __nsh_hv2 = element("view");
+		prop(__nsh_hv2, "onPress", () => props.onPlay(props.entry));
+		prop(__nsh_hv2, "role", "button");
+		bindProp(__nsh_hv2, "accessibilityLabel", () => props.playing ? "Остановить голосовую запись" : "Прослушать голосовую запись");
+		bindProp(__nsh_hv2, "accessibilityState", () => ({ selected: props.playing }));
+		prop(__nsh_hv2, "class", "shrink-0 items-center justify-center rounded-full");
+		prop(__nsh_hv2, "hoverStyle", { opacity: .8 });
+		prop(__nsh_hv2, "activeStyle", { opacity: .6 });
+		bindProp(__nsh_hv2, "style", () => ({
 			width: 24,
 			height: 24,
 			backgroundColor: colorAlpha("#ffffff", .24),
 			cursor: "pointer"
 		}));
-		const __nsh_hv2 = element("text");
-		prop(__nsh_hv2, "class", "text-[10px]");
-		prop(__nsh_hv2, "style", { color: "#ffffff" });
-		insert(__nsh_hv2, () => props.playing ? "■" : "▶");
-		append(__nsh_hv1, __nsh_hv2);
-		const __nsh_hv3 = element("view");
-		prop(__nsh_hv3, "class", "flex-row items-center");
-		prop(__nsh_hv3, "style", {
+		const __nsh_hv3 = element("text");
+		prop(__nsh_hv3, "class", "text-[10px]");
+		prop(__nsh_hv3, "style", { color: "#ffffff" });
+		insert(__nsh_hv3, () => props.playing ? "■" : "▶");
+		append(__nsh_hv2, __nsh_hv3);
+		const __nsh_hv4 = element("view");
+		prop(__nsh_hv4, "class", "flex-row items-center");
+		prop(__nsh_hv4, "style", {
 			gap: 2,
 			height: VOICE_BAR_MAX
 		});
-		insert(__nsh_hv3, each(() => voice.peaks, (peak) => (() => {
-			const __nsh_hv4 = element("view");
-			bindProp(__nsh_hv4, "style", () => ({
+		insert(__nsh_hv4, each(() => voice.peaks, (peak) => (() => {
+			const __nsh_hv5 = element("view");
+			bindProp(__nsh_hv5, "style", () => ({
 				width: 2,
 				borderRadius: 1,
 				backgroundColor: colorAlpha("#ffffff", .78),
 				height: voiceBarHeight(peak())
 			}));
-			return __nsh_hv4;
+			return __nsh_hv5;
 		})()));
-		const __nsh_hv5 = element("text");
-		prop(__nsh_hv5, "class", "text-[12px]");
-		bindProp(__nsh_hv5, "style", () => ({
+		const __nsh_hv6 = element("text");
+		prop(__nsh_hv6, "class", "text-[12px]");
+		bindProp(__nsh_hv6, "style", () => ({
 			color: colorAlpha("#ffffff", .82),
 			fontVariantNumeric: "tabular-nums"
 		}));
-		insert(__nsh_hv5, () => formatVoiceDuration(voice.durationMs));
-		append(__nsh_hv0, __nsh_hv1);
-		append(__nsh_hv0, __nsh_hv3);
-		append(__nsh_hv0, __nsh_hv5);
-		return __nsh_hv0;
+		insert(__nsh_hv6, () => formatVoiceDuration(voice.durationMs));
+		append(__nsh_hv1, __nsh_hv2);
+		append(__nsh_hv1, __nsh_hv4);
+		append(__nsh_hv1, __nsh_hv6);
+		return __nsh_hv1;
 	})();
 }
 function JournalBubble(props) {
@@ -1290,6 +1625,8 @@ function JournalBubble(props) {
 		duration: 280,
 		easing: Easing.bezier(.16, 1, .3, 1)
 	} }) : null;
+	const bubbleBg = () => journalBubble(props.colors.accent);
+	const bubbleInk = () => accentMark(bubbleBg());
 	const openEntryMenu = (event) => {
 		if (editingJournalId() === props.entry.id) return;
 		Menu.popup([
@@ -1311,40 +1648,59 @@ function JournalBubble(props) {
 		], event.pagePosition);
 	};
 	return (() => {
-		const __nsh_hv6 = element("view");
-		prop(__nsh_hv6, "onMouseEnter", () => showJournalDate(props.entry.id));
-		prop(__nsh_hv6, "onMouseLeave", () => hideJournalDate(props.entry.id));
-		prop(__nsh_hv6, "class", "mb-1 w-full flex-row items-center justify-end");
-		const __nsh_hv8 = element("view");
-		prop(__nsh_hv8, "onContextMenu", openEntryMenu);
-		prop(__nsh_hv8, "class", "max-w-[75%] px-3 py-2");
-		bindProp(__nsh_hv8, "style", () => ({
-			backgroundColor: editingJournalId() === props.entry.id ? props.colors.card : journalBubble(props.colors.accent),
+		const __nsh_hv7 = element("view");
+		prop(__nsh_hv7, "onMouseEnter", () => showJournalDate(props.entry.id));
+		prop(__nsh_hv7, "onMouseLeave", () => hideJournalDate(props.entry.id));
+		prop(__nsh_hv7, "class", "mb-1 w-full flex-row items-center justify-end");
+		const __nsh_hv9 = element("view");
+		prop(__nsh_hv9, "onContextMenu", openEntryMenu);
+		prop(__nsh_hv9, "class", "max-w-[75%] px-3 py-2");
+		bindProp(__nsh_hv9, "style", () => ({
+			backgroundColor: editingJournalId() === props.entry.id ? props.colors.card : bubbleBg(),
 			borderRadius: BUBBLE_RADIUS,
 			transformOrigin: "bottom right",
 			...sendMotion?.style ?? {}
 		}));
-		insert(__nsh_hv8, () => editingJournalId() === props.entry.id ? (() => {
-			const __nsh_hv9 = element("view");
-			const __nsh_hv10 = element("input");
-			prop(__nsh_hv10, "ref", (node) => {
+		insert(__nsh_hv9, () => editingJournalId() === props.entry.id ? (() => {
+			const __nsh_hv10 = element("view");
+			const __nsh_hv11 = element("view");
+			prop(__nsh_hv11, "class", "relative w-full overflow-hidden rounded-lg");
+			const __nsh_hv12 = element("input");
+			prop(__nsh_hv12, "ref", (node) => {
 				editFocus = node;
 			});
-			prop(__nsh_hv10, "autoFocus", true);
-			bindProp(__nsh_hv10, "value", () => editingJournalText());
-			prop(__nsh_hv10, "onChange", (e) => editingJournalText.set(e.value));
-			prop(__nsh_hv10, "multiline", true);
-			prop(__nsh_hv10, "submitBehavior", "newline");
-			prop(__nsh_hv10, "accessibilityLabel", "Текст записи");
-			prop(__nsh_hv10, "class", "min-h-[56px] w-full rounded-lg px-2 py-1 text-[15px]");
-			bindProp(__nsh_hv10, "style", () => ({
+			prop(__nsh_hv12, "autoFocus", true);
+			bindProp(__nsh_hv12, "value", () => editingJournalText());
+			prop(__nsh_hv12, "onChange", (e) => {
+				editingJournalText.set(e.value);
+				editCaret.bump();
+			});
+			prop(__nsh_hv12, "onCaretMove", (event) => editCaret.place(event.bounds));
+			prop(__nsh_hv12, "onSelectionChange", (range) => editCaret.selection.set(range));
+			prop(__nsh_hv12, "onCompositionChange", (event) => editCaret.composing.set(event.composing));
+			bindProp(__nsh_hv12, "onFocus", () => editCaret.focus);
+			bindProp(__nsh_hv12, "onBlur", () => editCaret.blur);
+			prop(__nsh_hv12, "multiline", true);
+			prop(__nsh_hv12, "submitBehavior", "newline");
+			prop(__nsh_hv12, "caret", false);
+			prop(__nsh_hv12, "accessibilityLabel", "Текст записи");
+			prop(__nsh_hv12, "class", "min-h-[56px] w-full rounded-lg px-2 py-1 text-[15px]");
+			bindProp(__nsh_hv12, "style", () => ({
 				color: props.colors.foreground,
-				backgroundColor: props.colors.background
+				backgroundColor: props.colors.background,
+				selectionColor: props.colors.accent
 			}));
-			const __nsh_hv11 = element("view");
-			prop(__nsh_hv11, "class", "mt-2 flex-row justify-end");
-			prop(__nsh_hv11, "style", { gap: 8 });
-			insert(__nsh_hv11, [component(GhostButton, {
+			append(__nsh_hv11, __nsh_hv12);
+			insert(__nsh_hv11, component(EditorCaret, {
+				caret: editCaret,
+				get color() {
+					return props.colors.accent;
+				}
+			}));
+			const __nsh_hv13 = element("view");
+			prop(__nsh_hv13, "class", "mt-2 flex-row justify-end");
+			prop(__nsh_hv13, "style", { gap: 8 });
+			insert(__nsh_hv13, [component(GhostButton, {
 				label: "Отмена",
 				get colors() {
 					return props.colors;
@@ -1366,9 +1722,9 @@ function JournalBubble(props) {
 					editingJournalId.set(null);
 				}
 			})]);
-			append(__nsh_hv9, __nsh_hv10);
-			append(__nsh_hv9, __nsh_hv11);
-			return __nsh_hv9;
+			append(__nsh_hv10, __nsh_hv11);
+			append(__nsh_hv10, __nsh_hv13);
+			return __nsh_hv10;
 		})() : props.entry.voice ? component(VoiceBubble, {
 			get entry() {
 				return props.entry;
@@ -1383,29 +1739,29 @@ function JournalBubble(props) {
 				return props.onPlay;
 			}
 		}) : (() => {
-			const __nsh_hv12 = element("text");
-			prop(__nsh_hv12, "onContextMenu", openEntryMenu);
-			prop(__nsh_hv12, "class", "select-text text-[15px] leading-5");
-			bindProp(__nsh_hv12, "style", () => ({
-				color: "#ffffff",
+			const __nsh_hv14 = element("text");
+			prop(__nsh_hv14, "onContextMenu", openEntryMenu);
+			prop(__nsh_hv14, "class", "select-text text-[15px] leading-5");
+			bindProp(__nsh_hv14, "style", () => ({
+				color: bubbleInk(),
 				fontWeight: 500,
-				selectionColor: colorAlpha(props.colors.accent, props.dark ? .35 : .24)
+				selectionColor: bubbleInk()
 			}));
-			insert(__nsh_hv12, () => props.entry.text);
-			return __nsh_hv12;
+			insert(__nsh_hv14, () => props.entry.text);
+			return __nsh_hv14;
 		})());
-		append(__nsh_hv6, __nsh_hv8);
-		insert(__nsh_hv6, () => journalDateShown() === props.entry.id && (() => {
-			const __nsh_hv7 = element("text");
-			prop(__nsh_hv7, "class", "mr-2 text-[11px]");
-			bindProp(__nsh_hv7, "style", () => ({
+		append(__nsh_hv7, __nsh_hv9);
+		insert(__nsh_hv7, () => journalDateShown() === props.entry.id && (() => {
+			const __nsh_hv8 = element("text");
+			prop(__nsh_hv8, "class", "mr-2 text-[11px]");
+			bindProp(__nsh_hv8, "style", () => ({
 				color: props.colors.muted,
 				pointerEvents: "none"
 			}));
-			insert(__nsh_hv7, () => formatJournalStamp(props.entry.createdAt));
-			return __nsh_hv7;
-		})(), __nsh_hv8);
-		return __nsh_hv6;
+			insert(__nsh_hv8, () => formatJournalStamp(props.entry.createdAt));
+			return __nsh_hv8;
+		})(), __nsh_hv9);
+		return __nsh_hv7;
 	})();
 }
 function JournalPage(props) {
@@ -1413,9 +1769,9 @@ function JournalPage(props) {
 	let composerScrollRef;
 	const revealComposer = (caret) => {
 		const viewport = composerViewportHeight();
-		const max = Math.max(0, composerInputHeight() - viewport);
-		const top = caret.y;
-		const bottom = top + Math.max(caret.height, COMPOSER_LINE);
+		const max = composerMaxScroll();
+		const top = Math.max(0, caret.y - COMPOSER_PAD_Y);
+		const bottom = caret.y + Math.max(caret.height, COMPOSER_LINE) + COMPOSER_PAD_Y;
 		let next = journalScrollY();
 		if (top < next) next = top;
 		else if (bottom > next + viewport) next = bottom - viewport;
@@ -1427,27 +1783,33 @@ function JournalPage(props) {
 			animated: false
 		});
 	};
+	effect(() => {
+		const max = composerMaxScroll();
+		if (journalScrollY() > max) {
+			journalScrollY.set(max);
+			composerScrollRef?.scrollTo({
+				y: max,
+				animated: false
+			});
+		}
+	});
 	const groups = () => buildJournalDays(props.entries());
 	effect(() => {
 		if (props.entries().length) queueMicrotask(() => feedRef?.scrollToEnd({ animated: true }));
 	});
+	let prevEditing = editingJournalId();
 	effect(() => {
 		const editing = editingJournalId();
+		if (editing === prevEditing) return;
+		prevEditing = editing;
 		queueMicrotask(() => {
 			if (editing) editFocus?.focus();
 			else composerRef?.focus();
 		});
-		return () => journalFocused.set(false);
 	});
-	effect(() => {
-		if (!journalFocused()) return;
-		journalCaretTick();
-		journalCaretOn.set(true);
-		let timer = setTimeout(function tick() {
-			journalCaretOn.update((on) => !on);
-			timer = setTimeout(tick, CARET_BLINK_MS);
-		}, CARET_BLINK_MS);
-		return () => clearTimeout(timer);
+	effect(() => () => {
+		composerCaret.blur();
+		editCaret.blur();
 	});
 	effect(() => {
 		if (props.recording()) {
@@ -1474,52 +1836,46 @@ function JournalPage(props) {
 			y: 0,
 			animated: false
 		});
-		journalCaret.set({
-			x: COMPOSER_PAD_X,
-			y: COMPOSER_PAD_Y,
-			height: COMPOSER_LINE
-		});
-		journalCaretOn.set(true);
-		journalCaretTick.update((n) => n + 1);
+		composerCaret.reset();
 		composerRef?.focus();
 	};
 	return (() => {
-		const __nsh_hv13 = element("view");
-		prop(__nsh_hv13, "onPress", claimJournalComposer);
-		prop(__nsh_hv13, "class", "min-h-0 flex-1 overflow-hidden");
-		const __nsh_hv14 = element("view");
-		prop(__nsh_hv14, "class", "relative min-h-0 flex-1 flex-col items-center");
 		const __nsh_hv15 = element("view");
-		prop(__nsh_hv15, "class", "relative min-h-0 w-full flex-1");
-		const __nsh_hv16 = element("scroll");
-		prop(__nsh_hv16, "ref", (node) => {
+		prop(__nsh_hv15, "class", "min-h-0 flex-1 overflow-hidden");
+		const __nsh_hv16 = element("view");
+		prop(__nsh_hv16, "class", "relative min-h-0 flex-1 flex-col items-center");
+		const __nsh_hv17 = element("view");
+		prop(__nsh_hv17, "class", "relative min-h-0 w-full flex-1");
+		const __nsh_hv18 = element("scroll");
+		prop(__nsh_hv18, "ref", (node) => {
 			feedRef = node;
 		});
-		prop(__nsh_hv16, "onLayout", (e) => feedBox.set({
+		prop(__nsh_hv18, "onLayout", (e) => feedBox.set({
 			width: e.bounds.size.width,
 			height: e.bounds.size.height
 		}));
-		prop(__nsh_hv16, "contentStyle", { flexGrow: 1 });
-		prop(__nsh_hv16, "class", "min-h-0 w-full flex-1 pb-4");
-		const __nsh_hv17 = element("view");
-		prop(__nsh_hv17, "onMouseLeave", leaveJournalDates);
-		prop(__nsh_hv17, "class", "mx-auto justify-end");
-		bindProp(__nsh_hv17, "style", () => ({
+		prop(__nsh_hv18, "contentStyle", { flexGrow: 1 });
+		prop(__nsh_hv18, "class", "min-h-0 w-full flex-1");
+		const __nsh_hv19 = element("view");
+		prop(__nsh_hv19, "onMouseLeave", leaveJournalDates);
+		prop(__nsh_hv19, "class", "mx-auto justify-end");
+		bindProp(__nsh_hv19, "style", () => ({
 			width: threadSpan(),
 			minHeight: feedBox().height,
 			paddingTop: props.titlebarInset + 16,
+			paddingBottom: composerBottomInset(),
 			paddingLeft: FEED_PAD,
 			paddingRight: FEED_PAD
 		}));
-		insert(__nsh_hv17, [each(() => groups(), (group) => (() => {
-			const __nsh_hv18 = element("view");
-			prop(__nsh_hv18, "class", "mb-4");
-			const __nsh_hv19 = element("text");
-			prop(__nsh_hv19, "class", "mb-3 text-center text-[12px]");
-			bindProp(__nsh_hv19, "style", () => ({ color: props.colors.muted }));
-			insert(__nsh_hv19, () => formatJournalDay(group()));
-			append(__nsh_hv18, __nsh_hv19);
-			insert(__nsh_hv18, each(() => group().entries, (entry) => component(JournalBubble, {
+		insert(__nsh_hv19, [each(() => groups(), (group) => (() => {
+			const __nsh_hv20 = element("view");
+			prop(__nsh_hv20, "class", "mb-4");
+			const __nsh_hv21 = element("text");
+			prop(__nsh_hv21, "class", "mb-3 text-center text-[12px]");
+			bindProp(__nsh_hv21, "style", () => ({ color: props.colors.muted }));
+			insert(__nsh_hv21, () => formatJournalDay(group()));
+			append(__nsh_hv20, __nsh_hv21);
+			insert(__nsh_hv20, each(() => group().entries, (entry) => component(JournalBubble, {
 				get entry() {
 					return entry();
 				},
@@ -1545,265 +1901,272 @@ function JournalPage(props) {
 					return props.onDelete;
 				}
 			}), ((entry) => entry.id)));
-			return __nsh_hv18;
-		})(), ((group) => group.key)), () => groups().length === 0 && (() => {
-			const __nsh_hv20 = element("view");
-			prop(__nsh_hv20, "class", "flex-1 items-center justify-center py-12");
-			const __nsh_hv21 = element("text");
-			prop(__nsh_hv21, "class", "text-[13px]");
-			bindProp(__nsh_hv21, "style", () => ({ color: props.colors.muted }));
-			const __nsh_hv22 = text("Записей пока нет");
-			append(__nsh_hv21, __nsh_hv22);
-			append(__nsh_hv20, __nsh_hv21);
 			return __nsh_hv20;
+		})(), ((group) => group.key)), () => groups().length === 0 && (() => {
+			const __nsh_hv22 = element("view");
+			prop(__nsh_hv22, "class", "flex-1 items-center justify-center py-12");
+			const __nsh_hv23 = element("text");
+			prop(__nsh_hv23, "class", "text-[13px]");
+			bindProp(__nsh_hv23, "style", () => ({ color: props.colors.muted }));
+			const __nsh_hv24 = text("Записей пока нет");
+			append(__nsh_hv23, __nsh_hv24);
+			append(__nsh_hv22, __nsh_hv23);
+			return __nsh_hv22;
 		})()]);
-		append(__nsh_hv16, __nsh_hv17);
-		const __nsh_hv23 = element("view");
-		prop(__nsh_hv23, "class", "absolute right-0 top-0 bottom-0 w-[8px]");
-		bindProp(__nsh_hv23, "style", () => ({
+		append(__nsh_hv18, __nsh_hv19);
+		const __nsh_hv25 = element("view");
+		prop(__nsh_hv25, "class", "absolute right-0 top-0 bottom-0 w-[8px]");
+		bindProp(__nsh_hv25, "style", () => ({
 			backgroundColor: props.colors.background,
 			opacity: .86,
 			pointerEvents: "none"
 		}));
-		append(__nsh_hv15, __nsh_hv16);
-		append(__nsh_hv15, __nsh_hv23);
-		const __nsh_hv24 = element("view");
-		prop(__nsh_hv24, "class", "mx-auto w-full");
-		prop(__nsh_hv24, "style", {
+		append(__nsh_hv17, __nsh_hv18);
+		append(__nsh_hv17, __nsh_hv25);
+		const __nsh_hv26 = element("view");
+		prop(__nsh_hv26, "class", "absolute left-0 right-0 bottom-0 items-center");
+		prop(__nsh_hv26, "style", {
+			paddingBottom: COMPOSER_BOTTOM_MARGIN,
+			pointerEvents: "box-none"
+		});
+		const __nsh_hv27 = element("view");
+		prop(__nsh_hv27, "class", "mx-auto w-full");
+		prop(__nsh_hv27, "style", {
 			maxWidth: THREAD_WIDTH,
 			paddingLeft: FEED_PAD,
 			paddingRight: FEED_PAD,
-			marginBottom: 18
+			pointerEvents: "box-none"
 		});
-		const __nsh_hv25 = element("view");
-		prop(__nsh_hv25, "class", "w-full overflow-hidden border");
-		bindProp(__nsh_hv25, "style", () => ({
-			borderRadius: scopeShown() ? SCOPE_RADIUS : COMPOSER_RADIUS,
-			borderColor: props.colors.border,
+		const __nsh_hv28 = element("view");
+		prop(__nsh_hv28, "onPress", claimJournalComposer);
+		prop(__nsh_hv28, "class", "w-full overflow-hidden");
+		bindProp(__nsh_hv28, "style", () => ({
+			borderRadius: composerCorners(composerExpanded(), scopeShown()).outer,
 			backgroundColor: props.colors.card
 		}));
-		const __nsh_hv29 = element("view");
-		prop(__nsh_hv29, "class", "w-full flex-row");
-		bindProp(__nsh_hv29, "style", () => ({
+		const __nsh_hv32 = element("view");
+		prop(__nsh_hv32, "class", "w-full flex-row");
+		bindProp(__nsh_hv32, "style", () => ({
 			height: composerPillHeight(),
 			alignItems: composerExpanded() ? "flex-end" : "center",
 			backgroundColor: "transparent"
 		}));
-		insert(__nsh_hv29, [
+		insert(__nsh_hv32, [
 			() => !props.recording() && (() => {
-				const __nsh_hv30 = element("view");
-				prop(__nsh_hv30, "class", "relative min-w-0 flex-1 overflow-hidden");
-				bindProp(__nsh_hv30, "style", () => ({ height: composerViewportHeight() }));
-				const __nsh_hv31 = element("scroll");
-				prop(__nsh_hv31, "ref", (node) => {
+				const __nsh_hv33 = element("view");
+				prop(__nsh_hv33, "class", "relative min-w-0 flex-1 overflow-hidden");
+				bindProp(__nsh_hv33, "style", () => ({ height: composerViewportHeight() }));
+				const __nsh_hv34 = element("scroll");
+				prop(__nsh_hv34, "ref", (node) => {
 					composerScrollRef = node;
 				});
-				prop(__nsh_hv31, "scrollbar", false);
-				prop(__nsh_hv31, "onScroll", (event) => journalScrollY.set(event.offset.y));
-				prop(__nsh_hv31, "class", "w-full");
-				bindProp(__nsh_hv31, "style", () => ({ height: composerViewportHeight() }));
-				const __nsh_hv32 = element("view");
-				prop(__nsh_hv32, "class", "relative w-full");
-				bindProp(__nsh_hv32, "style", () => ({ height: composerInputHeight() }));
-				const __nsh_hv33 = element("input");
-				prop(__nsh_hv33, "ref", (node) => {
+				prop(__nsh_hv34, "scrollbar", false);
+				prop(__nsh_hv34, "onScroll", (event) => journalScrollY.set(Math.max(0, Math.min(composerMaxScroll(), event.offset.y))));
+				prop(__nsh_hv34, "class", "w-full");
+				bindProp(__nsh_hv34, "style", () => ({ height: composerViewportHeight() }));
+				const __nsh_hv35 = element("view");
+				prop(__nsh_hv35, "class", "relative w-full overflow-hidden");
+				bindProp(__nsh_hv35, "style", () => ({ height: composerInputHeight() }));
+				const __nsh_hv36 = element("input");
+				prop(__nsh_hv36, "ref", (node) => {
 					composerRef = node;
 				});
-				prop(__nsh_hv33, "autoFocus", true);
-				bindProp(__nsh_hv33, "value", () => journalDraft());
-				prop(__nsh_hv33, "onChange", (e) => journalDraft.set(e.value));
-				prop(__nsh_hv33, "onContentSizeChange", ({ size }) => {
+				prop(__nsh_hv36, "autoFocus", true);
+				bindProp(__nsh_hv36, "value", () => journalDraft());
+				prop(__nsh_hv36, "onChange", (e) => {
+					journalDraft.set(e.value);
+					composerCaret.bump();
+				});
+				prop(__nsh_hv36, "onContentSizeChange", ({ size }) => {
 					const raw = Math.max(COMPOSER_LINE, Math.round(size.height));
 					if (raw === journalDraftContentHeight()) return;
 					if (clampDraftHeight(raw) !== clampDraftHeight(journalDraftContentHeight())) animateComposer();
 					journalDraftContentHeight.set(raw);
-					revealComposer(journalCaret());
+					revealComposer(composerCaret.rect());
 				});
-				prop(__nsh_hv33, "onCaretMove", (event) => {
-					placeCaret(event.bounds);
-					revealComposer(journalCaret());
+				prop(__nsh_hv36, "onCaretMove", (event) => {
+					composerCaret.place(event.bounds);
+					revealComposer(composerCaret.rect());
 				});
-				prop(__nsh_hv33, "onSelectionChange", (range) => journalSelection.set(range));
-				prop(__nsh_hv33, "onFocus", () => journalFocused.set(true));
-				prop(__nsh_hv33, "onBlur", () => journalFocused.set(false));
-				prop(__nsh_hv33, "onSubmit", (event) => send(event.text));
-				prop(__nsh_hv33, "multiline", true);
-				prop(__nsh_hv33, "submitBehavior", "submit");
-				prop(__nsh_hv33, "caret", false);
-				prop(__nsh_hv33, "placeholder", "Запись в дневник…");
-				prop(__nsh_hv33, "accessibilityLabel", "Новая запись в дневник");
-				prop(__nsh_hv33, "class", "min-w-0 w-full text-[15px]");
-				bindProp(__nsh_hv33, "style", () => ({
+				prop(__nsh_hv36, "onSelectionChange", (range) => composerCaret.selection.set(range));
+				prop(__nsh_hv36, "onCompositionChange", (event) => composerCaret.composing.set(event.composing));
+				bindProp(__nsh_hv36, "onFocus", () => composerCaret.focus);
+				bindProp(__nsh_hv36, "onBlur", () => composerCaret.blur);
+				prop(__nsh_hv36, "onSubmit", (event) => send(event.text));
+				prop(__nsh_hv36, "multiline", true);
+				prop(__nsh_hv36, "submitBehavior", "submit");
+				prop(__nsh_hv36, "caret", false);
+				prop(__nsh_hv36, "placeholder", "Запись в дневник…");
+				prop(__nsh_hv36, "accessibilityLabel", "Новая запись в дневник");
+				prop(__nsh_hv36, "class", "min-w-0 w-full text-[15px]");
+				bindProp(__nsh_hv36, "style", () => ({
 					height: composerInputHeight(),
-					fontSize: 15,
+					maxHeight: composerInputHeight(),
+					fontSize: COMPOSER_FONT,
 					lineHeight: COMPOSER_LINE,
 					paddingLeft: COMPOSER_PAD_X,
 					paddingRight: 8,
 					paddingTop: COMPOSER_PAD_Y,
 					paddingBottom: COMPOSER_PAD_Y,
 					placeholderColor: props.colors.muted,
-					selectionColor: colorAlpha(props.colors.accent, props.dark ? .35 : .24),
+					selectionColor: props.colors.accent,
 					backgroundColor: "transparent",
 					color: props.colors.foreground
 				}));
-				const __nsh_hv34 = element("view");
-				prop(__nsh_hv34, "class", "absolute");
-				bindProp(__nsh_hv34, "style", () => ({
-					pointerEvents: "none",
-					left: journalCaret().x,
-					top: journalCaret().y,
-					width: CARET_WIDTH,
-					height: journalCaret().height,
-					backgroundColor: props.colors.accent,
-					opacity: composerCaretShown() ? 1 : 0,
-					zIndex: 1
+				append(__nsh_hv35, __nsh_hv36);
+				insert(__nsh_hv35, component(EditorCaret, {
+					caret: composerCaret,
+					get color() {
+						return props.colors.accent;
+					}
 				}));
-				append(__nsh_hv32, __nsh_hv33);
-				append(__nsh_hv32, __nsh_hv34);
-				append(__nsh_hv31, __nsh_hv32);
-				append(__nsh_hv30, __nsh_hv31);
-				insert(__nsh_hv30, [() => composerFadeTop() && (() => {
-					const __nsh_hv35 = element("view");
-					prop(__nsh_hv35, "class", "absolute left-0 right-0 top-0");
-					bindProp(__nsh_hv35, "style", () => ({
+				append(__nsh_hv34, __nsh_hv35);
+				append(__nsh_hv33, __nsh_hv34);
+				insert(__nsh_hv33, [() => composerFadeTop() && (() => {
+					const __nsh_hv37 = element("view");
+					prop(__nsh_hv37, "class", "absolute left-0 right-0 top-0");
+					bindProp(__nsh_hv37, "style", () => ({
 						pointerEvents: "none",
 						height: COMPOSER_FADE,
 						backgroundImage: `linear-gradient(to bottom, ${props.colors.card}, ${colorAlpha(props.colors.card, 0)})`,
 						zIndex: 2
 					}));
-					return __nsh_hv35;
+					return __nsh_hv37;
 				})(), () => composerFadeBottom() && (() => {
-					const __nsh_hv36 = element("view");
-					prop(__nsh_hv36, "class", "absolute left-0 right-0 bottom-0");
-					bindProp(__nsh_hv36, "style", () => ({
+					const __nsh_hv38 = element("view");
+					prop(__nsh_hv38, "class", "absolute left-0 right-0 bottom-0");
+					bindProp(__nsh_hv38, "style", () => ({
 						pointerEvents: "none",
 						height: COMPOSER_FADE,
 						backgroundImage: `linear-gradient(to bottom, ${colorAlpha(props.colors.card, 0)}, ${props.colors.card})`,
 						zIndex: 2
 					}));
-					return __nsh_hv36;
+					return __nsh_hv38;
 				})()]);
-				return __nsh_hv30;
+				return __nsh_hv33;
 			})(),
 			() => props.recording() && (() => {
-				const __nsh_hv37 = element("view");
-				prop(__nsh_hv37, "class", "min-w-0 flex-1 flex-row items-center");
-				prop(__nsh_hv37, "style", {
+				const __nsh_hv39 = element("view");
+				prop(__nsh_hv39, "class", "min-w-0 flex-1 flex-row items-center");
+				prop(__nsh_hv39, "style", {
 					paddingLeft: COMPOSER_PAD_X,
 					gap: 8
 				});
-				const __nsh_hv38 = element("view");
-				prop(__nsh_hv38, "class", "shrink-0 rounded-full");
-				prop(__nsh_hv38, "style", {
+				const __nsh_hv40 = element("view");
+				prop(__nsh_hv40, "class", "shrink-0 rounded-full");
+				prop(__nsh_hv40, "style", {
 					width: 8,
 					height: 8,
 					backgroundColor: "#ff453a"
 				});
-				const __nsh_hv39 = element("text");
-				prop(__nsh_hv39, "class", "text-[13px]");
-				bindProp(__nsh_hv39, "style", () => ({
+				const __nsh_hv41 = element("text");
+				prop(__nsh_hv41, "class", "text-[13px]");
+				bindProp(__nsh_hv41, "style", () => ({
 					color: props.colors.foreground,
 					fontVariantNumeric: "tabular-nums"
 				}));
-				insert(__nsh_hv39, () => formatVoiceDuration(props.elapsed()));
-				append(__nsh_hv37, __nsh_hv38);
-				append(__nsh_hv37, __nsh_hv39);
-				return __nsh_hv37;
+				insert(__nsh_hv41, () => formatVoiceDuration(props.elapsed()));
+				append(__nsh_hv39, __nsh_hv40);
+				append(__nsh_hv39, __nsh_hv41);
+				return __nsh_hv39;
 			})(),
 			() => journalDraft().trim() ? (() => {
-				const __nsh_hv40 = element("view");
-				prop(__nsh_hv40, "onPress", () => send(journalDraft()));
-				prop(__nsh_hv40, "role", "button");
-				prop(__nsh_hv40, "accessibilityLabel", "Отправить запись");
-				prop(__nsh_hv40, "class", "shrink-0 items-center justify-center rounded-full");
-				bindProp(__nsh_hv40, "hoverStyle", () => ({ opacity: journalDraft().trim() ? .85 : .35 }));
-				bindProp(__nsh_hv40, "activeStyle", () => ({ opacity: journalDraft().trim() ? .7 : .35 }));
-				bindProp(__nsh_hv40, "style", () => ({
+				const __nsh_hv42 = element("view");
+				prop(__nsh_hv42, "onPress", () => send(journalDraft()));
+				prop(__nsh_hv42, "role", "button");
+				prop(__nsh_hv42, "accessibilityLabel", "Отправить запись");
+				prop(__nsh_hv42, "class", "shrink-0 items-center justify-center");
+				bindProp(__nsh_hv42, "hoverStyle", () => ({ opacity: journalDraft().trim() ? .85 : .35 }));
+				bindProp(__nsh_hv42, "activeStyle", () => ({ opacity: journalDraft().trim() ? .7 : .35 }));
+				bindProp(__nsh_hv42, "style", () => ({
 					width: COMPOSER_SEND,
 					height: COMPOSER_SEND,
-					marginRight: 8,
-					marginBottom: composerExpanded() ? 10 : 0,
+					borderRadius: composerCorners(composerExpanded(), scopeShown()).button,
+					marginRight: COMPOSER_BUTTON_INSET,
+					marginBottom: composerExpanded() ? COMPOSER_BUTTON_INSET : 0,
 					backgroundColor: journalBubble(props.colors.accent),
 					opacity: journalDraft().trim() ? 1 : .35,
 					cursor: journalDraft().trim() ? "pointer" : "default"
 				}));
-				const __nsh_hv41 = element("text");
-				prop(__nsh_hv41, "class", "text-[14px] font-semibold");
-				bindProp(__nsh_hv41, "style", () => ({ color: accentMark(journalBubble(props.colors.accent)) }));
-				const __nsh_hv42 = text("↑");
-				append(__nsh_hv41, __nsh_hv42);
-				append(__nsh_hv40, __nsh_hv41);
-				return __nsh_hv40;
-			})() : props.recording() ? (() => {
-				const __nsh_hv43 = element("view");
-				prop(__nsh_hv43, "onPress", () => {
-					animateComposer();
-					props.onStopRecording();
-				});
-				prop(__nsh_hv43, "role", "button");
-				prop(__nsh_hv43, "accessibilityLabel", "Остановить запись");
-				prop(__nsh_hv43, "accessibilityState", { selected: true });
-				prop(__nsh_hv43, "class", "shrink-0 items-center justify-center rounded-full");
-				prop(__nsh_hv43, "hoverStyle", { opacity: .85 });
-				prop(__nsh_hv43, "activeStyle", { opacity: .7 });
-				bindProp(__nsh_hv43, "style", () => ({
-					width: COMPOSER_SEND,
-					height: COMPOSER_SEND,
-					marginRight: 8,
-					marginBottom: composerExpanded() ? 10 : 0,
-					backgroundColor: "#ff453a",
-					cursor: "pointer"
-				}));
-				const __nsh_hv44 = element("view");
-				prop(__nsh_hv44, "style", {
-					width: 10,
-					height: 10,
-					borderRadius: 2,
-					backgroundColor: "#ffffff"
-				});
+				const __nsh_hv43 = element("text");
+				prop(__nsh_hv43, "class", "text-[14px] font-semibold");
+				bindProp(__nsh_hv43, "style", () => ({ color: accentMark(journalBubble(props.colors.accent)) }));
+				const __nsh_hv44 = text("↑");
 				append(__nsh_hv43, __nsh_hv44);
-				return __nsh_hv43;
-			})() : (() => {
+				append(__nsh_hv42, __nsh_hv43);
+				return __nsh_hv42;
+			})() : props.recording() ? (() => {
 				const __nsh_hv45 = element("view");
 				prop(__nsh_hv45, "onPress", () => {
 					animateComposer();
-					props.onStartRecording();
+					props.onStopRecording();
 				});
 				prop(__nsh_hv45, "role", "button");
-				prop(__nsh_hv45, "accessibilityLabel", "Записать голос");
-				prop(__nsh_hv45, "class", "shrink-0 items-center justify-center rounded-full");
+				prop(__nsh_hv45, "accessibilityLabel", "Остановить запись");
+				prop(__nsh_hv45, "accessibilityState", { selected: true });
+				prop(__nsh_hv45, "class", "shrink-0 items-center justify-center");
 				prop(__nsh_hv45, "hoverStyle", { opacity: .85 });
 				prop(__nsh_hv45, "activeStyle", { opacity: .7 });
 				bindProp(__nsh_hv45, "style", () => ({
 					width: COMPOSER_SEND,
 					height: COMPOSER_SEND,
-					marginRight: 8,
-					marginBottom: composerExpanded() ? 10 : 0,
+					borderRadius: composerCorners(composerExpanded(), scopeShown()).button,
+					marginRight: COMPOSER_BUTTON_INSET,
+					marginBottom: composerExpanded() ? COMPOSER_BUTTON_INSET : 0,
+					backgroundColor: "#ff453a",
+					cursor: "pointer"
+				}));
+				const __nsh_hv46 = element("view");
+				prop(__nsh_hv46, "style", {
+					width: 10,
+					height: 10,
+					borderRadius: 2,
+					backgroundColor: "#ffffff"
+				});
+				append(__nsh_hv45, __nsh_hv46);
+				return __nsh_hv45;
+			})() : (() => {
+				const __nsh_hv47 = element("view");
+				prop(__nsh_hv47, "onPress", () => {
+					animateComposer();
+					props.onStartRecording();
+				});
+				prop(__nsh_hv47, "role", "button");
+				prop(__nsh_hv47, "accessibilityLabel", "Записать голос");
+				prop(__nsh_hv47, "class", "shrink-0 items-center justify-center");
+				prop(__nsh_hv47, "hoverStyle", { opacity: .85 });
+				prop(__nsh_hv47, "activeStyle", { opacity: .7 });
+				bindProp(__nsh_hv47, "style", () => ({
+					width: COMPOSER_SEND,
+					height: COMPOSER_SEND,
+					borderRadius: composerCorners(composerExpanded(), scopeShown()).button,
+					marginRight: COMPOSER_BUTTON_INSET,
+					marginBottom: composerExpanded() ? COMPOSER_BUTTON_INSET : 0,
 					backgroundColor: journalBubble(props.colors.accent),
 					cursor: "pointer"
 				}));
-				const __nsh_hv46 = element("image");
-				prop(__nsh_hv46, "src", MIC_ICON);
-				bindProp(__nsh_hv46, "style", () => ({
+				const __nsh_hv48 = element("image");
+				prop(__nsh_hv48, "src", MIC_ICON);
+				bindProp(__nsh_hv48, "style", () => ({
 					width: 17,
 					height: 17,
 					tintColor: accentMark(journalBubble(props.colors.accent))
 				}));
-				append(__nsh_hv45, __nsh_hv46);
-				return __nsh_hv45;
+				append(__nsh_hv47, __nsh_hv48);
+				return __nsh_hv47;
 			})()
 		]);
-		append(__nsh_hv25, __nsh_hv29);
-		insert(__nsh_hv25, [() => scopeShown() && (() => {
-			const __nsh_hv26 = element("view");
-			prop(__nsh_hv26, "class", "relative w-full overflow-hidden");
-			bindProp(__nsh_hv26, "style", () => ({
+		append(__nsh_hv28, __nsh_hv32);
+		insert(__nsh_hv28, [() => scopeShown() && (() => {
+			const __nsh_hv29 = element("view");
+			prop(__nsh_hv29, "class", "relative w-full overflow-hidden");
+			bindProp(__nsh_hv29, "style", () => ({
 				height: scopeHeight(),
 				opacity: scopeOpacity()
 			}));
-			const __nsh_hv27 = element("view");
-			prop(__nsh_hv27, "class", "absolute left-0 right-0 top-0 bottom-0");
-			insert(__nsh_hv27, component(DotScope, {
+			const __nsh_hv30 = element("view");
+			prop(__nsh_hv30, "class", "absolute left-0 right-0 top-0 bottom-0");
+			insert(__nsh_hv30, component(DotScope, {
 				get level() {
 					return props.level();
 				},
@@ -1818,22 +2181,23 @@ function JournalPage(props) {
 					height: "100%"
 				}
 			}));
-			append(__nsh_hv26, __nsh_hv27);
-			return __nsh_hv26;
+			append(__nsh_hv29, __nsh_hv30);
+			return __nsh_hv29;
 		})(), () => scopeShown() && (() => {
-			const __nsh_hv28 = element("view");
-			prop(__nsh_hv28, "class", "w-full");
-			bindProp(__nsh_hv28, "style", () => ({
+			const __nsh_hv31 = element("view");
+			prop(__nsh_hv31, "class", "w-full");
+			bindProp(__nsh_hv31, "style", () => ({
 				height: scopeHeight() > .5 ? 1 : 0,
 				backgroundColor: props.colors.border
 			}));
-			return __nsh_hv28;
-		})()], __nsh_hv29);
-		append(__nsh_hv24, __nsh_hv25);
-		append(__nsh_hv14, __nsh_hv15);
-		append(__nsh_hv14, __nsh_hv24);
-		append(__nsh_hv13, __nsh_hv14);
-		return __nsh_hv13;
+			return __nsh_hv31;
+		})()], __nsh_hv32);
+		append(__nsh_hv27, __nsh_hv28);
+		append(__nsh_hv26, __nsh_hv27);
+		append(__nsh_hv16, __nsh_hv17);
+		append(__nsh_hv16, __nsh_hv26);
+		append(__nsh_hv15, __nsh_hv16);
+		return __nsh_hv15;
 	})();
 }
 
@@ -2131,6 +2495,7 @@ function tokenColors(dark) {
 const RECENT_LIMIT = 10;
 const STORAGE_KEY$1 = "mundus.atlas.recent.v1";
 const items = signal([]);
+let staged = null;
 let stamp$2 = 0;
 function recent() {
 	return items();
@@ -2154,7 +2519,49 @@ function rememberRecent(entry) {
 	stamp$2 += 1;
 	Storage.setItem(STORAGE_KEY$1, JSON.stringify(next));
 }
+function stageRecent(entry) {
+	const title = entry.title.trim();
+	if (!title) return;
+	staged = {
+		kind: entry.kind,
+		id: entry.id,
+		title
+	};
+	const list = items();
+	const index = list.findIndex((item) => item.kind === entry.kind && item.id === entry.id);
+	if (index === -1) {
+		const next = [{
+			...entry,
+			title,
+			at: Date.now()
+		}, ...list].slice(0, 10);
+		items.set(next);
+		stamp$2 += 1;
+		Storage.setItem(STORAGE_KEY$1, JSON.stringify(next));
+	} else if (list[index].title !== title) {
+		const next = list.map((item, i) => i === index ? {
+			...item,
+			title
+		} : item);
+		items.set(next);
+		stamp$2 += 1;
+		Storage.setItem(STORAGE_KEY$1, JSON.stringify(next));
+	}
+}
+function commitRecent(entry) {
+	const pending = staged;
+	if (!pending) return;
+	if (entry && (entry.kind !== pending.kind || entry.id !== pending.id)) return;
+	staged = null;
+	const title = entry?.title?.trim() || pending.title;
+	rememberRecent({
+		kind: pending.kind,
+		id: pending.id,
+		title
+	});
+}
 function forgetRecent(kind, id) {
+	if (staged && staged.kind === kind && staged.id === id) staged = null;
 	const next = items().filter((item) => !(item.kind === kind && item.id === id));
 	if (next.length === items().length) return;
 	items.set(next);
@@ -2177,6 +2584,204 @@ function readJson$2(value) {
 }
 
 //#endregion
+//#region notes-outline.tsx
+/** AnyType draws at most fifty marks: a rail longer than the page stops pointing anywhere. */
+const OUTLINE_LIMIT = 50;
+const OUTLINE_INSET = 14;
+const TICK_WIDTHS = [
+	24,
+	18,
+	13,
+	10,
+	8,
+	6
+];
+const POPOVER_ROW_HEIGHT = 36;
+const POPOVER_CLOSE_MS = 140;
+/** Direct mapping from heading level (H1..H6) to tick width in points: H1 longest, H6 shortest. */
+function outlineTickWidth(level) {
+	const index = Math.min(6, Math.max(1, Math.round(level))) - 1;
+	return TICK_WIDTHS[index];
+}
+/** Left padding for a row in the outline popover, indented by heading hierarchy. */
+function outlineRowIndent(level, minLevel = 1) {
+	return 12 + Math.max(0, Math.min(6, Math.max(1, Math.round(level))) - Math.min(6, Math.max(1, Math.round(minLevel)))) * 14;
+}
+/** Scroll-spy selection: last heading at or above the reading threshold, defaulting to the first. */
+function activeOutlineIndex(ys, threshold) {
+	let active = -1;
+	for (let index = 0; index < ys.length; index += 1) {
+		const y = ys[index];
+		if (y !== null && y <= threshold) active = index;
+	}
+	return active >= 0 ? active : 0;
+}
+function popoverShadow(dark) {
+	return dark ? "0 4px 12px rgba(0,0,0,0.45), 0 12px 32px rgba(0,0,0,0.42)" : "0 4px 12px rgba(15,23,42,0.08), 0 12px 32px rgba(15,23,42,0.12)";
+}
+function NotesOutlineRail(props) {
+	const open = signal(false);
+	let closeTimer = null;
+	const cancelClose = () => {
+		if (closeTimer) {
+			clearTimeout(closeTimer);
+			closeTimer = null;
+		}
+	};
+	const openRail = () => {
+		cancelClose();
+		props.onHoverOpen();
+		open.set(true);
+	};
+	const closeRail = () => {
+		cancelClose();
+		closeTimer = setTimeout(() => {
+			closeTimer = null;
+			open.set(false);
+		}, POPOVER_CLOSE_MS);
+	};
+	effect(() => () => cancelClose());
+	const list = () => props.marks().slice(0, 50);
+	const resolvedActive = () => {
+		const items = list();
+		if (!items.length) return 0;
+		const current = props.activePos();
+		return items.some((item) => item.pos === current) ? current : items[0].pos;
+	};
+	const minLevel = () => list().reduce((min, item) => Math.min(min, item.level), 6);
+	const maxBody = () => Math.max(140, props.maxHeight() - 16);
+	const renderRows = () => {
+		const items = list();
+		const activePos = resolvedActive();
+		const base = minLevel();
+		const rowActiveBg = props.dark ? colorAlpha("#ffffff", .08) : colorAlpha("#000000", .06);
+		const rowHoverBg = props.dark ? colorAlpha("#ffffff", .12) : colorAlpha("#000000", .09);
+		return (() => {
+			const __nsh_hv0 = element("view");
+			prop(__nsh_hv0, "style", { gap: 2 });
+			insert(__nsh_hv0, () => items.map((mark) => {
+				const active = mark.pos === activePos;
+				return (() => {
+					const __nsh_hv1 = element("view");
+					prop(__nsh_hv1, "onPress", () => props.onSelect(mark));
+					prop(__nsh_hv1, "role", "button");
+					bindProp(__nsh_hv1, "accessibilityLabel", () => mark.text || "Заголовок");
+					prop(__nsh_hv1, "accessibilityState", { selected: active });
+					prop(__nsh_hv1, "hoverStyle", { backgroundColor: rowHoverBg });
+					bindProp(__nsh_hv1, "style", () => ({
+						paddingLeft: outlineRowIndent(mark.level, base),
+						paddingRight: 12,
+						paddingTop: 7,
+						paddingBottom: 7,
+						borderRadius: 8,
+						backgroundColor: active ? rowActiveBg : "transparent",
+						cursor: "pointer"
+					}));
+					const __nsh_hv2 = element("text");
+					prop(__nsh_hv2, "class", "truncate");
+					bindProp(__nsh_hv2, "style", () => ({
+						fontSize: 13.5,
+						lineHeight: 20,
+						fontWeight: active ? 500 : 400,
+						color: active ? props.colors.foreground : colorAlpha(props.colors.foreground, .84)
+					}));
+					insert(__nsh_hv2, () => mark.text || "Заголовок");
+					append(__nsh_hv1, __nsh_hv2);
+					return __nsh_hv1;
+				})();
+			}));
+			return __nsh_hv0;
+		})();
+	};
+	const renderTicks = () => {
+		const items = list();
+		const activePos = resolvedActive();
+		const tickActive = props.dark ? "#ffffff" : props.colors.foreground;
+		const tickIdle = props.dark ? colorAlpha("#ffffff", .24) : colorAlpha("#000000", .2);
+		return (() => {
+			const __nsh_hv3 = element("view");
+			prop(__nsh_hv3, "class", "items-end");
+			bindProp(__nsh_hv3, "style", () => ({
+				paddingTop: 12,
+				paddingBottom: 12,
+				paddingLeft: 12,
+				paddingRight: 2,
+				gap: items.length > 25 ? 5 : 8
+			}));
+			insert(__nsh_hv3, () => items.map((mark) => {
+				const active = mark.pos === activePos;
+				return (() => {
+					const __nsh_hv4 = element("view");
+					prop(__nsh_hv4, "onPress", () => props.onSelect(mark));
+					prop(__nsh_hv4, "role", "button");
+					bindProp(__nsh_hv4, "accessibilityLabel", () => mark.text || "Заголовок");
+					prop(__nsh_hv4, "accessibilityState", { selected: active });
+					prop(__nsh_hv4, "class", "items-end justify-center");
+					prop(__nsh_hv4, "style", {
+						width: 28,
+						height: 6,
+						cursor: "pointer"
+					});
+					const __nsh_hv5 = element("view");
+					bindProp(__nsh_hv5, "style", () => ({
+						width: outlineTickWidth(mark.level),
+						height: 3,
+						borderRadius: 1.5,
+						backgroundColor: active ? tickActive : tickIdle
+					}));
+					append(__nsh_hv4, __nsh_hv5);
+					return __nsh_hv4;
+				})();
+			}));
+			return __nsh_hv3;
+		})();
+	};
+	const renderPopover = () => {
+		const bodyHeight = maxBody();
+		const scrollable = list().length * POPOVER_ROW_HEIGHT > bodyHeight;
+		return (() => {
+			const __nsh_hv6 = element("view");
+			prop(__nsh_hv6, "testID", "notes-outline-popover");
+			bindProp(__nsh_hv6, "style", () => ({
+				width: 256,
+				borderRadius: 14,
+				borderWidth: 1,
+				borderColor: props.dark ? colorAlpha("#ffffff", .1) : props.colors.border,
+				backgroundColor: props.colors.card,
+				padding: 8,
+				boxShadow: popoverShadow(props.dark)
+			}));
+			insert(__nsh_hv6, () => scrollable ? (() => {
+				const __nsh_hv7 = element("scroll");
+				prop(__nsh_hv7, "scrollbar", false);
+				prop(__nsh_hv7, "style", { height: bodyHeight });
+				insert(__nsh_hv7, () => renderRows());
+				return __nsh_hv7;
+			})() : renderRows());
+			return __nsh_hv6;
+		})();
+	};
+	return (() => {
+		const __nsh_hv8 = element("view");
+		prop(__nsh_hv8, "class", "absolute top-0 bottom-0 justify-center items-end");
+		prop(__nsh_hv8, "style", {
+			right: 14,
+			pointerEvents: "box-none",
+			zIndex: 20
+		});
+		insert(__nsh_hv8, () => list().length >= 2 && (() => {
+			const __nsh_hv9 = element("view");
+			prop(__nsh_hv9, "testID", "notes-outline-rail");
+			prop(__nsh_hv9, "onMouseEnter", openRail);
+			prop(__nsh_hv9, "onMouseLeave", closeRail);
+			insert(__nsh_hv9, () => open() ? renderPopover() : renderTicks());
+			return __nsh_hv9;
+		})());
+		return __nsh_hv8;
+	})();
+}
+
+//#endregion
 //#region notes.tsx
 let commands = {
 	create() {},
@@ -2187,15 +2792,20 @@ let commands = {
 let editorRef = null;
 let menuAnchor = null;
 const outline = signal([]);
+const activeOutlinePos = signal(0);
 let outlineTimer = null;
+let outlineSyncTimer = null;
+let outlineSettleTimer = null;
+let splitScrollRef;
+let splitScrollY = 0;
+let pageTopY = 48;
+let pinnedOutlinePos = null;
+let pinnedScrollY = 0;
 let saveTimer = null;
 const SAVE_DELAY_MS = 700;
 const CARD_MIN = 196;
 const CARD_GAP = 16;
 const CARD_RATIO = 264 / 236;
-const OUTLINE_LIMIT = 50;
-const RAIL_INSET = 12;
-const RAIL_WIDTH = 22;
 const CARD_MAX_COLUMNS = 5;
 const ENTER_STAGGER_CARDS = 11;
 function cardDelay(index) {
@@ -2387,12 +2997,17 @@ let slashSeg = null;
 let asked = false;
 let segments = [];
 let segSerial = 0;
+let singlePainted = "";
+const singlePaintRevs = /* @__PURE__ */ new Set();
 let epoch = 0;
 let split = false;
 const codeLayout = signal(false);
 const segmentList = signal([]);
 const bodyRev = signal(0);
 const segRefs = /* @__PURE__ */ new Map();
+const segHeights = /* @__PURE__ */ new Map();
+const segTops = /* @__PURE__ */ new Map();
+const segHeightRev = signal(0);
 let wantFocus = null;
 let reshaping = false;
 let splitTimer = null;
@@ -2473,35 +3088,49 @@ function paintCode() {
 	if (split) {
 		for (const seg of segments) {
 			if (!seg.paint) continue;
+			const doc = seg.session.getJSON();
+			const sig = `${paintedDark}|${JSON.stringify(doc)}`;
+			if (seg.painted === sig) continue;
 			const marks = [];
-			paintNodes(seg.session.getJSON().content ?? [], 0, palette, marks);
+			paintNodes(doc.content ?? [], 0, palette, marks);
 			seg.session.setDecorations(seg.paint.key, marks);
+			seg.painted = sig;
+			seg.paintRevs.add(seg.session.revision);
 		}
 		return;
 	}
 	const live = editor;
 	if (!live) return;
+	const doc = live.getJSON();
+	const sig = `${paintedDark}|${JSON.stringify(doc)}`;
+	if (singlePainted === sig) return;
 	const marks = [];
-	paintNodes(live.getJSON().content ?? [], 0, palette, marks);
+	paintNodes(doc.content ?? [], 0, palette, marks);
 	live.setDecorations("highlight", marks);
+	singlePainted = sig;
+	singlePaintRevs.add(live.revision);
 }
 let paintTimer = null;
 function schedulePaint() {
 	if (paintTimer) clearTimeout(paintTimer);
 	paintTimer = setTimeout(paintCode, 60);
 }
-function editorExtensions() {
+function editorExtensions(trailing = true) {
 	return [StarterKit.configure({
 		heading: { levels: [
 			1,
 			2,
-			3
+			3,
+			4,
+			5,
+			6
 		] },
 		highlight: false,
 		subscript: false,
 		superscript: false,
 		textStyle: false,
-		textAlign: false
+		textAlign: false,
+		...trailing ? {} : { trailingNode: false }
 	}), TableKit.configure({})];
 }
 function docOf(nodes) {
@@ -2587,17 +3216,20 @@ function retireSeg(seg) {
 		seg.paint?.dispose();
 	} catch {}
 	segRefs.delete(seg.id);
+	segHeights.delete(seg.id);
+	segTops.delete(seg.id);
 }
 function bindSeg(session, epochAt) {
-	session.on("revision", () => {
+	session.on("revision", (event) => {
 		if (epoch !== epochAt || reshaping) return;
-		if (!segments.some((seg) => seg.session === session)) return;
-		editor = session;
 		const seg = segments.find((item) => item.session === session);
+		if (!seg) return;
+		if (typeof event?.revision === "number" && seg.paintRevs.delete(event.revision)) return;
+		editor = session;
 		scheduleSave();
 		syncSlash();
 		scheduleOutline();
-		if (seg?.kind === "code" || session.findParentNode("codeBlock")) schedulePaint();
+		if (seg.kind === "code" || session.findParentNode("codeBlock")) schedulePaint();
 		bodyRev.set(bodyRev() + 1);
 		if (split && shapeDrifted()) scheduleReshape();
 	});
@@ -2609,7 +3241,7 @@ function createSeg(group) {
 	const plugins = paint ? [paint] : [];
 	const epochAt = epoch;
 	const make = (body) => createRichEditor({
-		extensions: editorExtensions(),
+		extensions: editorExtensions(false),
 		plugins,
 		content: body,
 		format: "json"
@@ -2625,7 +3257,9 @@ function createSeg(group) {
 		id,
 		kind: group.kind,
 		session,
-		paint
+		paint,
+		painted: "",
+		paintRevs: /* @__PURE__ */ new Set()
 	};
 }
 function becomeSplit(doc, focusOrdinal) {
@@ -2700,6 +3334,14 @@ function teardownEditors() {
 		clearTimeout(reshapeTimer);
 		reshapeTimer = null;
 	}
+	if (outlineSyncTimer) {
+		clearTimeout(outlineSyncTimer);
+		outlineSyncTimer = null;
+	}
+	if (outlineSettleTimer) {
+		clearTimeout(outlineSettleTimer);
+		outlineSettleTimer = null;
+	}
 	reshapeRuns = 0;
 	if (paintTimer) {
 		clearTimeout(paintTimer);
@@ -2710,8 +3352,15 @@ function teardownEditors() {
 	segments = [];
 	editor = null;
 	split = false;
+	splitScrollY = 0;
+	pinnedOutlinePos = null;
+	pinnedScrollY = 0;
 	wantFocus = null;
+	singlePainted = "";
+	singlePaintRevs.clear();
 	segRefs.clear();
+	segHeights.clear();
+	segTops.clear();
 	codeLayout.set(false);
 	segmentList.set([]);
 	copiedId.set(null);
@@ -2731,16 +3380,22 @@ function open(note) {
 		else mountSingle(doc);
 		savedBody = JSON.stringify(currentDoc());
 		savedTitle = text$1(note.title);
-		outline.set(headingsOf(doc));
+		const marks = headingsOf(doc);
+		outline.set(marks);
+		activeOutlinePos.set(marks[0]?.pos ?? 0);
 		paintCode();
-	} else outline.set([]);
+	} else {
+		outline.set([]);
+		activeOutlinePos.set(0);
+	}
 	editorVersion.set(editorVersion() + 1);
 }
 function mountSingle(doc) {
 	const epochAt = epoch;
 	const made = makeEditor(doc);
-	made.on("revision", () => {
+	made.on("revision", (event) => {
 		if (epoch !== epochAt || editor !== made) return;
+		if (typeof event?.revision === "number" && singlePaintRevs.delete(event.revision)) return;
 		scheduleSave();
 		syncSlash();
 		scheduleOutline();
@@ -2789,7 +3444,7 @@ function headingsOf(doc) {
 		if (block.type === "heading" && Array.isArray(block.content)) {
 			const text = block.content.map((child) => child?.text ?? "").join("").trim();
 			marks.push({
-				level: Math.min(3, Math.max(1, block.attrs?.level ?? 1)),
+				level: Math.min(6, Math.max(1, block.attrs?.level ?? 1)),
 				text,
 				pos: pos + 1
 			});
@@ -2817,8 +3472,179 @@ function scheduleOutline() {
 		if (!(next.length === current.length && next.every((mark, index) => {
 			const old = current[index];
 			return mark.pos === old.pos && mark.text === old.text && mark.level === old.level;
-		}))) outline.set(next);
+		}))) {
+			outline.set(next);
+			if (!next.some((mark) => mark.pos === activeOutlinePos())) activeOutlinePos.set(next[0]?.pos ?? 0);
+		}
 	}, 320);
+}
+function headingPmLocations(doc) {
+	const root = doc;
+	if (!root || !Array.isArray(root.content)) return [];
+	const out = [];
+	let pos = 0;
+	for (const node of root.content) {
+		const block = node;
+		if (block.type === "heading" && Array.isArray(block.content)) out.push({
+			nodePos: pos,
+			textPos: pos + 1
+		});
+		pos += blockSize(node);
+	}
+	return out;
+}
+function splitHeadingLocations() {
+	const out = [];
+	for (const seg of segments) {
+		if (seg.kind !== "prose") continue;
+		for (const loc of headingPmLocations(seg.session.getJSON())) out.push({
+			segId: seg.id,
+			session: seg.session,
+			nodePos: loc.nodePos,
+			textPos: loc.textPos
+		});
+	}
+	return out;
+}
+function outlineThreshold() {
+	return Math.max(96, Math.round(pageTall() * .36));
+}
+function syncOutlineFromCaret(segId, localPos) {
+	const marks = outline();
+	if (marks.length < 2) return;
+	if (split && segId !== null) {
+		const segOrder = segments.findIndex((seg) => seg.id === segId);
+		if (segOrder < 0) return;
+		const locs = splitHeadingLocations();
+		const count = Math.min(marks.length, locs.length);
+		if (!count) return;
+		let active = 0;
+		for (let index = 0; index < count; index += 1) {
+			const locOrder = segments.findIndex((seg) => seg.id === locs[index].segId);
+			if (locOrder < segOrder || locOrder === segOrder && locs[index].nodePos <= localPos) active = index;
+			else break;
+		}
+		if (activeOutlinePos() !== marks[active].pos) activeOutlinePos.set(marks[active].pos);
+		return;
+	}
+	if (!editor) return;
+	const locs = headingPmLocations(editor.getJSON());
+	const count = Math.min(marks.length, locs.length);
+	if (!count) return;
+	const active = activeOutlineIndex(locs.slice(0, count).map((loc) => loc.nodePos), localPos);
+	if (activeOutlinePos() !== marks[active].pos) activeOutlinePos.set(marks[active].pos);
+}
+function syncOutlineFromViewport() {
+	if (pinnedOutlinePos !== null) return;
+	const marks = outline();
+	if (marks.length < 2) return;
+	const threshold = outlineThreshold();
+	if (split) {
+		const locs = splitHeadingLocations();
+		const count = Math.min(marks.length, locs.length);
+		if (!count) return;
+		const ys = [];
+		for (let index = 0; index < count; index += 1) {
+			const loc = locs[index];
+			const segTop = segTops.get(loc.segId);
+			if (typeof segTop !== "number") {
+				ys.push(null);
+				continue;
+			}
+			let localY = 0;
+			try {
+				const rect = loc.session.nodeRect(loc.nodePos) ?? loc.session.coordsAtPos(loc.textPos);
+				if (rect && typeof rect.y === "number") localY = rect.y;
+			} catch {}
+			ys.push(segTop + localY);
+		}
+		if (!ys.some((y) => y !== null)) return;
+		const active = activeOutlineIndex(ys, splitScrollY + threshold);
+		if (activeOutlinePos() !== marks[active].pos) activeOutlinePos.set(marks[active].pos);
+		return;
+	}
+	if (!editor) return;
+	const locs = headingPmLocations(editor.getJSON());
+	const count = Math.min(marks.length, locs.length);
+	if (!count) return;
+	const ys = [];
+	for (let index = 0; index < count; index += 1) {
+		const loc = locs[index];
+		let y = null;
+		try {
+			const rect = editor.pageNodeRect(loc.nodePos) ?? editor.pageCoordsAtPos(loc.textPos);
+			if (rect && typeof rect.y === "number") y = rect.y;
+		} catch {}
+		ys.push(y);
+	}
+	if (!ys.some((y) => y !== null)) return;
+	const active = activeOutlineIndex(ys, pageTopY + threshold);
+	if (activeOutlinePos() !== marks[active].pos) activeOutlinePos.set(marks[active].pos);
+}
+function scheduleOutlineSync() {
+	if (outlineSyncTimer) return;
+	outlineSyncTimer = setTimeout(() => {
+		outlineSyncTimer = null;
+		syncOutlineFromViewport();
+	}, 60);
+}
+function onSplitScroll(y) {
+	splitScrollY = y;
+	if (pinnedOutlinePos !== null && !outlineSettleTimer && Math.abs(y - pinnedScrollY) > 24) pinnedOutlinePos = null;
+	scheduleOutlineSync();
+}
+function onSingleWheel() {
+	if (split || outline().length < 2) return;
+	pinnedOutlinePos = null;
+	syncOutlineFromViewport();
+	scheduleOutlineSync();
+	if (outlineSettleTimer) clearTimeout(outlineSettleTimer);
+	outlineSettleTimer = setTimeout(() => {
+		outlineSettleTimer = null;
+		syncOutlineFromViewport();
+	}, 220);
+}
+function jumpToOutline(mark) {
+	const index = outline().findIndex((item) => item.pos === mark.pos);
+	if (index < 0) return;
+	activeOutlinePos.set(mark.pos);
+	pinnedOutlinePos = mark.pos;
+	pinnedScrollY = splitScrollY;
+	if (outlineSettleTimer) clearTimeout(outlineSettleTimer);
+	outlineSettleTimer = setTimeout(() => {
+		outlineSettleTimer = null;
+		pinnedScrollY = splitScrollY;
+	}, 450);
+	if (split) {
+		const loc = splitHeadingLocations()[index];
+		if (!loc) return;
+		const segTop = segTops.get(loc.segId);
+		if (typeof segTop === "number" && splitScrollRef) {
+			let localY = 0;
+			try {
+				const rect = loc.session.nodeRect(loc.nodePos) ?? loc.session.coordsAtPos(loc.textPos);
+				if (rect && typeof rect.y === "number") localY = rect.y;
+			} catch {}
+			const targetY = Math.max(0, Math.round(segTop + localY - Math.max(40, pageTall() * .14)));
+			pinnedScrollY = targetY;
+			splitScrollRef.scrollTo({
+				y: targetY,
+				animated: true
+			});
+		}
+		const ref = segRefs.get(loc.segId);
+		if (ref) {
+			editor = loc.session;
+			ref.focus();
+			ref.setSelection(loc.textPos, loc.textPos);
+		}
+		return;
+	}
+	if (!editor || !editorRef) return;
+	const loc = headingPmLocations(editor.getJSON())[index];
+	const targetPos = loc ? loc.textPos : mark.pos;
+	editorRef.focus();
+	editorRef.setSelection(targetPos, targetPos);
 }
 function caretToEnd() {
 	if (split && segments.length) {
@@ -2920,7 +3746,7 @@ function syncSlash() {
 	if (slashOpen() && slashSession && editor !== slashSession) return;
 	const match = slashMatch();
 	if (!match) {
-		closeSlash();
+		if (slashOpen()) closeSlash();
 		return;
 	}
 	slashRange = match;
@@ -2975,7 +3801,7 @@ function closeSlash(discard = false) {
 	const wasOpen = slashOpen();
 	if (wasOpen) slashOpen.set(false);
 	unbindSlashKeysNow();
-	focusCaret();
+	if (wasOpen) focusCaret();
 	if (discard && wasOpen && range && live) live.run(deleteRange({
 		from: range.from,
 		to: range.to
@@ -3061,27 +3887,49 @@ function unbindSlashKeysNow() {
 		unbindSlashKeys = null;
 	}
 }
+function currentRecentEntry() {
+	const id = selectedId();
+	if (!id) return null;
+	return {
+		kind: "note",
+		id,
+		title: draftTitle().trim() || text$1(selected()?.title ?? "").trim() || "Без названия"
+	};
+}
 function select(note) {
 	const id = note ? text$1(note.id) : null;
 	if (id && id === selectedId() && editor) return;
 	flushSave();
 	applyPreview();
-	selectedId.set(id);
+	const leaving = currentRecentEntry();
+	if (leaving && leaving.id !== id) commitRecent(leaving);
 	draftTitle.set(note ? text$1(note.title) : "");
 	dirty.set(false);
 	open(note);
-	if (note) rememberRecent({
+	selectedId.set(id);
+	if (note) stageRecent({
 		kind: "note",
 		id: text$1(note.id),
 		title: text$1(note.title).trim() || "Без названия"
 	});
 }
 const openNoteTitle = () => selectedId() ? draftTitle() : "";
+const openNoteId = () => selectedId();
 const hasOpenNote = () => selectedId() !== null;
 const renameOpenNote = (value) => editTitle(value);
 const closeOpenNote = () => closeNote();
 const removeOpenNote = () => removeNote();
 const createOpenNote = () => createNote();
+function leaveOpenNote() {
+	flushSave();
+	applyPreview();
+	const current = currentRecentEntry();
+	if (current) commitRecent(current);
+}
+function resumeOpenNote() {
+	const current = currentRecentEntry();
+	if (current) stageRecent(current);
+}
 function openNoteById(id) {
 	const note = notes().find((item) => text$1(item.id) === id);
 	if (note) select(note);
@@ -3146,8 +3994,7 @@ function createNote() {
 	commands.create("", null);
 }
 function closeNote() {
-	flushSave();
-	applyPreview();
+	leaveOpenNote();
 	selectedId.set(null);
 	draftTitle.set("");
 	open(null);
@@ -3679,28 +4526,40 @@ function pieceWidth(room) {
 	const pad = room > 0 ? room < COMPACT_LIBRARY ? 16 : Math.max((room - PAGE_MAX) / 2, PAGE_PAD / 2) : PAGE_PAD;
 	return Math.max(220, (room > 0 ? room : 720) - pad * 2);
 }
+function updateSegHeight(id, height) {
+	const rounded = Math.max(24, Math.ceil(height));
+	if (segHeights.get(id) === rounded) return;
+	segHeights.set(id, rounded);
+	segHeightRev.update((n) => n + 1);
+}
+function measuredSegHeight(id, fallbackHeight) {
+	segHeightRev();
+	return segHeights.get(id) ?? fallbackHeight;
+}
 function proseBoxHeight(id, room, rev) {
 	const seg = segments.find((item) => item.id === id);
-	if (!seg) return 48;
+	if (!seg) return 32;
 	const width = pieceWidth(room);
 	const content = seg.session.getJSON().content ?? [];
-	let height = 8;
+	let height = 0;
 	for (const node of content) {
 		const type = node?.type;
 		const level = node?.attrs?.level ?? 1;
 		if (type === "heading") {
-			const line = level === 1 ? 32 : level === 2 ? 28 : 26;
-			height += (level === 1 ? 22 : 12) + wrappedLines(plainOf(node), width, line > 26 ? 28 : 18) * line + 6;
-		} else if (type === "horizontalRule") height += 40;
-		else if (type === "table") height += 40 * Math.max(1, (node.content ?? []).length) + 16;
-		else if (type === "bulletList" || type === "orderedList" || type === "blockquote") height += 12 + wrappedLines(plainOf(node), width - 32, 16) * 24;
+			const line = level === 1 ? 36 : level === 2 ? 30 : level === 3 ? 26 : level === 4 ? 24 : level === 5 ? 22 : 20;
+			const above = level === 1 ? 32 : level === 2 ? 26 : level === 3 ? 20 : level === 4 ? 16 : level === 5 ? 14 : 12;
+			const below = level === 1 ? 8 : level === 2 ? 6 : level <= 4 ? 4 : 2;
+			height += above + wrappedLines(plainOf(node), width, line > 26 ? 26 : 18) * line + below;
+		} else if (type === "horizontalRule") height += 38;
+		else if (type === "table") height += 40 * Math.max(1, (node.content ?? []).length) + 12;
+		else if (type === "bulletList" || type === "orderedList" || type === "blockquote") height += 10 + wrappedLines(plainOf(node), width - 32, 16) * 24;
 		else height += 8 + wrappedLines(plainOf(node), width, 16) * 24;
 	}
-	return Math.max(36, Math.ceil(height + 20));
+	return Math.max(28, Math.ceil(height));
 }
 function codeBoxHeight(text, room) {
 	const per = Math.max(8, Math.floor(Math.max(80, pieceWidth(room) - 28) / 8));
-	return 26 + (text.length ? text : " ").split("\n").reduce((count, line) => count + Math.max(1, Math.ceil(line.length / per)), 0) * 21 + 10;
+	return 26 + (text.length ? text : " ").split("\n").reduce((count, line) => count + Math.max(1, Math.ceil(line.length / per)), 0) * 21;
 }
 function CodeCard(props) {
 	const seg = segments.find((item) => item.id === props.id);
@@ -3710,8 +4569,8 @@ function CodeCard(props) {
 	return (() => {
 		const __nsh_hv40 = element("view");
 		bindProp(__nsh_hv40, "style", () => ({
-			marginTop: 10,
-			marginBottom: 10,
+			marginTop: 4,
+			marginBottom: 8,
 			borderRadius: 10,
 			borderWidth: 1,
 			borderColor: props.colors.border,
@@ -3782,8 +4641,10 @@ function CodeCard(props) {
 			},
 			ref: (ref) => attachRef(props.id, ref),
 			accessibilityLabel: "Код",
+			onContentSizeChange: ({ contentSize }) => updateSegHeight(props.id, Math.max(40, contentSize.height)),
+			onSelectionChange: ({ selection }) => syncOutlineFromCaret(props.id, selection.from),
 			get style() {
-				return { height: codeBoxHeight(codeFields(props.id, bodyRev()).text, pageRoom()) };
+				return { height: measuredSegHeight(props.id, codeBoxHeight(codeFields(props.id, bodyRev()).text, pageRoom())) };
 			},
 			get styles() {
 				return codeStyles(props.colors, props.dark);
@@ -3806,6 +4667,8 @@ function ProsePiece(props) {
 		get placeholder() {
 			return segmentList()[0]?.id === props.id ? "Пишите. Слэш открывает блоки: заголовок, список, таблица…" : void 0;
 		},
+		onContentSizeChange: ({ contentSize }) => updateSegHeight(props.id, contentSize.height),
+		onSelectionChange: ({ selection }) => syncOutlineFromCaret(props.id, selection.from),
 		onPasteFiles: (event) => {
 			pastePictures(event.paste, seg.session);
 		},
@@ -3819,7 +4682,7 @@ function ProsePiece(props) {
 			closeSlash();
 		},
 		get style() {
-			return { height: proseBoxHeight(props.id, pageRoom(), bodyRev()) };
+			return { height: measuredSegHeight(props.id, proseBoxHeight(props.id, pageRoom(), bodyRev())) };
 		},
 		get styles() {
 			return noteStyles(props.colors, props.dark, 0, 0, true);
@@ -3834,65 +4697,81 @@ function SplitNote(props) {
 			menuAnchor = node;
 		});
 		const __nsh_hv48 = element("scroll");
+		prop(__nsh_hv48, "ref", (node) => {
+			splitScrollRef = node;
+		});
+		prop(__nsh_hv48, "onScroll", (event) => onSplitScroll(event.offset.y));
 		prop(__nsh_hv48, "class", "min-h-0 flex-1");
 		bindProp(__nsh_hv48, "contentStyle", () => ({
-			paddingTop: 2,
-			paddingBottom: 120,
+			paddingTop: pageTopPad(),
+			paddingBottom: 0,
 			paddingLeft: pagePad(),
 			paddingRight: pagePad()
 		}));
+		const __nsh_hv50 = element("view");
+		prop(__nsh_hv50, "onPress", caretToEnd);
+		prop(__nsh_hv50, "testID", "split-note-tail");
+		prop(__nsh_hv50, "style", { height: 120 });
+		append(__nsh_hv48, __nsh_hv50);
 		insert(__nsh_hv48, each(() => segmentList(), (row) => {
 			const item = row();
-			return item.kind === "code" ? component(CodeCard, {
-				get id() {
-					return item.id;
-				},
-				get colors() {
-					return props.colors;
-				},
-				get dark() {
-					return props.dark;
-				},
-				get wash() {
-					return props.wash;
-				}
-			}) : component(ProsePiece, {
-				get id() {
-					return item.id;
-				},
-				get colors() {
-					return props.colors;
-				},
-				get dark() {
-					return props.dark;
-				}
-			});
-		}, ((row) => String(row.id))));
+			return (() => {
+				const __nsh_hv49 = element("view");
+				prop(__nsh_hv49, "onLayout", (event) => {
+					segTops.set(item.id, event.bounds.origin.y);
+				});
+				insert(__nsh_hv49, () => item.kind === "code" ? component(CodeCard, {
+					get id() {
+						return item.id;
+					},
+					get colors() {
+						return props.colors;
+					},
+					get dark() {
+						return props.dark;
+					},
+					get wash() {
+						return props.wash;
+					}
+				}) : component(ProsePiece, {
+					get id() {
+						return item.id;
+					},
+					get colors() {
+						return props.colors;
+					},
+					get dark() {
+						return props.dark;
+					}
+				}));
+				return __nsh_hv49;
+			})();
+		}, ((row) => String(row.id))), __nsh_hv50);
 		append(__nsh_hv47, __nsh_hv48);
 		return __nsh_hv47;
 	})();
 }
 function slashKeyboard() {
 	return (() => {
-		const __nsh_hv49 = element("view");
-		prop(__nsh_hv49, "ref", (node) => {
+		const __nsh_hv51 = element("view");
+		prop(__nsh_hv51, "ref", (node) => {
 			slashFocus = node;
 		});
-		prop(__nsh_hv49, "focusable", true);
-		prop(__nsh_hv49, "style", {
+		prop(__nsh_hv51, "focusable", true);
+		prop(__nsh_hv51, "style", {
 			position: "absolute",
 			width: 1,
 			height: 1,
 			opacity: 0
 		});
-		return __nsh_hv49;
+		return __nsh_hv51;
 	})();
 }
 function slashMenu(colors, wash) {
 	return (() => {
-		const __nsh_hv50 = element("view");
-		prop(__nsh_hv50, "class", "absolute rounded-lg border");
-		bindProp(__nsh_hv50, "style", () => ({
+		const __nsh_hv52 = element("view");
+		prop(__nsh_hv52, "class", "absolute rounded-lg border");
+		bindProp(__nsh_hv52, "style", () => ({
 			left: slashLeft(),
 			top: slashTop(),
 			width: 264,
@@ -3901,17 +4780,17 @@ function slashMenu(colors, wash) {
 			paddingTop: 4,
 			paddingBottom: 4
 		}));
-		insert(__nsh_hv50, () => filtered(slashQuery()).map((item, index) => (() => {
-			const __nsh_hv51 = element("view");
-			prop(__nsh_hv51, "onPress", () => {
+		insert(__nsh_hv52, () => filtered(slashQuery()).map((item, index) => (() => {
+			const __nsh_hv53 = element("view");
+			prop(__nsh_hv53, "onPress", () => {
 				slashIndex.set(index);
 				pick();
 			});
-			prop(__nsh_hv51, "role", "button");
-			bindProp(__nsh_hv51, "accessibilityLabel", () => item.label);
-			prop(__nsh_hv51, "class", "flex-row items-center");
-			prop(__nsh_hv51, "hoverStyle", { backgroundColor: wash });
-			bindProp(__nsh_hv51, "style", () => ({
+			prop(__nsh_hv53, "role", "button");
+			bindProp(__nsh_hv53, "accessibilityLabel", () => item.label);
+			prop(__nsh_hv53, "class", "flex-row items-center");
+			prop(__nsh_hv53, "hoverStyle", { backgroundColor: wash });
+			bindProp(__nsh_hv53, "style", () => ({
 				height: 28,
 				paddingLeft: 10,
 				paddingRight: 10,
@@ -3919,19 +4798,19 @@ function slashMenu(colors, wash) {
 				cursor: "pointer",
 				backgroundColor: index === slashIndex() ? wash : "transparent"
 			}));
-			const __nsh_hv52 = element("text");
-			prop(__nsh_hv52, "class", "text-[13px] flex-1");
-			bindProp(__nsh_hv52, "style", () => ({ color: colors.foreground }));
-			insert(__nsh_hv52, () => item.label);
-			const __nsh_hv53 = element("text");
-			prop(__nsh_hv53, "class", "text-[11px]");
-			bindProp(__nsh_hv53, "style", () => ({ color: colors.muted }));
-			insert(__nsh_hv53, () => item.hint);
-			append(__nsh_hv51, __nsh_hv52);
-			append(__nsh_hv51, __nsh_hv53);
-			return __nsh_hv51;
+			const __nsh_hv54 = element("text");
+			prop(__nsh_hv54, "class", "text-[13px] flex-1");
+			bindProp(__nsh_hv54, "style", () => ({ color: colors.foreground }));
+			insert(__nsh_hv54, () => item.label);
+			const __nsh_hv55 = element("text");
+			prop(__nsh_hv55, "class", "text-[11px]");
+			bindProp(__nsh_hv55, "style", () => ({ color: colors.muted }));
+			insert(__nsh_hv55, () => item.hint);
+			append(__nsh_hv53, __nsh_hv54);
+			append(__nsh_hv53, __nsh_hv55);
+			return __nsh_hv53;
 		})()));
-		return __nsh_hv50;
+		return __nsh_hv52;
 	})();
 }
 let noteEnterId = "";
@@ -3952,6 +4831,14 @@ function noteEntrance(id) {
 	} });
 	return noteEnter;
 }
+function onPageSpacePress() {
+	if (slashOpen()) {
+		closeSlash();
+		return;
+	}
+	if (split) return;
+	caretToEnd();
+}
 function NoteView(props) {
 	const colors = props.colors;
 	const wash = surfaceWash(props.dark, .07);
@@ -3966,29 +4853,33 @@ function NoteView(props) {
 	}
 	const enter = noteEntrance(id);
 	return (() => {
-		const __nsh_hv54 = element("view");
-		prop(__nsh_hv54, "class", "min-h-0 flex-1 flex-col");
-		bindProp(__nsh_hv54, "style", () => enter.style);
-		const __nsh_hv55 = element("view");
-		prop(__nsh_hv55, "class", "relative min-h-0 flex-1");
-		prop(__nsh_hv55, "onLayout", (event) => {
+		const __nsh_hv56 = element("view");
+		prop(__nsh_hv56, "class", "min-h-0 flex-1 flex-col");
+		bindProp(__nsh_hv56, "style", () => enter.style);
+		const __nsh_hv57 = element("view");
+		prop(__nsh_hv57, "class", "relative min-h-0 flex-1");
+		prop(__nsh_hv57, "onLayout", (event) => {
 			pageRoom.set(event.bounds.size.width);
 			pageTall.set(event.bounds.size.height);
+			menuAnchor?.measure().then((box) => {
+				if (box) pageTopY = box.pagePosition.y;
+			});
 		});
-		const __nsh_hv56 = element("view");
-		prop(__nsh_hv56, "class", "min-h-0 flex-col");
-		bindProp(__nsh_hv56, "style", () => ({
+		const __nsh_hv58 = element("view");
+		prop(__nsh_hv58, "class", "min-h-0 flex-col");
+		bindProp(__nsh_hv58, "style", () => ({
 			height: pageTall() > 0 ? pageTall() : void 0,
 			paddingTop: 4
 		}));
-		const __nsh_hv57 = element("view");
-		prop(__nsh_hv57, "class", "relative min-h-0 flex-1 overflow-hidden");
-		prop(__nsh_hv57, "ref", (node) => {
+		const __nsh_hv59 = element("view");
+		prop(__nsh_hv59, "class", "relative min-h-0 flex-1 overflow-hidden");
+		prop(__nsh_hv59, "ref", (node) => {
 			menuAnchor = node;
 		});
-		prop(__nsh_hv57, "onPress", caretToEnd);
-		prop(__nsh_hv57, "testID", "note-page-space");
-		insert(__nsh_hv57, [
+		prop(__nsh_hv59, "onPress", onPageSpacePress);
+		prop(__nsh_hv59, "onWheel", onSingleWheel);
+		prop(__nsh_hv59, "testID", "note-page-space");
+		insert(__nsh_hv59, [
 			() => codeLayout() ? component(SplitNote, {
 				colors,
 				get dark() {
@@ -4003,6 +4894,7 @@ function NoteView(props) {
 				class: "min-h-0 flex-1",
 				placeholder: "Пишите. Слэш открывает блоки: заголовок, список, таблица…",
 				accessibilityLabel: "Текст заметки",
+				onSelectionChange: ({ selection }) => syncOutlineFromCaret(null, selection.from),
 				onPasteFiles: (event) => {
 					pastePictures(event.paste, editor);
 				},
@@ -4016,25 +4908,31 @@ function NoteView(props) {
 					closeSlash();
 				},
 				get styles() {
-					return noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad(), false);
+					return noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad(), false, pageTopPad());
 				}
 			}) : (() => {
-				const __nsh_hv58 = element("view");
-				prop(__nsh_hv58, "class", "h-full");
-				return __nsh_hv58;
+				const __nsh_hv60 = element("view");
+				prop(__nsh_hv60, "class", "h-full");
+				return __nsh_hv60;
 			})(), ((row) => row.stamp)),
 			() => slashOpen() && slashKeyboard(),
 			() => slashOpen() && slashMenu(colors, wash)
 		]);
+		append(__nsh_hv58, __nsh_hv59);
+		append(__nsh_hv57, __nsh_hv58);
+		insert(__nsh_hv57, component(NotesOutlineRail, {
+			marks: outline,
+			activePos: activeOutlinePos,
+			colors,
+			get dark() {
+				return props.dark;
+			},
+			maxHeight: () => Math.max(180, pageTall() - 80),
+			onHoverOpen: syncOutlineFromViewport,
+			onSelect: jumpToOutline
+		}));
 		append(__nsh_hv56, __nsh_hv57);
-		const __nsh_hv59 = element("view");
-		prop(__nsh_hv59, "class", "absolute top-0 bottom-0");
-		prop(__nsh_hv59, "style", { right: RAIL_INSET });
-		insert(__nsh_hv59, () => outlineRails(colors, props.dark));
-		append(__nsh_hv55, __nsh_hv56);
-		append(__nsh_hv55, __nsh_hv59);
-		append(__nsh_hv54, __nsh_hv55);
-		return __nsh_hv54;
+		return __nsh_hv56;
 	})();
 }
 function pagePad() {
@@ -4043,56 +4941,10 @@ function pagePad() {
 	if (compact()) return 16;
 	return Math.max((room - PAGE_MAX) / 2, PAGE_PAD / 2);
 }
-function outlineRails(colors, dark) {
-	const marks = outline().slice(0, OUTLINE_LIMIT);
-	if (marks.length < 2) return null;
-	return (() => {
-		const __nsh_hv60 = element("view");
-		prop(__nsh_hv60, "class", "h-full items-end justify-center");
-		prop(__nsh_hv60, "style", {
-			width: RAIL_WIDTH,
-			gap: 3
-		});
-		insert(__nsh_hv60, () => marks.map((mark) => (() => {
-			const __nsh_hv61 = element("view");
-			prop(__nsh_hv61, "onPress", () => {
-				if (split) {
-					const found = segmentAt(mark.pos);
-					const ref = found ? segRefs.get(found.id) : null;
-					const seg = found ? segments.find((item) => item.id === found.id) : null;
-					if (!found || !ref || !seg) return;
-					editor = seg.session;
-					ref.focus();
-					ref.setSelection(found.local, found.local);
-					return;
-				}
-				if (!editor || !editorRef) return;
-				editorRef.focus();
-				editorRef.setSelection(mark.pos, mark.pos);
-			});
-			prop(__nsh_hv61, "role", "button");
-			bindProp(__nsh_hv61, "accessibilityLabel", () => mark.text || "Заголовок");
-			prop(__nsh_hv61, "class", "items-end justify-center");
-			bindProp(__nsh_hv61, "hoverStyle", () => ({ backgroundColor: surfaceWash(dark, .06) }));
-			prop(__nsh_hv61, "style", {
-				width: RAIL_WIDTH,
-				height: 8,
-				paddingRight: 3,
-				borderRadius: 4,
-				cursor: "pointer"
-			});
-			const __nsh_hv62 = element("view");
-			bindProp(__nsh_hv62, "style", () => ({
-				width: 14 / mark.level,
-				height: 2,
-				borderRadius: 2,
-				backgroundColor: colors.muted
-			}));
-			append(__nsh_hv61, __nsh_hv62);
-			return __nsh_hv61;
-		})()));
-		return __nsh_hv60;
-	})();
+function pageTopPad() {
+	const tall = pageTall();
+	if (!(tall > 0)) return compact() ? 96 : 240;
+	return Math.round(tall * .34);
 }
 let documentStylesCache = null;
 function segmentAt(markPos) {
@@ -4109,11 +4961,11 @@ function segmentAt(markPos) {
 	}
 	return null;
 }
-function noteStyles(colors, dark, minHeight, pad, piece = false) {
-	const key = `${piece}|${dark}|${minHeight}|${pad}|${colors.background}|${colors.foreground}|${colors.muted}|${colors.border}`;
+function noteStyles(colors, dark, minHeight, pad, piece = false, topPad = 2) {
+	const key = `${piece}|${dark}|${minHeight}|${pad}|${topPad}|${colors.background}|${colors.foreground}|${colors.muted}|${colors.border}`;
 	if (documentStylesCache?.key !== key) documentStylesCache = {
 		key,
-		styles: documentStyles(colors, dark, minHeight, pad, piece)
+		styles: documentStyles(colors, dark, minHeight, pad, piece, topPad)
 	};
 	return documentStylesCache.styles;
 }
@@ -4160,13 +5012,13 @@ function codeStyles(colors, dark) {
 	};
 	return codeStylesCache.styles;
 }
-function documentStyles(colors, dark, minHeight, pad, piece = false) {
+function documentStyles(colors, dark, minHeight, pad, piece = false, topPad = 2) {
 	return {
 		content: {
 			color: colors.foreground,
 			backgroundColor: "transparent",
-			paddingTop: piece ? 0 : 2,
-			paddingBottom: piece ? 4 : 120,
+			paddingTop: piece ? 0 : topPad,
+			paddingBottom: piece ? 0 : 120,
 			paddingLeft: piece ? 0 : pad,
 			paddingRight: piece ? 0 : pad,
 			minHeight: piece ? 0 : minHeight
@@ -4182,21 +5034,42 @@ function documentStyles(colors, dark, minHeight, pad, piece = false) {
 			},
 			"heading[level=1]": {
 				fontSize: 28,
-				lineHeight: 32,
+				lineHeight: 36,
 				fontWeight: "bold",
-				marginTop: 22,
-				marginBottom: 1
+				marginTop: 32,
+				marginBottom: 8
 			},
 			"heading[level=2]": {
 				fontSize: 22,
-				lineHeight: 28,
+				lineHeight: 30,
 				fontWeight: "bold",
-				marginTop: 12,
-				marginBottom: 1
+				marginTop: 26,
+				marginBottom: 6
 			},
 			"heading[level=3]": {
 				fontSize: 18,
 				lineHeight: 26,
+				fontWeight: "bold",
+				marginTop: 20,
+				marginBottom: 4
+			},
+			"heading[level=4]": {
+				fontSize: 16,
+				lineHeight: 24,
+				fontWeight: "bold",
+				marginTop: 16,
+				marginBottom: 4
+			},
+			"heading[level=5]": {
+				fontSize: 15,
+				lineHeight: 22,
+				fontWeight: "bold",
+				marginTop: 14,
+				marginBottom: 2
+			},
+			"heading[level=6]": {
+				fontSize: 14,
+				lineHeight: 20,
 				fontWeight: "bold",
 				marginTop: 12,
 				marginBottom: 2
@@ -4375,21 +5248,21 @@ function PreviewLine(props) {
 	const block = props.block;
 	const colors = props.colors;
 	if (block.kind === "rule") return (() => {
-		const __nsh_hv63 = element("view");
-		bindProp(__nsh_hv63, "style", () => ({
+		const __nsh_hv61 = element("view");
+		bindProp(__nsh_hv61, "style", () => ({
 			height: 1,
 			marginTop: 4,
 			marginBottom: 2,
 			backgroundColor: colors.border
 		}));
-		return __nsh_hv63;
+		return __nsh_hv61;
 	})();
 	const scale = block.kind === "heading" ? PREVIEW_SIZES[`h${Math.min(Math.max(block.level, 1), 3)}`] ?? PREVIEW_SIZES.h1 : PREVIEW_SIZES[block.kind] ?? PREVIEW_SIZES.text;
 	const ink = block.kind === "heading" ? colors.foreground : colorAlpha(colors.foreground, .62);
 	return (() => {
-		const __nsh_hv64 = element("text");
-		prop(__nsh_hv64, "class", "w-full");
-		bindProp(__nsh_hv64, "style", () => ({
+		const __nsh_hv62 = element("text");
+		prop(__nsh_hv62, "class", "w-full");
+		bindProp(__nsh_hv62, "style", () => ({
 			fontSize: scale.size,
 			lineHeight: scale.line,
 			fontWeight: scale.weight,
@@ -4398,8 +5271,8 @@ function PreviewLine(props) {
 			marginTop: scale.gap,
 			paddingLeft: block.kind === "item" ? 9 : 0
 		}));
-		insert(__nsh_hv64, () => block.kind === "item" ? `• ${block.text}` : block.text);
-		return __nsh_hv64;
+		insert(__nsh_hv62, () => block.kind === "item" ? `• ${block.text}` : block.text);
+		return __nsh_hv62;
 	})();
 }
 function cardShadow(dark) {
@@ -7107,10 +7980,10 @@ function SettingsPage() {
 	});
 }
 function App() {
-	effect(() => Window.setTitleBar({
+	effect(() => currentWindow().set({ titleBar: {
 		style: "hidden",
 		height: 38
-	}));
+	} }));
 	effect(() => visiblePages.set(pageNavigation.filter((item) => widgetOn(item.id))));
 	effect(() => {
 		const pages = visiblePages();
@@ -7128,7 +8001,22 @@ function App() {
 	const dark = snapshot().appearance?.settings.mode !== "light";
 	const changeRoute = (target) => {
 		if (!isRoute(target)) return;
+		const prev = route();
+		if (prev === "notes" && target !== "notes") leaveOpenNote();
 		route.set(target);
+		if (prev !== "notes" && target === "notes") resumeOpenNote();
+	};
+	const selectSidebarPage = (target) => {
+		if (target === "notes" && route() === "notes" && hasOpenNote()) {
+			closeOpenNote();
+			return;
+		}
+		changeRoute(target);
+	};
+	const activeRecentNote = () => {
+		if (route() !== "notes") return false;
+		const id = openNoteId();
+		return id !== null && recent().some((entry) => entry.kind === "note" && entry.id === id);
 	};
 	const openRecentEntry = (entry) => {
 		if (entry.kind === "note") {
@@ -7316,7 +8204,8 @@ function App() {
 			}));
 			const __nsh_hv14 = element("view");
 			prop(__nsh_hv14, "onPressDown", () => askEngine("window.drag"));
-			prop(__nsh_hv14, "class", "absolute left-0 right-0 top-0 bottom-0");
+			prop(__nsh_hv14, "class", "absolute left-0 right-0 bottom-0");
+			prop(__nsh_hv14, "style", { top: 38 });
 			const __nsh_hv15 = element("view");
 			prop(__nsh_hv15, "style", {
 				gap: 2,
@@ -7330,13 +8219,13 @@ function App() {
 					return iconForNavigation(item.id);
 				},
 				get selected() {
-					return route() === item.id;
+					return route() === item.id && !(item.id === "notes" && activeRecentNote());
 				},
 				dark,
 				get colors() {
 					return snapshot().colors;
 				},
-				onPress: () => changeRoute(item.id)
+				onPress: () => selectSidebarPage(item.id)
 			})));
 			const __nsh_hv20 = element("view");
 			prop(__nsh_hv20, "class", "mt-auto mb-2");
@@ -7379,6 +8268,9 @@ function App() {
 				prop(__nsh_hv19, "style", { gap: 1 });
 				insert(__nsh_hv19, () => recent().map((entry) => component(RecentRow, {
 					entry,
+					get selected() {
+						return entry.kind === "note" && route() === "notes" && openNoteId() === entry.id;
+					},
 					get colors() {
 						return snapshot().colors;
 					},
@@ -7475,6 +8367,9 @@ function App() {
 			},
 			get dimmed() {
 				return addTaskOpen() || gameLibrary.addOpen() || pickedExes().length > 1;
+			},
+			get fadeBackdrop() {
+				return route() === "journal";
 			},
 			get noteActive() {
 				return route() === "notes" && hasOpenNote();

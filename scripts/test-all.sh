@@ -4,7 +4,9 @@
 set -u
 cd "$(dirname "$0")/../ui" || exit 1
 log=/tmp/atlas-test-all.log
-perl -e 'alarm 180; exec @ARGV' "$HOME/.nsh-0.4.0/bin/nsh" test >"$log" 2>&1
+nsh="${NSH_BIN:-$HOME/.nsh/bin/nsh}"
+[ -x "$nsh" ] || nsh=nsh
+perl -e 'alarm 180; exec @ARGV' "$nsh" test >"$log" 2>&1
 code=$?
 rg "✗|tests:|error" "$log" | head -20
 if [ $code -ne 0 ]; then

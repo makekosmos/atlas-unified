@@ -111,7 +111,7 @@ async function killPortOwner(port) {
 /// the ones it does not know (`RichEditor`) and its types lie about events.
 /// `NSH_BIN` overrides the pair below.
 function nshBin() {
-    const candidates = [process.env.NSH_BIN, join(homedir(), ".nsh-0.4.0", "bin", "nsh")].filter(Boolean);
+    const candidates = [process.env.NSH_BIN, join(homedir(), ".nsh", "bin", "nsh")].filter(Boolean);
     for (const candidate of candidates) {
         if (existsSync(candidate)) return candidate;
     }

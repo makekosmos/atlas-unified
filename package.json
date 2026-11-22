@@ -6,6 +6,6 @@
     "shot": "node scripts/shot.mjs"
   },
   "dependencies": {
-    "@makekosmos/imago-nsh": "github:makekosmos/imago#d9186fab4dda30bd528fd5d6dbda843424b0ed78"
+    "@makekosmos/imago-nsh": "github:makekosmos/imago#9dd5fc97ce2d6b94319606e354e4aa0dd15d4c33"
   }
 }

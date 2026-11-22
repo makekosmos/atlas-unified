@@ -1,5 +1,6 @@
 import { expect, test } from "nsh/test";
 import { headingsOf, markdownOf, nodeSize, rowsOf } from "./notes";
+import { activeOutlineIndex, activeOutlinePosForCaret, outlineRowIndent, outlineTickWidth } from "./notes-outline";
 import type { Note } from "./state";
 
 /// The pieces of the notes page that decide how it behaves on long documents:
@@ -83,6 +84,42 @@ test("a note writes back as Markdown, block for block", () => {
 test("a document without headings has no rails", () => {
   expect(headingsOf(doc(paragraph("только текст"))).length).toBe(0);
   expect(headingsOf(null).length).toBe(0);
+});
+
+test("outline preserves heading levels 1..6 and tick widths decrease monotonically from H1 to H6", () => {
+  const marks = headingsOf(doc(
+    heading(1, "H1"),
+    heading(2, "H2"),
+    heading(3, "H3"),
+    heading(4, "H4"),
+    heading(5, "H5"),
+    heading(6, "H6"),
+  ));
+  expect(marks.map((mark) => mark.level)).toEqual([1, 2, 3, 4, 5, 6]);
+  for (let level = 1; level < 6; level += 1) {
+    expect(outlineTickWidth(level)).toBeGreaterThan(outlineTickWidth(level + 1));
+    expect(outlineRowIndent(level + 1, 1)).toBeGreaterThan(outlineRowIndent(level, 1));
+  }
+  // When a note starts at H2, H2 sits at the base indent while H3 is indented one step.
+  expect(outlineRowIndent(2, 2)).toBe(outlineRowIndent(1, 1));
+  expect(outlineRowIndent(3, 2)).toBeGreaterThan(outlineRowIndent(2, 2));
+});
+
+test("active outline selection follows scroll threshold and caret position", () => {
+  expect(activeOutlineIndex([100, 320, 640], 50)).toBe(0);
+  expect(activeOutlineIndex([100, 320, 640], 100)).toBe(0);
+  expect(activeOutlineIndex([100, 320, 640], 350)).toBe(1);
+  expect(activeOutlineIndex([100, 320, 640], 900)).toBe(2);
+  expect(activeOutlineIndex([null, 200, 500], 260)).toBe(1);
+
+  const marks = [
+    { level: 1, text: "A", pos: 2 },
+    { level: 2, text: "B", pos: 20 },
+    { level: 3, text: "C", pos: 45 },
+  ];
+  expect(activeOutlinePosForCaret(marks, 1)).toBe(2);
+  expect(activeOutlinePosForCaret(marks, 25)).toBe(20);
+  expect(activeOutlinePosForCaret(marks, 100)).toBe(45);
 });
 
 test("ten thousand notes become rows of cards without a stall", () => {

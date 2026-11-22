@@ -52,8 +52,8 @@ pnpm demo                                  # демо + hot reload UI (nsh dev)
 Логи: `.dev-logs/atlas-nsh-server.log`.
 
 CLI `nsh` должен совпадать по версии с `nsh-base`, который линкует хост
-(сейчас 0.4.0): старый CLI не знает компонентов вроде `RichEditor` и падает
-на «`nsh/base` has no export». Скрипт берёт `~/.nsh-0.4.0/bin/nsh`, если он
+(сейчас 0.6.1): старый CLI не знает компонентов вроде `RichEditor` и падает
+на «`nsh/base` has no export». Скрипт берёт `~/.nsh/bin/nsh`, если он
 есть, иначе `nsh` из `PATH`; путь можно задать через `NSH_BIN`.
 `ATLAS_ROUTE=notes` открывает окно сразу на нужной странице.
 

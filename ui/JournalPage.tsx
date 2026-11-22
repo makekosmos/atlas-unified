@@ -1,6 +1,6 @@
-import { Clipboard, createMotion, effect, Easing, Image, LayoutAnimation, Scroll, signal, Text, View, nativeComponent } from "nsh";
+import { Clipboard, createMotion, effect, Easing, Image, LayoutAnimation, pixelRatio, Scroll, signal, Text, View, nativeComponent } from "nsh";
 import { Input } from "nsh/base";
-import { Menu } from "nsh/desktop";
+import { Menu, windowState } from "nsh/desktop";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
 import { GhostButton, SolidButton, colorAlpha } from "./chrome";
 import { buildJournalDays, formatJournalDay, formatJournalStamp } from "./journal-model";
@@ -15,19 +15,26 @@ const DotScope = nativeComponent<{ level: number; active: boolean; done: boolean
 
 const MIC_ICON = "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M12%202C10.3431%202%209%203.34315%209%205V12C9%2013.6569%2010.3431%2015%2012%2015C13.6569%2015%2015%2013.6569%2015%2012V5C15%203.34315%2013.6569%202%2012%202Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%2011V12C19%2015.866%2015.866%2019%2012%2019C8.13401%2019%205%2015.866%205%2012V11%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12%2019V22%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E";
 
-const COMPOSER_RADIUS = 50;
+const COMPOSER_RADIUS = 25;
+const COMPOSER_EXPANDED_RADIUS = 18;
 const COMPOSER_COMPACT_HEIGHT = 49;
 /** The recording scope sits in its own compartment above the field. */
 const SCOPE_HEIGHT = 64;
 const SCOPE_RADIUS = 26;
 const COMPOSER_SEND = 31;
+const COMPOSER_BUTTON_INSET = 8;
+const COMPOSER_FONT = 15;
 const COMPOSER_LINE = 22;
 const COMPOSER_PAD_X = 16;
 const COMPOSER_PAD_Y = 12;
-const COMPOSER_MAX_CONTENT = 132;
-const COMPOSER_MAX_HEIGHT = 168;
-const CARET_WIDTH = 2;
-const CARET_BLINK_MS = 500;
+const COMPOSER_MAX_WINDOW_SHARE = 0.7;
+const COMPOSER_MAX_HEIGHT_FALLBACK = 168;
+/** Matches RichEditor's caret in notes (`nsh-base`: 1.5 pt wide, ~0.85 * asc+desc tall, 530 ms blink). */
+const CARET_WIDTH = 1.5;
+const CARET_HEIGHT = COMPOSER_FONT * 1.02;
+const CARET_BLINK_MS = 530;
+const COMPOSER_BOTTOM_MARGIN = 18;
+const COMPOSER_FEED_GAP = 14;
 const COMPOSER_FADE = 20;
 const BUBBLE_RADIUS = 18;
 const FEED_PAD = 16;
@@ -86,13 +93,51 @@ function leaveJournalDates() {
   journalDateShown.set(null);
 }
 
+type CaretRect = { x: number; y: number; height: number };
+
+function createCaretState(initial: CaretRect) {
+  const focused = signal(false);
+  const selection = signal({ start: 0, end: 0 });
+  const composing = signal(false);
+  const rect = signal(initial);
+  const on = signal(true);
+  const tick = signal(0);
+  const bump = () => {
+    on.set(true);
+    tick.update((n) => n + 1);
+  };
+  const place = (bounds: { origin: { x: number; y: number }; size: { height: number } }) => {
+    const height = bounds.size.height;
+    if (height <= 0) return;
+    rect.set({ x: bounds.origin.x, y: bounds.origin.y, height });
+    bump();
+  };
+  const active = () => {
+    const range = selection();
+    return focused() && (windowState()?.focused ?? true) && range.start === range.end && !composing();
+  };
+  const focus = () => {
+    focused.set(true);
+    bump();
+  };
+  const blur = () => {
+    focused.set(false);
+    selection.set({ start: 0, end: 0 });
+    composing.set(false);
+  };
+  const reset = () => {
+    selection.set({ start: 0, end: 0 });
+    composing.set(false);
+    rect.set(initial);
+    bump();
+  };
+  return { focused, selection, composing, rect, on, tick, bump, place, active, focus, blur, reset };
+}
+
 const journalDraft = signal("");
 const journalDraftContentHeight = signal(COMPOSER_LINE);
-const journalFocused = signal(false);
-const journalSelection = signal({ start: 0, end: 0 });
-const journalCaret = signal({ x: COMPOSER_PAD_X, y: COMPOSER_PAD_Y, height: COMPOSER_LINE });
-const journalCaretOn = signal(true);
-const journalCaretTick = signal(0);
+const composerCaret = createCaretState({ x: COMPOSER_PAD_X, y: COMPOSER_PAD_Y, height: COMPOSER_LINE });
+const editCaret = createCaretState({ x: 8, y: 4, height: COMPOSER_LINE });
 const journalScrollY = signal(0);
 const editingJournalId = signal<string | null>(null);
 const editingJournalText = signal("");
@@ -158,7 +203,7 @@ let composerRef: { focus: () => void; blur: () => void } | undefined;
 let editFocus: { focus: () => void } | undefined;
 
 function claimJournalComposer() {
-  if (editingJournalId()) return;
+  if (editingJournalId() || composerCaret.focused()) return;
   composerRef?.focus();
 }
 
@@ -166,8 +211,17 @@ function animateComposer() {
   LayoutAnimation.configureNext({ duration: 180, update: { type: "easeOut", duration: 180 } });
 }
 
+export function composerMaxHeight(windowHeight: number) {
+  if (windowHeight <= 0) return COMPOSER_MAX_HEIGHT_FALLBACK;
+  return Math.max(COMPOSER_COMPACT_HEIGHT, Math.round(windowHeight * COMPOSER_MAX_WINDOW_SHARE));
+}
+
+function composerMaxContent() {
+  return Math.max(COMPOSER_LINE, composerMaxHeight(feedBox().height) - COMPOSER_PAD_Y * 2);
+}
+
 function clampDraftHeight(height: number) {
-  return Math.round(Math.max(COMPOSER_LINE, Math.min(COMPOSER_MAX_CONTENT, height)));
+  return Math.round(Math.max(COMPOSER_LINE, Math.min(composerMaxContent(), height)));
 }
 
 function composerContentHeight() {
@@ -183,7 +237,15 @@ function composerViewportHeight() {
 }
 
 function composerPillHeight() {
-  return Math.max(COMPOSER_COMPACT_HEIGHT, Math.min(COMPOSER_MAX_HEIGHT, composerViewportHeight()));
+  return Math.max(COMPOSER_COMPACT_HEIGHT, Math.min(composerMaxHeight(feedBox().height), composerViewportHeight()));
+}
+
+function composerMaxScroll() {
+  return Math.max(0, composerInputHeight() - composerViewportHeight());
+}
+
+function composerBottomInset() {
+  return composerPillHeight() + (scopeShown() ? scopeHeight() : 0) + COMPOSER_BOTTOM_MARGIN + COMPOSER_FEED_GAP;
 }
 
 export function composerFadeEdges(content: number, viewport: number, scroll: number) {
@@ -204,21 +266,50 @@ function composerExpanded() {
   return journalDraftContentHeight() > COMPOSER_LINE + 1;
 }
 
-function placeCaret(bounds: { origin: { x: number; y: number }; size: { height: number } }) {
-  const height = bounds.size.height;
-  if (height <= 0) return;
-  journalCaret.set({ x: bounds.origin.x, y: bounds.origin.y, height });
-  journalCaretOn.set(true);
-  journalCaretTick.update((n) => n + 1);
+export function composerCorners(expanded: boolean, scoped: boolean) {
+  const outer = expanded ? COMPOSER_EXPANDED_RADIUS : scoped ? SCOPE_RADIUS : COMPOSER_RADIUS;
+  const button = Math.min(Math.ceil(COMPOSER_SEND / 2), Math.max(8, outer - COMPOSER_BUTTON_INSET));
+  return { outer, button };
 }
 
-function composerSelecting() {
-  const range = journalSelection();
-  return range.start !== range.end;
+export function composerCaretBox(caret: CaretRect, ratio: number) {
+  const dpr = Math.max(1, ratio);
+  const snap = (value: number) => Math.round(value * dpr) / dpr;
+  const width = Math.max(1 / dpr, snap(CARET_WIDTH));
+  const height = snap(Math.min(caret.height, CARET_HEIGHT));
+  const top = snap(caret.y + (caret.height - height) * 0.5);
+  const left = Math.max(0, snap(caret.x - width * 0.5));
+  return { left, top, width, height };
 }
 
-function composerCaretShown() {
-  return journalFocused() && !composerSelecting() && journalCaretOn();
+function EditorCaret(props: { caret: ReturnType<typeof createCaretState>; color: string }) {
+  effect(() => {
+    if (!props.caret.active()) {
+      props.caret.on.set(false);
+      return;
+    }
+    props.caret.tick();
+    props.caret.on.set(true);
+    let timer = setTimeout(function step() {
+      props.caret.on.update((visible) => !visible);
+      timer = setTimeout(step, CARET_BLINK_MS);
+    }, CARET_BLINK_MS);
+    return () => clearTimeout(timer);
+  });
+  const box = () => composerCaretBox(props.caret.rect(), pixelRatio());
+  return <View
+    class="absolute"
+    style={{
+      pointerEvents: "none",
+      left: box().left,
+      top: box().top,
+      width: box().width,
+      height: box().height,
+      backgroundColor: props.color,
+      opacity: props.caret.active() && props.caret.on() ? 1 : 0,
+      zIndex: 1,
+    }}
+  />;
 }
 
 function animateSend() {
@@ -296,16 +387,21 @@ function JournalBubble(props: {
         },
       })
     : null;
+  const bubbleBg = () => journalBubble(props.colors.accent);
+  const bubbleInk = () => accentMark(bubbleBg());
   const openEntryMenu = (event: { pagePosition: { x: number; y: number } }) => {
     if (editingJournalId() === props.entry.id) return;
     void Menu.popup([{ label: "Копировать", onSelect: () => void Clipboard.writeText(props.entry.text) }, { label: "Изменить", onSelect: () => { editingJournalId.set(props.entry.id); editingJournalText.set(props.entry.text); } }, { label: "Удалить", onSelect: () => props.onDelete(props.entry.id) }], event.pagePosition);
   };
   return <View onMouseEnter={() => showJournalDate(props.entry.id)} onMouseLeave={() => hideJournalDate(props.entry.id)} class="mb-1 w-full flex-row items-center justify-end">
     {journalDateShown() === props.entry.id && <Text class="mr-2 text-[11px]" style={{ color: props.colors.muted, pointerEvents: "none" }}>{formatJournalStamp(props.entry.createdAt)}</Text>}
-    <View onContextMenu={openEntryMenu} class="max-w-[75%] px-3 py-2" style={{ backgroundColor: editingJournalId() === props.entry.id ? props.colors.card : journalBubble(props.colors.accent), borderRadius: BUBBLE_RADIUS, transformOrigin: "bottom right", ...(sendMotion?.style ?? {}) }}>
+    <View onContextMenu={openEntryMenu} class="max-w-[75%] px-3 py-2" style={{ backgroundColor: editingJournalId() === props.entry.id ? props.colors.card : bubbleBg(), borderRadius: BUBBLE_RADIUS, transformOrigin: "bottom right", ...(sendMotion?.style ?? {}) }}>
       {editingJournalId() === props.entry.id
         ? <View>
-            <Input ref={(node) => { editFocus = node; }} autoFocus value={editingJournalText()} onChange={(e) => editingJournalText.set(e.value)} multiline={true} submitBehavior="newline" accessibilityLabel="Текст записи" class="min-h-[56px] w-full rounded-lg px-2 py-1 text-[15px]" style={{ color: props.colors.foreground, backgroundColor: props.colors.background }} />
+            <View class="relative w-full overflow-hidden rounded-lg">
+              <Input ref={(node) => { editFocus = node; }} autoFocus value={editingJournalText()} onChange={(e) => { editingJournalText.set(e.value); editCaret.bump(); }} onCaretMove={(event) => editCaret.place(event.bounds)} onSelectionChange={(range) => editCaret.selection.set(range)} onCompositionChange={(event) => editCaret.composing.set(event.composing)} onFocus={editCaret.focus} onBlur={editCaret.blur} multiline={true} submitBehavior="newline" caret={false} accessibilityLabel="Текст записи" class="min-h-[56px] w-full rounded-lg px-2 py-1 text-[15px]" style={{ color: props.colors.foreground, backgroundColor: props.colors.background, selectionColor: props.colors.accent }} />
+              <EditorCaret caret={editCaret} color={props.colors.accent} />
+            </View>
             <View class="mt-2 flex-row justify-end" style={{ gap: 8 }}>
               <GhostButton label="Отмена" colors={props.colors} dark={props.dark} onPress={() => editingJournalId.set(null)} />
               <SolidButton label="Сохранить" background={props.colors.accent} foreground={props.colors.background} onPress={() => { props.onUpdate(props.entry.id, editingJournalText()); editingJournalId.set(null); }} />
@@ -313,7 +409,7 @@ function JournalBubble(props: {
           </View>
         : props.entry.voice
         ? <VoiceBubble entry={props.entry} playing={props.playing} colors={props.colors} onPlay={props.onPlay} />
-        : <Text onContextMenu={openEntryMenu} class="select-text text-[15px] leading-5" style={{ color: "#ffffff", fontWeight: 500, selectionColor: colorAlpha(props.colors.accent, props.dark ? 0.35 : 0.24) }}>{props.entry.text}</Text>}
+        : <Text onContextMenu={openEntryMenu} class="select-text text-[15px] leading-5" style={{ color: bubbleInk(), fontWeight: 500, selectionColor: bubbleInk() }}>{props.entry.text}</Text>}
     </View>
   </View>;
 }
@@ -338,9 +434,9 @@ export function JournalPage(props: {
   let composerScrollRef: { scrollTo: (options: { y?: number; animated?: boolean }) => void } | undefined;
   const revealComposer = (caret: { y: number; height: number }) => {
     const viewport = composerViewportHeight();
-    const max = Math.max(0, composerInputHeight() - viewport);
-    const top = caret.y;
-    const bottom = top + Math.max(caret.height, COMPOSER_LINE);
+    const max = composerMaxScroll();
+    const top = Math.max(0, caret.y - COMPOSER_PAD_Y);
+    const bottom = caret.y + Math.max(caret.height, COMPOSER_LINE) + COMPOSER_PAD_Y;
     let next = journalScrollY();
     if (top < next) next = top;
     else if (bottom > next + viewport) next = bottom - viewport;
@@ -349,28 +445,31 @@ export function JournalPage(props: {
     journalScrollY.set(next);
     composerScrollRef?.scrollTo({ y: next, animated: false });
   };
+  effect(() => {
+    const max = composerMaxScroll();
+    if (journalScrollY() > max) {
+      journalScrollY.set(max);
+      composerScrollRef?.scrollTo({ y: max, animated: false });
+    }
+  });
   const groups = () => buildJournalDays(props.entries());
   effect(() => {
     const entries = props.entries();
     if (entries.length) queueMicrotask(() => feedRef?.scrollToEnd({ animated: true }));
   });
+  let prevEditing = editingJournalId();
   effect(() => {
     const editing = editingJournalId();
+    if (editing === prevEditing) return;
+    prevEditing = editing;
     queueMicrotask(() => {
       if (editing) editFocus?.focus();
       else composerRef?.focus();
     });
-    return () => journalFocused.set(false);
   });
-  effect(() => {
-    if (!journalFocused()) return;
-    journalCaretTick();
-    journalCaretOn.set(true);
-    let timer = setTimeout(function tick() {
-      journalCaretOn.update((on) => !on);
-      timer = setTimeout(tick, CARET_BLINK_MS);
-    }, CARET_BLINK_MS);
-    return () => clearTimeout(timer);
+  effect(() => () => {
+    composerCaret.blur();
+    editCaret.blur();
   });
   effect(() => {
     const recording = props.recording();
@@ -396,62 +495,61 @@ export function JournalPage(props: {
     journalDraftContentHeight.set(COMPOSER_LINE);
     journalScrollY.set(0);
     composerScrollRef?.scrollTo({ y: 0, animated: false });
-    journalCaret.set({ x: COMPOSER_PAD_X, y: COMPOSER_PAD_Y, height: COMPOSER_LINE });
-    journalCaretOn.set(true);
-    journalCaretTick.update((n) => n + 1);
+    composerCaret.reset();
     composerRef?.focus();
   };
 
-  return <View onPress={claimJournalComposer} class="min-h-0 flex-1 overflow-hidden">
+  return <View class="min-h-0 flex-1 overflow-hidden">
     <View class="relative min-h-0 flex-1 flex-col items-center">
       <View class="relative min-h-0 w-full flex-1">
-      <Scroll ref={(node) => { feedRef = node; }} onLayout={(e) => feedBox.set({ width: e.bounds.size.width, height: e.bounds.size.height })} contentStyle={{ flexGrow: 1 }} class="min-h-0 w-full flex-1 pb-4">
-        <View onMouseLeave={leaveJournalDates} class="mx-auto justify-end" style={{ width: threadSpan(), minHeight: feedBox().height, paddingTop: props.titlebarInset + 16, paddingLeft: FEED_PAD, paddingRight: FEED_PAD }}>
-        <Each of={groups()} key={((group: { key: string }) => group.key) as any}>{(group) => <View class="mb-4">
-          <Text class="mb-3 text-center text-[12px]" style={{ color: props.colors.muted }}>{formatJournalDay(group())}</Text>
-          <Each of={group().entries} key={((entry: JournalEntry) => entry.id) as any}>{(entry) => <JournalBubble entry={entry()} arriving={arrivingId() === entry().id} colors={props.colors} dark={props.dark} playing={props.playing() === entry().id} onPlay={props.onPlayVoice} onUpdate={props.onUpdate} onDelete={props.onDelete} />}</Each>
-        </View>}</Each>
-        {groups().length === 0 && <View class="flex-1 items-center justify-center py-12"><Text class="text-[13px]" style={{ color: props.colors.muted }}>Записей пока нет</Text></View>}
-        </View>
-      </Scroll>
-      <View class="absolute right-0 top-0 bottom-0 w-[8px]" style={{ backgroundColor: props.colors.background, opacity: 0.86, pointerEvents: "none" }} />
+        <Scroll ref={(node) => { feedRef = node; }} onLayout={(e) => feedBox.set({ width: e.bounds.size.width, height: e.bounds.size.height })} contentStyle={{ flexGrow: 1 }} class="min-h-0 w-full flex-1">
+          <View onMouseLeave={leaveJournalDates} class="mx-auto justify-end" style={{ width: threadSpan(), minHeight: feedBox().height, paddingTop: props.titlebarInset + 16, paddingBottom: composerBottomInset(), paddingLeft: FEED_PAD, paddingRight: FEED_PAD }}>
+            <Each of={groups()} key={((group: { key: string }) => group.key) as any}>{(group) => <View class="mb-4">
+              <Text class="mb-3 text-center text-[12px]" style={{ color: props.colors.muted }}>{formatJournalDay(group())}</Text>
+              <Each of={group().entries} key={((entry: JournalEntry) => entry.id) as any}>{(entry) => <JournalBubble entry={entry()} arriving={arrivingId() === entry().id} colors={props.colors} dark={props.dark} playing={props.playing() === entry().id} onPlay={props.onPlayVoice} onUpdate={props.onUpdate} onDelete={props.onDelete} />}</Each>
+            </View>}</Each>
+            {groups().length === 0 && <View class="flex-1 items-center justify-center py-12"><Text class="text-[13px]" style={{ color: props.colors.muted }}>Записей пока нет</Text></View>}
+          </View>
+        </Scroll>
+        <View class="absolute right-0 top-0 bottom-0 w-[8px]" style={{ backgroundColor: props.colors.background, opacity: 0.86, pointerEvents: "none" }} />
       </View>
-      <View class="mx-auto w-full" style={{ maxWidth: THREAD_WIDTH, paddingLeft: FEED_PAD, paddingRight: FEED_PAD, marginBottom: 18 }}>
-        <View class="w-full overflow-hidden border" style={{ borderRadius: scopeShown() ? SCOPE_RADIUS : COMPOSER_RADIUS, borderColor: props.colors.border, backgroundColor: props.colors.card }}>
-        {scopeShown() && <View class="relative w-full overflow-hidden" style={{ height: scopeHeight(), opacity: scopeOpacity() }}>
-          <View class="absolute left-0 right-0 top-0 bottom-0">
-            <DotScope level={props.level()} active={props.recording()} done={!props.recording()} style={{ width: "100%", height: "100%" }} />
-          </View>
-        </View>}
-        {scopeShown() && <View class="w-full" style={{ height: scopeHeight() > 0.5 ? 1 : 0, backgroundColor: props.colors.border }} />}
-        <View class="w-full flex-row" style={{ height: composerPillHeight(), alignItems: composerExpanded() ? "flex-end" : "center", backgroundColor: "transparent" }}>
-          {!props.recording() && <View class="relative min-w-0 flex-1 overflow-hidden" style={{ height: composerViewportHeight() }}>
-            <Scroll ref={(node) => { composerScrollRef = node; }} scrollbar={false} onScroll={(event) => journalScrollY.set(event.offset.y)} class="w-full" style={{ height: composerViewportHeight() }}>
-              <View class="relative w-full" style={{ height: composerInputHeight() }}>
-                <Input ref={(node) => { composerRef = node; }} autoFocus value={journalDraft()} onChange={(e) => journalDraft.set(e.value)} onContentSizeChange={({ size }) => { const raw = Math.max(COMPOSER_LINE, Math.round(size.height)); if (raw === journalDraftContentHeight()) return; if (clampDraftHeight(raw) !== clampDraftHeight(journalDraftContentHeight())) animateComposer(); journalDraftContentHeight.set(raw); revealComposer(journalCaret()); }} onCaretMove={(event) => { placeCaret(event.bounds); revealComposer(journalCaret()); }} onSelectionChange={(range) => journalSelection.set(range)} onFocus={() => journalFocused.set(true)} onBlur={() => journalFocused.set(false)} onSubmit={(event) => send(event.text)} multiline={true} submitBehavior="submit" caret={false} placeholder="Запись в дневник…" accessibilityLabel="Новая запись в дневник" class="min-w-0 w-full text-[15px]" style={{ height: composerInputHeight(), fontSize: 15, lineHeight: COMPOSER_LINE, paddingLeft: COMPOSER_PAD_X, paddingRight: 8, paddingTop: COMPOSER_PAD_Y, paddingBottom: COMPOSER_PAD_Y, placeholderColor: props.colors.muted, selectionColor: colorAlpha(props.colors.accent, props.dark ? 0.35 : 0.24), backgroundColor: "transparent", color: props.colors.foreground }} />
-                <View class="absolute" style={{ pointerEvents: "none", left: journalCaret().x, top: journalCaret().y, width: CARET_WIDTH, height: journalCaret().height, backgroundColor: props.colors.accent, opacity: composerCaretShown() ? 1 : 0, zIndex: 1 }} />
+      <View class="absolute left-0 right-0 bottom-0 items-center" style={{ paddingBottom: COMPOSER_BOTTOM_MARGIN, pointerEvents: "box-none" }}>
+        <View class="mx-auto w-full" style={{ maxWidth: THREAD_WIDTH, paddingLeft: FEED_PAD, paddingRight: FEED_PAD, pointerEvents: "box-none" }}>
+          <View onPress={claimJournalComposer} class="w-full overflow-hidden" style={{ borderRadius: composerCorners(composerExpanded(), scopeShown()).outer, backgroundColor: props.colors.card }}>
+            {scopeShown() && <View class="relative w-full overflow-hidden" style={{ height: scopeHeight(), opacity: scopeOpacity() }}>
+              <View class="absolute left-0 right-0 top-0 bottom-0">
+                <DotScope level={props.level()} active={props.recording()} done={!props.recording()} style={{ width: "100%", height: "100%" }} />
               </View>
-            </Scroll>
-            {composerFadeTop() && <View class="absolute left-0 right-0 top-0" style={{ pointerEvents: "none", height: COMPOSER_FADE, backgroundImage: `linear-gradient(to bottom, ${props.colors.card}, ${colorAlpha(props.colors.card, 0)})`, zIndex: 2 }} />}
-            {composerFadeBottom() && <View class="absolute left-0 right-0 bottom-0" style={{ pointerEvents: "none", height: COMPOSER_FADE, backgroundImage: `linear-gradient(to bottom, ${colorAlpha(props.colors.card, 0)}, ${props.colors.card})`, zIndex: 2 }} />}
-
-          </View>}
-          {props.recording() && <View class="min-w-0 flex-1 flex-row items-center" style={{ paddingLeft: COMPOSER_PAD_X, gap: 8 }}>
-            <View class="shrink-0 rounded-full" style={{ width: 8, height: 8, backgroundColor: "#ff453a" }} />
-            <Text class="text-[13px]" style={{ color: props.colors.foreground, fontVariantNumeric: "tabular-nums" }}>{formatVoiceDuration(props.elapsed())}</Text>
-          </View>}
-          {journalDraft().trim()
-            ? <View onPress={() => send(journalDraft())} role="button" accessibilityLabel="Отправить запись" class="shrink-0 items-center justify-center rounded-full" hoverStyle={{ opacity: journalDraft().trim() ? 0.85 : 0.35 }} activeStyle={{ opacity: journalDraft().trim() ? 0.7 : 0.35 }} style={{ width: COMPOSER_SEND, height: COMPOSER_SEND, marginRight: 8, marginBottom: composerExpanded() ? 10 : 0, backgroundColor: journalBubble(props.colors.accent), opacity: journalDraft().trim() ? 1 : 0.35, cursor: journalDraft().trim() ? "pointer" : "default" }}>
-            <Text class="text-[14px] font-semibold" style={{ color: accentMark(journalBubble(props.colors.accent)) }}>↑</Text>
-          </View>
-            : props.recording()
-            ? <View onPress={() => { animateComposer(); props.onStopRecording(); }} role="button" accessibilityLabel="Остановить запись" accessibilityState={{ selected: true }} class="shrink-0 items-center justify-center rounded-full" hoverStyle={{ opacity: 0.85 }} activeStyle={{ opacity: 0.7 }} style={{ width: COMPOSER_SEND, height: COMPOSER_SEND, marginRight: 8, marginBottom: composerExpanded() ? 10 : 0, backgroundColor: "#ff453a", cursor: "pointer" }}>
-                <View style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: "#ffffff" }} />
-              </View>
-            : <View onPress={() => { animateComposer(); props.onStartRecording(); }} role="button" accessibilityLabel="Записать голос" class="shrink-0 items-center justify-center rounded-full" hoverStyle={{ opacity: 0.85 }} activeStyle={{ opacity: 0.7 }} style={{ width: COMPOSER_SEND, height: COMPOSER_SEND, marginRight: 8, marginBottom: composerExpanded() ? 10 : 0, backgroundColor: journalBubble(props.colors.accent), cursor: "pointer" }}>
-                <Image src={MIC_ICON} style={{ width: 17, height: 17, tintColor: accentMark(journalBubble(props.colors.accent)) }} />
+            </View>}
+            {scopeShown() && <View class="w-full" style={{ height: scopeHeight() > 0.5 ? 1 : 0, backgroundColor: props.colors.border }} />}
+            <View class="w-full flex-row" style={{ height: composerPillHeight(), alignItems: composerExpanded() ? "flex-end" : "center", backgroundColor: "transparent" }}>
+              {!props.recording() && <View class="relative min-w-0 flex-1 overflow-hidden" style={{ height: composerViewportHeight() }}>
+                <Scroll ref={(node) => { composerScrollRef = node; }} scrollbar={false} onScroll={(event) => journalScrollY.set(Math.max(0, Math.min(composerMaxScroll(), event.offset.y)))} class="w-full" style={{ height: composerViewportHeight() }}>
+                  <View class="relative w-full overflow-hidden" style={{ height: composerInputHeight() }}>
+                    <Input ref={(node) => { composerRef = node; }} autoFocus value={journalDraft()} onChange={(e) => { journalDraft.set(e.value); composerCaret.bump(); }} onContentSizeChange={({ size }) => { const raw = Math.max(COMPOSER_LINE, Math.round(size.height)); if (raw === journalDraftContentHeight()) return; if (clampDraftHeight(raw) !== clampDraftHeight(journalDraftContentHeight())) animateComposer(); journalDraftContentHeight.set(raw); revealComposer(composerCaret.rect()); }} onCaretMove={(event) => { composerCaret.place(event.bounds); revealComposer(composerCaret.rect()); }} onSelectionChange={(range) => composerCaret.selection.set(range)} onCompositionChange={(event) => composerCaret.composing.set(event.composing)} onFocus={composerCaret.focus} onBlur={composerCaret.blur} onSubmit={(event) => send(event.text)} multiline={true} submitBehavior="submit" caret={false} placeholder="Запись в дневник…" accessibilityLabel="Новая запись в дневник" class="min-w-0 w-full text-[15px]" style={{ height: composerInputHeight(), maxHeight: composerInputHeight(), fontSize: COMPOSER_FONT, lineHeight: COMPOSER_LINE, paddingLeft: COMPOSER_PAD_X, paddingRight: 8, paddingTop: COMPOSER_PAD_Y, paddingBottom: COMPOSER_PAD_Y, placeholderColor: props.colors.muted, selectionColor: props.colors.accent, backgroundColor: "transparent", color: props.colors.foreground }} />
+                    <EditorCaret caret={composerCaret} color={props.colors.accent} />
+                  </View>
+                </Scroll>
+                {composerFadeTop() && <View class="absolute left-0 right-0 top-0" style={{ pointerEvents: "none", height: COMPOSER_FADE, backgroundImage: `linear-gradient(to bottom, ${props.colors.card}, ${colorAlpha(props.colors.card, 0)})`, zIndex: 2 }} />}
+                {composerFadeBottom() && <View class="absolute left-0 right-0 bottom-0" style={{ pointerEvents: "none", height: COMPOSER_FADE, backgroundImage: `linear-gradient(to bottom, ${colorAlpha(props.colors.card, 0)}, ${props.colors.card})`, zIndex: 2 }} />}
               </View>}
-        </View>
+              {props.recording() && <View class="min-w-0 flex-1 flex-row items-center" style={{ paddingLeft: COMPOSER_PAD_X, gap: 8 }}>
+                <View class="shrink-0 rounded-full" style={{ width: 8, height: 8, backgroundColor: "#ff453a" }} />
+                <Text class="text-[13px]" style={{ color: props.colors.foreground, fontVariantNumeric: "tabular-nums" }}>{formatVoiceDuration(props.elapsed())}</Text>
+              </View>}
+              {journalDraft().trim()
+                ? <View onPress={() => send(journalDraft())} role="button" accessibilityLabel="Отправить запись" class="shrink-0 items-center justify-center" hoverStyle={{ opacity: journalDraft().trim() ? 0.85 : 0.35 }} activeStyle={{ opacity: journalDraft().trim() ? 0.7 : 0.35 }} style={{ width: COMPOSER_SEND, height: COMPOSER_SEND, borderRadius: composerCorners(composerExpanded(), scopeShown()).button, marginRight: COMPOSER_BUTTON_INSET, marginBottom: composerExpanded() ? COMPOSER_BUTTON_INSET : 0, backgroundColor: journalBubble(props.colors.accent), opacity: journalDraft().trim() ? 1 : 0.35, cursor: journalDraft().trim() ? "pointer" : "default" }}>
+                <Text class="text-[14px] font-semibold" style={{ color: accentMark(journalBubble(props.colors.accent)) }}>↑</Text>
+              </View>
+                : props.recording()
+                ? <View onPress={() => { animateComposer(); props.onStopRecording(); }} role="button" accessibilityLabel="Остановить запись" accessibilityState={{ selected: true }} class="shrink-0 items-center justify-center" hoverStyle={{ opacity: 0.85 }} activeStyle={{ opacity: 0.7 }} style={{ width: COMPOSER_SEND, height: COMPOSER_SEND, borderRadius: composerCorners(composerExpanded(), scopeShown()).button, marginRight: COMPOSER_BUTTON_INSET, marginBottom: composerExpanded() ? COMPOSER_BUTTON_INSET : 0, backgroundColor: "#ff453a", cursor: "pointer" }}>
+                    <View style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: "#ffffff" }} />
+                  </View>
+                : <View onPress={() => { animateComposer(); props.onStartRecording(); }} role="button" accessibilityLabel="Записать голос" class="shrink-0 items-center justify-center" hoverStyle={{ opacity: 0.85 }} activeStyle={{ opacity: 0.7 }} style={{ width: COMPOSER_SEND, height: COMPOSER_SEND, borderRadius: composerCorners(composerExpanded(), scopeShown()).button, marginRight: COMPOSER_BUTTON_INSET, marginBottom: composerExpanded() ? COMPOSER_BUTTON_INSET : 0, backgroundColor: journalBubble(props.colors.accent), cursor: "pointer" }}>
+                    <Image src={MIC_ICON} style={{ width: 17, height: 17, tintColor: accentMark(journalBubble(props.colors.accent)) }} />
+                  </View>}
+            </View>
+          </View>
         </View>
       </View>
     </View>

@@ -938,6 +938,7 @@ impl NativeComponent for AtlasBridge {
                 }
             }
             "window.drag" => crate::win_chrome::drag(window),
+            "window.titlebar-double-click" => crate::win_chrome::titlebar_double_click(window),
             "window.minimize" => window.minimize_window(),
             "window.zoom" => crate::win_chrome::toggle_zoom(window),
             "window.close" => crate::win_chrome::request_close(window),

@@ -25,6 +25,16 @@ test("a card opens the note, and its headings become the rails", async () => {
   await app.press("label:Подраздел");
 });
 
+test("hovering the outline rail opens the heading popover", async () => {
+  const app = await open("./notes-fixture.tsx", { width: 1180, height: 820, platform: "macos" });
+  await app.press("label:Заметка 1");
+  expect(app.texts().filter((item) => item === "Подраздел").length).toBe(1);
+  await app.hover("id:notes-outline-rail");
+  expect(app.texts().filter((item) => item === "Раздел").length).toBe(2);
+  expect(app.texts().filter((item) => item === "Подраздел").length).toBe(2);
+  await app.press("label:Подраздел");
+});
+
 test("the slash menu offers Markdown's blocks, check lists among them", async () => {
   const app = await open("./notes-fixture.tsx", { width: 1180, height: 820 });
   await app.press("label:Заметка 2");

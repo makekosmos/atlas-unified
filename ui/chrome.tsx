@@ -21,6 +21,7 @@ const TRAILING_INSET = 6;
 const CAPTION_BUTTON_WIDTH = 36;
 
 const closeHovered = signal(false);
+const titleFocused = signal(false);
 
 export function animatePanes() {
   LayoutAnimation.configureNext({ duration: 200, update: { type: "easeOut", duration: 200 } });
@@ -169,6 +170,7 @@ export function TitlebarOverlay(props: {
   dark: boolean;
   showAddGame?: boolean;
   dimmed?: boolean;
+  fadeBackdrop?: boolean;
   pageInset?: number;
   /// The open note's name: it takes the bar's middle in place of the page.
   noteTitle?: string;
@@ -189,26 +191,36 @@ export function TitlebarOverlay(props: {
   const controlsRight = captionWidth + TRAILING_INSET;
   const addGameRight = controlsRight;
   const wash = hoverWash(props.dark);
-  return <View class="absolute left-0 right-0 top-0 z-20" style={{ height: controls.height || TITLEBAR_HEIGHT }} desktop={{ windowDrag: true }}>
-    <View class="absolute top-0 bottom-0" style={{ left: props.pageInset ?? 0, right: 0, backgroundColor: props.colors.background, pointerEvents: "none" }} />
+  const barHeight = controls.height || TITLEBAR_HEIGHT;
+  const dragLeft = macos ? Math.max(controls.left, 78) : 0;
+  return <View class="absolute left-0 right-0 top-0 z-20" style={{ height: barHeight }} desktop={{ windowDrag: true }}>
+    {props.fadeBackdrop
+      ? <View class="absolute top-0" style={{ left: props.pageInset ?? 0, right: 0, height: barHeight + 34, backgroundImage: `linear-gradient(to bottom, ${props.colors.background} 0%, ${colorAlpha(props.colors.background, 0.94)} 34%, ${colorAlpha(props.colors.background, 0.58)} 66%, ${colorAlpha(props.colors.background, 0)} 100%)`, pointerEvents: "none" }} />
+      : <View class="absolute top-0 bottom-0" style={{ left: props.pageInset ?? 0, right: 0, backgroundColor: props.colors.background, pointerEvents: "none" }} />}
     {props.dimmed && <View class="absolute top-0 bottom-0" style={{ left: props.pageInset ?? 0, right: 0, backgroundColor: "#00000080", pointerEvents: "none" }} />}
-    <View onPressDown={() => props.onChrome("window.drag")} class="absolute left-0 right-0 top-0 bottom-0" />
+    <View onPressDown={(event) => props.onChrome((event?.clickCount ?? 1) >= 2 ? "window.titlebar-double-click" : "window.drag")} class="absolute right-0 top-0 bottom-0" style={{ left: dragLeft }} />
     <View onPress={props.onToggleSidebar} role="button" accessibilityLabel="Боковая панель" class="absolute items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ top: titlebarControlTop(24), left: sidebarLeft, width: 24, height: 24, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
       <SharedIcon name="sidebar" size={16} color={props.colors.muted} />
     </View>
     {props.showAddGame && <View onPress={() => props.onAddGame?.()} role="button" accessibilityLabel="Добавить игру" class="absolute items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ top: titlebarControlTop(28), right: addGameRight, width: 28, height: 28, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
       <SharedIcon name="plus" size={16} color={props.colors.muted} />
     </View>}
-    {props.noteActive && <View onPress={() => props.onCloseNote?.()} role="button" accessibilityLabel="К списку заметок" class="absolute flex-row items-center" hoverStyle={{ backgroundColor: wash }} desktop={{ windowDrag: false }} style={{ left: (props.pageInset ?? 0) + 8, top: titlebarControlTop(24), height: 24, paddingLeft: 8, paddingRight: 10, gap: 3, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
+    {props.noteActive && <View onPress={() => { titleFocused.set(false); props.onCloseNote?.(); }} role="button" accessibilityLabel="К списку заметок" class="absolute flex-row items-center" hoverStyle={{ backgroundColor: wash }} desktop={{ windowDrag: false }} style={{ left: (props.pageInset ?? 0) + 8, top: titlebarControlTop(24), height: 24, paddingLeft: 8, paddingRight: 10, gap: 3, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
       <Text class="text-[15px]" style={{ color: props.colors.muted }}>‹</Text>
       <Text class="text-[12px]" style={{ color: props.colors.muted }}>Заметки</Text>
     </View>}
-    {/* The page's middle, from the sidebar's edge to the window's edge. The
-        name is centred in the field, so a short title sits on that middle. */}
-    {props.noteActive && <View class="absolute flex-row items-center justify-center" pointerEvents="box-none" desktop={{ windowDrag: false }} style={{ left: props.pageInset ?? 0, right: 0, top: titlebarControlTop(26), height: 26 }}>
-      <Input value={props.noteTitle ?? ""} onChange={(event) => props.onRenameNote?.(event.value)} placeholder="Заголовок" accessibilityLabel="Заголовок заметки" class="text-center text-[13px] font-semibold" style={{ width: 360, maxWidth: "70%", textAlign: "center", color: props.colors.foreground, backgroundColor: "transparent", paddingTop: 0, paddingBottom: 0, paddingLeft: 8, paddingRight: 8, lineHeight: 18 }} />
+    {/* The page's middle, from the sidebar's edge to the window's edge.
+        nsh-platform-gpui 0.4.0 paints single-line placeholders at x=0 instead
+        of applying textAlign, so we draw the empty placeholder centred here. */}
+    {props.noteActive && <View class="absolute flex-row items-center justify-center" desktop={{ windowDrag: false }} style={{ left: props.pageInset ?? 0, right: 0, top: titlebarControlTop(26), height: 26, pointerEvents: "box-none" }}>
+      <View class="relative items-center justify-center" style={{ width: 360, maxWidth: "70%", height: 26 }}>
+        {!(props.noteTitle ?? "") && !titleFocused() && <View class="absolute left-0 right-0 top-0 bottom-0 items-center justify-center" style={{ pointerEvents: "none" }}>
+          <Text class="text-center text-[13px] font-semibold" style={{ color: colorAlpha(props.colors.foreground, 0.5), lineHeight: 18 }}>Заголовок</Text>
+        </View>}
+        <Input value={props.noteTitle ?? ""} onChange={(event) => props.onRenameNote?.(event.value)} onFocus={() => titleFocused.set(true)} onBlur={() => titleFocused.set(false)} accessibilityLabel="Заголовок заметки" class="text-center text-[13px] font-semibold" style={{ width: "100%", height: 26, textAlign: "center", color: props.colors.foreground, backgroundColor: "transparent", paddingTop: 0, paddingBottom: 0, paddingLeft: 8, paddingRight: 8, lineHeight: 18 }} />
+      </View>
     </View>}
-    {props.noteActive && <View onPress={() => props.onDeleteNote?.()} role="button" accessibilityLabel="Удалить заметку" class="absolute items-center justify-center" hoverStyle={{ backgroundColor: wash }} desktop={{ windowDrag: false }} style={{ right: controlsRight + 8, top: titlebarControlTop(24), width: 26, height: 24, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
+    {props.noteActive && <View onPress={() => { titleFocused.set(false); props.onDeleteNote?.(); }} role="button" accessibilityLabel="Удалить заметку" class="absolute items-center justify-center" hoverStyle={{ backgroundColor: wash }} desktop={{ windowDrag: false }} style={{ right: controlsRight + 8, top: titlebarControlTop(24), width: 26, height: 24, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
       <SharedIcon name="trash" size={13} color={props.colors.muted} />
     </View>}
     {drawCaptions && <View class="absolute right-0 top-0 flex-row" desktop={{ windowDrag: false }} style={{ height: TITLEBAR_HEIGHT }}>
@@ -237,16 +249,17 @@ export function SidebarRow(props: {
 }
 
 /// A row under the widgets: something opened not long ago. Quieter than a
-/// widget: smaller text, no icon, and no selection mark.
+/// widget: smaller text and no icon, lit with the same raised fill when active.
 export function RecentRow(props: {
   entry: { kind: string; id: string; title: string };
+  selected?: boolean;
   colors: ThemeColors;
   dark: boolean;
   onPress: () => void;
 }) {
   const wash = hoverWash(props.dark);
-  return <View onPress={props.onPress} role="button" accessibilityLabel={props.entry.title} class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: NAV_ROW_HEIGHT - 6, paddingLeft: 10, paddingRight: 10, borderRadius: NAV_ROW_RADIUS, cursor: "pointer" }}>
-    <Text class="text-[12px]" style={{ color: props.colors.muted, lineHeight: 18 }}>{props.entry.title}</Text>
+  return <View onPress={props.onPress} role="button" accessibilityLabel={props.entry.title} accessibilityState={{ selected: Boolean(props.selected) }} desktop={{ windowDrag: false }} class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: NAV_ROW_HEIGHT - 6, paddingLeft: 10, paddingRight: 10, borderRadius: NAV_ROW_RADIUS, backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent", cursor: "pointer" }}>
+    <Text class="text-[12px]" style={{ color: props.selected ? props.colors.foreground : props.colors.muted, fontWeight: props.selected ? 500 : 400, lineHeight: 18 }}>{props.entry.title}</Text>
   </View>;
 }
 

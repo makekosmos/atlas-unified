@@ -1,5 +1,6 @@
 import { open, expect, test } from "nsh/test";
 import { addNote, cardDelay, notes, setNotes } from "./notes";
+import { commitRecent, forgetRecent, recent, rememberRecent, stageRecent } from "./recent";
 import type { Note } from "./state";
 
 /// The four defects the desk showed, each pinned to the rule that fixes it: a
@@ -46,4 +47,55 @@ test("a note the host makes joins the library alone", () => {
   // second note.
   addNote(note("c", "Свежая"));
   expect(notes().length).toBe(3);
+});
+
+test("a code note does not steal focus to its last block on paint or sheet tap", async () => {
+  const app = await open("./notes-code-fixture.tsx", { width: 1180, height: 820 });
+  await app.press("label:Код: языки");
+  // Wait past multiple paintCode / schedulePaint ticks (60 ms each).
+  await app.wait(300);
+  // Neither syntax painting nor a stray tap on note-page-space may focus the
+  // trailing plain-text code block (which would yank scroll to the bottom).
+  await app.keyboard.press("x");
+  await app.press("id:note-page-space");
+  await app.wait(150);
+  await app.keyboard.press("y");
+  const joined = app.texts().join("\n");
+  expect(joined).toContain("обычный текст");
+  expect(joined).not.toContain("xобычный текст");
+  expect(joined).not.toContain("yобычный текст");
+  expect(joined).not.toContain("подсветкиx");
+  expect(joined).not.toContain("подсветкиy");
+  // Pressing the explicit empty tail below the last block focuses it.
+  await app.press("id:split-note-tail");
+  await app.wait(100);
+  await app.keyboard.press("z");
+  expect(app.texts().join("\n")).toContain("z");
+});
+
+test("recent notes stay in place while open and move to the top when left", () => {
+  for (const item of recent()) forgetRecent(item.kind, item.id);
+  rememberRecent({ kind: "note", id: "n3", title: "Третья" });
+  rememberRecent({ kind: "note", id: "n2", title: "Вторая" });
+  rememberRecent({ kind: "note", id: "n1", title: "Первая" });
+  expect(recent().map((item) => item.id)).toEqual(["n1", "n2", "n3"]);
+
+  // Opening a note already in the list highlights it in place without jumping.
+  stageRecent({ kind: "note", id: "n3", title: "Третья" });
+  expect(recent().map((item) => item.id)).toEqual(["n1", "n2", "n3"]);
+
+  // Leaving the page promotes it to the top (carrying any updated title).
+  commitRecent({ kind: "note", id: "n3", title: "Третья (новая)" });
+  expect(recent().map((item) => item.id)).toEqual(["n3", "n1", "n2"]);
+  expect(recent()[0]?.title).toBe("Третья (новая)");
+
+  // Deleting a staged note keeps it gone even if leave runs afterward.
+  stageRecent({ kind: "note", id: "n2", title: "Вторая" });
+  forgetRecent("note", "n2");
+  commitRecent({ kind: "note", id: "n2", title: "Вторая" });
+  expect(recent().map((item) => item.id)).toEqual(["n3", "n1"]);
+
+  // Opening a note not yet in the list adds it so the sidebar can show it active.
+  stageRecent({ kind: "note", id: "n4", title: "Четвёртая" });
+  expect(recent().map((item) => item.id)).toEqual(["n4", "n3", "n1"]);
 });

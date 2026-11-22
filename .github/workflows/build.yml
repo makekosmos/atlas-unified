@@ -170,7 +170,7 @@ jobs:
       RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
       # The phone bundle is built from nsh's own runtime: pinned, so a new nsh
       # commit cannot change the app under us.
-      NSH_REV: 1894697155685ef5b8669e51406ce0f6aa710bbd
+      NSH_REV: 2f51d8611677c8a6bbad937b39756e8d0cc45350
       NDK_VERSION: 27.2.12479018
     steps:
       - uses: actions/checkout@v6

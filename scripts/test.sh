@@ -8,8 +8,10 @@ if [ $# -lt 1 ] || [ -z "$1" ]; then
 fi
 cd "$(dirname "$0")/../ui" || exit 1
 log=/tmp/atlas-test.log
+nsh="${NSH_BIN:-$HOME/.nsh/bin/nsh}"
+[ -x "$nsh" ] || nsh=nsh
 # macOS has no `timeout`: alarm in perl is the one that exists everywhere here.
-perl -e 'alarm 120; exec @ARGV' "$HOME/.nsh-0.4.0/bin/nsh" test --filter "$1" >"$log" 2>&1
+perl -e 'alarm 120; exec @ARGV' "$nsh" test --filter "$1" >"$log" 2>&1
 code=$?
 rg "✗|tests:|error" "$log" | head -20
 if [ $code -ne 0 ]; then

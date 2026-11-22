@@ -28,12 +28,15 @@ pub(crate) fn install() {
     app_menu.addItem(&item(mtm, "Завершить Atlas", Some(sel!(terminate:)), "q"));
     app_menu.addItem(&NSMenuItem::separatorItem(mtm));
     app_menu.addItem(&item(mtm, "Скрыть Atlas", Some(sel!(hide:)), "h"));
-    app_menu.addItem(&item(
+    let hide_others = item(
         mtm,
         "Скрыть остальные",
         Some(sel!(hideOtherApplications:)),
         "h",
-    ));
+    );
+    hide_others
+        .setKeyEquivalentModifierMask(NSEventModifierFlags::Command | NSEventModifierFlags::Option);
+    app_menu.addItem(&hide_others);
     app_menu.addItem(&item(
         mtm,
         "Показать все",
@@ -56,10 +59,33 @@ pub(crate) fn install() {
     // Window: what the traffic lights do, with the keys a Mac app answers to.
     let window = titled(mtm, "Окно");
     window.addItem(&item(mtm, "Свернуть", Some(sel!(performMiniaturize:)), "m"));
+    window.addItem(&item(mtm, "Увеличить", Some(sel!(performZoom:)), ""));
+    let fullscreen = item(
+        mtm,
+        "Перейти в полноэкранный режим",
+        Some(sel!(toggleFullScreen:)),
+        "f",
+    );
+    fullscreen
+        .setKeyEquivalentModifierMask(NSEventModifierFlags::Control | NSEventModifierFlags::Command);
+    window.addItem(&fullscreen);
+    window.addItem(&NSMenuItem::separatorItem(mtm));
     window.addItem(&item(mtm, "Закрыть", Some(sel!(performClose:)), "w"));
     main.addItem(&submenu(mtm, "Окно", &window));
 
     app.setMainMenu(Some(&main));
+    app.setWindowsMenu(Some(&window));
+}
+
+/// Closes the active window through AppKit's `performClose:` so `windowShouldClose:` runs.
+pub(crate) fn perform_close_key_window() {
+    let Some(mtm) = MainThreadMarker::new() else {
+        return;
+    };
+    let app = NSApplication::sharedApplication(mtm);
+    if let Some(window) = app.keyWindow() {
+        window.performClose(None);
+    }
 }
 
 fn item(

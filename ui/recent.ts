@@ -16,6 +16,7 @@ export const RECENT_LIMIT = 10;
 
 const STORAGE_KEY = "mundus.atlas.recent.v1";
 const items = signal<RecentItem[]>([]);
+let staged: { kind: RecentKind; id: string; title: string } | null = null;
 let stamp = 0;
 
 export function recent(): RecentItem[] {
@@ -40,8 +41,41 @@ export function rememberRecent(entry: { kind: RecentKind; id: string; title: str
   void Storage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
 
+/// Marks an entry as currently open without reordering it if it is already
+/// listed, so the sidebar does not jump while the user is on that page.
+/// Call `commitRecent` when leaving the page to move it to the top.
+export function stageRecent(entry: { kind: RecentKind; id: string; title: string }) {
+  const title = entry.title.trim();
+  if (!title) return;
+  staged = { kind: entry.kind, id: entry.id, title };
+  const list = items();
+  const index = list.findIndex((item) => item.kind === entry.kind && item.id === entry.id);
+  if (index === -1) {
+    const next = [{ ...entry, title, at: Date.now() }, ...list].slice(0, RECENT_LIMIT);
+    items.set(next);
+    stamp += 1;
+    void Storage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } else if (list[index].title !== title) {
+    const next = list.map((item, i) => (i === index ? { ...item, title } : item));
+    items.set(next);
+    stamp += 1;
+    void Storage.setItem(STORAGE_KEY, JSON.stringify(next));
+  }
+}
+
+/// Promotes the staged entry to the top of the list once the user leaves its page.
+export function commitRecent(entry?: { kind: RecentKind; id: string; title?: string }) {
+  const pending = staged;
+  if (!pending) return;
+  if (entry && (entry.kind !== pending.kind || entry.id !== pending.id)) return;
+  staged = null;
+  const title = entry?.title?.trim() || pending.title;
+  rememberRecent({ kind: pending.kind, id: pending.id, title });
+}
+
 /// A note that is gone takes its entry with it, so the list never lies.
 export function forgetRecent(kind: RecentKind, id: string) {
+  if (staged && staged.kind === kind && staged.id === id) staged = null;
   const next = items().filter((item) => !(item.kind === kind && item.id === id));
   if (next.length === items().length) return;
   items.set(next);

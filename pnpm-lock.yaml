@@ -9,15 +9,15 @@ importers:
   .:
     dependencies:
       '@makekosmos/imago-nsh':
-        specifier: github:makekosmos/imago#d9186fab4dda30bd528fd5d6dbda843424b0ed78
-        version: https://codeload.github.com/makekosmos/imago/tar.gz/d9186fab4dda30bd528fd5d6dbda843424b0ed78
+        specifier: github:makekosmos/imago#9dd5fc97ce2d6b94319606e354e4aa0dd15d4c33
+        version: https://codeload.github.com/makekosmos/imago/tar.gz/9dd5fc97ce2d6b94319606e354e4aa0dd15d4c33
 
 packages:
 
-  '@makekosmos/imago-nsh@https://codeload.github.com/makekosmos/imago/tar.gz/d9186fab4dda30bd528fd5d6dbda843424b0ed78':
-    resolution: {gitHosted: true, integrity: sha512-vYsssLb/cG+1BlHpyjOHZAq0xlSpgWHyIFLJ9jaONitel4YSQTNQiGgHTQwL5bBdgTDZkVnOX3d0U3CTWGHT+A==, tarball: https://codeload.github.com/makekosmos/imago/tar.gz/d9186fab4dda30bd528fd5d6dbda843424b0ed78}
+  '@makekosmos/imago-nsh@https://codeload.github.com/makekosmos/imago/tar.gz/9dd5fc97ce2d6b94319606e354e4aa0dd15d4c33':
+    resolution: {gitHosted: true, integrity: sha512-pQ8gZWm09A8jjQo4PTlg3+SskO7pQDTh2x/DSDG1YR9R1bufTBMjqUE6uhIV4bG8bOuWe4F2g5KPnKWlgasP9Q==, tarball: https://codeload.github.com/makekosmos/imago/tar.gz/9dd5fc97ce2d6b94319606e354e4aa0dd15d4c33}
     version: 0.1.0
 
 snapshots:
 
-  '@makekosmos/imago-nsh@https://codeload.github.com/makekosmos/imago/tar.gz/d9186fab4dda30bd528fd5d6dbda843424b0ed78': {}
+  '@makekosmos/imago-nsh@https://codeload.github.com/makekosmos/imago/tar.gz/9dd5fc97ce2d6b94319606e354e4aa0dd15d4c33': {}

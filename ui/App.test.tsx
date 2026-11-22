@@ -1,7 +1,7 @@
 import { expect, open, test } from "nsh/test";
 import { voiceBarHeight } from "./JournalPage";
 import { SIDEBAR_HIDE_MS, SIDEBAR_MOTION_MS, SIDEBAR_OPEN_MS, SIDEBAR_WIDTH, animateSidebar, drawsCaptionButtons, navInk, sidebarFrame, sidebarWidthAt, titlebarControlTop } from "./chrome";
-import { composerFadeEdges, journalDateDelay } from "./JournalPage";
+import { composerCaretBox, composerFadeEdges, composerMaxHeight, journalDateDelay } from "./JournalPage";
 import { buildJournalDays, formatJournalDay, formatJournalStamp } from "./journal-model";
 import { fallback, resolveAppearanceColors } from "./state";
 import { journalBubble } from "./themes";
@@ -93,6 +93,18 @@ test("dims the composer edges only where lines are still hidden", () => {
   expect(composerFadeEdges(200, 120, 0)).toEqual({ top: false, bottom: true });
   expect(composerFadeEdges(200, 120, 40)).toEqual({ top: true, bottom: true });
   expect(composerFadeEdges(200, 120, 80)).toEqual({ top: true, bottom: false });
+});
+
+test("caps the journal composer height at 70% of the window", () => {
+  expect(composerMaxHeight(0)).toEqual(168);
+  expect(composerMaxHeight(800)).toEqual(560);
+  expect(composerMaxHeight(1000)).toEqual(700);
+  expect(composerMaxHeight(40)).toEqual(49);
+});
+
+test("snaps the journal caret to RichEditor's width and glyph height", () => {
+  expect(composerCaretBox({ x: 16, y: 12, height: 22 }, 2)).toEqual({ left: 15.5, top: 15.5, width: 1.5, height: 15.5 });
+  expect(composerCaretBox({ x: 16, y: 12, height: 22 }, 1)).toEqual({ left: 15, top: 16, width: 2, height: 15 });
 });
 
 test("types into the journal composer from the keyboard", async () => {
