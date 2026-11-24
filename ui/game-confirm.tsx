@@ -19,19 +19,76 @@ function sourceLabel(source: string) {
 export function ConfirmGameDialog(props: { colors: ThemeColors }) {
   const pending = gameLibrary.pendingAdd();
   if (!pending) return <View />;
-  const footer = <View class="flex-row items-center justify-between" style={{ gap: 8 }}>
-    <SharedButton label="Назад" colors={props.colors} onPress={gameLibrary.cancelConfirm} className="border-0 px-0 py-0" style={{ backgroundColor: "transparent", borderColor: "transparent" }} />
-    <SharedButton label="Добавить" colors={props.colors} onPress={gameLibrary.confirmAdd} selected className="h-9 items-center justify-center px-3 py-0" style={{ backgroundColor: props.colors.accent, borderColor: "transparent" }} textColor={props.colors.background} />
-  </View>;
-  return <Modal title="Добавить игру" colors={props.colors} onDismiss={gameLibrary.cancelConfirm} onBack={gameLibrary.cancelConfirm} width={460} footer={footer}>
-    <Text class="mb-2 text-[12px]" style={{ color: props.colors.muted }}>Поправь название, если угадалось неверно.</Text>
-    <Input value={pending.title} onChange={(e) => gameLibrary.editPendingTitle(e.value)} accessibilityLabel="Название игры" class="h-10 rounded-[10px] px-3 text-[13px]" style={{ backgroundColor: props.colors.background, color: props.colors.foreground }} />
-    <View class="mt-3 rounded-[10px] p-3" style={{ backgroundColor: props.colors.background }}>
-      <Text class="text-[11px]" style={{ color: props.colors.muted }}>Запускается</Text>
-      <Text class="mt-1 text-[12px]" style={{ color: props.colors.foreground }}>{pending.path}</Text>
-      <Text class="mt-2 text-[11px]" style={{ color: props.colors.muted }}>Источник · {sourceLabel(pending.source)}</Text>
+  const footer = (
+    <View class="flex-row items-center justify-between" style={{ gap: 8 }}>
+      <SharedButton
+        label="Назад"
+        colors={props.colors}
+        onPress={gameLibrary.cancelConfirm}
+        className="border-0 px-0 py-0"
+        style={{ backgroundColor: "transparent", borderColor: "transparent" }}
+      />
+      <SharedButton
+        label="Добавить"
+        colors={props.colors}
+        onPress={gameLibrary.confirmAdd}
+        selected
+        className="h-9 items-center justify-center px-3 py-0"
+        style={{
+          backgroundColor: props.colors.accent,
+          borderColor: "transparent",
+        }}
+        textColor={props.colors.background}
+      />
     </View>
-    <Text class="mt-3 text-[11px] leading-[17px]" style={{ color: props.colors.muted }}>После добавления игра появится сразу; метаданные и горизонтальная обложка загрузятся в фоне. Если источники не найдут игру, её можно дополнить вручную.</Text>
-  </Modal>;
+  );
+  return (
+    <Modal
+      title="Добавить игру"
+      colors={props.colors}
+      onDismiss={gameLibrary.cancelConfirm}
+      onBack={gameLibrary.cancelConfirm}
+      width={460}
+      footer={footer}
+    >
+      <Text class="mb-2 text-[12px]" style={{ color: props.colors.muted }}>
+        Поправь название, если угадалось неверно.
+      </Text>
+      <Input
+        value={pending.title}
+        onChange={(e) => gameLibrary.editPendingTitle(e.value)}
+        accessibilityLabel="Название игры"
+        class="h-10 rounded-[10px] px-3 text-[13px]"
+        style={{
+          backgroundColor: props.colors.background,
+          color: props.colors.foreground,
+        }}
+      />
+      <View
+        class="mt-3 rounded-[10px] p-3"
+        style={{ backgroundColor: props.colors.background }}
+      >
+        <Text class="text-[11px]" style={{ color: props.colors.muted }}>
+          Запускается
+        </Text>
+        <Text
+          class="mt-1 text-[12px]"
+          style={{ color: props.colors.foreground }}
+        >
+          {pending.path}
+        </Text>
+        <Text class="mt-2 text-[11px]" style={{ color: props.colors.muted }}>
+          Источник · {sourceLabel(pending.source)}
+        </Text>
+      </View>
+      <Text
+        class="mt-3 text-[11px] leading-[17px]"
+        style={{ color: props.colors.muted }}
+      >
+        После добавления игра появится сразу; метаданные и горизонтальная
+        обложка загрузятся в фоне. Если источники не найдут игру, её можно
+        дополнить вручную.
+      </Text>
+    </Modal>
+  );
 }
-

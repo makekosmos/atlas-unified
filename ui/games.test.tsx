@@ -2,23 +2,49 @@ import { expect, open, test } from "nsh/test";
 import { gameLibrary, visibleGameCards } from "./game-library";
 
 const card = (id: string, title: string, exePath: string, hidden = false) => ({
-  id, title, exePath, hidden, rating: null, note: "",
+  id,
+  title,
+  exePath,
+  hidden,
+  rating: null,
+  note: "",
 });
 
-const candidate = (title: string, exePath: string, source = "steam") => ({ title, exePath, installDir: "D:\\Games", source });
+const candidate = (title: string, exePath: string, source = "steam") => ({
+  title,
+  exePath,
+  installDir: "D:\\Games",
+  source,
+});
 
 test("filters hidden Engine cards by title or executable path", () => {
-  const visible = visibleGameCards([
-    card("hades", "Hades", "D:\\Games\\Hades.exe"),
-    card("ori", "Ori and the Blind Forest", "D:\\Games\\Ori.exe"),
-    card("hidden", "Hidden Game", "D:\\Games\\Hidden.exe", true),
-  ], "d:\\games\\hades.exe");
+  const visible = visibleGameCards(
+    [
+      card("hades", "Hades", "D:\\Games\\Hades.exe"),
+      card("ori", "Ori and the Blind Forest", "D:\\Games\\Ori.exe"),
+      card("hidden", "Hidden Game", "D:\\Games\\Hidden.exe", true),
+    ],
+    "d:\\games\\hades.exe",
+  );
   expect(visible.map((game) => game.id).join(",")).toEqual("hades");
-  expect(visibleGameCards([card("hidden", "Hidden Game", "D:\\Hidden.exe", true)], "").length).toEqual(0);
+  expect(
+    visibleGameCards(
+      [card("hidden", "Hidden Game", "D:\\Hidden.exe", true)],
+      "",
+    ).length,
+  ).toEqual(0);
 });
 
 test("reports provider progress and preserves partial discovery results", () => {
-  gameLibrary.receiveDiscovery({ progress: { provider: "epic", phase: "scanning", completed: 1, total: 3, found: 2 } });
+  gameLibrary.receiveDiscovery({
+    progress: {
+      provider: "epic",
+      phase: "scanning",
+      completed: 1,
+      total: 3,
+      found: 2,
+    },
+  });
   expect(gameLibrary.scanProgress()?.provider).toEqual("epic");
   gameLibrary.receiveDiscovery({
     candidates: [candidate("Hades", "D:\\Games\\Hades.exe")],
@@ -32,11 +58,18 @@ test("reports provider progress and preserves partial discovery results", () => 
 test("shows a fatal error when legacy discovery also fails", () => {
   gameLibrary.receiveDiscovery({
     candidates: [],
-    errors: [{ provider: "Engine", message: "games.discover_installed: invalid-request" }],
+    errors: [
+      {
+        provider: "Engine",
+        message: "games.discover_installed: invalid-request",
+      },
+    ],
     fatal: true,
   });
   expect(gameLibrary.scanState()).toEqual("error");
-  expect(gameLibrary.scanError()).toContain("Engine: games.discover_installed: invalid-request");
+  expect(gameLibrary.scanError()).toContain(
+    "Engine: games.discover_installed: invalid-request",
+  );
 });
 
 test("reviews what the search found one card at a time", () => {
@@ -62,7 +95,9 @@ test("reviews what the search found one card at a time", () => {
 
 test("keeps the search result on screen when every found game is already in the library", () => {
   gameLibrary.receiveLibrary([card("hades", "Hades", "D:\\Games\\Hades.exe")]);
-  gameLibrary.receiveDiscovery({ candidates: [candidate("Hades", "D:\\Games\\Hades.exe")] });
+  gameLibrary.receiveDiscovery({
+    candidates: [candidate("Hades", "D:\\Games\\Hades.exe")],
+  });
   expect(gameLibrary.scanState()).toEqual("ready");
   expect(gameLibrary.candidates().length).toEqual(1);
   expect(gameLibrary.deck().length).toEqual(0);
@@ -70,7 +105,11 @@ test("keeps the search result on screen when every found game is already in the 
 });
 
 test("closes the add dialog from the backdrop and stays open on presses inside", async () => {
-  const app = await open("./widgets-on-fixture.tsx", { platform: "windows", width: 1100, height: 800 });
+  const app = await open("./widgets-on-fixture.tsx", {
+    platform: "windows",
+    width: 1100,
+    height: 800,
+  });
   await app.press("Игры");
   await app.press("Добавить игру");
   expect(app.texts()).toContain("Найти автоматически");
@@ -81,7 +120,11 @@ test("closes the add dialog from the backdrop and stays open on presses inside",
 });
 
 test("opens the add dialog with the three ways to add games and does not scan by itself", async () => {
-  const app = await open("./widgets-on-fixture.tsx", { platform: "windows", width: 1100, height: 800 });
+  const app = await open("./widgets-on-fixture.tsx", {
+    platform: "windows",
+    width: 1100,
+    height: 800,
+  });
   await app.press("Игры");
   expect(app.texts()).not.toContain("Все");
   expect(app.texts()).not.toContain("Скрытые");
@@ -105,10 +148,22 @@ test("shows ambiguous metadata candidates and lets the user choose one", () => {
   gameLibrary.receiveLibrary([card("hades", "Hades", "D:\\Games\\Hades.exe")]);
   gameLibrary.receiveMetadata({
     exePath: "D:\\Games\\Hades.exe",
-    result: { status: "ambiguous", candidates: [
-      { provider: "steam", providerId: "1", name: "Hades Remastered", headerImagePath: "C:\\cache\\1.jpg" },
-      { provider: "steam", providerId: "2", name: "Hades Definitive Edition" },
-    ] },
+    result: {
+      status: "ambiguous",
+      candidates: [
+        {
+          provider: "steam",
+          providerId: "1",
+          name: "Hades Remastered",
+          headerImagePath: "C:\\cache\\1.jpg",
+        },
+        {
+          provider: "steam",
+          providerId: "2",
+          name: "Hades Definitive Edition",
+        },
+      ],
+    },
   });
   expect(gameLibrary.metadataChoices()?.candidates.length).toEqual(2);
   gameLibrary.chooseMetadata(gameLibrary.metadataChoices()!.candidates[1]);

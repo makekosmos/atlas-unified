@@ -26,7 +26,11 @@ test("a card opens the note, and its headings become the rails", async () => {
 });
 
 test("hovering the outline rail opens the heading popover", async () => {
-  const app = await open("./notes-fixture.tsx", { width: 1180, height: 820, platform: "macos" });
+  const app = await open("./notes-fixture.tsx", {
+    width: 1180,
+    height: 820,
+    platform: "macos",
+  });
   await app.press("label:Заметка 1");
   expect(app.texts().filter((item) => item === "Подраздел").length).toBe(1);
   await app.hover("id:notes-outline-rail");
@@ -57,7 +61,10 @@ test("a press below the text puts the caret where writing continues", async () =
 
 test("a thousand notes show the cards near the viewport, not the whole list", async () => {
   const started = Date.now();
-  const app = await open("./notes-fixture-many.tsx", { width: 1180, height: 820 });
+  const app = await open("./notes-fixture-many.tsx", {
+    width: 1180,
+    height: 820,
+  });
   const spent = Date.now() - started;
   expect(app.texts()).toContain("Заметки");
   expect(app.texts()).toContain("Заметка 1");

@@ -1,0 +1,14 @@
+# Generated output, not source: `nsh build` writes it and the app `include_str!`s
+# the copy in ui/. Formatting it would fight the bundler.
+ui/bundle.js
+
+# `bun fmt` formats Markdown, YAML and TOML too; this repo's are Rust-side
+# manifests, CI workflows and hand-written docs, so the formatter is scoped to
+# the UI sources and scripts (see the `ui-fmt` step in hk.pkl).
+*.md
+*.toml
+*.yml
+*.yaml
+Cargo.lock
+src/**
+.audit/**

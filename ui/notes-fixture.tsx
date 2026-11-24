@@ -12,9 +12,20 @@ function body(tag: string) {
   return {
     type: "doc",
     content: [
-      { type: "heading", attrs: { level: 1 }, content: [{ type: "text", text: "Раздел" }] },
-      { type: "paragraph", content: [{ type: "text", text: `Текст заметки ${tag}` }] },
-      { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Подраздел" }] },
+      {
+        type: "heading",
+        attrs: { level: 1 },
+        content: [{ type: "text", text: "Раздел" }],
+      },
+      {
+        type: "paragraph",
+        content: [{ type: "text", text: `Текст заметки ${tag}` }],
+      },
+      {
+        type: "heading",
+        attrs: { level: 2 },
+        content: [{ type: "text", text: "Подраздел" }],
+      },
       { type: "paragraph", content: [{ type: "text", text: "Ещё строка." }] },
     ],
   };
@@ -31,7 +42,11 @@ export function fixtureNotes(count: number): Note[] {
   }));
 }
 
-const library = fixtureNotes(Number((globalThis as { notesFixtureCount?: number }).notesFixtureCount ?? 24));
+const library = fixtureNotes(
+  Number(
+    (globalThis as { notesFixtureCount?: number }).notesFixtureCount ?? 24,
+  ),
+);
 setNotes(library);
 // The page asks the host for its notes when it opens; here the answer is the
 // same library, as if it had just arrived.
@@ -49,13 +64,17 @@ bindNoteCommands({
   },
   save() {},
   remove() {},
-  reload() { setNotes(library); },
+  reload() {
+    setNotes(library);
+  },
 });
 
 function NotesFixture() {
-  return <View class="h-full w-full" style={{ backgroundColor: colors.background }}>
-    <NotesPage colors={colors} dark={true} titlebarInset={0} />
-  </View>;
+  return (
+    <View class="h-full w-full" style={{ backgroundColor: colors.background }}>
+      <NotesPage colors={colors} dark={true} titlebarInset={0} />
+    </View>
+  );
 }
 
 mount(NotesFixture);

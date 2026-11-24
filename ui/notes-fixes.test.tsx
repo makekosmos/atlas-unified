@@ -1,6 +1,12 @@
 import { open, expect, test } from "nsh/test";
 import { addNote, cardDelay, notes, setNotes } from "./notes";
-import { commitRecent, forgetRecent, recent, rememberRecent, stageRecent } from "./recent";
+import {
+  commitRecent,
+  forgetRecent,
+  recent,
+  rememberRecent,
+  stageRecent,
+} from "./recent";
 import type { Note } from "./state";
 
 /// The four defects the desk showed, each pinned to the rule that fixes it: a
@@ -42,7 +48,11 @@ test("a note the host makes joins the library alone", () => {
   // A created note comes back by itself: the library gains it on top and keeps
   // what it had, so nothing around it has to be sent again.
   addNote(note("c", "Свежая"));
-  expect(notes().map((item) => item.title)).toEqual(["Свежая", "Старая", "Тоже старая"]);
+  expect(notes().map((item) => item.title)).toEqual([
+    "Свежая",
+    "Старая",
+    "Тоже старая",
+  ]);
   // The same note twice is one entry: a create that is echoed again is not a
   // second note.
   addNote(note("c", "Свежая"));
@@ -50,7 +60,10 @@ test("a note the host makes joins the library alone", () => {
 });
 
 test("a code note does not steal focus to its last block on paint or sheet tap", async () => {
-  const app = await open("./notes-code-fixture.tsx", { width: 1180, height: 820 });
+  const app = await open("./notes-code-fixture.tsx", {
+    width: 1180,
+    height: 820,
+  });
   await app.press("label:Код: языки");
   // Wait past multiple paintCode / schedulePaint ticks (60 ms each).
   await app.wait(300);

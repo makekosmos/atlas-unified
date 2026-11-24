@@ -31,7 +31,11 @@ test("a slash works with the page scrolled to the end", async () => {
 // A code block wears its language on the top left and a copy button on the
 // top right. The name opens the list of languages.
 test("a code block names its language and copies from its corner", async () => {
-  const app = await open("./notes-fixture.tsx", { width: 1180, height: 820, platform: "macos" });
+  const app = await open("./notes-fixture.tsx", {
+    width: 1180,
+    height: 820,
+    platform: "macos",
+  });
   await app.press("label:Заметка 2");
   await app.press("label:Текст заметки");
   await app.keyboard.press("mod+ArrowDown");

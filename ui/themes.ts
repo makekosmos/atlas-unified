@@ -1,8 +1,20 @@
 import type { ThemeColors } from "@makekosmos/imago-nsh";
 
-export type PreviewTheme = { key: string; name: string; light: ThemeColors; dark: ThemeColors };
+export type PreviewTheme = {
+  key: string;
+  name: string;
+  light: ThemeColors;
+  dark: ThemeColors;
+};
 
-function colors(background: string, foreground: string, muted: string, border: string, accent: string, card: string): ThemeColors {
+function colors(
+  background: string,
+  foreground: string,
+  muted: string,
+  border: string,
+  accent: string,
+  card: string,
+): ThemeColors {
   return { background, foreground, muted, border, accent, card };
 }
 
@@ -16,27 +28,137 @@ const BLUE_DARK = "#1784fc";
 // Cobalt Foundry — the palette Atlas wears: forged steel greys lit by a cobalt
 // arc, the same scheme `imago-nsh/ui/palettes.ts` ships.
 export const previewThemes: PreviewTheme[] = [
-  { key: "cobalt-foundry", name: "Cobalt Foundry", light: colors("#f7f8fa", "#111820", "#5f6a7a", "#dde2ea", "#1f6df5", "#ffffff"), dark: colors("#090c15", "#ffffff", "#717580", "#1e222b", "#1784fc", "#101318") },
+  {
+    key: "cobalt-foundry",
+    name: "Cobalt Foundry",
+    light: colors(
+      "#f7f8fa",
+      "#111820",
+      "#5f6a7a",
+      "#dde2ea",
+      "#1f6df5",
+      "#ffffff",
+    ),
+    dark: colors(
+      "#090c15",
+      "#ffffff",
+      "#717580",
+      "#1e222b",
+      "#1784fc",
+      "#101318",
+    ),
+  },
 ];
 
-export const systemAccents: { key: string; name: string; darkName?: string; light: string; dark: string; plate: string; legacy: string[] }[] = [
-  { key: "mono", name: "Чёрный", darkName: "Белый", light: "#000000", dark: "#ffffff", plate: "#d1d1d1", legacy: [] },
-  { key: "brown", name: "Коричневый", light: "#a16c39", dark: "#a16c39", plate: "#83582f", legacy: ["#996e42"] },
-  { key: "red", name: "Красный", light: "#fb2c3f", dark: "#fc2d3e", plate: "#cf2633", legacy: ["#e74347", "#e84447"] },
-  { key: "orange", name: "Оранжевый", light: "#fe6a10", dark: "#fa6710", plate: "#cc550f", legacy: ["#ec7332", "#e87031"] },
-  { key: "yellow", name: "Жёлтый", light: "#f69312", dark: "#f79411", plate: "#ca7912", legacy: ["#e8983a", "#e9993a"] },
-  { key: "green", name: "Зелёный", light: "#13c16f", dark: "#13c370", plate: "#169f5c", legacy: ["#59be77", "#5ac078"] },
-  { key: "teal", name: "Бирюзовый", light: "#15b8a3", dark: "#15b8a4", plate: "#179686", legacy: ["#55b5a3", "#55b5a4"] },
-  { key: "blue", name: "Синий", light: BLUE_LIGHT, dark: BLUE_DARK, plate: "#156dcf", legacy: ["#4184f4", "#3e82f4"] },
-  { key: "purple", name: "Фиолетовый", light: "#905afa", dark: "#915bfc", plate: "#764ace", legacy: ["#885cf1", "#895df3"] },
-  { key: "pink", name: "Розовый", light: "#f93498", dark: "#fb3499", plate: "#cd2b7e", legacy: ["#e54896", "#e74897"] },
-  { key: "gray", name: "Серый", light: "#959595", dark: "#777777", plate: "#626262", legacy: [] },
+export const systemAccents: {
+  key: string;
+  name: string;
+  darkName?: string;
+  light: string;
+  dark: string;
+  plate: string;
+  legacy: string[];
+}[] = [
+  {
+    key: "mono",
+    name: "Чёрный",
+    darkName: "Белый",
+    light: "#000000",
+    dark: "#ffffff",
+    plate: "#d1d1d1",
+    legacy: [],
+  },
+  {
+    key: "brown",
+    name: "Коричневый",
+    light: "#a16c39",
+    dark: "#a16c39",
+    plate: "#83582f",
+    legacy: ["#996e42"],
+  },
+  {
+    key: "red",
+    name: "Красный",
+    light: "#fb2c3f",
+    dark: "#fc2d3e",
+    plate: "#cf2633",
+    legacy: ["#e74347", "#e84447"],
+  },
+  {
+    key: "orange",
+    name: "Оранжевый",
+    light: "#fe6a10",
+    dark: "#fa6710",
+    plate: "#cc550f",
+    legacy: ["#ec7332", "#e87031"],
+  },
+  {
+    key: "yellow",
+    name: "Жёлтый",
+    light: "#f69312",
+    dark: "#f79411",
+    plate: "#ca7912",
+    legacy: ["#e8983a", "#e9993a"],
+  },
+  {
+    key: "green",
+    name: "Зелёный",
+    light: "#13c16f",
+    dark: "#13c370",
+    plate: "#169f5c",
+    legacy: ["#59be77", "#5ac078"],
+  },
+  {
+    key: "teal",
+    name: "Бирюзовый",
+    light: "#15b8a3",
+    dark: "#15b8a4",
+    plate: "#179686",
+    legacy: ["#55b5a3", "#55b5a4"],
+  },
+  {
+    key: "blue",
+    name: "Синий",
+    light: BLUE_LIGHT,
+    dark: BLUE_DARK,
+    plate: "#156dcf",
+    legacy: ["#4184f4", "#3e82f4"],
+  },
+  {
+    key: "purple",
+    name: "Фиолетовый",
+    light: "#905afa",
+    dark: "#915bfc",
+    plate: "#764ace",
+    legacy: ["#885cf1", "#895df3"],
+  },
+  {
+    key: "pink",
+    name: "Розовый",
+    light: "#f93498",
+    dark: "#fb3499",
+    plate: "#cd2b7e",
+    legacy: ["#e54896", "#e74897"],
+  },
+  {
+    key: "gray",
+    name: "Серый",
+    light: "#959595",
+    dark: "#777777",
+    plate: "#626262",
+    legacy: [],
+  },
 ];
 
 export function systemAccent(stored: string | null | undefined, dark: boolean) {
   if (!stored) return undefined;
   const needle = stored.toLowerCase();
-  const match = systemAccents.find((accent) => accent.light === needle || accent.dark === needle || accent.legacy.includes(needle));
+  const match = systemAccents.find(
+    (accent) =>
+      accent.light === needle ||
+      accent.dark === needle ||
+      accent.legacy.includes(needle),
+  );
   if (!match) return stored;
   return dark ? match.dark : match.light;
 }
@@ -45,13 +167,16 @@ export function systemAccent(stored: string | null | undefined, dark: boolean) {
 // Brown is the same hex in both modes, so it stays the circle.
 export function journalBubble(accent: string) {
   const needle = accent.toLowerCase();
-  const match = systemAccents.find((item) => item.dark === needle && item.light !== item.dark);
+  const match = systemAccents.find(
+    (item) => item.dark === needle && item.light !== item.dark,
+  );
   return match?.plate ?? accent;
 }
 
 export function accentMark(hex: string) {
   const n = Number.parseInt(hex.replace("#", ""), 16);
   if (Number.isNaN(n)) return "#ffffff";
-  const y = (((n >> 16) & 255) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000;
+  const y =
+    (((n >> 16) & 255) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000;
   return y > 160 ? "#1d1d1f" : "#ffffff";
 }

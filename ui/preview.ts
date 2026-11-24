@@ -26,21 +26,36 @@ export function loadPreview(): Promise<PreviewStore | null> {
 
 function isPreviewStore(value: unknown): value is PreviewStore {
   if (typeof value !== "object" || value === null) return false;
-  if (!("journalEntries" in value) || !Array.isArray(value.journalEntries)) return false;
+  if (!("journalEntries" in value) || !Array.isArray(value.journalEntries))
+    return false;
   if (!("todos" in value) || !Array.isArray(value.todos)) return false;
-  return value.journalEntries.every(isJournalEntry) && value.todos.every(isTodo);
+  return (
+    value.journalEntries.every(isJournalEntry) && value.todos.every(isTodo)
+  );
 }
 
 function isJournalEntry(value: unknown): value is JournalEntry {
-  return typeof value === "object" && value !== null
-    && "id" in value && typeof value.id === "string"
-    && "text" in value && typeof value.text === "string"
-    && "createdAt" in value && typeof value.createdAt === "string";
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "id" in value &&
+    typeof value.id === "string" &&
+    "text" in value &&
+    typeof value.text === "string" &&
+    "createdAt" in value &&
+    typeof value.createdAt === "string"
+  );
 }
 
 function isTodo(value: unknown): value is Todo {
-  return typeof value === "object" && value !== null
-    && "id" in value && typeof value.id === "string"
-    && "title" in value && typeof value.title === "string"
-    && "is_completed" in value && typeof value.is_completed === "boolean";
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "id" in value &&
+    typeof value.id === "string" &&
+    "title" in value &&
+    typeof value.title === "string" &&
+    "is_completed" in value &&
+    typeof value.is_completed === "boolean"
+  );
 }

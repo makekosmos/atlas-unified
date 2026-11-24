@@ -14,13 +14,41 @@ const codeNote: Note = {
   doc: {
     type: "doc",
     content: [
-      { type: "paragraph", content: [{ type: "text", text: "Одна заметка, несколько языков." }] },
-      { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Rust" }] },
-      { type: "codeBlock", attrs: { language: "rust" }, content: [{ type: "text", text: "fn main() {\n    println!(\"hi\");\n}" }] },
-      { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "CSS" }] },
-      { type: "codeBlock", attrs: { language: "css" }, content: [{ type: "text", text: ".card {\n  display: flex;\n}" }] },
-      { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Без языка" }] },
-      { type: "codeBlock", content: [{ type: "text", text: "обычный текст\nбез подсветки" }] },
+      {
+        type: "paragraph",
+        content: [{ type: "text", text: "Одна заметка, несколько языков." }],
+      },
+      {
+        type: "heading",
+        attrs: { level: 2 },
+        content: [{ type: "text", text: "Rust" }],
+      },
+      {
+        type: "codeBlock",
+        attrs: { language: "rust" },
+        content: [
+          { type: "text", text: 'fn main() {\n    println!("hi");\n}' },
+        ],
+      },
+      {
+        type: "heading",
+        attrs: { level: 2 },
+        content: [{ type: "text", text: "CSS" }],
+      },
+      {
+        type: "codeBlock",
+        attrs: { language: "css" },
+        content: [{ type: "text", text: ".card {\n  display: flex;\n}" }],
+      },
+      {
+        type: "heading",
+        attrs: { level: 2 },
+        content: [{ type: "text", text: "Без языка" }],
+      },
+      {
+        type: "codeBlock",
+        content: [{ type: "text", text: "обычный текст\nбез подсветки" }],
+      },
     ],
   },
   text: "Одна заметка, несколько языков.",
@@ -34,13 +62,17 @@ bindNoteCommands({
   create() {},
   save() {},
   remove() {},
-  reload() { setNotes(library); },
+  reload() {
+    setNotes(library);
+  },
 });
 
 function NotesCodeFixture() {
-  return <View class="h-full w-full" style={{ backgroundColor: colors.background }}>
-    <NotesPage colors={colors} dark={true} titlebarInset={0} />
-  </View>;
+  return (
+    <View class="h-full w-full" style={{ backgroundColor: colors.background }}>
+      <NotesPage colors={colors} dark={true} titlebarInset={0} />
+    </View>
+  );
 }
 
 mount(NotesCodeFixture);

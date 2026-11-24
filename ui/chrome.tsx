@@ -19,12 +19,16 @@ const CLUSTER_START_MACOS = 88;
 const CLUSTER_START = 10;
 const TRAILING_INSET = 6;
 const CAPTION_BUTTON_WIDTH = 36;
+const TOGGLE_SIZE = 24;
 
 const closeHovered = signal(false);
 const titleFocused = signal(false);
 
 export function animatePanes() {
-  LayoutAnimation.configureNext({ duration: 200, update: { type: "easeOut", duration: 200 } });
+  LayoutAnimation.configureNext({
+    duration: 200,
+    update: { type: "easeOut", duration: 200 },
+  });
 }
 
 // Zeron RESIZE: cubic-bezier(0, 0, 0.58, 1). The signal is the width
@@ -41,7 +45,12 @@ export function sidebarMotionMs(open: boolean) {
 }
 
 const sidebarWidth = signal(SIDEBAR_WIDTH);
-let sidebarTween: { from: number; to: number; started: number; duration: number } | null = null;
+let sidebarTween: {
+  from: number;
+  to: number;
+  started: number;
+  duration: number;
+} | null = null;
 let sidebarScheduled = false;
 
 function easeOut(t: number) {
@@ -56,7 +65,12 @@ function easeOut(t: number) {
   return 3 * (1 - u) * u * u + u * u * u;
 }
 
-export function sidebarWidthAt(from: number, to: number, elapsed: number, duration = SIDEBAR_MOTION_MS) {
+export function sidebarWidthAt(
+  from: number,
+  to: number,
+  elapsed: number,
+  duration = SIDEBAR_MOTION_MS,
+) {
   const t = duration <= 0 ? 1 : Math.min(1, Math.max(0, elapsed / duration));
   return from + (to - from) * easeOut(t);
 }
@@ -69,7 +83,12 @@ export function sidebarFrame(now: number) {
     sidebarWidth.set(tween.to);
     return tween.to;
   }
-  const value = sidebarWidthAt(tween.from, tween.to, now - tween.started, tween.duration);
+  const value = sidebarWidthAt(
+    tween.from,
+    tween.to,
+    now - tween.started,
+    tween.duration,
+  );
   sidebarWidth.set(value);
   return value;
 }
@@ -92,7 +111,12 @@ export function animateSidebar(open: boolean, now?: number) {
     sidebarTween = null;
     return;
   }
-  sidebarTween = { from, to, started: now ?? Date.now(), duration: sidebarMotionMs(open) };
+  sidebarTween = {
+    from,
+    to,
+    started: now ?? Date.now(),
+    duration: sidebarMotionMs(open),
+  };
   if (now === undefined) scheduleSidebar();
 }
 
@@ -115,11 +139,24 @@ export function shellFill(colors: { background: string }, dark: boolean) {
 
 /** A raised surface: the selected sidebar row, a card above the page. */
 export function raisedFill(colors: { background: string }, dark: boolean) {
-  return mixHex(colors.background, dark ? "#ffffff" : "#000000", dark ? 0.065 : 0.04);
+  return mixHex(
+    colors.background,
+    dark ? "#ffffff" : "#000000",
+    dark ? 0.065 : 0.04,
+  );
 }
 
 export function titlebarControlTop(size: number) {
   return (TITLEBAR_HEIGHT + TITLEBAR_TOP_PAD) / 2 - size / 2;
+}
+
+/**
+ * Where a page's own leading chip (the note's "‹ Заметки") starts. The sidebar
+ * toggle keeps a fixed x wherever the pane is, so a hidden sidebar would put
+ * the chip straight under it; the chip starts after the toggle instead.
+ */
+export function noteBackLeft(pageInset: number, toggleLeft: number) {
+  return Math.max(pageInset + 8, toggleLeft + TOGGLE_SIZE + 8);
 }
 
 function channel(hex: string, shift: number) {
@@ -137,8 +174,19 @@ export function mixHex(from: string, to: string, t: number) {
   const tr = channel(to, 16);
   const tg = channel(to, 8);
   const tb = channel(to, 0);
-  if (fr === null || fg === null || fb === null || tr === null || tg === null || tb === null) return from;
-  const mix = (a: number, b: number) => Math.round(a + (b - a) * t).toString(16).padStart(2, "0");
+  if (
+    fr === null ||
+    fg === null ||
+    fb === null ||
+    tr === null ||
+    tg === null ||
+    tb === null
+  )
+    return from;
+  const mix = (a: number, b: number) =>
+    Math.round(a + (b - a) * t)
+      .toString(16)
+      .padStart(2, "0");
   return `#${mix(fr, tr)}${mix(fg, tg)}${mix(fb, tb)}`;
 }
 
@@ -150,7 +198,11 @@ export function colorAlpha(hex: string, alpha: number) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-export function navInk(_selected: boolean, _hot: boolean, colors: { foreground: string; muted: string }) {
+export function navInk(
+  _selected: boolean,
+  _hot: boolean,
+  colors: { foreground: string; muted: string },
+) {
   return colors.foreground;
 }
 
@@ -187,48 +239,282 @@ export function TitlebarOverlay(props: {
   const macos = os === "macos";
   const drawCaptions = drawsCaptionButtons(os, controls.right);
   const captionWidth = drawCaptions ? CAPTION_BUTTON_WIDTH * 3 : controls.right;
-  const sidebarLeft = macos ? Math.max(controls.left, CLUSTER_START_MACOS) : Math.max(controls.left, CLUSTER_START);
+  const sidebarLeft = macos
+    ? Math.max(controls.left, CLUSTER_START_MACOS)
+    : Math.max(controls.left, CLUSTER_START);
   const controlsRight = captionWidth + TRAILING_INSET;
   const addGameRight = controlsRight;
   const wash = hoverWash(props.dark);
   const barHeight = controls.height || TITLEBAR_HEIGHT;
   const dragLeft = macos ? Math.max(controls.left, 78) : 0;
-  return <View class="absolute left-0 right-0 top-0 z-20" style={{ height: barHeight }} desktop={{ windowDrag: true }}>
-    {props.fadeBackdrop
-      ? <View class="absolute top-0" style={{ left: props.pageInset ?? 0, right: 0, height: barHeight + 34, backgroundImage: `linear-gradient(to bottom, ${props.colors.background} 0%, ${colorAlpha(props.colors.background, 0.94)} 34%, ${colorAlpha(props.colors.background, 0.58)} 66%, ${colorAlpha(props.colors.background, 0)} 100%)`, pointerEvents: "none" }} />
-      : <View class="absolute top-0 bottom-0" style={{ left: props.pageInset ?? 0, right: 0, backgroundColor: props.colors.background, pointerEvents: "none" }} />}
-    {props.dimmed && <View class="absolute top-0 bottom-0" style={{ left: props.pageInset ?? 0, right: 0, backgroundColor: "#00000080", pointerEvents: "none" }} />}
-    <View onPressDown={(event) => props.onChrome((event?.clickCount ?? 1) >= 2 ? "window.titlebar-double-click" : "window.drag")} class="absolute right-0 top-0 bottom-0" style={{ left: dragLeft }} />
-    <View onPress={props.onToggleSidebar} role="button" accessibilityLabel="Боковая панель" class="absolute items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ top: titlebarControlTop(24), left: sidebarLeft, width: 24, height: 24, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
-      <SharedIcon name="sidebar" size={16} color={props.colors.muted} />
-    </View>
-    {props.showAddGame && <View onPress={() => props.onAddGame?.()} role="button" accessibilityLabel="Добавить игру" class="absolute items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ top: titlebarControlTop(28), right: addGameRight, width: 28, height: 28, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
-      <SharedIcon name="plus" size={16} color={props.colors.muted} />
-    </View>}
-    {props.noteActive && <View onPress={() => { titleFocused.set(false); props.onCloseNote?.(); }} role="button" accessibilityLabel="К списку заметок" class="absolute flex-row items-center" hoverStyle={{ backgroundColor: wash }} desktop={{ windowDrag: false }} style={{ left: (props.pageInset ?? 0) + 8, top: titlebarControlTop(24), height: 24, paddingLeft: 8, paddingRight: 10, gap: 3, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
-      <Text class="text-[15px]" style={{ color: props.colors.muted }}>‹</Text>
-      <Text class="text-[12px]" style={{ color: props.colors.muted }}>Заметки</Text>
-    </View>}
-    {/* The page's middle, from the sidebar's edge to the window's edge.
+  return (
+    <View
+      class="absolute left-0 right-0 top-0 z-20"
+      style={{ height: barHeight }}
+      desktop={{ windowDrag: true }}
+    >
+      {props.fadeBackdrop ? (
+        <View
+          class="absolute top-0"
+          style={{
+            left: props.pageInset ?? 0,
+            right: 0,
+            height: barHeight + 34,
+            backgroundImage: `linear-gradient(to bottom, ${props.colors.background} 0%, ${colorAlpha(props.colors.background, 0.94)} 34%, ${colorAlpha(props.colors.background, 0.58)} 66%, ${colorAlpha(props.colors.background, 0)} 100%)`,
+            pointerEvents: "none",
+          }}
+        />
+      ) : (
+        <View
+          class="absolute top-0 bottom-0"
+          style={{
+            left: props.pageInset ?? 0,
+            right: 0,
+            backgroundColor: props.colors.background,
+            pointerEvents: "none",
+          }}
+        />
+      )}
+      {props.dimmed && (
+        <View
+          class="absolute top-0 bottom-0"
+          style={{
+            left: props.pageInset ?? 0,
+            right: 0,
+            backgroundColor: "#00000080",
+            pointerEvents: "none",
+          }}
+        />
+      )}
+      <View
+        onPressDown={(event) =>
+          props.onChrome(
+            (event?.clickCount ?? 1) >= 2
+              ? "window.titlebar-double-click"
+              : "window.drag",
+          )
+        }
+        class="absolute right-0 top-0 bottom-0"
+        style={{ left: dragLeft }}
+      />
+      <View
+        onPress={props.onToggleSidebar}
+        role="button"
+        accessibilityLabel="Боковая панель"
+        class="absolute items-center justify-center"
+        desktop={{ windowDrag: false }}
+        hoverStyle={{ backgroundColor: wash }}
+        style={{
+          top: titlebarControlTop(TOGGLE_SIZE),
+          left: sidebarLeft,
+          width: TOGGLE_SIZE,
+          height: TOGGLE_SIZE,
+          borderRadius: CONTROL_RADIUS,
+          cursor: "pointer",
+        }}
+      >
+        <SharedIcon name="sidebar" size={16} color={props.colors.muted} />
+      </View>
+      {props.showAddGame && (
+        <View
+          onPress={() => props.onAddGame?.()}
+          role="button"
+          accessibilityLabel="Добавить игру"
+          class="absolute items-center justify-center"
+          desktop={{ windowDrag: false }}
+          hoverStyle={{ backgroundColor: wash }}
+          style={{
+            top: titlebarControlTop(28),
+            right: addGameRight,
+            width: 28,
+            height: 28,
+            borderRadius: CONTROL_RADIUS,
+            cursor: "pointer",
+          }}
+        >
+          <SharedIcon name="plus" size={16} color={props.colors.muted} />
+        </View>
+      )}
+      {props.noteActive && (
+        <View
+          onPress={() => {
+            titleFocused.set(false);
+            props.onCloseNote?.();
+          }}
+          role="button"
+          accessibilityLabel="К списку заметок"
+          class="absolute flex-row items-center"
+          hoverStyle={{ backgroundColor: wash }}
+          desktop={{ windowDrag: false }}
+          style={{
+            left: noteBackLeft(props.pageInset ?? 0, sidebarLeft),
+            top: titlebarControlTop(24),
+            height: 24,
+            paddingLeft: 8,
+            paddingRight: 10,
+            gap: 3,
+            borderRadius: CONTROL_RADIUS,
+            cursor: "pointer",
+          }}
+        >
+          <Text class="text-[15px]" style={{ color: props.colors.muted }}>
+            ‹
+          </Text>
+          <Text class="text-[12px]" style={{ color: props.colors.muted }}>
+            Заметки
+          </Text>
+        </View>
+      )}
+      {/* The page's middle, from the sidebar's edge to the window's edge.
         nsh-platform-gpui 0.4.0 paints single-line placeholders at x=0 instead
         of applying textAlign, so we draw the empty placeholder centred here. */}
-    {props.noteActive && <View class="absolute flex-row items-center justify-center" desktop={{ windowDrag: false }} style={{ left: props.pageInset ?? 0, right: 0, top: titlebarControlTop(26), height: 26, pointerEvents: "box-none" }}>
-      <View class="relative items-center justify-center" style={{ width: 360, maxWidth: "70%", height: 26 }}>
-        {!(props.noteTitle ?? "") && !titleFocused() && <View class="absolute left-0 right-0 top-0 bottom-0 items-center justify-center" style={{ pointerEvents: "none" }}>
-          <Text class="text-center text-[13px] font-semibold" style={{ color: colorAlpha(props.colors.foreground, 0.5), lineHeight: 18 }}>Заголовок</Text>
-        </View>}
-        <Input value={props.noteTitle ?? ""} onChange={(event) => props.onRenameNote?.(event.value)} onFocus={() => titleFocused.set(true)} onBlur={() => titleFocused.set(false)} accessibilityLabel="Заголовок заметки" class="text-center text-[13px] font-semibold" style={{ width: "100%", height: 26, textAlign: "center", color: props.colors.foreground, backgroundColor: "transparent", paddingTop: 0, paddingBottom: 0, paddingLeft: 8, paddingRight: 8, lineHeight: 18 }} />
-      </View>
-    </View>}
-    {props.noteActive && <View onPress={() => { titleFocused.set(false); props.onDeleteNote?.(); }} role="button" accessibilityLabel="Удалить заметку" class="absolute items-center justify-center" hoverStyle={{ backgroundColor: wash }} desktop={{ windowDrag: false }} style={{ right: controlsRight + 8, top: titlebarControlTop(24), width: 26, height: 24, borderRadius: CONTROL_RADIUS, cursor: "pointer" }}>
-      <SharedIcon name="trash" size={13} color={props.colors.muted} />
-    </View>}
-    {drawCaptions && <View class="absolute right-0 top-0 flex-row" desktop={{ windowDrag: false }} style={{ height: TITLEBAR_HEIGHT }}>
-      <View onPress={() => props.onChrome("window.minimize")} role="button" accessibilityLabel="Свернуть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowMin" color={props.colors.foreground} size={12} /></View>
-      <View onPress={() => props.onChrome("window.zoom")} role="button" accessibilityLabel="Развернуть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: wash }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowMax" color={props.colors.foreground} size={12} /></View>
-      <View onPress={() => props.onChrome("window.close")} onMouseEnter={() => closeHovered.set(true)} onMouseLeave={() => closeHovered.set(false)} role="button" accessibilityLabel="Закрыть окно" class="items-center justify-center" desktop={{ windowDrag: false }} hoverStyle={{ backgroundColor: "#e81123" }} style={{ width: CAPTION_BUTTON_WIDTH, height: TITLEBAR_HEIGHT, cursor: "pointer" }}><SharedIcon name="windowClose" color={closeHovered() ? "#ffffff" : props.colors.foreground} size={12} /></View>
-    </View>}
-  </View>;
+      {props.noteActive && (
+        <View
+          class="absolute flex-row items-center justify-center"
+          desktop={{ windowDrag: false }}
+          style={{
+            left: props.pageInset ?? 0,
+            right: 0,
+            top: titlebarControlTop(26),
+            height: 26,
+            pointerEvents: "box-none",
+          }}
+        >
+          <View
+            class="relative items-center justify-center"
+            style={{ width: 360, maxWidth: "70%", height: 26 }}
+          >
+            {!(props.noteTitle ?? "") && !titleFocused() && (
+              <View
+                class="absolute left-0 right-0 top-0 bottom-0 items-center justify-center"
+                style={{ pointerEvents: "none" }}
+              >
+                <Text
+                  class="text-center text-[13px] font-semibold"
+                  style={{
+                    color: colorAlpha(props.colors.foreground, 0.5),
+                    lineHeight: 18,
+                  }}
+                >
+                  Заголовок
+                </Text>
+              </View>
+            )}
+            <Input
+              value={props.noteTitle ?? ""}
+              onChange={(event) => props.onRenameNote?.(event.value)}
+              onFocus={() => titleFocused.set(true)}
+              onBlur={() => titleFocused.set(false)}
+              accessibilityLabel="Заголовок заметки"
+              class="text-center text-[13px] font-semibold"
+              style={{
+                width: "100%",
+                height: 26,
+                textAlign: "center",
+                color: props.colors.foreground,
+                backgroundColor: "transparent",
+                paddingTop: 0,
+                paddingBottom: 0,
+                paddingLeft: 8,
+                paddingRight: 8,
+                lineHeight: 18,
+              }}
+            />
+          </View>
+        </View>
+      )}
+      {props.noteActive && (
+        <View
+          onPress={() => {
+            titleFocused.set(false);
+            props.onDeleteNote?.();
+          }}
+          role="button"
+          accessibilityLabel="Удалить заметку"
+          class="absolute items-center justify-center"
+          hoverStyle={{ backgroundColor: wash }}
+          desktop={{ windowDrag: false }}
+          style={{
+            right: controlsRight + 8,
+            top: titlebarControlTop(24),
+            width: 26,
+            height: 24,
+            borderRadius: CONTROL_RADIUS,
+            cursor: "pointer",
+          }}
+        >
+          <SharedIcon name="trash" size={13} color={props.colors.muted} />
+        </View>
+      )}
+      {drawCaptions && (
+        <View
+          class="absolute right-0 top-0 flex-row"
+          desktop={{ windowDrag: false }}
+          style={{ height: TITLEBAR_HEIGHT }}
+        >
+          <View
+            onPress={() => props.onChrome("window.minimize")}
+            role="button"
+            accessibilityLabel="Свернуть окно"
+            class="items-center justify-center"
+            desktop={{ windowDrag: false }}
+            hoverStyle={{ backgroundColor: wash }}
+            style={{
+              width: CAPTION_BUTTON_WIDTH,
+              height: TITLEBAR_HEIGHT,
+              cursor: "pointer",
+            }}
+          >
+            <SharedIcon
+              name="windowMin"
+              color={props.colors.foreground}
+              size={12}
+            />
+          </View>
+          <View
+            onPress={() => props.onChrome("window.zoom")}
+            role="button"
+            accessibilityLabel="Развернуть окно"
+            class="items-center justify-center"
+            desktop={{ windowDrag: false }}
+            hoverStyle={{ backgroundColor: wash }}
+            style={{
+              width: CAPTION_BUTTON_WIDTH,
+              height: TITLEBAR_HEIGHT,
+              cursor: "pointer",
+            }}
+          >
+            <SharedIcon
+              name="windowMax"
+              color={props.colors.foreground}
+              size={12}
+            />
+          </View>
+          <View
+            onPress={() => props.onChrome("window.close")}
+            onMouseEnter={() => closeHovered.set(true)}
+            onMouseLeave={() => closeHovered.set(false)}
+            role="button"
+            accessibilityLabel="Закрыть окно"
+            class="items-center justify-center"
+            desktop={{ windowDrag: false }}
+            hoverStyle={{ backgroundColor: "#e81123" }}
+            style={{
+              width: CAPTION_BUTTON_WIDTH,
+              height: TITLEBAR_HEIGHT,
+              cursor: "pointer",
+            }}
+          >
+            <SharedIcon
+              name="windowClose"
+              color={closeHovered() ? "#ffffff" : props.colors.foreground}
+              size={12}
+            />
+          </View>
+        </View>
+      )}
+    </View>
+  );
 }
 
 export function SidebarRow(props: {
@@ -240,12 +526,47 @@ export function SidebarRow(props: {
   onPress: () => void;
 }) {
   const wash = hoverWash(props.dark);
-  return <View onPress={props.onPress} role="button" accessibilityState={{ selected: props.selected }} desktop={{ windowDrag: false }} class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: NAV_ROW_HEIGHT, gap: 10, paddingLeft: 10, paddingRight: 10, borderRadius: NAV_ROW_RADIUS, backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent", cursor: "pointer" }}>
-    {props.icon === "gamepad" || props.icon === "file"
-      ? <Glyph name={props.icon} size={16} color={props.colors.foreground} />
-      : <SharedIcon name={props.icon} size={16} color={props.colors.foreground} />}
-    <Text class="text-[14px]" style={{ color: props.colors.foreground, fontWeight: 500, lineHeight: 20 }}>{props.label}</Text>
-  </View>;
+  return (
+    <View
+      onPress={props.onPress}
+      role="button"
+      accessibilityState={{ selected: props.selected }}
+      desktop={{ windowDrag: false }}
+      class="flex-row items-center"
+      hoverStyle={{ backgroundColor: wash }}
+      style={{
+        height: NAV_ROW_HEIGHT,
+        gap: 10,
+        paddingLeft: 10,
+        paddingRight: 10,
+        borderRadius: NAV_ROW_RADIUS,
+        backgroundColor: props.selected
+          ? raisedFill(props.colors, props.dark)
+          : "transparent",
+        cursor: "pointer",
+      }}
+    >
+      {props.icon === "gamepad" || props.icon === "file" ? (
+        <Glyph name={props.icon} size={16} color={props.colors.foreground} />
+      ) : (
+        <SharedIcon
+          name={props.icon}
+          size={16}
+          color={props.colors.foreground}
+        />
+      )}
+      <Text
+        class="text-[14px]"
+        style={{
+          color: props.colors.foreground,
+          fontWeight: 500,
+          lineHeight: 20,
+        }}
+      >
+        {props.label}
+      </Text>
+    </View>
+  );
 }
 
 /// A row under the widgets: something opened not long ago. Quieter than a
@@ -258,19 +579,100 @@ export function RecentRow(props: {
   onPress: () => void;
 }) {
   const wash = hoverWash(props.dark);
-  return <View onPress={props.onPress} role="button" accessibilityLabel={props.entry.title} accessibilityState={{ selected: Boolean(props.selected) }} desktop={{ windowDrag: false }} class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: NAV_ROW_HEIGHT - 6, paddingLeft: 10, paddingRight: 10, borderRadius: NAV_ROW_RADIUS, backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent", cursor: "pointer" }}>
-    <Text class="text-[12px]" style={{ color: props.selected ? props.colors.foreground : props.colors.muted, fontWeight: props.selected ? 500 : 400, lineHeight: 18 }}>{props.entry.title}</Text>
-  </View>;
+  return (
+    <View
+      onPress={props.onPress}
+      role="button"
+      accessibilityLabel={props.entry.title}
+      accessibilityState={{ selected: Boolean(props.selected) }}
+      desktop={{ windowDrag: false }}
+      class="flex-row items-center"
+      hoverStyle={{ backgroundColor: wash }}
+      style={{
+        height: NAV_ROW_HEIGHT - 6,
+        paddingLeft: 10,
+        paddingRight: 10,
+        borderRadius: NAV_ROW_RADIUS,
+        backgroundColor: props.selected
+          ? raisedFill(props.colors, props.dark)
+          : "transparent",
+        cursor: "pointer",
+      }}
+    >
+      <Text
+        class="text-[12px]"
+        style={{
+          color: props.selected ? props.colors.foreground : props.colors.muted,
+          fontWeight: props.selected ? 500 : 400,
+          lineHeight: 18,
+        }}
+      >
+        {props.entry.title}
+      </Text>
+    </View>
+  );
 }
 
-export function GhostButton(props: { label: string; colors: ThemeColors; dark: boolean; onPress: () => void }) {
-  return <View onPress={props.onPress} role="button" accessibilityLabel={props.label} class="items-center justify-center" hoverStyle={{ backgroundColor: props.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }} style={{ height: ROW_HEIGHT, paddingLeft: 12, paddingRight: 12, borderRadius: ROW_RADIUS, cursor: "pointer" }}>
-    <Text class={`text-[13px] hover:text-[${props.colors.foreground}]`} style={{ color: props.colors.muted }}>{props.label}</Text>
-  </View>;
+export function GhostButton(props: {
+  label: string;
+  colors: ThemeColors;
+  dark: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <View
+      onPress={props.onPress}
+      role="button"
+      accessibilityLabel={props.label}
+      class="items-center justify-center"
+      hoverStyle={{
+        backgroundColor: props.dark
+          ? "rgba(255,255,255,0.06)"
+          : "rgba(0,0,0,0.06)",
+      }}
+      style={{
+        height: ROW_HEIGHT,
+        paddingLeft: 12,
+        paddingRight: 12,
+        borderRadius: ROW_RADIUS,
+        cursor: "pointer",
+      }}
+    >
+      <Text
+        class={`text-[13px] hover:text-[${props.colors.foreground}]`}
+        style={{ color: props.colors.muted }}
+      >
+        {props.label}
+      </Text>
+    </View>
+  );
 }
 
-export function SolidButton(props: { label: string; background: string; foreground: string; onPress: () => void }) {
-  return <View onPress={props.onPress} role="button" accessibilityLabel={props.label} class="items-center justify-center" hoverStyle={{ opacity: 0.9 }} style={{ height: ROW_HEIGHT, paddingLeft: 12, paddingRight: 12, borderRadius: ROW_RADIUS, backgroundColor: props.background, cursor: "pointer" }}>
-    <Text class="text-[13px] font-medium" style={{ color: props.foreground }}>{props.label}</Text>
-  </View>;
+export function SolidButton(props: {
+  label: string;
+  background: string;
+  foreground: string;
+  onPress: () => void;
+}) {
+  return (
+    <View
+      onPress={props.onPress}
+      role="button"
+      accessibilityLabel={props.label}
+      class="items-center justify-center"
+      hoverStyle={{ opacity: 0.9 }}
+      style={{
+        height: ROW_HEIGHT,
+        paddingLeft: 12,
+        paddingRight: 12,
+        borderRadius: ROW_RADIUS,
+        backgroundColor: props.background,
+        cursor: "pointer",
+      }}
+    >
+      <Text class="text-[13px] font-medium" style={{ color: props.foreground }}>
+        {props.label}
+      </Text>
+    </View>
+  );
 }

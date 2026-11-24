@@ -9,14 +9,31 @@ export type WidgetId = "journal" | "notes" | "tasks" | "games";
 export type Widget = { id: WidgetId; label: string; description: string };
 
 export const WIDGETS: Widget[] = [
-  { id: "journal", label: "Дневник", description: "Записи по дням, голосом и текстом" },
-  { id: "notes", label: "Заметки", description: "Документы: текст, списки, таблицы, код" },
-  { id: "tasks", label: "Задачи", description: "Список дел на сегодня и потом" },
+  {
+    id: "journal",
+    label: "Дневник",
+    description: "Записи по дням, голосом и текстом",
+  },
+  {
+    id: "notes",
+    label: "Заметки",
+    description: "Документы: текст, списки, таблицы, код",
+  },
+  {
+    id: "tasks",
+    label: "Задачи",
+    description: "Список дел на сегодня и потом",
+  },
   { id: "games", label: "Игры", description: "Библиотека игр и время в них" },
 ];
 
 /** What a fresh install shows: the journal and the notes. Tasks and games stay off until a person turns them on. */
-export const ALL_WIDGETS: Record<WidgetId, boolean> = { journal: true, notes: true, tasks: false, games: false };
+export const ALL_WIDGETS: Record<WidgetId, boolean> = {
+  journal: true,
+  notes: true,
+  tasks: false,
+  games: false,
+};
 
 const STORAGE_KEY = "mundus.atlas.widgets.v1";
 const shown = signal<Record<WidgetId, boolean>>({ ...ALL_WIDGETS });
@@ -40,7 +57,12 @@ export function loadWidgets() {
 
 export function setWidget(id: WidgetId, on: boolean) {
   // One widget stays on: an app with an empty sidebar has nowhere to go.
-  if (!on && WIDGETS.filter((widget) => widget.id !== id && shown()[widget.id] !== false).length === 0) return;
+  if (
+    !on &&
+    WIDGETS.filter((widget) => widget.id !== id && shown()[widget.id] !== false)
+      .length === 0
+  )
+    return;
   const next = { ...shown(), [id]: on };
   shown.set(next);
   stamp += 1;

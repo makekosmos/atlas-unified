@@ -1,9 +1,37 @@
 import { LayoutAnimation, signal, Storage } from "nsh";
-import type { Command, GameCard, GameCandidate, LibraryState, MetadataChoice, PendingAdd, ScanProgress, ScanState } from "./game-library-types";
-import { isCandidate, isGameCard, isScanProgress, pathKey, guessTitle, providerLabel } from "./game-library-utils";
-import { chooseMetadata, metadataChoices, receiveMetadata as receiveMetadataEvent, setImage as setImageOverride } from "./game-library-metadata";
+import type {
+  Command,
+  GameCard,
+  GameCandidate,
+  LibraryState,
+  MetadataChoice,
+  PendingAdd,
+  ScanProgress,
+  ScanState,
+} from "./game-library-types";
+import {
+  isCandidate,
+  isGameCard,
+  isScanProgress,
+  pathKey,
+  guessTitle,
+  providerLabel,
+} from "./game-library-utils";
+import {
+  chooseMetadata,
+  metadataChoices,
+  receiveMetadata as receiveMetadataEvent,
+  setImage as setImageOverride,
+} from "./game-library-metadata";
 
-export type { GameCard, GameCandidate, MetadataChoice, MetadataChoices, PendingAdd, ScanProgress } from "./game-library-types";
+export type {
+  GameCard,
+  GameCandidate,
+  MetadataChoice,
+  MetadataChoices,
+  PendingAdd,
+  ScanProgress,
+} from "./game-library-types";
 export { visibleGameCards, pathKey, guessTitle } from "./game-library-utils";
 
 const legacyCardsKey = "mundus.atlas.games.v1";
@@ -33,7 +61,11 @@ let migrationRequested = false;
 
 function readJson<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback;
-  try { return JSON.parse(raw) as T; } catch { return fallback; }
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
 }
 
 function migrateLegacyCards() {
@@ -41,7 +73,8 @@ function migrateLegacyCards() {
   migrationRequested = true;
   void Storage.getItem(legacyCardsKey).then((raw) => {
     const legacy = readJson<GameCard[]>(raw, []).filter(isGameCard);
-    if (legacy.length) sendCommand?.("games.import-legacy", { candidates: legacy });
+    if (legacy.length)
+      sendCommand?.("games.import-legacy", { candidates: legacy });
   });
 }
 
@@ -69,7 +102,13 @@ function startDiscovery() {
     reviewDone.set(true);
     return;
   }
-  scanProgress.set({ provider: "steam", phase: "scanning", completed: 0, total: 3, found: 0 });
+  scanProgress.set({
+    provider: "steam",
+    phase: "scanning",
+    completed: 0,
+    total: 3,
+    found: 0,
+  });
   scanState.set("scanning");
   sendCommand("games.discover");
 }
@@ -124,7 +163,9 @@ function importGames(selected: GameCandidate[]) {
 /// one thing the Engine cannot merge for us.
 export function availableCandidates(): GameCandidate[] {
   const known = new Set(cards().map((card) => pathKey(card.exePath)));
-  return candidates().filter((candidate) => !known.has(pathKey(candidate.exePath)));
+  return candidates().filter(
+    (candidate) => !known.has(pathKey(candidate.exePath)),
+  );
 }
 
 /// What is about to be added: the picked exe, the name guessed for it, and
@@ -155,22 +196,37 @@ function confirmAdd() {
   const pending = pendingAdd();
   if (!pending) return;
   pendingAdd.set(null);
-  importGames([{
-    title: pending.title.trim() || guessTitle(pending.path),
-    exePath: pending.path,
-    installDir: "",
-    source: pending.source,
-  }]);
+  importGames([
+    {
+      title: pending.title.trim() || guessTitle(pending.path),
+      exePath: pending.path,
+      installDir: "",
+      source: pending.source,
+    },
+  ]);
 }
 
 function receiveLaunch(value: unknown) {
-  const result = value && typeof value === "object" ? value as { ok?: unknown; error?: unknown } : {};
-  launchError.set(result.ok === true ? "" : String(result.error ?? "Не удалось запустить игру"));
+  const result =
+    value && typeof value === "object"
+      ? (value as { ok?: unknown; error?: unknown })
+      : {};
+  launchError.set(
+    result.ok === true
+      ? ""
+      : String(result.error ?? "Не удалось запустить игру"),
+  );
 }
 
 function receiveLibrary(value: unknown) {
   if (!Array.isArray(value)) {
-    const message = value && typeof value === "object" ? String((value as { error?: unknown }).error ?? "Не удалось загрузить библиотеку игр") : "Не удалось загрузить библиотеку игр";
+    const message =
+      value && typeof value === "object"
+        ? String(
+            (value as { error?: unknown }).error ??
+              "Не удалось загрузить библиотеку игр",
+          )
+        : "Не удалось загрузить библиотеку игр";
     libraryState.set("error");
     error.set(message);
     return;
@@ -185,16 +241,33 @@ function receiveDiscovery(value: unknown) {
   if (value && typeof value === "object" && "progress" in value) {
     const progress = (value as { progress?: unknown }).progress;
     if (isScanProgress(progress)) {
-      LayoutAnimation.configureNext({ duration: 500, update: { type: "easeOut", duration: 500 } });
+      LayoutAnimation.configureNext({
+        duration: 500,
+        update: { type: "easeOut", duration: 500 },
+      });
       scanProgress.set(progress);
     }
     return;
   }
-  const response = value && typeof value === "object" ? value as { candidates?: unknown; errors?: unknown; error?: unknown; fatal?: unknown } : {};
-  const items = Array.isArray(value) ? value : Array.isArray(response.candidates) ? response.candidates : null;
+  const response =
+    value && typeof value === "object"
+      ? (value as {
+          candidates?: unknown;
+          errors?: unknown;
+          error?: unknown;
+          fatal?: unknown;
+        })
+      : {};
+  const items = Array.isArray(value)
+    ? value
+    : Array.isArray(response.candidates)
+      ? response.candidates
+      : null;
   if (!items) {
     scanState.set("error");
-    scanError.set(String(response.error ?? "Не удалось проверить библиотеки игр"));
+    scanError.set(
+      String(response.error ?? "Не удалось проверить библиотеки игр"),
+    );
     reviewDone.set(true);
     return;
   }
@@ -205,27 +278,48 @@ function receiveDiscovery(value: unknown) {
     update: { type: "easeOut", duration: 500 },
     delete: { type: "easeOut", property: "opacity", duration: 500 },
   });
-  const failures = Array.isArray(response.errors) ? response.errors.map((entry) => {
-    const failure = entry && typeof entry === "object" ? entry as { provider?: unknown; message?: unknown } : {};
-    return `${providerLabel(failure.provider)}: ${String(failure.message ?? "ошибка")}`;
-  }) : [];
+  const failures = Array.isArray(response.errors)
+    ? response.errors.map((entry) => {
+        const failure =
+          entry && typeof entry === "object"
+            ? (entry as { provider?: unknown; message?: unknown })
+            : {};
+        return `${providerLabel(failure.provider)}: ${String(failure.message ?? "ошибка")}`;
+      })
+    : [];
   candidates.set(found);
-  scanProgress.set({ provider: "gog", phase: "complete", completed: 3, total: 3, found: found.length });
-  if ((response.fatal === true || failures.length === 3) && found.length === 0) {
+  scanProgress.set({
+    provider: "gog",
+    phase: "complete",
+    completed: 3,
+    total: 3,
+    found: found.length,
+  });
+  if (
+    (response.fatal === true || failures.length === 3) &&
+    found.length === 0
+  ) {
     scanState.set("error");
     scanError.set(failures.join(" · "));
     scanWarning.set("");
   } else {
     scanState.set("ready");
     scanError.set("");
-    scanWarning.set(failures.length ? `Не все библиотеки проверены: ${failures.join(" · ")}` : "");
+    scanWarning.set(
+      failures.length
+        ? `Не все библиотеки проверены: ${failures.join(" · ")}`
+        : "",
+    );
     startDeck();
   }
   reviewDone.set(true);
 }
 
 function receiveImport(value: unknown) {
-  const result = value && typeof value === "object" ? value as { ok?: unknown; legacy?: unknown; error?: unknown } : {};
+  const result =
+    value && typeof value === "object"
+      ? (value as { ok?: unknown; legacy?: unknown; error?: unknown })
+      : {};
   if (result.ok === true) {
     importError.set("");
     // The review keeps the dialog: its cards report their own errors and the
@@ -233,7 +327,9 @@ function receiveImport(value: unknown) {
     if (result.legacy === true) void Storage.setItem(legacyCardsKey, "[]");
     else if (!deckTotal()) addOpen.set(false);
   } else {
-    importError.set(String(result.error ?? "Не удалось добавить игру в Engine"));
+    importError.set(
+      String(result.error ?? "Не удалось добавить игру в Engine"),
+    );
     if (!result.legacy && !deckTotal()) addOpen.set(true);
   }
 }
@@ -251,8 +347,10 @@ export const gameLibrary = {
   addOpen,
   metadataChoices,
   receiveMetadata: (value: unknown) => receiveMetadataEvent(value, cards()),
-  chooseMetadata: (choice: MetadataChoice) => chooseMetadata(choice, sendCommand),
-  setImage: (exePath: string, source: string) => setImageOverride(exePath, source, sendCommand),
+  chooseMetadata: (choice: MetadataChoice) =>
+    chooseMetadata(choice, sendCommand),
+  setImage: (exePath: string, source: string) =>
+    setImageOverride(exePath, source, sendCommand),
   deck,
   deckTotal,
   deckAdded,

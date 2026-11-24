@@ -4,7 +4,15 @@
 /// keywords, names). Languages differ in their words, not in the shape of a
 /// token, so one scanner serves them all.
 
-export type TokenKind = "comment" | "string" | "number" | "keyword" | "literal" | "function" | "property" | "tag";
+export type TokenKind =
+  | "comment"
+  | "string"
+  | "number"
+  | "keyword"
+  | "literal"
+  | "function"
+  | "property"
+  | "tag";
 
 export type Token = { from: number; to: number; kind: TokenKind };
 
@@ -12,7 +20,8 @@ const WORDS: Record<string, string> = {
   rust: "as async await break const continue crate dyn else enum extern false fn for if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while",
   ts: "abstract as async await break case catch class const continue debugger declare default delete do else enum export extends false finally for from function get if implements import in instanceof interface let new null of private protected public readonly return set static super switch this throw true try type typeof undefined var void while yield",
   js: "async await break case catch class const continue debugger default delete do else export extends false finally for function if import in instanceof let new null of return static super switch this throw true try typeof undefined var void while yield",
-  python: "and as assert async await break class continue def del elif else except False finally for from global if import in is lambda None nonlocal not or pass raise return True try while with yield",
+  python:
+    "and as assert async await break class continue def del elif else except False finally for from global if import in is lambda None nonlocal not or pass raise return True try while with yield",
   go: "break case chan const continue default defer else fallthrough for func go goto if import interface map package range return select struct switch type var true false nil",
   sql: "add all alter and as asc between by case cast column create delete desc distinct drop else end exists from group having in index inner insert into is join key left like limit not null off offset on or order outer primary references right select set table then union unique update values when where with",
   bash: "if then else elif fi for while do done case esac function in export local readonly return exit echo cd source set unset",
@@ -24,17 +33,43 @@ const WORDS: Record<string, string> = {
 
 const WORD_SET: Record<string, Set<string>> = {};
 function wordsOf(language: string): Set<string> {
-  if (!WORD_SET[language]) WORD_SET[language] = new Set((WORDS[language] ?? "").split(/\s+/).filter(Boolean));
+  if (!WORD_SET[language])
+    WORD_SET[language] = new Set(
+      (WORDS[language] ?? "").split(/\s+/).filter(Boolean),
+    );
   return WORD_SET[language];
 }
 
 const ALIASES: Record<string, string> = {
   rs: "rust",
-  js: "js", javascript: "js", jsx: "js", mjs: "js", tsx: "ts", typescript: "ts",
-  py: "python", python3: "python", sh: "bash", shell: "bash", zsh: "bash", console: "bash",
-  golang: "go", postgres: "sql", postgresql: "sql", mysql: "sql", sqlite: "sql",
-  yml: "yaml", yaml: "yaml", md: "markdown", markdown: "markdown", text: "", plaintext: "",
-  htm: "html", xml: "html", svg: "html", scss: "css", less: "css",
+  js: "js",
+  javascript: "js",
+  jsx: "js",
+  mjs: "js",
+  tsx: "ts",
+  typescript: "ts",
+  py: "python",
+  python3: "python",
+  sh: "bash",
+  shell: "bash",
+  zsh: "bash",
+  console: "bash",
+  golang: "go",
+  postgres: "sql",
+  postgresql: "sql",
+  mysql: "sql",
+  sqlite: "sql",
+  yml: "yaml",
+  yaml: "yaml",
+  md: "markdown",
+  markdown: "markdown",
+  text: "",
+  plaintext: "",
+  htm: "html",
+  xml: "html",
+  svg: "html",
+  scss: "css",
+  less: "css",
 };
 
 /// The language a fence names, as one of the scanner's own names; empty when it
@@ -44,21 +79,49 @@ export function languageOf(name: string | null | undefined): string {
   if (!key) return "";
   const mapped = ALIASES[key] ?? key;
   if (!mapped) return "";
-  if (mapped === "html" || mapped === "css" || mapped === "markdown" || mapped === "yaml") return mapped;
+  if (
+    mapped === "html" ||
+    mapped === "css" ||
+    mapped === "markdown" ||
+    mapped === "yaml"
+  )
+    return mapped;
   return WORDS[mapped] ? mapped : "";
 }
 
 const lineComment: Record<string, string[]> = {
-  rust: ["//"], ts: ["//"], js: ["//"], go: ["//"], python: ["#"], bash: ["#"], sql: ["--"], yaml: ["#"], css: [], html: [], markdown: [], json: [],
+  rust: ["//"],
+  ts: ["//"],
+  js: ["//"],
+  go: ["//"],
+  python: ["#"],
+  bash: ["#"],
+  sql: ["--"],
+  yaml: ["#"],
+  css: [],
+  html: [],
+  markdown: [],
+  json: [],
 };
 
 const quotePairs: Record<string, string[]> = {
-  rust: ['"', "'"], ts: ['"', "'", "`"], js: ['"', "'", "`"], python: ['"', "'"], go: ['"', "'", "`"],
-  sql: ["'"], bash: ['"', "'"], json: ['"'], yaml: ['"', "'"], css: ['"', "'"], html: ['"', "'"], markdown: ['"', "'"],
+  rust: ['"', "'"],
+  ts: ['"', "'", "`"],
+  js: ['"', "'", "`"],
+  python: ['"', "'"],
+  go: ['"', "'", "`"],
+  sql: ["'"],
+  bash: ['"', "'"],
+  json: ['"'],
+  yaml: ['"', "'"],
+  css: ['"', "'"],
+  html: ['"', "'"],
+  markdown: ['"', "'"],
 };
 
 const identifier = /[A-Za-z_$\u0400-\u04FF][A-Za-z0-9_$\u0400-\u04FF]*/y;
-const number = /(?:0[xXbBoO][0-9a-fA-F_]+|\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?)(?:[a-zA-Z]{0,3})?/y;
+const number =
+  /(?:0[xXbBoO][0-9a-fA-F_]+|\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?)(?:[a-zA-Z]{0,3})?/y;
 
 /// The tokens of `code`, positions in UTF-16 units from the block's start, as
 /// the editor counts them.
@@ -165,7 +228,7 @@ export function scan(code: string, language: string): Token[] {
           continue;
         }
       }
-      if (/[A-Za-z-]/.test(ch) && code[i + 1] === "-" || ch === "-") {
+      if ((/[A-Za-z-]/.test(ch) && code[i + 1] === "-") || ch === "-") {
         const prop = /^-{0,2}[A-Za-z-]+(?=\s*:)/.exec(code.slice(i));
         if (prop) {
           push(i, i + prop[0].length, "property");
@@ -193,7 +256,11 @@ export function scan(code: string, language: string): Token[] {
       }
       const stop = Math.min(j, code.length);
       const after = code.slice(stop).match(/^\s*:/);
-      push(i, stop, (lang === "json" || lang === "yaml") && after ? "property" : "string");
+      push(
+        i,
+        stop,
+        (lang === "json" || lang === "yaml") && after ? "property" : "string",
+      );
       i = stop;
       continue;
     }
@@ -216,10 +283,18 @@ export function scan(code: string, language: string): Token[] {
         const next = code[i + word.length];
         let kind: TokenKind | null = null;
         const lower = word.toLowerCase();
-        if (words.has(word)) kind = lower === "true" || lower === "false" || lower === "null" || lower === "none" ? "literal" : "keyword";
+        if (words.has(word))
+          kind =
+            lower === "true" ||
+            lower === "false" ||
+            lower === "null" ||
+            lower === "none"
+              ? "literal"
+              : "keyword";
         else if (next === "(") kind = "function";
         // Rust's macros call with a bang: `println!`.
-        else if (next === "!" && code[i + word.length + 1] === "(") kind = "function";
+        else if (next === "!" && code[i + word.length + 1] === "(")
+          kind = "function";
         else if (lang === "json" && next === ":") kind = "property";
         else if (lang === "yaml" && next === ":") kind = "property";
         if (kind) push(i, i + word.length, kind);
@@ -238,23 +313,23 @@ export function scan(code: string, language: string): Token[] {
 export function tokenColors(dark: boolean): Record<TokenKind, string> {
   return dark
     ? {
-      comment: "#7f8b93",
-      string: "#b8dc9a",
-      number: "#e3b341",
-      keyword: "#c9a2f7",
-      literal: "#e39a6b",
-      function: "#8ec7f5",
-      property: "#f0c674",
-      tag: "#f29d92",
-    }
+        comment: "#7f8b93",
+        string: "#b8dc9a",
+        number: "#e3b341",
+        keyword: "#c9a2f7",
+        literal: "#e39a6b",
+        function: "#8ec7f5",
+        property: "#f0c674",
+        tag: "#f29d92",
+      }
     : {
-      comment: "#8a8f98",
-      string: "#4a7d2f",
-      number: "#9a5b00",
-      keyword: "#7a3fb5",
-      literal: "#a1451b",
-      function: "#1f5f9e",
-      property: "#8a6d1f",
-      tag: "#a1322c",
-    };
+        comment: "#8a8f98",
+        string: "#4a7d2f",
+        number: "#9a5b00",
+        keyword: "#7a3fb5",
+        literal: "#a1451b",
+        function: "#1f5f9e",
+        property: "#8a6d1f",
+        tag: "#a1322c",
+      };
 }

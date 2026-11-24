@@ -1,4 +1,16 @@
-import { Clipboard, Image, createMotion, Easing, effect, keymap, List, Scroll, signal, Text, View } from "nsh";
+import {
+  Clipboard,
+  Image,
+  createMotion,
+  Easing,
+  effect,
+  keymap,
+  List,
+  Scroll,
+  signal,
+  Text,
+  View,
+} from "nsh";
 import {
   Input,
   RichEditor,
@@ -13,7 +25,12 @@ import {
   setNodeAttribute,
 } from "nsh/base";
 import Mono from "./fonts/IBMPlexMono-Regular.ttf";
-import type { RichCommand, RichEditorPastedFiles, RichEditorRef, RichEditorSession } from "nsh/base";
+import type {
+  RichCommand,
+  RichEditorPastedFiles,
+  RichEditorRef,
+  RichEditorSession,
+} from "nsh/base";
 import type { ViewRef } from "nsh";
 import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import { Menu } from "nsh/desktop";
@@ -42,10 +59,21 @@ type NoteCommands = {
   reload(): void;
 };
 
-type SlashItem = { id: string; label: string; hint: string; keys: string; make: () => RichCommand };
+type SlashItem = {
+  id: string;
+  label: string;
+  hint: string;
+  keys: string;
+  make: () => RichCommand;
+};
 type Point = { x: number; y: number };
 
-const idleCommands: NoteCommands = { create() {}, save() {}, remove() {}, reload() {} };
+const idleCommands: NoteCommands = {
+  create() {},
+  save() {},
+  remove() {},
+  reload() {},
+};
 let commands: NoteCommands = idleCommands;
 /// The editor's handle, for putting the caret where a press asked for it.
 let editorRef: RichEditorRef | null = null;
@@ -58,7 +86,9 @@ const activeOutlinePos = signal(0);
 let outlineTimer: ReturnType<typeof setTimeout> | null = null;
 let outlineSyncTimer: ReturnType<typeof setTimeout> | null = null;
 let outlineSettleTimer: ReturnType<typeof setTimeout> | null = null;
-let splitScrollRef: { scrollTo: (options: { y?: number; animated?: boolean }) => void } | undefined;
+let splitScrollRef:
+  | { scrollTo: (options: { y?: number; animated?: boolean }) => void }
+  | undefined;
 let splitScrollY = 0;
 let pageTopY = 48;
 let pinnedOutlinePos: number | null = null;
@@ -103,17 +133,83 @@ const PREVIEW_BLOCKS = 14;
 const SLASH_MENU_HEIGHT = 320;
 
 const SLASH_ITEMS: SlashItem[] = [
-  { id: "text", label: "Текст", hint: "обычный абзац", keys: "text paragraph p", make: () => command("setParagraph") },
-  { id: "h1", label: "Заголовок 1", hint: "крупный раздел", keys: "heading h1", make: () => command("setHeading", { level: 1 }) },
-  { id: "h2", label: "Заголовок 2", hint: "раздел", keys: "heading h2", make: () => command("setHeading", { level: 2 }) },
-  { id: "h3", label: "Заголовок 3", hint: "подраздел", keys: "heading h3", make: () => command("setHeading", { level: 3 }) },
-  { id: "bullet", label: "Список", hint: "маркированный", keys: "list bullet ul", make: () => command("toggleBulletList") },
-  { id: "ordered", label: "Нумерация", hint: "нумерованный список", keys: "ordered list ol number", make: () => command("toggleOrderedList") },
-  { id: "task", label: "Чек-лист", hint: "задачи с галочками", keys: "task todo check", make: () => command("toggleTaskList") },
-  { id: "quote", label: "Цитата", hint: "выделить блок", keys: "quote blockquote", make: () => command("toggleBlockquote") },
-  { id: "code", label: "Код", hint: "блок кода", keys: "code", make: () => command("toggleCodeBlock") },
-  { id: "table", label: "Таблица", hint: "3 на 3 с заголовком", keys: "table", make: () => insertTable({ rows: 3, cols: 3, withHeaderRow: true }) },
-  { id: "rule", label: "Разделитель", hint: "горизонтальная линия", keys: "divider rule hr line", make: () => command("setHorizontalRule") },
+  {
+    id: "text",
+    label: "Текст",
+    hint: "обычный абзац",
+    keys: "text paragraph p",
+    make: () => command("setParagraph"),
+  },
+  {
+    id: "h1",
+    label: "Заголовок 1",
+    hint: "крупный раздел",
+    keys: "heading h1",
+    make: () => command("setHeading", { level: 1 }),
+  },
+  {
+    id: "h2",
+    label: "Заголовок 2",
+    hint: "раздел",
+    keys: "heading h2",
+    make: () => command("setHeading", { level: 2 }),
+  },
+  {
+    id: "h3",
+    label: "Заголовок 3",
+    hint: "подраздел",
+    keys: "heading h3",
+    make: () => command("setHeading", { level: 3 }),
+  },
+  {
+    id: "bullet",
+    label: "Список",
+    hint: "маркированный",
+    keys: "list bullet ul",
+    make: () => command("toggleBulletList"),
+  },
+  {
+    id: "ordered",
+    label: "Нумерация",
+    hint: "нумерованный список",
+    keys: "ordered list ol number",
+    make: () => command("toggleOrderedList"),
+  },
+  {
+    id: "task",
+    label: "Чек-лист",
+    hint: "задачи с галочками",
+    keys: "task todo check",
+    make: () => command("toggleTaskList"),
+  },
+  {
+    id: "quote",
+    label: "Цитата",
+    hint: "выделить блок",
+    keys: "quote blockquote",
+    make: () => command("toggleBlockquote"),
+  },
+  {
+    id: "code",
+    label: "Код",
+    hint: "блок кода",
+    keys: "code",
+    make: () => command("toggleCodeBlock"),
+  },
+  {
+    id: "table",
+    label: "Таблица",
+    hint: "3 на 3 с заголовком",
+    keys: "table",
+    make: () => insertTable({ rows: 3, cols: 3, withHeaderRow: true }),
+  },
+  {
+    id: "rule",
+    label: "Разделитель",
+    hint: "горизонтальная линия",
+    keys: "divider rule hr line",
+    make: () => command("setHorizontalRule"),
+  },
 ];
 
 export const notes = signal<Note[]>([]);
@@ -122,7 +218,8 @@ export const notes = signal<Note[]>([]);
 const editorVersion = signal(0);
 
 /// Two overlapping sheets: the copy button on a code block.
-const COPY_ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect x='8.5' y='8.5' width='11' height='11' rx='2' stroke='%23000' stroke-width='1.6'/%3E%3Cpath d='M6.5 15.5H5.2A2.2 2.2 0 0 1 3 13.3V5.2A2.2 2.2 0 0 1 5.2 3h8.1A2.2 2.2 0 0 1 15.5 5.2V6.5' stroke='%23000' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E";
+const COPY_ICON =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect x='8.5' y='8.5' width='11' height='11' rx='2' stroke='%23000' stroke-width='1.6'/%3E%3Cpath d='M6.5 15.5H5.2A2.2 2.2 0 0 1 3 13.3V5.2A2.2 2.2 0 0 1 5.2 3h8.1A2.2 2.2 0 0 1 15.5 5.2V6.5' stroke='%23000' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E";
 
 /// One code block as the page draws it. `node` is the position before the
 /// block (what `pageNodeRect` and the language attribute take). `pos` is its
@@ -147,7 +244,14 @@ function shownLanguage(named: string): string {
   const known = languageOf(named);
   if (known) return known;
   const key = named.trim().toLowerCase();
-  if (!key || key === "text" || key === "plaintext" || key === "plain" || key === "txt") return "";
+  if (
+    !key ||
+    key === "text" ||
+    key === "plaintext" ||
+    key === "plain" ||
+    key === "txt"
+  )
+    return "";
   return named.trim();
 }
 
@@ -158,11 +262,23 @@ export function codeBlocksOf(doc: unknown): CodeBlock[] {
   const found: CodeBlock[] = [];
   let pos = 0;
   for (const node of root.content) {
-    const block = node as { type?: string; attrs?: { language?: string | null }; content?: { text?: string }[] };
+    const block = node as {
+      type?: string;
+      attrs?: { language?: string | null };
+      content?: { text?: string }[];
+    };
     if (block.type === "codeBlock") {
-      const named = typeof block.attrs?.language === "string" ? block.attrs.language : "";
-      const text = (block.content ?? []).map((child) => child?.text ?? "").join("");
-      found.push({ node: pos, pos: pos + 1, language: shownLanguage(named), text });
+      const named =
+        typeof block.attrs?.language === "string" ? block.attrs.language : "";
+      const text = (block.content ?? [])
+        .map((child) => child?.text ?? "")
+        .join("");
+      found.push({
+        node: pos,
+        pos: pos + 1,
+        language: shownLanguage(named),
+        text,
+      });
     }
     pos += blockSize(node);
   }
@@ -171,16 +287,25 @@ export function codeBlocksOf(doc: unknown): CodeBlock[] {
 
 /// The languages the app knows, as a menu names them.
 export const codeLanguages: [string, string][] = [
-  ["rust", "Rust"], ["ts", "TypeScript"], ["js", "JavaScript"], ["python", "Python"],
-  ["json", "JSON"], ["bash", "Bash"], ["sql", "SQL"], ["go", "Go"],
-  ["html", "HTML"], ["css", "CSS"], ["markdown", "Markdown"], ["", "Простой текст"],
+  ["rust", "Rust"],
+  ["ts", "TypeScript"],
+  ["js", "JavaScript"],
+  ["python", "Python"],
+  ["json", "JSON"],
+  ["bash", "Bash"],
+  ["sql", "SQL"],
+  ["go", "Go"],
+  ["html", "HTML"],
+  ["css", "CSS"],
+  ["markdown", "Markdown"],
+  ["", "Простой текст"],
 ];
 
 /// What the block's corner says: a known language by its name, anything else
 /// by the fence's own word.
 export function languageLabel(name: string): string {
   const found = codeLanguages.find(([value]) => value === name);
-  return found ? found[1] : (name || "Простой текст");
+  return found ? found[1] : name || "Простой текст";
 }
 
 /// The picture as the note keeps it: the bytes themselves, in a `data:` URI.
@@ -190,12 +315,17 @@ export function languageLabel(name: string): string {
 /// larger than the limit is left out rather than making the note unwieldy.
 const PICTURE_LIMIT = 4 * 1024 * 1024;
 
-function pictureUri(file: { name: string; mime: string; data: Uint8Array }): string | null {
+function pictureUri(file: {
+  name: string;
+  mime: string;
+  data: Uint8Array;
+}): string | null {
   if (file.data.byteLength > PICTURE_LIMIT) {
     console.log("[atlas-notes] picture is larger than 4 MiB:", file.name);
     return null;
   }
-  const mime = file.mime && file.mime.startsWith("image/") ? file.mime : "image/png";
+  const mime =
+    file.mime && file.mime.startsWith("image/") ? file.mime : "image/png";
   return `data:${mime};base64,${Buffer.from(file.data).toString("base64")}`;
 }
 
@@ -209,7 +339,8 @@ function insertPicture(session: RichEditorSession, src: string) {
   session.run(command("setImage", { src }));
   try {
     const found = session.findParentNode("image") as { pos?: number } | null;
-    if (typeof found?.pos === "number") session.run(setNodeAttribute(found.pos, "width", PICTURE_WIDTH));
+    if (typeof found?.pos === "number")
+      session.run(setNodeAttribute(found.pos, "width", PICTURE_WIDTH));
   } catch {
     /* A node without a width shows at its natural size, which is fine. */
   }
@@ -218,7 +349,10 @@ function insertPicture(session: RichEditorSession, src: string) {
 /// Puts the pasted pictures into the note, one after another, where the caret
 /// was. Files that are not pictures are left alone: the editor inserts nothing
 /// for them, and neither does the app yet.
-function pastePictures(pasted: RichEditorPastedFiles, session: RichEditorSession) {
+function pastePictures(
+  pasted: RichEditorPastedFiles,
+  session: RichEditorSession,
+) {
   for (const file of pasted.files) {
     if (!file.mime || !file.mime.startsWith("image/")) continue;
     const src = pictureUri(file);
@@ -244,7 +378,10 @@ function copyBlock(text: string, id: number) {
   void Clipboard.writeText(text);
   copiedId.set(id);
   if (copiedTimer) clearTimeout(copiedTimer);
-  copiedTimer = setTimeout(() => { copiedId.set(null); copiedTimer = null; }, 1400);
+  copiedTimer = setTimeout(() => {
+    copiedId.set(null);
+    copiedTimer = null;
+  }, 1400);
 }
 
 /// The plugin the code block's colours are handed to.
@@ -292,7 +429,8 @@ type Seg = {
   painted: string;
   paintRevs: Set<number>;
 };
-type Group = { kind: "prose"; nodes: unknown[] } | { kind: "code"; node: unknown };
+type Group =
+  { kind: "prose"; nodes: unknown[] } | { kind: "code"; node: unknown };
 let segments: Seg[] = [];
 let segSerial = 0;
 let singlePainted = "";
@@ -358,7 +496,8 @@ function sameLibrary(left: readonly Note[], right: readonly Note[]): boolean {
   if (left.length !== right.length) return false;
   for (let index = 0; index < left.length; index += 1) {
     if (text(left[index].id) !== text(right[index].id)) return false;
-    if (text(left[index].updatedAt) !== text(right[index].updatedAt)) return false;
+    if (text(left[index].updatedAt) !== text(right[index].updatedAt))
+      return false;
     if (text(left[index].title) !== text(right[index].title)) return false;
   }
   return true;
@@ -372,20 +511,37 @@ function text(value: unknown): string {
 
 /// Walks the document counting positions the way the editor does, and marks the
 /// words inside its code blocks.
-function paintNodes(nodes: unknown[], from: number, palette: Record<TokenKind, string>, out: { from: number; to: number; kind: string; attrs: { class: string } }[]): number {
+function paintNodes(
+  nodes: unknown[],
+  from: number,
+  palette: Record<TokenKind, string>,
+  out: { from: number; to: number; kind: string; attrs: { class: string } }[],
+): number {
   let at = from;
-  for (const node of nodes as { type?: string; text?: string; attrs?: { language?: string }; content?: unknown[] }[]) {
+  for (const node of nodes as {
+    type?: string;
+    text?: string;
+    attrs?: { language?: string };
+    content?: unknown[];
+  }[]) {
     const kind = node?.type;
     if (kind === "text") {
       at += String(node.text ?? "").length;
       continue;
     }
     if (kind === "codeBlock") {
-      const body = (Array.isArray(node.content) ? node.content : []).map((child) => String((child as { text?: string })?.text ?? "")).join("");
+      const body = (Array.isArray(node.content) ? node.content : [])
+        .map((child) => String((child as { text?: string })?.text ?? ""))
+        .join("");
       for (const token of scan(body, languageOf(node?.attrs?.language))) {
         // The view takes a decoration's `class`, not its style: the colour is
         // a Tailwind arbitrary value, as everywhere else in the app.
-        out.push({ from: at + 1 + token.from, to: at + 1 + token.to, kind: "inline", attrs: { class: `text-[${palette[token.kind]}]` } });
+        out.push({
+          from: at + 1 + token.from,
+          to: at + 1 + token.to,
+          kind: "inline",
+          attrs: { class: `text-[${palette[token.kind]}]` },
+        });
       }
       at += body.length + 2;
       continue;
@@ -408,7 +564,12 @@ function paintCode() {
       const doc = seg.session.getJSON() as { content?: unknown[] };
       const sig = `${paintedDark}|${JSON.stringify(doc)}`;
       if (seg.painted === sig) continue;
-      const marks: { from: number; to: number; kind: string; attrs: { class: string } }[] = [];
+      const marks: {
+        from: number;
+        to: number;
+        kind: string;
+        attrs: { class: string };
+      }[] = [];
       paintNodes(doc.content ?? [], 0, palette, marks);
       seg.session.setDecorations(seg.paint.key, marks as never);
       seg.painted = sig;
@@ -421,7 +582,12 @@ function paintCode() {
   const doc = live.getJSON() as { content?: unknown[] };
   const sig = `${paintedDark}|${JSON.stringify(doc)}`;
   if (singlePainted === sig) return;
-  const marks: { from: number; to: number; kind: string; attrs: { class: string } }[] = [];
+  const marks: {
+    from: number;
+    to: number;
+    kind: string;
+    attrs: { class: string };
+  }[] = [];
   paintNodes(doc.content ?? [], 0, palette, marks);
   live.setDecorations("highlight", marks as never);
   singlePainted = sig;
@@ -458,12 +624,17 @@ function editorExtensions(trailing = true) {
 }
 
 function docOf(nodes: unknown[]): unknown {
-  return { type: "doc", content: nodes.length ? nodes : [{ type: "paragraph" }] };
+  return {
+    type: "doc",
+    content: nodes.length ? nodes : [{ type: "paragraph" }],
+  };
 }
 
 function hasCodeBlock(doc: unknown): boolean {
   const content = (doc as { content?: { type?: string }[] } | null)?.content;
-  return Array.isArray(content) && content.some((node) => node?.type === "codeBlock");
+  return (
+    Array.isArray(content) && content.some((node) => node?.type === "codeBlock")
+  );
 }
 
 function groupsOf(doc: unknown): Group[] {
@@ -483,12 +654,15 @@ function groupsOf(doc: unknown): Group[] {
     } else prose.push(node);
   }
   flush();
-  if (!groups.length) groups.push({ kind: "prose", nodes: [{ type: "paragraph" }] });
+  if (!groups.length)
+    groups.push({ kind: "prose", nodes: [{ type: "paragraph" }] });
   return groups;
 }
 
 function groupKinds(doc: unknown): string {
-  return groupsOf(doc).map((group) => group.kind).join(",");
+  return groupsOf(doc)
+    .map((group) => group.kind)
+    .join(",");
 }
 
 /// The note as one document: the single editor, or the pieces joined back.
@@ -504,7 +678,10 @@ function currentDoc(): unknown {
 
 function currentText(): string {
   if (!split) return editor ? editor.getText() : "";
-  return segments.map((seg) => seg.session.getText()).filter((part) => part.length > 0).join("\n");
+  return segments
+    .map((seg) => seg.session.getText())
+    .filter((part) => part.length > 0)
+    .join("\n");
 }
 
 function codeOrdinal(doc: unknown, pos: number): number {
@@ -529,12 +706,23 @@ function shapeDrifted(): boolean {
 function activeCodeOrdinal(): number {
   const index = segments.findIndex((seg) => seg.session === editor);
   if (index < 0 || segments[index].kind !== "code") return -1;
-  return segments.slice(0, index + 1).filter((seg) => seg.kind === "code").length - 1;
+  return (
+    segments.slice(0, index + 1).filter((seg) => seg.kind === "code").length - 1
+  );
 }
 
 function retireSeg(seg: Seg) {
-  try { seg.session.dispose(); } catch { /* already gone */ }
-  try { seg.paint?.dispose(); } catch { /* already gone */ }
+  try {
+    seg.session.dispose();
+  } catch {
+    /* already gone */
+  }
+  try {
+    seg.paint?.dispose();
+  } catch {
+    /* already gone */
+  }
+  headingLocsCache.delete(seg.session);
   segRefs.delete(seg.id);
   segHeights.delete(seg.id);
   segTops.delete(seg.id);
@@ -547,12 +735,17 @@ function bindSeg(session: RichEditorSession, epochAt: number) {
     if (!seg) return;
     // Our own syntax-highlight decoration transaction must not overwrite the
     // active segment, hijack focus, or schedule another paint pass.
-    if (typeof event?.revision === "number" && seg.paintRevs.delete(event.revision)) return;
+    if (
+      typeof event?.revision === "number" &&
+      seg.paintRevs.delete(event.revision)
+    )
+      return;
     editor = session;
     scheduleSave();
     syncSlash();
     scheduleOutline();
-    if (seg.kind === "code" || session.findParentNode("codeBlock")) schedulePaint();
+    if (seg.kind === "code" || session.findParentNode("codeBlock"))
+      schedulePaint();
     bodyRev.set(bodyRev() + 1);
     if (split && shapeDrifted()) scheduleReshape();
   });
@@ -560,16 +753,19 @@ function bindSeg(session: RichEditorSession, epochAt: number) {
 
 function createSeg(group: Group): Seg {
   const id = ++segSerial;
-  const paint = group.kind === "code" ? new RichEditorPlugin(`paint-${id}`) : null;
-  const content = group.kind === "code" ? docOf([group.node]) : docOf(group.nodes);
+  const paint =
+    group.kind === "code" ? new RichEditorPlugin(`paint-${id}`) : null;
+  const content =
+    group.kind === "code" ? docOf([group.node]) : docOf(group.nodes);
   const plugins = paint ? [paint] : [];
   const epochAt = epoch;
-  const make = (body: unknown) => createRichEditor({
-    extensions: editorExtensions(false),
-    plugins,
-    content: body as never,
-    format: "json",
-  });
+  const make = (body: unknown) =>
+    createRichEditor({
+      extensions: editorExtensions(false),
+      plugins,
+      content: body as never,
+      format: "json",
+    });
   let session: RichEditorSession;
   try {
     session = make(content);
@@ -577,7 +773,14 @@ function createSeg(group: Group): Seg {
     session = make(docOf([{ type: "paragraph" }]));
   }
   bindSeg(session, epochAt);
-  return { id, kind: group.kind, session, paint, painted: "", paintRevs: new Set<number>() };
+  return {
+    id,
+    kind: group.kind,
+    session,
+    paint,
+    painted: "",
+    paintRevs: new Set<number>(),
+  };
 }
 
 /// Replaces the open editors with one session per run of prose and per code
@@ -586,13 +789,24 @@ function createSeg(group: Group): Seg {
 function becomeSplit(doc: unknown, focusOrdinal: number) {
   epoch += 1;
   reshaping = true;
-  if (splitTimer) { clearTimeout(splitTimer); splitTimer = null; }
-  if (reshapeTimer) { clearTimeout(reshapeTimer); reshapeTimer = null; }
+  if (splitTimer) {
+    clearTimeout(splitTimer);
+    splitTimer = null;
+  }
+  if (reshapeTimer) {
+    clearTimeout(reshapeTimer);
+    reshapeTimer = null;
+  }
   const retiring = segments.slice();
-  const retiringSingle = editor && !retiring.some((seg) => seg.session === editor) ? editor : null;
+  const retiringSingle =
+    editor && !retiring.some((seg) => seg.session === editor) ? editor : null;
   let groups = groupsOf(doc);
   let built = groups.map((group) => createSeg(group));
-  const flat = docOf(built.flatMap((seg) => ((seg.session.getJSON() as { content?: unknown[] }).content ?? [])));
+  const flat = docOf(
+    built.flatMap(
+      (seg) => (seg.session.getJSON() as { content?: unknown[] }).content ?? [],
+    ),
+  );
   if (groupKinds(flat) !== groups.map((group) => group.kind).join(",")) {
     for (const seg of built) retireSeg(seg);
     groups = groupsOf(flat);
@@ -602,15 +816,20 @@ function becomeSplit(doc: unknown, focusOrdinal: number) {
   split = true;
   codeLayout.set(true);
   const codes = built.filter((seg) => seg.kind === "code");
-  const focus = focusOrdinal >= 0 ? codes[focusOrdinal] ?? null : null;
-  const active = focus ?? built.find((seg) => seg.kind === "prose") ?? built[0] ?? null;
+  const focus = focusOrdinal >= 0 ? (codes[focusOrdinal] ?? null) : null;
+  const active =
+    focus ?? built.find((seg) => seg.kind === "prose") ?? built[0] ?? null;
   editor = active?.session ?? null;
   wantFocus = focus?.id ?? null;
   segmentList.set(built.map((seg) => ({ id: seg.id, kind: seg.kind })));
   reshaping = false;
   for (const seg of retiring) retireSeg(seg);
   if (retiringSingle) {
-    try { retiringSingle.dispose(); } catch { /* already gone */ }
+    try {
+      retiringSingle.dispose();
+    } catch {
+      /* already gone */
+    }
   }
   paintCode();
 }
@@ -642,14 +861,30 @@ function scheduleReshape() {
 function teardownEditors() {
   epoch += 1;
   reshaping = true;
-  if (splitTimer) { clearTimeout(splitTimer); splitTimer = null; }
-  if (reshapeTimer) { clearTimeout(reshapeTimer); reshapeTimer = null; }
-  if (outlineSyncTimer) { clearTimeout(outlineSyncTimer); outlineSyncTimer = null; }
-  if (outlineSettleTimer) { clearTimeout(outlineSettleTimer); outlineSettleTimer = null; }
+  if (splitTimer) {
+    clearTimeout(splitTimer);
+    splitTimer = null;
+  }
+  if (reshapeTimer) {
+    clearTimeout(reshapeTimer);
+    reshapeTimer = null;
+  }
+  if (outlineSyncTimer) {
+    clearTimeout(outlineSyncTimer);
+    outlineSyncTimer = null;
+  }
+  if (outlineSettleTimer) {
+    clearTimeout(outlineSettleTimer);
+    outlineSettleTimer = null;
+  }
   reshapeRuns = 0;
-  if (paintTimer) { clearTimeout(paintTimer); paintTimer = null; }
+  if (paintTimer) {
+    clearTimeout(paintTimer);
+    paintTimer = null;
+  }
   const retiring = segments.slice();
-  const single = editor && !retiring.some((seg) => seg.session === editor) ? editor : null;
+  const single =
+    editor && !retiring.some((seg) => seg.session === editor) ? editor : null;
   segments = [];
   editor = null;
   split = false;
@@ -667,7 +902,11 @@ function teardownEditors() {
   copiedId.set(null);
   for (const seg of retiring) retireSeg(seg);
   if (single) {
-    try { single.dispose(); } catch { /* already gone */ }
+    try {
+      single.dispose();
+    } catch {
+      /* already gone */
+    }
   }
   reshaping = false;
 }
@@ -705,7 +944,11 @@ function mountSingle(doc: unknown) {
   const made = makeEditor(doc);
   made.on("revision", (event) => {
     if (epoch !== epochAt || editor !== made) return;
-    if (typeof event?.revision === "number" && singlePaintRevs.delete(event.revision)) return;
+    if (
+      typeof event?.revision === "number" &&
+      singlePaintRevs.delete(event.revision)
+    )
+      return;
     scheduleSave();
     // The suggestion state lands with the transaction: reading it a second
     // time once the update is applied is what keeps `/` from opening the
@@ -716,7 +959,9 @@ function mountSingle(doc: unknown) {
     // made typing stutter: the code is painted while the caret is in it.
     if (made.findParentNode("codeBlock")) schedulePaint();
     if (hasCodeBlock(made.getJSON())) {
-      const parent = made.findParentNode("codeBlock") as { pos?: number } | null;
+      const parent = made.findParentNode("codeBlock") as {
+        pos?: number;
+      } | null;
       scheduleSplit(codeOrdinal(made.getJSON(), parent?.pos ?? 0));
     }
   });
@@ -758,7 +1003,10 @@ function documentOf(doc: unknown): unknown {
 /// Markdown spelling is the check that it stays Markdown's shape.
 export function markdownOf(doc: unknown): string {
   const session = createRichEditor({
-    extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] } }), TableKit.configure({})],
+    extensions: [
+      StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] } }),
+      TableKit.configure({}),
+    ],
     content: documentOf(doc) as never,
     format: "json",
   });
@@ -775,10 +1023,21 @@ export function headingsOf(doc: unknown): OutlineMark[] {
   const marks: OutlineMark[] = [];
   let pos = 1;
   for (const node of root.content) {
-    const block = node as { type?: string; attrs?: { level?: number }; content?: { text?: string }[] };
+    const block = node as {
+      type?: string;
+      attrs?: { level?: number };
+      content?: { text?: string }[];
+    };
     if (block.type === "heading" && Array.isArray(block.content)) {
-      const text = block.content.map((child) => child?.text ?? "").join("").trim();
-      marks.push({ level: Math.min(6, Math.max(1, block.attrs?.level ?? 1)), text, pos: pos + 1 });
+      const text = block.content
+        .map((child) => child?.text ?? "")
+        .join("")
+        .trim();
+      marks.push({
+        level: Math.min(6, Math.max(1, block.attrs?.level ?? 1)),
+        text,
+        pos: pos + 1,
+      });
     }
     pos += nodeSize(node);
   }
@@ -804,10 +1063,16 @@ function scheduleOutline() {
     const next = headingsOf(currentDoc());
     const current = outline();
     // A caret move fires a revision too: only a changed outline re-renders.
-    const same = next.length === current.length && next.every((mark, index) => {
-      const old = current[index];
-      return mark.pos === old.pos && mark.text === old.text && mark.level === old.level;
-    });
+    const same =
+      next.length === current.length &&
+      next.every((mark, index) => {
+        const old = current[index];
+        return (
+          mark.pos === old.pos &&
+          mark.text === old.text &&
+          mark.level === old.level
+        );
+      });
     if (!same) {
       outline.set(next);
       if (!next.some((mark) => mark.pos === activeOutlinePos())) {
@@ -819,7 +1084,9 @@ function scheduleOutline() {
 
 /// Real ProseMirror positions for each heading in `doc`, matching `headingsOf`
 /// one-to-one by index without `nodeSize` drift on long documents.
-function headingPmLocations(doc: unknown): { nodePos: number; textPos: number }[] {
+function headingPmLocations(
+  doc: unknown,
+): { nodePos: number; textPos: number }[] {
   const root = doc as { content?: unknown[] } | null;
   if (!root || !Array.isArray(root.content)) return [];
   const out: { nodePos: number; textPos: number }[] = [];
@@ -834,12 +1101,55 @@ function headingPmLocations(doc: unknown): { nodePos: number; textPos: number }[
   return out;
 }
 
-function splitHeadingLocations(): { segId: number; session: RichEditorSession; nodePos: number; textPos: number }[] {
-  const out: { segId: number; session: RichEditorSession; nodePos: number; textPos: number }[] = [];
+/// Heading positions are asked for on every pointer move while a selection is
+/// dragged, and a session's JSON costs an FFI round trip each time. They only
+/// change when the document does, so they are kept per session and revision.
+export function cachedByRev<K, V>(
+  cache: Map<K, { rev: number; value: V }>,
+  key: K,
+  rev: number,
+  make: () => V,
+): V {
+  const hit = cache.get(key);
+  if (hit && hit.rev === rev) return hit.value;
+  const value = make();
+  cache.set(key, { rev, value });
+  return value;
+}
+
+const headingLocsCache = new Map<
+  RichEditorSession,
+  { rev: number; value: { nodePos: number; textPos: number }[] }
+>();
+
+/// A session's heading positions for the document it currently holds.
+function headingLocsOf(session: RichEditorSession) {
+  return cachedByRev(headingLocsCache, session, bodyRev(), () =>
+    headingPmLocations(session.getJSON()),
+  );
+}
+
+function splitHeadingLocations(): {
+  segId: number;
+  session: RichEditorSession;
+  nodePos: number;
+  textPos: number;
+}[] {
+  const out: {
+    segId: number;
+    session: RichEditorSession;
+    nodePos: number;
+    textPos: number;
+  }[] = [];
   for (const seg of segments) {
     if (seg.kind !== "prose") continue;
-    for (const loc of headingPmLocations(seg.session.getJSON())) {
-      out.push({ segId: seg.id, session: seg.session, nodePos: loc.nodePos, textPos: loc.textPos });
+    for (const loc of headingLocsOf(seg.session)) {
+      out.push({
+        segId: seg.id,
+        session: seg.session,
+        nodePos: loc.nodePos,
+        textPos: loc.textPos,
+      });
     }
   }
   return out;
@@ -860,22 +1170,32 @@ function syncOutlineFromCaret(segId: number | null, localPos: number) {
     if (!count) return;
     let active = 0;
     for (let index = 0; index < count; index += 1) {
-      const locOrder = segments.findIndex((seg) => seg.id === locs[index].segId);
-      if (locOrder < segOrder || (locOrder === segOrder && locs[index].nodePos <= localPos)) {
+      const locOrder = segments.findIndex(
+        (seg) => seg.id === locs[index].segId,
+      );
+      if (
+        locOrder < segOrder ||
+        (locOrder === segOrder && locs[index].nodePos <= localPos)
+      ) {
         active = index;
       } else {
         break;
       }
     }
-    if (activeOutlinePos() !== marks[active].pos) activeOutlinePos.set(marks[active].pos);
+    if (activeOutlinePos() !== marks[active].pos)
+      activeOutlinePos.set(marks[active].pos);
     return;
   }
   if (!editor) return;
-  const locs = headingPmLocations(editor.getJSON());
+  const locs = headingLocsOf(editor);
   const count = Math.min(marks.length, locs.length);
   if (!count) return;
-  const active = activeOutlineIndex(locs.slice(0, count).map((loc) => loc.nodePos), localPos);
-  if (activeOutlinePos() !== marks[active].pos) activeOutlinePos.set(marks[active].pos);
+  const active = activeOutlineIndex(
+    locs.slice(0, count).map((loc) => loc.nodePos),
+    localPos,
+  );
+  if (activeOutlinePos() !== marks[active].pos)
+    activeOutlinePos.set(marks[active].pos);
 }
 
 function syncOutlineFromViewport() {
@@ -897,7 +1217,8 @@ function syncOutlineFromViewport() {
       }
       let localY = 0;
       try {
-        const rect = (loc.session.nodeRect(loc.nodePos) ?? loc.session.coordsAtPos(loc.textPos)) as Point | null;
+        const rect = (loc.session.nodeRect(loc.nodePos) ??
+          loc.session.coordsAtPos(loc.textPos)) as Point | null;
         if (rect && typeof rect.y === "number") localY = rect.y;
       } catch {
         // Stale position while a reshape or edit settles.
@@ -906,11 +1227,12 @@ function syncOutlineFromViewport() {
     }
     if (!ys.some((y) => y !== null)) return;
     const active = activeOutlineIndex(ys, splitScrollY + threshold);
-    if (activeOutlinePos() !== marks[active].pos) activeOutlinePos.set(marks[active].pos);
+    if (activeOutlinePos() !== marks[active].pos)
+      activeOutlinePos.set(marks[active].pos);
     return;
   }
   if (!editor) return;
-  const locs = headingPmLocations(editor.getJSON());
+  const locs = headingLocsOf(editor);
   const count = Math.min(marks.length, locs.length);
   if (!count) return;
   const ys: (number | null)[] = [];
@@ -918,7 +1240,8 @@ function syncOutlineFromViewport() {
     const loc = locs[index];
     let y: number | null = null;
     try {
-      const rect = (editor.pageNodeRect(loc.nodePos) ?? editor.pageCoordsAtPos(loc.textPos)) as Point | null;
+      const rect = (editor.pageNodeRect(loc.nodePos) ??
+        editor.pageCoordsAtPos(loc.textPos)) as Point | null;
       if (rect && typeof rect.y === "number") y = rect.y;
     } catch {
       // Stale position during edit.
@@ -927,7 +1250,8 @@ function syncOutlineFromViewport() {
   }
   if (!ys.some((y) => y !== null)) return;
   const active = activeOutlineIndex(ys, pageTopY + threshold);
-  if (activeOutlinePos() !== marks[active].pos) activeOutlinePos.set(marks[active].pos);
+  if (activeOutlinePos() !== marks[active].pos)
+    activeOutlinePos.set(marks[active].pos);
 }
 
 function scheduleOutlineSync() {
@@ -940,7 +1264,11 @@ function scheduleOutlineSync() {
 
 function onSplitScroll(y: number) {
   splitScrollY = y;
-  if (pinnedOutlinePos !== null && !outlineSettleTimer && Math.abs(y - pinnedScrollY) > 24) {
+  if (
+    pinnedOutlinePos !== null &&
+    !outlineSettleTimer &&
+    Math.abs(y - pinnedScrollY) > 24
+  ) {
     pinnedOutlinePos = null;
   }
   scheduleOutlineSync();
@@ -978,12 +1306,16 @@ function jumpToOutline(mark: OutlineMark) {
     if (typeof segTop === "number" && splitScrollRef) {
       let localY = 0;
       try {
-        const rect = (loc.session.nodeRect(loc.nodePos) ?? loc.session.coordsAtPos(loc.textPos)) as Point | null;
+        const rect = (loc.session.nodeRect(loc.nodePos) ??
+          loc.session.coordsAtPos(loc.textPos)) as Point | null;
         if (rect && typeof rect.y === "number") localY = rect.y;
       } catch {
         // Fall back to segment top.
       }
-      const targetY = Math.max(0, Math.round(segTop + localY - Math.max(40, pageTall() * 0.14)));
+      const targetY = Math.max(
+        0,
+        Math.round(segTop + localY - Math.max(40, pageTall() * 0.14)),
+      );
       pinnedScrollY = targetY;
       splitScrollRef.scrollTo({ y: targetY, animated: true });
     }
@@ -996,7 +1328,7 @@ function jumpToOutline(mark: OutlineMark) {
     return;
   }
   if (!editor || !editorRef) return;
-  const loc = headingPmLocations(editor.getJSON())[index];
+  const loc = headingLocsOf(editor)[index];
   const targetPos = loc ? loc.textPos : mark.pos;
   editorRef.focus();
   editorRef.setSelection(targetPos, targetPos);
@@ -1010,7 +1342,10 @@ function caretToEnd() {
     if (!ref) return;
     editor = last.session;
     ref.focus();
-    ref.setSelection(headingsEnd(last.session.getJSON()), headingsEnd(last.session.getJSON()));
+    ref.setSelection(
+      headingsEnd(last.session.getJSON()),
+      headingsEnd(last.session.getJSON()),
+    );
     return;
   }
   if (!editor || !editorRef) return;
@@ -1021,7 +1356,8 @@ function caretToEnd() {
 
 function headingsEnd(doc: unknown): number {
   const root = doc as { content?: unknown[] } | null;
-  if (!root || !Array.isArray(root.content) || root.content.length === 0) return 1;
+  if (!root || !Array.isArray(root.content) || root.content.length === 0)
+    return 1;
   let pos = 1;
   for (const node of root.content) pos += nodeSize(node);
   // The last position inside the document, where typing continues the last
@@ -1032,17 +1368,47 @@ function headingsEnd(doc: unknown): number {
 /// The letters of the Russian layout, as the US keys that type them: a keymap
 /// names keys by the US layout on every layout, so `/заг` arrives as `pfu`.
 const US_OF_RU: Record<string, string> = {
-  "й": "q", "ц": "w", "у": "e", "к": "r", "т": "t", "н": "y", "г": "u",
-  "ш": "i", "щ": "o", "з": "p", "х": "[", "ъ": "]", "ф": "a", "ы": "s",
-  "в": "d", "а": "f", "п": "g", "р": "h", "о": "j", "л": "k", "д": "l",
-  "ж": ";", "э": "'", "я": "z", "ч": "x", "с": "c", "м": "v", "и": "b",
-  "т": "n", "ь": "m", "б": ",", "ю": ".", "ё": "`",
+  й: "q",
+  ц: "w",
+  у: "e",
+  к: "r",
+  т: "t",
+  н: "y",
+  г: "u",
+  ш: "i",
+  щ: "o",
+  з: "p",
+  х: "[",
+  ъ: "]",
+  ф: "a",
+  ы: "s",
+  в: "d",
+  а: "f",
+  п: "g",
+  р: "h",
+  о: "j",
+  л: "k",
+  д: "l",
+  ж: ";",
+  э: "'",
+  я: "z",
+  ч: "x",
+  с: "c",
+  м: "v",
+  и: "b",
+  т: "n",
+  ь: "m",
+  б: ",",
+  ю: ".",
+  ё: "`",
 };
 
 /// A word as the keys that type it on a Russian keyboard: `Заголовок` and a
 /// typed `pfu…` become one string, so the list filters on either layout.
 function usForm(text: string): string {
-  return Array.from(text.toLowerCase()).map((letter) => US_OF_RU[letter] ?? letter).join("");
+  return Array.from(text.toLowerCase())
+    .map((letter) => US_OF_RU[letter] ?? letter)
+    .join("");
 }
 
 /// The `/query` typed right before the caret: where it starts, where it ends,
@@ -1055,11 +1421,16 @@ let slashRange: SlashMatch | null = null;
 function slashMatch(): SlashMatch | null {
   const live = editor;
   if (!live) return null;
-  const selection = live.selection as { type?: string; anchor?: number; head?: number } | null;
+  const selection = live.selection as {
+    type?: string;
+    anchor?: number;
+    head?: number;
+  } | null;
   const at = selection?.anchor;
   const head = selection?.head ?? at;
   // A cursor, not a selection: the list belongs where the user types.
-  if (selection?.type !== "text" || typeof at !== "number" || at !== head) return null;
+  if (selection?.type !== "text" || typeof at !== "number" || at !== head)
+    return null;
   // The document's text up to the caret, blocks apart: a block's own start is
   // not always a position the resolver gives back.
   const before = live.textBetween(0, at, "\n");
@@ -1085,14 +1456,22 @@ function placeSlash(pos: number) {
   if (!page && !seg) return;
   void Promise.all([anchor.measure(), segBox]).then(([box, piece]) => {
     if (!box) return;
-    const x = piece ? piece.pagePosition.x - box.pagePosition.x : (page as Point).x - box.pagePosition.x;
-    const y = piece ? piece.pagePosition.y - box.pagePosition.y + 30 : (page as Point).y - box.pagePosition.y;
+    const x = piece
+      ? piece.pagePosition.x - box.pagePosition.x
+      : (page as Point).x - box.pagePosition.x;
+    const y = piece
+      ? piece.pagePosition.y - box.pagePosition.y + 30
+      : (page as Point).y - box.pagePosition.y;
     // The caret sits at the bottom edge as the editor follows it: below it
     // there is no room for the list, so the list goes above.
     const below = y + 24;
     const above = y - SLASH_MENU_HEIGHT - 8;
     slashLeft.set(Math.max(0, x));
-    slashTop.set(below + SLASH_MENU_HEIGHT <= box.bounds.size.height ? below : Math.max(0, above));
+    slashTop.set(
+      below + SLASH_MENU_HEIGHT <= box.bounds.size.height
+        ? below
+        : Math.max(0, above),
+    );
   });
 }
 
@@ -1125,7 +1504,9 @@ function syncSlash() {
 
 function filtered(query: string): SlashItem[] {
   if (!query) return SLASH_ITEMS;
-  return SLASH_ITEMS.filter((item) => usForm(item.label).includes(query) || item.keys.includes(query));
+  return SLASH_ITEMS.filter(
+    (item) => usForm(item.label).includes(query) || item.keys.includes(query),
+  );
 }
 
 /// The keys the list takes while it is open: the arrows move, Enter and Tab
@@ -1153,7 +1534,9 @@ function pick() {
   const range = slashRange;
   closeSlash();
   if (!item || !editor || !range) return;
-  editor.run(chain([deleteRange({ from: range.from, to: range.to }), item.make()]));
+  editor.run(
+    chain([deleteRange({ from: range.from, to: range.to }), item.make()]),
+  );
   // The block may have split the page into segments, whose editors mount after
   // this run: the caret's keyboard is claimed once they are there.
   setTimeout(focusCaret, 0);
@@ -1196,9 +1579,43 @@ function focusCaret() {
 /// same physical key that types `з` on a Russian keyboard arrives as `p`; the
 /// list reads both through `usForm`.
 const SLASH_TYPE_KEYS = [
-  "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
-  "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
-  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "minus",
+  "a",
+  "b",
+  "c",
+  "d",
+  "e",
+  "f",
+  "g",
+  "h",
+  "i",
+  "j",
+  "k",
+  "l",
+  "m",
+  "n",
+  "o",
+  "p",
+  "q",
+  "r",
+  "s",
+  "t",
+  "u",
+  "v",
+  "w",
+  "x",
+  "y",
+  "z",
+  "0",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "minus",
 ];
 
 let unbindSlashKeys: (() => void) | null = null;
@@ -1230,7 +1647,10 @@ function bindSlashKeys() {
     enter: () => onSlashKey("Enter"),
     tab: () => onSlashKey("Tab"),
     escape: () => onSlashKey("Escape"),
-    backspace: () => { slashQuery.set(slashQuery().slice(0, -1)); slashIndex.set(0); },
+    backspace: () => {
+      slashQuery.set(slashQuery().slice(0, -1));
+      slashIndex.set(0);
+    },
   };
   for (const key of SLASH_TYPE_KEYS) {
     bindings[key] = () => {
@@ -1251,7 +1671,10 @@ function unbindSlashKeysNow() {
 function currentRecentEntry() {
   const id = selectedId();
   if (!id) return null;
-  const title = draftTitle().trim() || text(selected()?.title ?? "").trim() || "Без названия";
+  const title =
+    draftTitle().trim() ||
+    text(selected()?.title ?? "").trim() ||
+    "Без названия";
   return { kind: "note" as const, id, title };
 }
 
@@ -1268,7 +1691,12 @@ function select(note: Note | null) {
   dirty.set(false);
   open(note);
   selectedId.set(id);
-  if (note) stageRecent({ kind: "note", id: text(note.id), title: text(note.title).trim() || "Без названия" });
+  if (note)
+    stageRecent({
+      kind: "note",
+      id: text(note.id),
+      title: text(note.title).trim() || "Без названия",
+    });
 }
 
 /// The open note's name, for the window's title bar.
@@ -1358,7 +1786,11 @@ function applyPreview() {
   if (!pendingPreview) return;
   const { id, title, text: body } = pendingPreview;
   pendingPreview = null;
-  notes.set(notes().map((item) => (text(item.id) === id ? { ...item, title, text: body } : item)));
+  notes.set(
+    notes().map((item) =>
+      text(item.id) === id ? { ...item, title, text: body } : item,
+    ),
+  );
 }
 
 function createNote() {
@@ -1392,78 +1824,189 @@ function removeNote() {
 
 /// The notes screen has two faces: the library of cards, and the note itself.
 /// Picking a card opens the note across the content's whole width.
-export function NotesPage(props: { colors: ThemeColors; dark: boolean; titlebarInset: number; onBack?: () => void }) {
+export function NotesPage(props: {
+  colors: ThemeColors;
+  dark: boolean;
+  titlebarInset: number;
+  onBack?: () => void;
+}) {
   if (!asked) {
     // The page owns the read: the host answers with the current notes.
     asked = true;
     loading.set(true);
     commands.reload();
   }
-  return <View class="min-h-0 flex-1 flex-col" style={{ paddingTop: props.titlebarInset }}>
-    {selected()
-      ? <Each of={[{ id: selectedId() ?? "" }]} key={((row: { id: string }) => row.id) as any}>{(row) => <NoteView colors={props.colors} dark={props.dark} />}</Each>
-      : <LibraryView colors={props.colors} dark={props.dark} onBack={props.onBack} />}
-  </View>;
+  return (
+    <View
+      class="min-h-0 flex-1 flex-col"
+      style={{ paddingTop: props.titlebarInset }}
+    >
+      {selected() ? (
+        <Each
+          of={[{ id: selectedId() ?? "" }]}
+          key={((row: { id: string }) => row.id) as any}
+        >
+          {(row) => <NoteView colors={props.colors} dark={props.dark} />}
+        </Each>
+      ) : (
+        <LibraryView
+          colors={props.colors}
+          dark={props.dark}
+          onBack={props.onBack}
+        />
+      )}
+    </View>
+  );
 }
 
 /// The library: every note as a card shaped like a page, its first blocks in
 /// miniature. The cards come in one after another.
-function LibraryView(props: { colors: ThemeColors; dark: boolean; onBack?: () => void }) {
+function LibraryView(props: {
+  colors: ThemeColors;
+  dark: boolean;
+  onBack?: () => void;
+}) {
   const colors = props.colors;
-  return <View class="relative min-h-0 flex-1 flex-col">
-    <View class="flex-row items-center" style={{ height: 54, paddingLeft: compact() ? 12 : GRID_PAD, paddingRight: compact() ? 12 : GRID_PAD - 6, gap: 10 }}>
-      {compact() && props.onBack
-        ? <View onPress={props.onBack} role="button" accessibilityLabel="Назад" class="items-center justify-center" style={{ width: 24, height: 28, cursor: "pointer" }}>
-          <Text class="text-[20px]" style={{ color: colors.accent }}>‹</Text>
-        </View>
-        : null}
-      {/* The page's name stays put: this screen is the library, not a count. */}
-      <Text class="text-[17px] font-semibold flex-1" style={{ color: colors.foreground }}>Заметки</Text>
-    </View>
-    <View class="min-h-0 flex-1" onLayout={(event) => gridWidth.set(event.bounds.size.width)}>
-      {loading()
-        ? skeletonLibrary(colors, props.dark)
-        : notes().length === 0
-          ? <EmptyLibrary colors={colors} />
-          : compact()
-            ? libraryList(notes(), colors, props.dark)
-            : libraryGrid(notes(), colors, props.dark)}
-    </View>
-    {/* Out of the header and over the page: the one thing a card list always
+  return (
+    <View class="relative min-h-0 flex-1 flex-col">
+      <View
+        class="flex-row items-center"
+        style={{
+          height: 54,
+          paddingLeft: compact() ? 12 : GRID_PAD,
+          paddingRight: compact() ? 12 : GRID_PAD - 6,
+          gap: 10,
+        }}
+      >
+        {compact() && props.onBack ? (
+          <View
+            onPress={props.onBack}
+            role="button"
+            accessibilityLabel="Назад"
+            class="items-center justify-center"
+            style={{ width: 24, height: 28, cursor: "pointer" }}
+          >
+            <Text class="text-[20px]" style={{ color: colors.accent }}>
+              ‹
+            </Text>
+          </View>
+        ) : null}
+        {/* The page's name stays put: this screen is the library, not a count. */}
+        <Text
+          class="text-[17px] font-semibold flex-1"
+          style={{ color: colors.foreground }}
+        >
+          Заметки
+        </Text>
+      </View>
+      <View
+        class="min-h-0 flex-1"
+        onLayout={(event) => gridWidth.set(event.bounds.size.width)}
+      >
+        {loading() ? (
+          skeletonLibrary(colors, props.dark)
+        ) : notes().length === 0 ? (
+          <EmptyLibrary colors={colors} />
+        ) : compact() ? (
+          libraryList(notes(), colors, props.dark)
+        ) : (
+          libraryGrid(notes(), colors, props.dark)
+        )}
+      </View>
+      {/* Out of the header and over the page: the one thing a card list always
         offers stays within reach of the thumb and of the last row. */}
-    <View onPress={createNote} role="button" accessibilityLabel="Новая заметка" class="absolute flex-row items-center justify-center" hoverStyle={{ backgroundColor: surfaceWash(props.dark, 0.1) }} style={{ left: "50%", marginLeft: -92, bottom: 24, width: 184, height: 40, gap: 8, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, cursor: "pointer", boxShadow: cardShadow(props.dark) }}>
-      <SharedIcon name="plus" size={15} color={colors.foreground} />
-      <Text class="text-[13px] font-medium" style={{ color: colors.foreground }}>Новая заметка</Text>
+      <View
+        onPress={createNote}
+        role="button"
+        accessibilityLabel="Новая заметка"
+        class="absolute flex-row items-center justify-center"
+        hoverStyle={{ backgroundColor: surfaceWash(props.dark, 0.1) }}
+        style={{
+          left: "50%",
+          marginLeft: -92,
+          bottom: 24,
+          width: 184,
+          height: 40,
+          gap: 8,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.background,
+          cursor: "pointer",
+          boxShadow: cardShadow(props.dark),
+        }}
+      >
+        <SharedIcon name="plus" size={15} color={colors.foreground} />
+        <Text
+          class="text-[13px] font-medium"
+          style={{ color: colors.foreground }}
+        >
+          Новая заметка
+        </Text>
+      </View>
     </View>
-  </View>;
+  );
 }
 
 /// The cards in rows, as many to a row as their smallest width allows. The rows
 /// go through a virtualized list: a library of ten thousand notes makes the
 /// cards that are in view and no others.
-function libraryGrid(items: readonly Note[], colors: ThemeColors, dark: boolean) {
+function libraryGrid(
+  items: readonly Note[],
+  colors: ThemeColors,
+  dark: boolean,
+) {
   const room = Math.max(gridWidth() - GRID_PAD * 2, CARD_MIN);
-  const columns = Math.max(1, Math.min(CARD_MAX_COLUMNS, Math.floor((room + CARD_GAP) / (CARD_MIN + CARD_GAP))));
+  const columns = Math.max(
+    1,
+    Math.min(
+      CARD_MAX_COLUMNS,
+      Math.floor((room + CARD_GAP) / (CARD_MIN + CARD_GAP)),
+    ),
+  );
   const cardWidth = (room - CARD_GAP * (columns - 1)) / columns;
   const rows = rowsOf(items, columns);
   const rowHeight = Math.round(cardWidth * CARD_RATIO) + CARD_GAP + 8;
-  return <List
-    each={rows}
-    keyExtractor={(row: Note[]) => "row:" + (row[0] ? text(row[0].id) : "empty")}
-    estimatedItemSize={rowHeight}
-    testID="notes-grid"
-    class="min-h-0 flex-1"
-    contentStyle={{ paddingLeft: GRID_PAD, paddingRight: GRID_PAD, paddingTop: 4, paddingBottom: LIBRARY_BOTTOM }}
-  >
-    {(row: () => Note[], rowIndex: () => number) => <View class="flex-row" style={{ gap: CARD_GAP, paddingBottom: CARD_GAP }}>
-      {row().map((note, index) => <NoteCard note={note} index={rowIndex() * columns + index} width={cardWidth} colors={colors} dark={dark} />)}
-    </View>}
-  </List>;
+  return (
+    <List
+      each={rows}
+      keyExtractor={(row: Note[]) =>
+        "row:" + (row[0] ? text(row[0].id) : "empty")
+      }
+      estimatedItemSize={rowHeight}
+      testID="notes-grid"
+      class="min-h-0 flex-1"
+      contentStyle={{
+        paddingLeft: GRID_PAD,
+        paddingRight: GRID_PAD,
+        paddingTop: 4,
+        paddingBottom: LIBRARY_BOTTOM,
+      }}
+    >
+      {(row: () => Note[], rowIndex: () => number) => (
+        <View
+          class="flex-row"
+          style={{ gap: CARD_GAP, paddingBottom: CARD_GAP }}
+        >
+          {row().map((note, index) => (
+            <NoteCard
+              note={note}
+              index={rowIndex() * columns + index}
+              width={cardWidth}
+              colors={colors}
+              dark={dark}
+            />
+          ))}
+        </View>
+      )}
+    </List>
+  );
 }
 
 export function rowsOf(notes: readonly Note[], columns: number): Note[][] {
   const rows: Note[][] = [];
-  for (let index = 0; index < notes.length; index += columns) rows.push(notes.slice(index, index + columns));
+  for (let index = 0; index < notes.length; index += columns)
+    rows.push(notes.slice(index, index + columns));
   return rows;
 }
 
@@ -1471,68 +2014,164 @@ export function rowsOf(notes: readonly Note[], columns: number): Note[][] {
 /// page it is about to draw: cards without text, pulsing quietly.
 function skeletonLibrary(colors: ThemeColors, dark: boolean) {
   const room = Math.max(gridWidth() - GRID_PAD * 2, CARD_MIN);
-  const columns = Math.max(1, Math.min(CARD_MAX_COLUMNS, Math.floor((room + CARD_GAP) / (CARD_MIN + CARD_GAP))));
+  const columns = Math.max(
+    1,
+    Math.min(
+      CARD_MAX_COLUMNS,
+      Math.floor((room + CARD_GAP) / (CARD_MIN + CARD_GAP)),
+    ),
+  );
   const cardWidth = (room - CARD_GAP * (columns - 1)) / columns;
   const height = Math.round(cardWidth * CARD_RATIO);
   const fill = surfaceWash(dark, 0.06);
-  const line = (width: number) => <View style={{ width, height: 5, borderRadius: 3, backgroundColor: fill }} />;
-  const card = <View style={{ width: cardWidth, height, padding: 4, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background }}>
-    <View class="overflow-hidden" style={{ flex: 1, borderRadius: 16, backgroundColor: colors.card, padding: 14, gap: 8 }}>
-      <View style={{ width: cardWidth * 0.55, height: 11, borderRadius: 4, backgroundColor: fill }} />
-      <View style={{ marginTop: 6, gap: 6 }}>
-        {line(cardWidth * 0.72)}
-        {line(cardWidth * 0.64)}
-        {line(cardWidth * 0.7)}
-        {line(cardWidth * 0.4)}
+  const line = (width: number) => (
+    <View
+      style={{ width, height: 5, borderRadius: 3, backgroundColor: fill }}
+    />
+  );
+  const card = (
+    <View
+      style={{
+        width: cardWidth,
+        height,
+        padding: 4,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.background,
+      }}
+    >
+      <View
+        class="overflow-hidden"
+        style={{
+          flex: 1,
+          borderRadius: 16,
+          backgroundColor: colors.card,
+          padding: 14,
+          gap: 8,
+        }}
+      >
+        <View
+          style={{
+            width: cardWidth * 0.55,
+            height: 11,
+            borderRadius: 4,
+            backgroundColor: fill,
+          }}
+        />
+        <View style={{ marginTop: 6, gap: 6 }}>
+          {line(cardWidth * 0.72)}
+          {line(cardWidth * 0.64)}
+          {line(cardWidth * 0.7)}
+          {line(cardWidth * 0.4)}
+        </View>
       </View>
     </View>
-  </View>;
+  );
   const rows: null[][] = [];
-  for (let index = 0; index < 3 * columns; index += columns) rows.push(new Array(columns).fill(null));
-  return <View class="min-h-0 flex-1" style={{ paddingLeft: GRID_PAD, paddingRight: GRID_PAD, paddingTop: 4 }}>
-    <View style={{ gap: CARD_GAP }}>
-      {rows.map((row) => <View class="flex-row" style={{ gap: CARD_GAP }}>
-        {row.map(() => card)}
-      </View>)}
+  for (let index = 0; index < 3 * columns; index += columns)
+    rows.push(new Array(columns).fill(null));
+  return (
+    <View
+      class="min-h-0 flex-1"
+      style={{ paddingLeft: GRID_PAD, paddingRight: GRID_PAD, paddingTop: 4 }}
+    >
+      <View style={{ gap: CARD_GAP }}>
+        {rows.map((row) => (
+          <View class="flex-row" style={{ gap: CARD_GAP }}>
+            {row.map(() => card)}
+          </View>
+        ))}
+      </View>
     </View>
-  </View>;
+  );
 }
 
 /// One note as a page: the title, then its blocks in miniature. Hovering lifts
 /// it a little on a spring, as quiet.md's cards do.
 /// The library on a phone: one row per note, its title and the first line of
 /// the text. Rows go through the same virtualized list as the cards.
-function libraryList(items: readonly Note[], colors: ThemeColors, dark: boolean) {
+function libraryList(
+  items: readonly Note[],
+  colors: ThemeColors,
+  dark: boolean,
+) {
   const wash = surfaceWash(dark, 0.07);
-  return <List
-    each={items}
-    keyExtractor={(note: Note) => "note:" + text(note.id)}
-    estimatedItemSize={78}
-    class="min-h-0 flex-1"
-    contentStyle={{ paddingLeft: 12, paddingRight: 12, paddingTop: 4, paddingBottom: LIBRARY_BOTTOM }}
-  >
-    {(note: () => Note) => {
-      const item = note();
-      const title = text(item.title).trim() || "Без названия";
-      return <View onPress={() => select(item)} role="button" accessibilityLabel={title} hoverStyle={{ backgroundColor: wash }} style={{ paddingLeft: 12, paddingRight: 12, paddingTop: 12, paddingBottom: 12, gap: 3, borderRadius: 14, cursor: "pointer" }}>
-        <Text class="text-[16px] font-semibold" style={{ color: colors.foreground }}>{title}</Text>
-        <Text class="text-[13px]" style={{ color: colors.muted }}>{listLine(item)}</Text>
-        <Text class="text-[11px]" style={{ color: colors.muted }}>{stamp(item.updatedAt)}</Text>
-      </View>;
-    }}
-  </List>;
+  return (
+    <List
+      each={items}
+      keyExtractor={(note: Note) => "note:" + text(note.id)}
+      estimatedItemSize={78}
+      class="min-h-0 flex-1"
+      contentStyle={{
+        paddingLeft: 12,
+        paddingRight: 12,
+        paddingTop: 4,
+        paddingBottom: LIBRARY_BOTTOM,
+      }}
+    >
+      {(note: () => Note) => {
+        const item = note();
+        const title = text(item.title).trim() || "Без названия";
+        return (
+          <View
+            onPress={() => select(item)}
+            role="button"
+            accessibilityLabel={title}
+            hoverStyle={{ backgroundColor: wash }}
+            style={{
+              paddingLeft: 12,
+              paddingRight: 12,
+              paddingTop: 12,
+              paddingBottom: 12,
+              gap: 3,
+              borderRadius: 14,
+              cursor: "pointer",
+            }}
+          >
+            <Text
+              class="text-[16px] font-semibold"
+              style={{ color: colors.foreground }}
+            >
+              {title}
+            </Text>
+            <Text class="text-[13px]" style={{ color: colors.muted }}>
+              {listLine(item)}
+            </Text>
+            <Text class="text-[11px]" style={{ color: colors.muted }}>
+              {stamp(item.updatedAt)}
+            </Text>
+          </View>
+        );
+      }}
+    </List>
+  );
 }
 
 /// The first line of a note's text, as the phone's list shows it.
 function listLine(note: Note): string {
   const blocks = previewOf(note.doc);
-  const readable = blocks.filter((block) => block.text.trim() && (block.kind === "text" || block.kind === "item" || block.kind === "quote"));
-  const line = text((readable[0] ?? blocks.find((block) => block.text.trim()))?.text).trim();
+  const readable = blocks.filter(
+    (block) =>
+      block.text.trim() &&
+      (block.kind === "text" ||
+        block.kind === "item" ||
+        block.kind === "quote"),
+  );
+  const line = text(
+    (readable[0] ?? blocks.find((block) => block.text.trim()))?.text,
+  ).trim();
   if (!line) return "Пустая заметка";
   return line.length > 80 ? `${line.slice(0, 78)}…` : line;
 }
 
-function NoteCard(props: { note: Note; index: number; width: number; colors: ThemeColors; dark: boolean }) {
+function NoteCard(props: {
+  note: Note;
+  index: number;
+  width: number;
+  colors: ThemeColors;
+  dark: boolean;
+}) {
   const colors = props.colors;
   const title = text(props.note.title).trim() || "Без названия";
   const height = Math.round(props.width * CARD_RATIO);
@@ -1540,7 +2179,10 @@ function NoteCard(props: { note: Note; index: number; width: number; colors: The
   const enter = createMotion({
     initial: { opacity: 0, translateY: 10 },
     enter: {
-      keyframes: [{ opacity: 0, translateY: 10 }, { opacity: 1, translateY: 0 }],
+      keyframes: [
+        { opacity: 0, translateY: 10 },
+        { opacity: 1, translateY: 0 },
+      ],
       duration: 260,
       delay: cardDelay(props.index),
       easing: Easing.bezier(0.16, 1, 0.3, 1),
@@ -1554,48 +2196,129 @@ function NoteCard(props: { note: Note; index: number; width: number; colors: The
       easing: Easing.bezier(0.16, 1, 0.3, 1),
     });
   };
-  return <View style={enter.style}>
-    <View onPress={() => select(props.note)} onMouseEnter={() => rise(true)} onMouseLeave={() => rise(false)} role="button" accessibilityLabel={title} hoverStyle={{ backgroundColor: surfaceWash(props.dark, 0.07) }} style={{ width: props.width, height, padding: 4, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, cursor: "pointer", boxShadow: cardShadow(props.dark), ...lift.style }}>
-      <View class="overflow-hidden" style={{ flex: 1, borderRadius: 16, backgroundColor: colors.card, padding: 14 }}>
-        <View class="overflow-hidden" style={{ height: 36 }}>
-          <Text class="text-[13px] font-semibold" style={{ color: colors.foreground, lineHeight: 18 }}>{title}</Text>
-        </View>
-        <View style={{ marginTop: 9, gap: 3 }}>
-          {blocks.map((block) => <PreviewLine block={block} colors={colors} />)}
+  return (
+    <View style={enter.style}>
+      <View
+        onPress={() => select(props.note)}
+        onMouseEnter={() => rise(true)}
+        onMouseLeave={() => rise(false)}
+        role="button"
+        accessibilityLabel={title}
+        hoverStyle={{ backgroundColor: surfaceWash(props.dark, 0.07) }}
+        style={{
+          width: props.width,
+          height,
+          padding: 4,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.background,
+          cursor: "pointer",
+          boxShadow: cardShadow(props.dark),
+          ...lift.style,
+        }}
+      >
+        <View
+          class="overflow-hidden"
+          style={{
+            flex: 1,
+            borderRadius: 16,
+            backgroundColor: colors.card,
+            padding: 14,
+          }}
+        >
+          <View class="overflow-hidden" style={{ height: 36 }}>
+            <Text
+              class="text-[13px] font-semibold"
+              style={{ color: colors.foreground, lineHeight: 18 }}
+            >
+              {title}
+            </Text>
+          </View>
+          <View style={{ marginTop: 9, gap: 3 }}>
+            {blocks.map((block) => (
+              <PreviewLine block={block} colors={colors} />
+            ))}
+          </View>
         </View>
       </View>
     </View>
-  </View>;
+  );
 }
 
 function EmptyLibrary(props: { colors: ThemeColors }) {
   const colors = props.colors;
-  return <View class="items-center" style={{ paddingTop: 96, gap: 10 }}>
-    <Text class="text-[15px]" style={{ color: colors.foreground }}>Заметок пока нет</Text>
-    <Text class="text-[12px]" style={{ color: colors.muted }}>Первая заметка — как чистый лист.</Text>
-    <View onPress={createNote} role="button" accessibilityLabel="Создать заметку" class="flex-row items-center" hoverStyle={{ backgroundColor: surfaceWash(false, 0.07) }} style={{ marginTop: 6, height: 30, paddingLeft: 12, paddingRight: 14, gap: 6, borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, cursor: "pointer" }}>
-      <SharedIcon name="plus" size={13} color={colors.foreground} />
-      <Text class="text-[13px]" style={{ color: colors.foreground }}>Создать заметку</Text>
+  return (
+    <View class="items-center" style={{ paddingTop: 96, gap: 10 }}>
+      <Text class="text-[15px]" style={{ color: colors.foreground }}>
+        Заметок пока нет
+      </Text>
+      <Text class="text-[12px]" style={{ color: colors.muted }}>
+        Первая заметка — как чистый лист.
+      </Text>
+      <View
+        onPress={createNote}
+        role="button"
+        accessibilityLabel="Создать заметку"
+        class="flex-row items-center"
+        hoverStyle={{ backgroundColor: surfaceWash(false, 0.07) }}
+        style={{
+          marginTop: 6,
+          height: 30,
+          paddingLeft: 12,
+          paddingRight: 14,
+          gap: 6,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.card,
+          cursor: "pointer",
+        }}
+      >
+        <SharedIcon name="plus" size={13} color={colors.foreground} />
+        <Text class="text-[13px]" style={{ color: colors.foreground }}>
+          Создать заметку
+        </Text>
+      </View>
     </View>
-  </View>;
+  );
 }
 
 /// The note itself, across the content's width: a back chip, the title, then
 /// one column of text with the rails of its headings on the right.
-function codeFields(id: number, rev?: number): { language: string; text: string } {
+function codeFields(
+  id: number,
+  rev?: number,
+): { language: string; text: string } {
   void rev;
   const seg = segments.find((item) => item.id === id);
-  const content = (seg?.session.getJSON() as { content?: { type?: string; attrs?: { language?: string | null }; content?: { text?: string }[] }[] } | undefined)?.content ?? [];
-  const block = content.find((node) => node?.type === "codeBlock") ?? content[0];
-  const named = typeof block?.attrs?.language === "string" ? block.attrs.language : "";
-  const text = (block?.content ?? []).map((child) => child?.text ?? "").join("");
+  const content =
+    (
+      seg?.session.getJSON() as
+        | {
+            content?: {
+              type?: string;
+              attrs?: { language?: string | null };
+              content?: { text?: string }[];
+            }[];
+          }
+        | undefined
+    )?.content ?? [];
+  const block =
+    content.find((node) => node?.type === "codeBlock") ?? content[0];
+  const named =
+    typeof block?.attrs?.language === "string" ? block.attrs.language : "";
+  const text = (block?.content ?? [])
+    .map((child) => child?.text ?? "")
+    .join("");
   return { language: shownLanguage(named), text };
 }
 
 function setCodeLanguage(id: number, language: string) {
   const seg = segments.find((item) => item.id === id && item.kind === "code");
   if (!seg) return;
-  const content = (seg.session.getJSON() as { content?: { type?: string }[] }).content ?? [];
+  const content =
+    (seg.session.getJSON() as { content?: { type?: string }[] }).content ?? [];
   let pos = 0;
   for (const node of content) {
     if (node?.type === "codeBlock") break;
@@ -1606,7 +2329,13 @@ function setCodeLanguage(id: number, language: string) {
 }
 
 function codeLanguageMenu(id: number, at: Point) {
-  void Menu.popup(codeLanguages.map(([value, label]) => ({ label, onSelect: () => setCodeLanguage(id, value) })), at);
+  void Menu.popup(
+    codeLanguages.map(([value, label]) => ({
+      label,
+      onSelect: () => setCodeLanguage(id, value),
+    })),
+    at,
+  );
 }
 
 function attachRef(id: number, ref: RichEditorRef | null) {
@@ -1627,26 +2356,53 @@ function attachRef(id: number, ref: RichEditorRef | null) {
   }
 }
 
-const TEXT_BLOCKS = new Set(["paragraph", "heading", "listItem", "bulletList", "orderedList", "blockquote", "codeBlock", "table", "tableRow", "taskList", "taskItem"]);
+const TEXT_BLOCKS = new Set([
+  "paragraph",
+  "heading",
+  "listItem",
+  "bulletList",
+  "orderedList",
+  "blockquote",
+  "codeBlock",
+  "table",
+  "tableRow",
+  "taskList",
+  "taskItem",
+]);
 
 function plainOf(node: unknown): string {
-  const block = node as { type?: string; text?: string; content?: unknown[] } | null;
+  const block = node as {
+    type?: string;
+    text?: string;
+    content?: unknown[];
+  } | null;
   if (!block) return "";
   if (typeof block.text === "string") return block.text;
   if (!Array.isArray(block.content)) return "";
-  const blocky = block.content.some((child) => TEXT_BLOCKS.has(String((child as { type?: string })?.type ?? "")));
-  return block.content.map(plainOf).filter((part) => part.length > 0).join(blocky ? "\n" : "");
+  const blocky = block.content.some((child) =>
+    TEXT_BLOCKS.has(String((child as { type?: string })?.type ?? "")),
+  );
+  return block.content
+    .map(plainOf)
+    .filter((part) => part.length > 0)
+    .join(blocky ? "\n" : "");
 }
 
 function wrappedLines(text: string, width: number, font: number): number {
   const per = Math.max(8, Math.floor(Math.max(40, width) / (font * 0.62)));
   let lines = 0;
-  for (const line of (text || " ").split("\n")) lines += Math.max(1, Math.ceil(line.length / per));
+  for (const line of (text || " ").split("\n"))
+    lines += Math.max(1, Math.ceil(line.length / per));
   return lines;
 }
 
 function pieceWidth(room: number): number {
-  const pad = room > 0 ? (room < COMPACT_LIBRARY ? 16 : Math.max((room - PAGE_MAX) / 2, PAGE_PAD / 2)) : PAGE_PAD;
+  const pad =
+    room > 0
+      ? room < COMPACT_LIBRARY
+        ? 16
+        : Math.max((room - PAGE_MAX) / 2, PAGE_PAD / 2)
+      : PAGE_PAD;
   return Math.max(220, (room > 0 ? room : 720) - pad * 2);
 }
 
@@ -1669,19 +2425,59 @@ function proseBoxHeight(id: number, room: number, rev?: number): number {
   const seg = segments.find((item) => item.id === id);
   if (!seg) return 32;
   const width = pieceWidth(room);
-  const content = (seg.session.getJSON() as { content?: { type?: string; attrs?: { level?: number }; content?: unknown[] }[] }).content ?? [];
+  const content =
+    (
+      seg.session.getJSON() as {
+        content?: {
+          type?: string;
+          attrs?: { level?: number };
+          content?: unknown[];
+        }[];
+      }
+    ).content ?? [];
   let height = 0;
   for (const node of content) {
     const type = node?.type;
     const level = node?.attrs?.level ?? 1;
     if (type === "heading") {
-      const line = level === 1 ? 36 : level === 2 ? 30 : level === 3 ? 26 : level === 4 ? 24 : level === 5 ? 22 : 20;
-      const above = level === 1 ? 32 : level === 2 ? 26 : level === 3 ? 20 : level === 4 ? 16 : level === 5 ? 14 : 12;
+      const line =
+        level === 1
+          ? 36
+          : level === 2
+            ? 30
+            : level === 3
+              ? 26
+              : level === 4
+                ? 24
+                : level === 5
+                  ? 22
+                  : 20;
+      const above =
+        level === 1
+          ? 32
+          : level === 2
+            ? 26
+            : level === 3
+              ? 20
+              : level === 4
+                ? 16
+                : level === 5
+                  ? 14
+                  : 12;
       const below = level === 1 ? 8 : level === 2 ? 6 : level <= 4 ? 4 : 2;
-      height += above + wrappedLines(plainOf(node), width, line > 26 ? 26 : 18) * line + below;
+      height +=
+        above +
+        wrappedLines(plainOf(node), width, line > 26 ? 26 : 18) * line +
+        below;
     } else if (type === "horizontalRule") height += 38;
-    else if (type === "table") height += 40 * Math.max(1, (node.content ?? []).length) + 12;
-    else if (type === "bulletList" || type === "orderedList" || type === "blockquote") height += 10 + wrappedLines(plainOf(node), width - 32, 16) * 24;
+    else if (type === "table")
+      height += 40 * Math.max(1, (node.content ?? []).length) + 12;
+    else if (
+      type === "bulletList" ||
+      type === "orderedList" ||
+      type === "blockquote"
+    )
+      height += 10 + wrappedLines(plainOf(node), width - 32, 16) * 24;
     else height += 8 + wrappedLines(plainOf(node), width, 16) * 24;
   }
   return Math.max(28, Math.ceil(height));
@@ -1689,94 +2485,282 @@ function proseBoxHeight(id: number, room: number, rev?: number): number {
 
 function codeBoxHeight(text: string, room: number): number {
   const per = Math.max(8, Math.floor(Math.max(80, pieceWidth(room) - 28) / 8));
-  const lines = (text.length ? text : " ").split("\n").reduce((count, line) => count + Math.max(1, Math.ceil(line.length / per)), 0);
+  const lines = (text.length ? text : " ")
+    .split("\n")
+    .reduce(
+      (count, line) => count + Math.max(1, Math.ceil(line.length / per)),
+      0,
+    );
   return 12 + 14 + lines * 21;
 }
 
 /// A code block as shadcn draws it: a header row, then the code. The row is
 /// flex, so the language stays on the left and copy on the right without a
 /// measured overlay.
-function CodeCard(props: { id: number; colors: ThemeColors; dark: boolean; wash: string }) {
+function CodeCard(props: {
+  id: number;
+  colors: ThemeColors;
+  dark: boolean;
+  wash: string;
+}) {
   const seg = segments.find((item) => item.id === props.id);
   if (!seg) return <View />;
-  return <View style={{ marginTop: 4, marginBottom: 8, borderRadius: 10, borderWidth: 1, borderColor: props.colors.border, backgroundColor: surfaceWash(props.dark, 0.06), overflow: "hidden" }}>
-    <View class="flex-row items-center justify-between" style={{ height: 36, paddingLeft: 12, paddingRight: 4, borderBottomWidth: 1, borderColor: props.colors.border }}>
-      <View onPress={(event) => codeLanguageMenu(props.id, event.pagePosition)} role="button" accessibilityLabel={languageLabel(codeFields(props.id, bodyRev()).language)} hoverStyle={{ backgroundColor: props.wash }} style={{ height: 26, paddingLeft: 8, paddingRight: 8, borderRadius: 6, cursor: "pointer", justifyContent: "center" }}>
-        <Text class="text-[12px] font-medium" style={{ color: props.colors.muted }}>{languageLabel(codeFields(props.id, bodyRev()).language)}</Text>
+  return (
+    <View
+      style={{
+        marginTop: 4,
+        marginBottom: 8,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: props.colors.border,
+        backgroundColor: surfaceWash(props.dark, 0.06),
+        overflow: "hidden",
+      }}
+    >
+      <View
+        class="flex-row items-center justify-between"
+        style={{
+          height: 36,
+          paddingLeft: 12,
+          paddingRight: 4,
+          borderBottomWidth: 1,
+          borderColor: props.colors.border,
+        }}
+      >
+        <View
+          onPress={(event) => codeLanguageMenu(props.id, event.pagePosition)}
+          role="button"
+          accessibilityLabel={languageLabel(
+            codeFields(props.id, bodyRev()).language,
+          )}
+          hoverStyle={{ backgroundColor: props.wash }}
+          style={{
+            height: 26,
+            paddingLeft: 8,
+            paddingRight: 8,
+            borderRadius: 6,
+            cursor: "pointer",
+            justifyContent: "center",
+          }}
+        >
+          <Text
+            class="text-[12px] font-medium"
+            style={{ color: props.colors.muted }}
+          >
+            {languageLabel(codeFields(props.id, bodyRev()).language)}
+          </Text>
+        </View>
+        <View
+          onPress={() => copyBlock(codeFields(props.id).text, props.id)}
+          role="button"
+          accessibilityLabel="Скопировать"
+          class="items-center justify-center"
+          hoverStyle={{ backgroundColor: props.wash }}
+          style={{ width: 28, height: 28, borderRadius: 6, cursor: "pointer" }}
+        >
+          {copiedId() === props.id ? (
+            <Glyph name="check" size={14} color={props.colors.foreground} />
+          ) : (
+            <Image
+              src={COPY_ICON}
+              style={{ width: 14, height: 14, tintColor: props.colors.muted }}
+            />
+          )}
+        </View>
       </View>
-      <View onPress={() => copyBlock(codeFields(props.id).text, props.id)} role="button" accessibilityLabel="Скопировать" class="items-center justify-center" hoverStyle={{ backgroundColor: props.wash }} style={{ width: 28, height: 28, borderRadius: 6, cursor: "pointer" }}>
-        {copiedId() === props.id
-          ? <Glyph name="check" size={14} color={props.colors.foreground} />
-          : <Image src={COPY_ICON} style={{ width: 14, height: 14, tintColor: props.colors.muted }} />}
-      </View>
+      <RichEditor
+        editor={seg.session}
+        ref={(ref) => attachRef(props.id, ref)}
+        accessibilityLabel="Код"
+        onContentSizeChange={({ contentSize }) =>
+          updateSegHeight(props.id, Math.max(40, contentSize.height))
+        }
+        onSelectionChange={({ selection }) =>
+          syncOutlineFromCaret(props.id, selection.from)
+        }
+        style={{
+          height: measuredSegHeight(
+            props.id,
+            codeBoxHeight(codeFields(props.id, bodyRev()).text, pageRoom()),
+          ),
+        }}
+        styles={codeStyles(props.colors, props.dark)}
+      />
     </View>
-    <RichEditor
-      editor={seg.session}
-      ref={(ref) => attachRef(props.id, ref)}
-      accessibilityLabel="Код"
-      onContentSizeChange={({ contentSize }) => updateSegHeight(props.id, Math.max(40, contentSize.height))}
-      onSelectionChange={({ selection }) => syncOutlineFromCaret(props.id, selection.from)}
-      style={{ height: measuredSegHeight(props.id, codeBoxHeight(codeFields(props.id, bodyRev()).text, pageRoom())) }}
-      styles={codeStyles(props.colors, props.dark)}
-    />
-  </View>;
+  );
 }
 
 function ProsePiece(props: { id: number; colors: ThemeColors; dark: boolean }) {
   const seg = segments.find((item) => item.id === props.id);
   if (!seg) return <View />;
-  return <RichEditor
-    editor={seg.session}
-    ref={(ref) => attachRef(props.id, ref)}
-    accessibilityLabel="Текст заметки"
-    placeholder={segmentList()[0]?.id === props.id ? "Пишите. Слэш открывает блоки: заголовок, список, таблица…" : undefined}
-    onContentSizeChange={({ contentSize }) => updateSegHeight(props.id, contentSize.height)}
-    onSelectionChange={({ selection }) => syncOutlineFromCaret(props.id, selection.from)}
-    onPasteFiles={(event) => { pastePictures(event.paste, seg.session); }}
-    onBlur={() => {
-      // The blur the list asked for is not a leave: the caret's editor keeps
-      // the keyboard off while the list has it.
-      if (!slashOpen()) return;
-      if (slashHold) { slashHold = false; return; }
-      if (seg.session !== slashSession) return;
-      closeSlash();
-    }}
-    style={{ height: measuredSegHeight(props.id, proseBoxHeight(props.id, pageRoom(), bodyRev())) }}
-    styles={noteStyles(props.colors, props.dark, 0, 0, true)}
-  />;
+  return (
+    <RichEditor
+      editor={seg.session}
+      ref={(ref) => attachRef(props.id, ref)}
+      accessibilityLabel="Текст заметки"
+      placeholder={
+        segmentList()[0]?.id === props.id
+          ? "Пишите. Слэш открывает блоки: заголовок, список, таблица…"
+          : undefined
+      }
+      onContentSizeChange={({ contentSize }) =>
+        updateSegHeight(props.id, contentSize.height)
+      }
+      onSelectionChange={({ selection }) =>
+        syncOutlineFromCaret(props.id, selection.from)
+      }
+      onPasteFiles={(event) => {
+        pastePictures(event.paste, seg.session);
+      }}
+      onBlur={() => {
+        // The blur the list asked for is not a leave: the caret's editor keeps
+        // the keyboard off while the list has it.
+        if (!slashOpen()) return;
+        if (slashHold) {
+          slashHold = false;
+          return;
+        }
+        if (seg.session !== slashSession) return;
+        closeSlash();
+      }}
+      style={{
+        height: measuredSegHeight(
+          props.id,
+          proseBoxHeight(props.id, pageRoom(), bodyRev()),
+        ),
+      }}
+      styles={noteStyles(props.colors, props.dark, 0, 0, true)}
+    />
+  );
 }
 
-function SplitNote(props: { colors: ThemeColors; dark: boolean; wash: string }) {
+function SplitNote(props: {
+  colors: ThemeColors;
+  dark: boolean;
+  wash: string;
+}) {
   // The sheet is pinned to the page. A flex-1 scroll inside a percentage-height
   // column collapses, and then the cards are gone while the rails stay.
-  return <View class="relative min-h-0 flex-1" ref={(node) => { menuAnchor = node; }}>
-  <Scroll ref={(node) => { splitScrollRef = node; }} onScroll={(event) => onSplitScroll(event.offset.y)} class="min-h-0 flex-1" contentStyle={{ paddingTop: pageTopPad(), paddingBottom: 0, paddingLeft: pagePad(), paddingRight: pagePad() }}>
-    <Each of={segmentList()} key={((row: { id: number; kind: "prose" | "code" }) => String(row.id)) as any}>{(row) => {
-      const item = row();
-      return <View onLayout={(event) => { segTops.set(item.id, event.bounds.origin.y); }}>
-        {item.kind === "code"
-          ? <CodeCard id={item.id} colors={props.colors} dark={props.dark} wash={props.wash} />
-          : <ProsePiece id={item.id} colors={props.colors} dark={props.dark} />}
-      </View>;
-    }}</Each>
-    <View onPress={caretToEnd} testID="split-note-tail" style={{ height: 120 }} />
-  </Scroll>
-  </View>;
+  return (
+    <View
+      class="relative min-h-0 flex-1"
+      ref={(node) => {
+        menuAnchor = node;
+      }}
+    >
+      <Scroll
+        ref={(node) => {
+          splitScrollRef = node;
+        }}
+        onScroll={(event) => onSplitScroll(event.offset.y)}
+        class="min-h-0 flex-1"
+        contentStyle={{
+          paddingTop: pageTopPad(),
+          paddingBottom: 0,
+          paddingLeft: pagePad(),
+          paddingRight: pagePad(),
+        }}
+      >
+        <Each
+          of={segmentList()}
+          key={
+            ((row: { id: number; kind: "prose" | "code" }) =>
+              String(row.id)) as any
+          }
+        >
+          {(row) => {
+            const item = row();
+            return (
+              <View
+                onLayout={(event) => {
+                  segTops.set(item.id, event.bounds.origin.y);
+                }}
+              >
+                {item.kind === "code" ? (
+                  <CodeCard
+                    id={item.id}
+                    colors={props.colors}
+                    dark={props.dark}
+                    wash={props.wash}
+                  />
+                ) : (
+                  <ProsePiece
+                    id={item.id}
+                    colors={props.colors}
+                    dark={props.dark}
+                  />
+                )}
+              </View>
+            );
+          }}
+        </Each>
+        <View
+          onPress={caretToEnd}
+          testID="split-note-tail"
+          style={{ height: 120 }}
+        />
+      </Scroll>
+    </View>
+  );
 }
 
 /// The keyboard the list keeps while it is open: invisible, takes no presses,
 /// and does not type, so every key reaches the keymap.
 function slashKeyboard() {
-  return <View ref={(node) => { slashFocus = node; }} focusable style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />;
+  return (
+    <View
+      ref={(node) => {
+        slashFocus = node;
+      }}
+      focusable
+      style={{ position: "absolute", width: 1, height: 1, opacity: 0 }}
+    />
+  );
 }
 
 function slashMenu(colors: ThemeColors, wash: string) {
-  return <View class="absolute rounded-lg border" style={{ left: slashLeft(), top: slashTop(), width: 264, backgroundColor: colors.card, borderColor: colors.border, paddingTop: 4, paddingBottom: 4 }}>
-    {filtered(slashQuery()).map((item, index) => <View onPress={() => { slashIndex.set(index); pick(); }} role="button" accessibilityLabel={item.label} class="flex-row items-center" hoverStyle={{ backgroundColor: wash }} style={{ height: 28, paddingLeft: 10, paddingRight: 10, gap: 8, cursor: "pointer", backgroundColor: index === slashIndex() ? wash : "transparent" }}>
-      <Text class="text-[13px] flex-1" style={{ color: colors.foreground }}>{item.label}</Text>
-      <Text class="text-[11px]" style={{ color: colors.muted }}>{item.hint}</Text>
-    </View>)}
-  </View>;
+  return (
+    <View
+      class="absolute rounded-lg border"
+      style={{
+        left: slashLeft(),
+        top: slashTop(),
+        width: 264,
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        paddingTop: 4,
+        paddingBottom: 4,
+      }}
+    >
+      {filtered(slashQuery()).map((item, index) => (
+        <View
+          onPress={() => {
+            slashIndex.set(index);
+            pick();
+          }}
+          role="button"
+          accessibilityLabel={item.label}
+          class="flex-row items-center"
+          hoverStyle={{ backgroundColor: wash }}
+          style={{
+            height: 28,
+            paddingLeft: 10,
+            paddingRight: 10,
+            gap: 8,
+            cursor: "pointer",
+            backgroundColor: index === slashIndex() ? wash : "transparent",
+          }}
+        >
+          <Text class="text-[13px] flex-1" style={{ color: colors.foreground }}>
+            {item.label}
+          </Text>
+          <Text class="text-[11px]" style={{ color: colors.muted }}>
+            {item.hint}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
 }
 
 /// One entrance per open note. The page function runs again when the library
@@ -1789,7 +2773,10 @@ function noteEntrance(id: string) {
   noteEnterId = id;
   noteEnter = createMotion({
     enter: {
-      keyframes: [{ opacity: 0, translateY: 8 }, { opacity: 1, translateY: 0 }],
+      keyframes: [
+        { opacity: 0, translateY: 8 },
+        { opacity: 1, translateY: 0 },
+      ],
       duration: 220,
       easing: Easing.bezier(0.16, 1, 0.3, 1),
     },
@@ -1825,70 +2812,107 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
     queueMicrotask(paintCode);
   }
   const enter = noteEntrance(id);
-  return <View class="min-h-0 flex-1 flex-col" style={enter.style}>
-    {/* The sheet is the page, not the column: the scroll view takes the whole
+  return (
+    <View class="min-h-0 flex-1 flex-col" style={enter.style}>
+      {/* The sheet is the page, not the column: the scroll view takes the whole
         width, so its indicator sits at the page's edge, and the text is inset
         to the column's width instead. */}
-    <View
-      class="relative min-h-0 flex-1"
-      onLayout={(event) => {
-        pageRoom.set(event.bounds.size.width);
-        pageTall.set(event.bounds.size.height);
-        void menuAnchor?.measure().then((box) => {
-          if (box) pageTopY = box.pagePosition.y;
-        });
-      }}
-    >
-    <View class="min-h-0 flex-col" style={{ height: pageTall() > 0 ? pageTall() : undefined, paddingTop: 4 }}>
-      {/* A press on the page below the text belongs to the text: the caret
+      <View
+        class="relative min-h-0 flex-1"
+        onLayout={(event) => {
+          pageRoom.set(event.bounds.size.width);
+          pageTall.set(event.bounds.size.height);
+          void menuAnchor?.measure().then((box) => {
+            if (box) pageTopY = box.pagePosition.y;
+          });
+        }}
+      >
+        <View
+          class="min-h-0 flex-col"
+          style={{
+            height: pageTall() > 0 ? pageTall() : undefined,
+            paddingTop: 4,
+          }}
+        >
+          {/* A press on the page below the text belongs to the text: the caret
           goes to the end, the way a word processor takes a click on the
           empty part of a sheet. A split note puts that press target below its
           last block inside the scroll view so margins, gaps, and code headers
           never yank focus and scroll to the bottom. */}
-      <View
-        class="relative min-h-0 flex-1 overflow-hidden"
-        ref={(node) => { menuAnchor = node; }}
-        onPress={onPageSpacePress}
-        onWheel={onSingleWheel}
-        testID="note-page-space"
-      >
-        {codeLayout()
-          ? <SplitNote colors={colors} dark={props.dark} wash={wash} />
-          : <Each of={[{ stamp: editorVersion() }]} key={((row: { stamp: number }) => row.stamp) as any}>{(row) => editor
-            ? <RichEditor
-              editor={editor}
-              ref={(ref) => { editorRef = ref; }}
-              class="min-h-0 flex-1"
-              placeholder="Пишите. Слэш открывает блоки: заголовок, список, таблица…"
-              accessibilityLabel="Текст заметки"
-              onSelectionChange={({ selection }) => syncOutlineFromCaret(null, selection.from)}
-              onPasteFiles={(event) => { pastePictures(event.paste, editor as RichEditorSession); }}
-              onBlur={() => {
-                // The blur the list asked for is not a leave: the caret's editor
-                // keeps the keyboard off while the list has it.
-                if (!slashOpen()) return;
-                if (slashHold) { slashHold = false; return; }
-                if (editor !== slashSession) return;
-                closeSlash();
-              }}
-              styles={noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad(), false, pageTopPad())}
-            />
-            : <View class="h-full" />}</Each>}
-        {slashOpen() && slashKeyboard()}
-        {slashOpen() && slashMenu(colors, wash)}
+          <View
+            class="relative min-h-0 flex-1 overflow-hidden"
+            ref={(node) => {
+              menuAnchor = node;
+            }}
+            onPress={onPageSpacePress}
+            onWheel={onSingleWheel}
+            testID="note-page-space"
+          >
+            {codeLayout() ? (
+              <SplitNote colors={colors} dark={props.dark} wash={wash} />
+            ) : (
+              <Each
+                of={[{ stamp: editorVersion() }]}
+                key={((row: { stamp: number }) => row.stamp) as any}
+              >
+                {(row) =>
+                  editor ? (
+                    <RichEditor
+                      editor={editor}
+                      ref={(ref) => {
+                        editorRef = ref;
+                      }}
+                      class="min-h-0 flex-1"
+                      placeholder="Пишите. Слэш открывает блоки: заголовок, список, таблица…"
+                      accessibilityLabel="Текст заметки"
+                      onSelectionChange={({ selection }) =>
+                        syncOutlineFromCaret(null, selection.from)
+                      }
+                      onPasteFiles={(event) => {
+                        pastePictures(event.paste, editor as RichEditorSession);
+                      }}
+                      onBlur={() => {
+                        // The blur the list asked for is not a leave: the caret's editor
+                        // keeps the keyboard off while the list has it.
+                        if (!slashOpen()) return;
+                        if (slashHold) {
+                          slashHold = false;
+                          return;
+                        }
+                        if (editor !== slashSession) return;
+                        closeSlash();
+                      }}
+                      styles={noteStyles(
+                        colors,
+                        props.dark,
+                        Math.max(0, pageTall() - 150),
+                        pagePad(),
+                        false,
+                        pageTopPad(),
+                      )}
+                    />
+                  ) : (
+                    <View class="h-full" />
+                  )
+                }
+              </Each>
+            )}
+            {slashOpen() && slashKeyboard()}
+            {slashOpen() && slashMenu(colors, wash)}
+          </View>
+        </View>
+        <NotesOutlineRail
+          marks={outline}
+          activePos={activeOutlinePos}
+          colors={colors}
+          dark={props.dark}
+          maxHeight={() => Math.max(180, pageTall() - 80)}
+          onHoverOpen={syncOutlineFromViewport}
+          onSelect={jumpToOutline}
+        />
       </View>
     </View>
-    <NotesOutlineRail
-      marks={outline}
-      activePos={activeOutlinePos}
-      colors={colors}
-      dark={props.dark}
-      maxHeight={() => Math.max(180, pageTall() - 80)}
-      onHoverOpen={syncOutlineFromViewport}
-      onSelect={jumpToOutline}
-    />
-    </View>
-  </View>;
+  );
 }
 
 /// The page's side margin: on a phone it is a phone's margin, on a wide page
@@ -1925,15 +2949,26 @@ function segmentAt(markPos: number): { id: number; local: number } | null {
     const start = pos;
     const doc = seg.session.getJSON() as { content?: unknown[] };
     for (const node of doc.content ?? []) pos += nodeSize(node);
-    if (markPos < pos || index === segments.length - 1) return { id: seg.id, local: markPos - (start - 1) };
+    if (markPos < pos || index === segments.length - 1)
+      return { id: seg.id, local: markPos - (start - 1) };
   }
   return null;
 }
 
-function noteStyles(colors: ThemeColors, dark: boolean, minHeight: number, pad: number, piece = false, topPad = 2) {
+function noteStyles(
+  colors: ThemeColors,
+  dark: boolean,
+  minHeight: number,
+  pad: number,
+  piece = false,
+  topPad = 2,
+) {
   const key = `${piece}|${dark}|${minHeight}|${pad}|${topPad}|${colors.background}|${colors.foreground}|${colors.muted}|${colors.border}`;
   if (documentStylesCache?.key !== key) {
-    documentStylesCache = { key, styles: documentStyles(colors, dark, minHeight, pad, piece, topPad) };
+    documentStylesCache = {
+      key,
+      styles: documentStyles(colors, dark, minHeight, pad, piece, topPad),
+    };
   }
   return documentStylesCache.styles as ReturnType<typeof documentStyles>;
 }
@@ -1946,12 +2981,37 @@ function codeStyles(colors: ThemeColors, dark: boolean) {
     codeStylesCache = {
       key,
       styles: {
-        content: { color: colors.foreground, backgroundColor: "transparent", paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0, minHeight: 0 },
+        content: {
+          color: colors.foreground,
+          backgroundColor: "transparent",
+          paddingTop: 0,
+          paddingBottom: 0,
+          paddingLeft: 0,
+          paddingRight: 0,
+          minHeight: 0,
+        },
         placeholder: { color: colors.muted },
         caret: { backgroundColor: colors.accent },
         nodes: {
-          codeBlock: { fontFamily: Mono, fontSize: 13, lineHeight: 21, paddingTop: 12, paddingBottom: 14, paddingLeft: 14, paddingRight: 14, marginTop: 0, marginBottom: 0, backgroundColor: "transparent" },
-          paragraph: { fontFamily: Mono, fontSize: 13, lineHeight: 21, marginTop: 0, marginBottom: 0 },
+          codeBlock: {
+            fontFamily: Mono,
+            fontSize: 13,
+            lineHeight: 21,
+            paddingTop: 12,
+            paddingBottom: 14,
+            paddingLeft: 14,
+            paddingRight: 14,
+            marginTop: 0,
+            marginBottom: 0,
+            backgroundColor: "transparent",
+          },
+          paragraph: {
+            fontFamily: Mono,
+            fontSize: 13,
+            lineHeight: 21,
+            marginTop: 0,
+            marginBottom: 0,
+          },
         },
         marks: {},
       },
@@ -1960,41 +3020,139 @@ function codeStyles(colors: ThemeColors, dark: boolean) {
   return codeStylesCache.styles as ReturnType<typeof documentStyles>;
 }
 
-function documentStyles(colors: ThemeColors, dark: boolean, minHeight: number, pad: number, piece = false, topPad = 2) {
+function documentStyles(
+  colors: ThemeColors,
+  dark: boolean,
+  minHeight: number,
+  pad: number,
+  piece = false,
+  topPad = 2,
+) {
   return {
     // The page's text fills at least the room it is in: a press below the last
     // line lands on the editable area, and the caret goes where writing goes.
     // The side margins keep the text in its column while the scroll view keeps
     // the page's whole width. A piece sits in the column's own padding.
-    content: { color: colors.foreground, backgroundColor: "transparent", paddingTop: piece ? 0 : topPad, paddingBottom: piece ? 0 : 120, paddingLeft: piece ? 0 : pad, paddingRight: piece ? 0 : pad, minHeight: piece ? 0 : minHeight },
+    content: {
+      color: colors.foreground,
+      backgroundColor: "transparent",
+      paddingTop: piece ? 0 : topPad,
+      paddingBottom: piece ? 0 : 120,
+      paddingLeft: piece ? 0 : pad,
+      paddingRight: piece ? 0 : pad,
+      minHeight: piece ? 0 : minHeight,
+    },
     placeholder: { color: colors.muted },
     caret: { backgroundColor: colors.accent },
     nodes: {
-      paragraph: { fontSize: 16, lineHeight: 24, marginTop: 2, marginBottom: 4 },
-      "heading[level=1]": { fontSize: 28, lineHeight: 36, fontWeight: "bold", marginTop: 32, marginBottom: 8 },
-      "heading[level=2]": { fontSize: 22, lineHeight: 30, fontWeight: "bold", marginTop: 26, marginBottom: 6 },
-      "heading[level=3]": { fontSize: 18, lineHeight: 26, fontWeight: "bold", marginTop: 20, marginBottom: 4 },
-      "heading[level=4]": { fontSize: 16, lineHeight: 24, fontWeight: "bold", marginTop: 16, marginBottom: 4 },
-      "heading[level=5]": { fontSize: 15, lineHeight: 22, fontWeight: "bold", marginTop: 14, marginBottom: 2 },
-      "heading[level=6]": { fontSize: 14, lineHeight: 20, fontWeight: "bold", marginTop: 12, marginBottom: 2 },
-      blockquote: { paddingLeft: 28, marginTop: 6, marginBottom: 6, borderLeftWidth: 2, borderColor: colors.border },
+      paragraph: {
+        fontSize: 16,
+        lineHeight: 24,
+        marginTop: 2,
+        marginBottom: 4,
+      },
+      "heading[level=1]": {
+        fontSize: 28,
+        lineHeight: 36,
+        fontWeight: "bold",
+        marginTop: 32,
+        marginBottom: 8,
+      },
+      "heading[level=2]": {
+        fontSize: 22,
+        lineHeight: 30,
+        fontWeight: "bold",
+        marginTop: 26,
+        marginBottom: 6,
+      },
+      "heading[level=3]": {
+        fontSize: 18,
+        lineHeight: 26,
+        fontWeight: "bold",
+        marginTop: 20,
+        marginBottom: 4,
+      },
+      "heading[level=4]": {
+        fontSize: 16,
+        lineHeight: 24,
+        fontWeight: "bold",
+        marginTop: 16,
+        marginBottom: 4,
+      },
+      "heading[level=5]": {
+        fontSize: 15,
+        lineHeight: 22,
+        fontWeight: "bold",
+        marginTop: 14,
+        marginBottom: 2,
+      },
+      "heading[level=6]": {
+        fontSize: 14,
+        lineHeight: 20,
+        fontWeight: "bold",
+        marginTop: 12,
+        marginBottom: 2,
+      },
+      blockquote: {
+        paddingLeft: 28,
+        marginTop: 6,
+        marginBottom: 6,
+        borderLeftWidth: 2,
+        borderColor: colors.border,
+      },
       bulletList: { marginTop: 2, marginBottom: 4, paddingLeft: 6 },
       orderedList: { marginTop: 2, marginBottom: 4, paddingLeft: 6 },
       listItem: { fontSize: 16, lineHeight: 24 },
-      codeBlock: { fontFamily: Mono, fontSize: 13, lineHeight: 21, paddingTop: 12, paddingBottom: 12, paddingLeft: 14, paddingRight: 14, marginTop: piece ? 0 : 6, marginBottom: piece ? 0 : 6, borderRadius: piece ? 0 : 8, backgroundColor: piece ? "transparent" : surfaceWash(dark, 0.08) },
-      horizontalRule: { marginTop: 18, marginBottom: 18, borderColor: colors.border },
+      codeBlock: {
+        fontFamily: Mono,
+        fontSize: 13,
+        lineHeight: 21,
+        paddingTop: 12,
+        paddingBottom: 12,
+        paddingLeft: 14,
+        paddingRight: 14,
+        marginTop: piece ? 0 : 6,
+        marginBottom: piece ? 0 : 6,
+        borderRadius: piece ? 0 : 8,
+        backgroundColor: piece ? "transparent" : surfaceWash(dark, 0.08),
+      },
+      horizontalRule: {
+        marginTop: 18,
+        marginBottom: 18,
+        borderColor: colors.border,
+      },
       table: { marginTop: 6, marginBottom: 6 },
-      tableCell: { fontSize: 14, lineHeight: 22, padding: 8, borderColor: colors.border },
-      tableHeader: { fontSize: 14, lineHeight: 22, padding: 8, fontWeight: "bold", backgroundColor: surfaceWash(dark, 0.05) },
+      tableCell: {
+        fontSize: 14,
+        lineHeight: 22,
+        padding: 8,
+        borderColor: colors.border,
+      },
+      tableHeader: {
+        fontSize: 14,
+        lineHeight: 22,
+        padding: 8,
+        fontWeight: "bold",
+        backgroundColor: surfaceWash(dark, 0.05),
+      },
     },
     marks: {
-      code: { fontFamily: Mono, fontSize: 14, color: colors.foreground, backgroundColor: surfaceWash(dark, 0.08) },
+      code: {
+        fontFamily: Mono,
+        fontSize: 14,
+        color: colors.foreground,
+        backgroundColor: surfaceWash(dark, 0.08),
+      },
       link: { color: colors.accent, textDecorationLine: "underline" },
     },
   } as const;
 }
 
-type PreviewBlock = { kind: "heading" | "text" | "item" | "code" | "quote" | "rule"; text: string; level: number };
+type PreviewBlock = {
+  kind: "heading" | "text" | "item" | "code" | "quote" | "rule";
+  text: string;
+  level: number;
+};
 
 /// The first blocks of a note, small enough to stand for the page: the same
 /// order, the same kinds, taken far enough to fill a card.
@@ -2003,25 +3161,42 @@ function previewOf(doc: unknown): PreviewBlock[] {
   const blocks = Array.isArray(body.content) ? body.content : [];
   const out: PreviewBlock[] = [];
   const push = (block: PreviewBlock) => {
-    if (out.length < PREVIEW_BLOCKS && (block.text || block.kind === "rule")) out.push(block);
+    if (out.length < PREVIEW_BLOCKS && (block.text || block.kind === "rule"))
+      out.push(block);
   };
   const walk = (node: unknown, depth: number) => {
-    if (out.length >= PREVIEW_BLOCKS || !node || typeof node !== "object") return;
-    const value = node as { type?: string; attrs?: { level?: number }; content?: unknown[] };
+    if (out.length >= PREVIEW_BLOCKS || !node || typeof node !== "object")
+      return;
+    const value = node as {
+      type?: string;
+      attrs?: { level?: number };
+      content?: unknown[];
+    };
     const nodes = Array.isArray(value.content) ? value.content : [];
     for (const child of nodes) {
       if (out.length >= PREVIEW_BLOCKS) return;
       const type = String((child as { type?: string })?.type ?? "");
       const text = inlineText(child);
-      if (type === "heading") push({ kind: "heading", text, level: Number((child as { attrs?: { level?: number } }).attrs?.level ?? 1) });
-      else if (type === "paragraph") push({ kind: depth > 0 ? "item" : "text", text, level: 0 });
+      if (type === "heading")
+        push({
+          kind: "heading",
+          text,
+          level: Number(
+            (child as { attrs?: { level?: number } }).attrs?.level ?? 1,
+          ),
+        });
+      else if (type === "paragraph")
+        push({ kind: depth > 0 ? "item" : "text", text, level: 0 });
       else if (type === "codeBlock") push({ kind: "code", text, level: 0 });
       else if (type === "blockquote") walk(child, depth + 1);
-      else if (type === "bulletList" || type === "orderedList") walk(child, depth + 1);
+      else if (type === "bulletList" || type === "orderedList")
+        walk(child, depth + 1);
       else if (type === "listItem") walk(child, depth);
-      else if (type === "horizontalRule") push({ kind: "rule", text: "", level: 0 });
+      else if (type === "horizontalRule")
+        push({ kind: "rule", text: "", level: 0 });
       else if (type === "table") push({ kind: "rule", text: "", level: 0 });
-      else if (Array.isArray((child as { content?: unknown[] }).content)) walk(child, depth);
+      else if (Array.isArray((child as { content?: unknown[] }).content))
+        walk(child, depth);
     }
   };
   walk(body, 0);
@@ -2035,7 +3210,10 @@ function inlineText(node: unknown): string {
   return value.content.map((child) => inlineText(child)).join("");
 }
 
-const PREVIEW_SIZES: Record<string, { size: number; line: number; weight: "normal" | "bold"; gap: number }> = {
+const PREVIEW_SIZES: Record<
+  string,
+  { size: number; line: number; weight: "normal" | "bold"; gap: number }
+> = {
   h1: { size: 12, line: 16, weight: "bold", gap: 6 },
   h2: { size: 11, line: 15, weight: "bold", gap: 5 },
   h3: { size: 10, line: 14, weight: "bold", gap: 4 },
@@ -2049,11 +3227,42 @@ function PreviewLine(props: { block: PreviewBlock; colors: ThemeColors }) {
   const block = props.block;
   const colors = props.colors;
   if (block.kind === "rule") {
-    return <View style={{ height: 1, marginTop: 4, marginBottom: 2, backgroundColor: colors.border }} />;
+    return (
+      <View
+        style={{
+          height: 1,
+          marginTop: 4,
+          marginBottom: 2,
+          backgroundColor: colors.border,
+        }}
+      />
+    );
   }
-  const scale = block.kind === "heading" ? PREVIEW_SIZES[`h${Math.min(Math.max(block.level, 1), 3)}`] ?? PREVIEW_SIZES.h1 : PREVIEW_SIZES[block.kind] ?? PREVIEW_SIZES.text;
-  const ink = block.kind === "heading" ? colors.foreground : colorAlpha(colors.foreground, 0.62);
-  return <Text class="w-full" style={{ fontSize: scale.size, lineHeight: scale.line, fontWeight: scale.weight, fontFamily: block.kind === "code" ? Mono : undefined, color: ink, marginTop: scale.gap, paddingLeft: block.kind === "item" ? 9 : 0 }}>{block.kind === "item" ? `• ${block.text}` : block.text}</Text>;
+  const scale =
+    block.kind === "heading"
+      ? (PREVIEW_SIZES[`h${Math.min(Math.max(block.level, 1), 3)}`] ??
+        PREVIEW_SIZES.h1)
+      : (PREVIEW_SIZES[block.kind] ?? PREVIEW_SIZES.text);
+  const ink =
+    block.kind === "heading"
+      ? colors.foreground
+      : colorAlpha(colors.foreground, 0.62);
+  return (
+    <Text
+      class="w-full"
+      style={{
+        fontSize: scale.size,
+        lineHeight: scale.line,
+        fontWeight: scale.weight,
+        fontFamily: block.kind === "code" ? Mono : undefined,
+        color: ink,
+        marginTop: scale.gap,
+        paddingLeft: block.kind === "item" ? 9 : 0,
+      }}
+    >
+      {block.kind === "item" ? `• ${block.text}` : block.text}
+    </Text>
+  );
 }
 
 /// A sheet's shadow: barely there in the light theme, a lifted edge in the dark.
@@ -2063,7 +3272,20 @@ function cardShadow(dark: boolean) {
     : "0 1px 2px rgba(15,23,42,0.06), 0 10px 26px rgba(15,23,42,0.09)";
 }
 
-const MONTHS_SHORT = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+const MONTHS_SHORT = [
+  "янв",
+  "фев",
+  "мар",
+  "апр",
+  "мая",
+  "июн",
+  "июл",
+  "авг",
+  "сен",
+  "окт",
+  "ноя",
+  "дек",
+];
 
 /// "9 ноя 2026" from the note's stamp; nothing when it has none.
 function stamp(value: string | undefined): string {

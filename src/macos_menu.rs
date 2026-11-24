@@ -66,8 +66,9 @@ pub(crate) fn install() {
         Some(sel!(toggleFullScreen:)),
         "f",
     );
-    fullscreen
-        .setKeyEquivalentModifierMask(NSEventModifierFlags::Control | NSEventModifierFlags::Command);
+    fullscreen.setKeyEquivalentModifierMask(
+        NSEventModifierFlags::Control | NSEventModifierFlags::Command,
+    );
     window.addItem(&fullscreen);
     window.addItem(&NSMenuItem::separatorItem(mtm));
     window.addItem(&item(mtm, "Закрыть", Some(sel!(performClose:)), "w"));

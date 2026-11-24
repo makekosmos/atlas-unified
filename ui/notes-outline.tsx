@@ -27,7 +27,10 @@ export function outlineRowIndent(level: number, minLevel = 1): number {
 }
 
 /** Scroll-spy selection: last heading at or above the reading threshold, defaulting to the first. */
-export function activeOutlineIndex(ys: readonly (number | null)[], threshold: number): number {
+export function activeOutlineIndex(
+  ys: readonly (number | null)[],
+  threshold: number,
+): number {
   let active = -1;
   for (let index = 0; index < ys.length; index += 1) {
     const y = ys[index];
@@ -37,7 +40,10 @@ export function activeOutlineIndex(ys: readonly (number | null)[], threshold: nu
 }
 
 /** Caret-based fallback: last heading at or before the caret position, defaulting to the first. */
-export function activeOutlinePosForCaret(marks: readonly OutlineMark[], caretPos: number): number {
+export function activeOutlinePosForCaret(
+  marks: readonly OutlineMark[],
+  caretPos: number,
+): number {
   if (!marks.length) return 0;
   let active = marks[0].pos;
   for (const mark of marks) {
@@ -92,101 +98,148 @@ export function NotesOutlineRail(props: {
     const current = props.activePos();
     return items.some((item) => item.pos === current) ? current : items[0].pos;
   };
-  const minLevel = () => list().reduce((min, item) => Math.min(min, item.level), 6);
+  const minLevel = () =>
+    list().reduce((min, item) => Math.min(min, item.level), 6);
   const maxBody = () => Math.max(140, props.maxHeight() - 16);
 
   const renderRows = () => {
     const items = list();
     const activePos = resolvedActive();
     const base = minLevel();
-    const rowActiveBg = props.dark ? colorAlpha("#ffffff", 0.08) : colorAlpha("#000000", 0.06);
-    const rowHoverBg = props.dark ? colorAlpha("#ffffff", 0.12) : colorAlpha("#000000", 0.09);
-    return <View style={{ gap: 2 }}>
-      {items.map((mark) => {
-        const active = mark.pos === activePos;
-        return <View
-          onPress={() => props.onSelect(mark)}
-          role="button"
-          accessibilityLabel={mark.text || "Заголовок"}
-          accessibilityState={{ selected: active }}
-          hoverStyle={{ backgroundColor: rowHoverBg }}
-          style={{
-            paddingLeft: outlineRowIndent(mark.level, base),
-            paddingRight: 12,
-            paddingTop: 7,
-            paddingBottom: 7,
-            borderRadius: 8,
-            backgroundColor: active ? rowActiveBg : "transparent",
-            cursor: "pointer",
-          }}
-        >
-          <Text
-            class="truncate"
-            style={{
-              fontSize: 13.5,
-              lineHeight: 20,
-              fontWeight: active ? 500 : 400,
-              color: active ? props.colors.foreground : colorAlpha(props.colors.foreground, 0.84),
-            }}
-          >
-            {mark.text || "Заголовок"}
-          </Text>
-        </View>;
-      })}
-    </View>;
+    const rowActiveBg = props.dark
+      ? colorAlpha("#ffffff", 0.08)
+      : colorAlpha("#000000", 0.06);
+    const rowHoverBg = props.dark
+      ? colorAlpha("#ffffff", 0.12)
+      : colorAlpha("#000000", 0.09);
+    return (
+      <View style={{ gap: 2 }}>
+        {items.map((mark) => {
+          const active = mark.pos === activePos;
+          return (
+            <View
+              onPress={() => props.onSelect(mark)}
+              role="button"
+              accessibilityLabel={mark.text || "Заголовок"}
+              accessibilityState={{ selected: active }}
+              hoverStyle={{ backgroundColor: rowHoverBg }}
+              style={{
+                paddingLeft: outlineRowIndent(mark.level, base),
+                paddingRight: 12,
+                paddingTop: 7,
+                paddingBottom: 7,
+                borderRadius: 8,
+                backgroundColor: active ? rowActiveBg : "transparent",
+                cursor: "pointer",
+              }}
+            >
+              <Text
+                class="truncate"
+                style={{
+                  fontSize: 13.5,
+                  lineHeight: 20,
+                  fontWeight: active ? 500 : 400,
+                  color: active
+                    ? props.colors.foreground
+                    : colorAlpha(props.colors.foreground, 0.84),
+                }}
+              >
+                {mark.text || "Заголовок"}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    );
   };
 
   const renderTicks = () => {
     const items = list();
     const activePos = resolvedActive();
     const tickActive = props.dark ? "#ffffff" : props.colors.foreground;
-    const tickIdle = props.dark ? colorAlpha("#ffffff", 0.24) : colorAlpha("#000000", 0.2);
-    return <View
-      class="items-end"
-      style={{ paddingTop: 12, paddingBottom: 12, paddingLeft: 12, paddingRight: 2, gap: items.length > 25 ? 5 : 8 }}
-    >
-      {items.map((mark) => {
-        const active = mark.pos === activePos;
-        return <View
-          onPress={() => props.onSelect(mark)}
-          role="button"
-          accessibilityLabel={mark.text || "Заголовок"}
-          accessibilityState={{ selected: active }}
-          class="items-end justify-center"
-          style={{ width: 28, height: 6, cursor: "pointer" }}
-        >
-          <View style={{ width: outlineTickWidth(mark.level), height: 3, borderRadius: 1.5, backgroundColor: active ? tickActive : tickIdle }} />
-        </View>;
-      })}
-    </View>;
+    const tickIdle = props.dark
+      ? colorAlpha("#ffffff", 0.24)
+      : colorAlpha("#000000", 0.2);
+    return (
+      <View
+        class="items-end"
+        style={{
+          paddingTop: 12,
+          paddingBottom: 12,
+          paddingLeft: 12,
+          paddingRight: 2,
+          gap: items.length > 25 ? 5 : 8,
+        }}
+      >
+        {items.map((mark) => {
+          const active = mark.pos === activePos;
+          return (
+            <View
+              onPress={() => props.onSelect(mark)}
+              role="button"
+              accessibilityLabel={mark.text || "Заголовок"}
+              accessibilityState={{ selected: active }}
+              class="items-end justify-center"
+              style={{ width: 28, height: 6, cursor: "pointer" }}
+            >
+              <View
+                style={{
+                  width: outlineTickWidth(mark.level),
+                  height: 3,
+                  borderRadius: 1.5,
+                  backgroundColor: active ? tickActive : tickIdle,
+                }}
+              />
+            </View>
+          );
+        })}
+      </View>
+    );
   };
 
   const renderPopover = () => {
     const bodyHeight = maxBody();
     const scrollable = list().length * POPOVER_ROW_HEIGHT > bodyHeight;
-    return <View
-      testID="notes-outline-popover"
-      style={{
-        width: 256,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: props.dark ? colorAlpha("#ffffff", 0.1) : props.colors.border,
-        backgroundColor: props.colors.card,
-        padding: 8,
-        boxShadow: popoverShadow(props.dark),
-      }}
-    >
-      {scrollable
-        ? <Scroll scrollbar={false} style={{ height: bodyHeight }}>{renderRows()}</Scroll>
-        : renderRows()}
-    </View>;
+    return (
+      <View
+        testID="notes-outline-popover"
+        style={{
+          width: 256,
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: props.dark
+            ? colorAlpha("#ffffff", 0.1)
+            : props.colors.border,
+          backgroundColor: props.colors.card,
+          padding: 8,
+          boxShadow: popoverShadow(props.dark),
+        }}
+      >
+        {scrollable ? (
+          <Scroll scrollbar={false} style={{ height: bodyHeight }}>
+            {renderRows()}
+          </Scroll>
+        ) : (
+          renderRows()
+        )}
+      </View>
+    );
   };
 
-  return <View class="absolute top-0 bottom-0 justify-center items-end" style={{ right: OUTLINE_INSET, pointerEvents: "box-none", zIndex: 20 }}>
-    {list().length >= 2 && (
-      <View testID="notes-outline-rail" onMouseEnter={openRail} onMouseLeave={closeRail}>
-        {open() ? renderPopover() : renderTicks()}
-      </View>
-    )}
-  </View>;
+  return (
+    <View
+      class="absolute top-0 bottom-0 justify-center items-end"
+      style={{ right: OUTLINE_INSET, pointerEvents: "box-none", zIndex: 20 }}
+    >
+      {list().length >= 2 && (
+        <View
+          testID="notes-outline-rail"
+          onMouseEnter={openRail}
+          onMouseLeave={closeRail}
+        >
+          {open() ? renderPopover() : renderTicks()}
+        </View>
+      )}
+    </View>
+  );
 }

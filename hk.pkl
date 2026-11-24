@@ -1,5 +1,11 @@
 amends "package://github.com/jdx/hk/releases/download/v2.0.1/hk@2.0.1#/Config.pkl"
 
+// One step at a time. Two cargo invocations at once race on the shared target
+// dir the cargo fork keeps under ~/.cargo/targets, and gpui-fast-windows' build
+// script appends to its generated bindings when it runs twice, which breaks the
+// whole workspace with "the name `QUAD_VERTEX_BYTES` is defined multiple times".
+jobs = 1
+
 // Rust files plus the inputs that change how they build or lint.
 local rust_glob = List(
   "*.rs",
@@ -9,6 +15,9 @@ local rust_glob = List(
   "rust-toolchain*",
   ".cargo/**",
 )
+
+// The UI sources `bun fmt` owns: JS/TS/TSX, plus the JSON the screens read.
+local ui_glob = List("ui/*.ts", "ui/*.tsx", "ui/*.json", "scripts/*.mjs", "bunfig.toml", ".prettierignore")
 
 // Whole-project steps: run on every push and via `hk check --all`. They take no
 // file list on purpose — a push must not skip the gate when file matching fails.
@@ -22,19 +31,23 @@ local gate = new Mapping<String, Step> {
     check = "cargo clippy --workspace --all-targets --all-features -- -D warnings"
   }
   ["cargo-deny"] { check = "cargo deny check advisories bans sources" }
+  ["ui-fmt"] { check = "bun fmt --check ." }
   ["source-size"] { check = "cargo run -q --bin check-source-size" }
 }
 
 hooks {
   ["pre-commit"] {
     steps {
-      ["cargo-check"] {
-        glob = rust_glob
-        check = "cargo check --quiet"
-      }
+      // Size gate (300 warns, 500 fails) and the compile check, in one process:
+      // see scripts/hk-cargo-gate.mjs for why they must not run concurrently.
+      ["cargo-gate"] { check = "node scripts/hk-cargo-gate.mjs" }
       ["rustfmt"] {
         glob = List("*.rs", "build.rs")
         check = "cargo fmt --check"
+      }
+      ["ui-fmt"] {
+        glob = ui_glob
+        check = "bun fmt --check ."
       }
     }
   }

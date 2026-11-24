@@ -14,6 +14,10 @@ const stored = JSON.stringify([
 
 void Storage.setItem("mundus.atlas.recent.v1", stored).then(() => loadRecent());
 
-mount(() => <View style={{ gap: 4 }}>
-  {recent().map((entry) => <Text>{entry.title}</Text>)}
-</View>);
+mount(() => (
+  <View style={{ gap: 4 }}>
+    {recent().map((entry) => (
+      <Text>{entry.title}</Text>
+    ))}
+  </View>
+));
