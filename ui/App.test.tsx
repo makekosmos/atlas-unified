@@ -86,7 +86,7 @@ test("a tab is a chip of one width, whatever it is called", async () => {
     height: 800,
   });
   await app.waitFor("label:Дневник");
-  expect(app.layout("label:Дневник")?.width).toEqual(200);
+  expect(app.layout("label:Дневник")?.width).toEqual(350);
 });
 
 test("a page opens as a tab and closes back to the one before", async () => {

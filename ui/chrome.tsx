@@ -205,7 +205,7 @@ const TAB_CLOSE_ROOM = 4 + TAB_CLOSE_SIZE + 4;
 const TAB_TEXT_SIZE = 14;
 /// A tab is this wide, its name or not: the strip reads as a row of equal
 /// chips. It shrinks when the strip runs out of room, down to `TAB_MIN_WIDTH`.
-const TAB_WIDTH = 200;
+const TAB_WIDTH = 350;
 const TAB_MIN_WIDTH = 88;
 /// How far the name fades out at the chip's right edge when it is longer than
 /// the chip: the plate's own tone covers the cut.
