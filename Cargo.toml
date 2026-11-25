@@ -9,13 +9,13 @@ default-run = "atlas"
 members = ["crates/agenda-core"]
 
 [dependencies]
-# gpui-kit 0.10 routes windows and rendering through gpui-fast.
-gpui = { package = "gpui-kit", version = "=0.10.0", features = ["gpui-fast"] }
-gpui-component = { version = "=0.10.0", features = ["gpui-fast"] }
+# gpui-kit 0.11 routes windows and rendering through gpui-fast 0.1.19.
+gpui = { package = "gpui-kit", version = "=0.11.0", features = ["gpui-fast"] }
+gpui-component = { version = "=0.11.0", features = ["gpui-fast"] }
 # NSH screens run in the same GPUI Fast renderer as the host app.
-imago-nsh = { git = "https://github.com/makekosmos/imago.git", branch = "nsh-0.6" }
+imago-nsh = { git = "https://github.com/makekosmos/imago.git", branch = "nsh-0.7" }
 # Enables the NSH dev-server client in the embedded GPUI host.
-nsh-platform-gpui = { version = "=0.6.1", default-features = false, features = ["js", "dev"] }
+nsh-platform-gpui = { version = "=0.7.1", default-features = false, features = ["js", "dev"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
@@ -88,7 +88,7 @@ objc2-foundation = "=0.3.2"
 objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSApplication", "NSMenu", "NSMenuItem", "NSPanel", "NSResponder", "NSSavePanel", "NSWindow"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-gpui-fast-backend = { package = "gpui-fast", version = "=0.1.17", features = ["windows-manifest-provided-by-host"] }
+gpui-fast-backend = { package = "gpui-fast", version = "=0.1.19", features = ["windows-manifest-provided-by-host"] }
 raw-window-handle = "0.6"
 
 
@@ -96,5 +96,5 @@ raw-window-handle = "0.6"
 # gpui-fast and its gpui-pre compatibility dependency are patched from the
 # same Imago revision as the shared Atlas components. Atlas uses gpui-kit's
 # gpui-fast feature and doesn't import gpui-pre itself.
-gpui-fast = { git = "https://github.com/makekosmos/imago.git", branch = "nsh-0.6" }
-gpui-pre = { git = "https://github.com/makekosmos/imago.git", branch = "nsh-0.6" }
+gpui-fast = { git = "https://github.com/makekosmos/imago.git", branch = "nsh-0.7" }
+gpui-pre = { git = "https://github.com/makekosmos/imago.git", branch = "nsh-0.7" }

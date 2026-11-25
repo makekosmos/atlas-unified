@@ -4922,6 +4922,8 @@ function SplitNote(props) {
 			splitScrollRef = node;
 		});
 		prop(__nsh_hv46, "onScroll", (event) => onSplitScroll(event.offset.y));
+		prop(__nsh_hv46, "smoothWheel", true);
+		prop(__nsh_hv46, "wheelLineHeight", 40);
 		prop(__nsh_hv46, "scrollbar", false);
 		prop(__nsh_hv46, "class", "min-h-0 flex-1");
 		bindProp(__nsh_hv46, "contentStyle", () => ({

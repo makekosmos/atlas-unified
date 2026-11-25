@@ -2726,6 +2726,12 @@ function SplitNote(props: {
           splitScrollRef = node;
         }}
         onScroll={(event) => onSplitScroll(event.offset.y)}
+        // The wheel: a notch glides instead of jumping a fixed step, and a line
+        // is 40 px — the reading rhythm of the page's own 20 px leading — so a
+        // notch (three lines on Windows) carries the eye a paragraph, not an
+        // eighth of the screen.
+        smoothWheel
+        wheelLineHeight={40}
         // No bar: the rail says where the reader is, and a second indicator down
         // the page's edge only competes with it.
         scrollbar={false}

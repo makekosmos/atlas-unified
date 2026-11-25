@@ -52,7 +52,7 @@ pnpm demo                                  # демо + hot reload UI (nsh dev)
 Логи: `.dev-logs/atlas-nsh-server.log`.
 
 CLI `nsh` должен совпадать по версии с `nsh-base`, который линкует хост
-(сейчас 0.6.1): старый CLI не знает компонентов вроде `RichEditor` и падает
+(сейчас 0.7.1): старый CLI не знает компонентов вроде `RichEditor` и падает
 на «`nsh/base` has no export». Скрипт берёт `~/.nsh/bin/nsh`, если он
 есть, иначе `nsh` из `PATH`; путь можно задать через `NSH_BIN`.
 `ATLAS_ROUTE=notes` открывает окно сразу на нужной странице.
@@ -146,11 +146,14 @@ hk run pre-push                             # или hk check --all
   список `GRANDFATHERED` (`app.rs`, `chrome.rs`, `model.rs`, `pages.rs`) только
   сокращается: новый код клади в подмодули.
 - `gpui` (псевдоним `gpui-kit`) и `gpui-component` закреплены точными
-  версиями и должны совпадать с cortex/manager-gpui, memoria-gpui и dictation
-  (там же закреплён и `gpui-base`; он здесь приходит транзитивно): две версии
-  gpui в одной сборке — ошибка типов. Поднимай вместе. `imago-gpui` и
-  `mundus-gpui-kit` закреплены по одному rev репозитория `makekosmos/imago`,
-  `[patch.crates-io]` (`gpui-pre*`) — по другому; их меняют отдельно.
+  версиями (`=0.11.0`, вместе с транзитивным `gpui-base`). Их диктует nsh:
+  0.7.1 требует `gpui-fast 0.1.19`, а тот приходит только с gpui-kit 0.11 —
+  две версии gpui в одной сборке и есть ошибка типов. Поднимать надо вместе
+  с cortex/manager-gpui, memoria-gpui и dictation: они пока на старых пинах
+  (0.9.x/0.8.x там, где эти крейты вообще есть), и сборка одного приложения
+  от этого не ломается. `imago-gpui` и `mundus-gpui-kit` закреплены по одному
+  rev репозитория `makekosmos/imago`, `[patch.crates-io]` (`gpui-pre*`,
+  `gpui-fast`) — по другому (ветка `nsh-0.7`).
 - В `[profile.release]` `debug-assertions` должен оставаться `false`:
   иначе gpui-pre-windows не скомпилирует шейдеры (комментарий в `Cargo.toml`).
 - Цвета и шрифты — только через токены темы (`theme.rs`, `palettes.rs`).
