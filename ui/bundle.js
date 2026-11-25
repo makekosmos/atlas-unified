@@ -798,10 +798,11 @@ function TabChip(props) {
 			overflow: "hidden"
 		});
 		const __nsh_hv3 = element("text");
-		prop(__nsh_hv3, "class", "truncate");
 		bindProp(__nsh_hv3, "style", () => ({
 			fontSize: TAB_TEXT_SIZE,
 			lineHeight: 20,
+			numberOfLines: 1,
+			textOverflow: "clip",
 			fontWeight: props.tab.active ? 600 : 500,
 			color: props.tab.active ? colors.foreground : colors.muted
 		}));

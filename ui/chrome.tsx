@@ -322,10 +322,13 @@ function TabChip(props: {
         }}
       >
         <Text
-          class="truncate"
           style={{
             fontSize: TAB_TEXT_SIZE,
             lineHeight: 20,
+            // One line, cut where the room ends and no ellipsis: the fade is
+            // what hides the cut.
+            numberOfLines: 1,
+            textOverflow: "clip",
             fontWeight: props.tab.active ? 600 : 500,
             color: props.tab.active ? colors.foreground : colors.muted,
           }}
