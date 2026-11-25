@@ -1,28 +1,56 @@
 import { open, expect, test } from "nsh/test";
-import { addNote, cardDelay, notes, setNotes } from "./notes";
+import { addNote, gridMetrics, notes, setNotes } from "./notes";
+import { NOTE_TITLE_BLOCK, NOTE_TITLE_GAP } from "./notes";
+import type { Note } from "./state";
 import {
   commitRecent,
+  forgetMissingNotes,
   forgetRecent,
   recent,
   rememberRecent,
   stageRecent,
 } from "./recent";
-import type { Note } from "./state";
+
+test("the title holds two lines before it moves the page", () => {
+  // Two 40px lines: a one-line title leaves a line of air above it, a second
+  // line fills that air, and only a third one takes the note's text down.
+  expect(NOTE_TITLE_BLOCK).toEqual(80);
+  expect(NOTE_TITLE_GAP).toEqual(20);
+});
 
 /// The four defects the desk showed, each pinned to the rule that fixes it: a
 /// card that waits for its place in the queue, a note opened by a save, pages
 /// in the list of what was opened, and the text column that took the scroll.
 
-test("a card scrolled into view arrives with the frame", () => {
-  // The first screen staggers: 32 ms apart, so the library lands as a row.
-  expect(cardDelay(0)).toBe(0);
-  expect(cardDelay(3)).toBe(96);
-  expect(cardDelay(11)).toBe(352);
-  // Past the first screen the wait stops growing: a card at index 105 used to
-  // wait 3.4 seconds, and one at 3000 nearly two minutes.
-  expect(cardDelay(12)).toBe(352);
-  expect(cardDelay(105)).toBe(352);
-  expect(cardDelay(3000)).toBe(352);
+test("the grid keeps a card between its smallest and largest width", () => {
+  // A narrow page holds one card, grown to the largest and centred; a wide one
+  // never stretches a card past it, nor squeezes one below the smallest.
+  const narrow = gridMetrics(420);
+  expect(narrow.columns).toBe(1);
+  expect(narrow.cardWidth).toBe(260);
+  expect(narrow.sidePad).toBe(56);
+  let columns = 0;
+  for (const width of [300, 420, 700, 900, 1180, 1400, 1600, 2400]) {
+    const metrics = gridMetrics(width);
+    expect(metrics.cardWidth).toBeGreaterThanOrEqual(196);
+    expect(metrics.cardWidth).toBeLessThanOrEqual(260);
+    expect(metrics.columns).toBeGreaterThanOrEqual(columns);
+    columns = metrics.columns;
+  }
+  expect(gridMetrics(1180).columns).toBe(5);
+  expect(gridMetrics(2400).columns).toBe(5);
+});
+
+test("a note the library no longer holds leaves the sidebar", () => {
+  for (const item of recent()) forgetRecent(item.kind, item.id);
+  rememberRecent({ kind: "note", id: "n1", title: "Живая" });
+  rememberRecent({ kind: "note", id: "gone", title: "Удалённая" });
+  rememberRecent({ kind: "game", id: "g1", title: "Игра" });
+  forgetMissingNotes(new Set(["n1"]));
+  // The game stays: the notes library has nothing to say about it.
+  expect(recent().map((item) => item.id)).toEqual(["g1", "n1"]);
+  forgetRecent("game", "g1");
+  forgetRecent("note", "n1");
 });
 
 test("the list of what was opened keeps notes and games only", async () => {
@@ -111,4 +139,49 @@ test("recent notes stay in place while open and move to the top when left", () =
   // Opening a note not yet in the list adds it so the sidebar can show it active.
   stageRecent({ kind: "note", id: "n4", title: "Четвёртая" });
   expect(recent().map((item) => item.id)).toEqual(["n4", "n3", "n1"]);
+});
+
+test("the notes' arrows walk back to the list and forward into the note", async () => {
+  const app = await open("./notes-trail-fixture.tsx", {
+    width: 1180,
+    height: 820,
+  });
+  await app.press("label:Заметка 2");
+  // The list keeps its "Новая заметка" button; a note is the note itself.
+  expect(app.texts()).toContain("Текст заметки 2");
+  expect(app.texts()).not.toContain("Новая заметка");
+
+  // Back from the first note opened is the list it came from — the arrow is
+  // the way out, so a note has no separate "close" — and forward is the note
+  // again, as the trail remembers it.
+  await app.press("label:Назад");
+  expect(app.texts()).toContain("Новая заметка");
+
+  await app.press("label:Вперёд");
+  expect(app.texts()).not.toContain("Новая заметка");
+  expect(app.texts()).toContain("Текст заметки 2");
+
+  // A note opened from the list drops what was ahead: the trail is the way
+  // walked, not everything ever visited.
+  await app.press("label:Назад");
+  await app.press("label:Заметка 1");
+  await app.press("label:Вперёд");
+  expect(app.texts()).not.toContain("Новая заметка");
+  expect(app.texts()).toContain("Текст заметки 1");
+});
+
+test("a note restored without a walk leaves both arrows still", async () => {
+  const app = await open("./notes-trail-fixture.tsx", {
+    width: 1180,
+    height: 820,
+  });
+  // The page opens with nowhere behind it and nowhere ahead.
+  expect(app.texts()).toContain("нет:нет");
+
+  // What the host and the bar's tabs do: bring a note back without walking.
+  // A step recorded here would leave back lit wherever the reader stands and
+  // forward dark at the end of the trail.
+  await app.press("label:Восстановить заметку");
+  expect(app.texts()).toContain("Текст заметки 2");
+  expect(app.texts()).toContain("нет:нет");
 });

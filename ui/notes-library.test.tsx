@@ -25,7 +25,7 @@ test("a card opens the note, and its headings become the rails", async () => {
   await app.press("label:Подраздел");
 });
 
-test("hovering the outline rail opens the heading popover", async () => {
+test("pointing at the rail opens the outline board beside it", async () => {
   const app = await open("./notes-fixture.tsx", {
     width: 1180,
     height: 820,
@@ -33,10 +33,11 @@ test("hovering the outline rail opens the heading popover", async () => {
   });
   await app.press("label:Заметка 1");
   expect(app.texts().filter((item) => item === "Подраздел").length).toBe(1);
+  // The marks alone say where the reader is; pointing at them opens the board
+  // that names every heading, so the page reads the name twice: once as the
+  // document's, once as the board's.
   await app.hover("id:notes-outline-rail");
-  expect(app.texts().filter((item) => item === "Раздел").length).toBe(2);
   expect(app.texts().filter((item) => item === "Подраздел").length).toBe(2);
-  await app.press("label:Подраздел");
 });
 
 test("the slash menu offers Markdown's blocks, check lists among them", async () => {

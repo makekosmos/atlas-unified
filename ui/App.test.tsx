@@ -65,7 +65,7 @@ test("groups journal bubbles by date and omits the current year", () => {
   );
 });
 
-test("keeps macOS traffic lights and leaves page names out of the titlebar", async () => {
+test("keeps macOS traffic lights and names the open page in its tab", async () => {
   const app = await open("./App.tsx", {
     platform: "macos",
     width: 1200,
@@ -75,12 +75,27 @@ test("keeps macOS traffic lights and leaves page names out of the titlebar", asy
   expect(app.texts()).not.toContain("Свернуть окно");
   expect(app.texts()).not.toContain("Развернуть окно");
   expect(app.texts()).not.toContain("Закрыть окно");
-  expect(app.texts().filter((text) => text === "Дневник").length).toEqual(1);
+  // The page's name comes twice: the sidebar row and the page's own tab.
+  expect(app.texts().filter((text) => text === "Дневник").length).toEqual(2);
+});
+
+test("a page opens as a tab and closes back to the one before", async () => {
+  const app = await open("./App.tsx", { width: 1200, height: 800 });
+  // The window opens on the journal, so its tab is the only one there.
+  expect(app.texts()).toContain("Записей пока нет");
+  await app.press("text:Заметки");
+  expect(app.texts()).not.toContain("Записей пока нет");
+  // The tab carries the page's name, and closing it goes back to the journal.
+  expect(
+    app.texts().filter((text) => text === "Заметки").length,
+  ).toBeGreaterThan(1);
+  await app.press("label:Закрыть Заметки");
+  expect(app.texts()).toContain("Записей пока нет");
 });
 
 test("centers titlebar controls on the same line as the traffic lights", () => {
-  expect(titlebarControlTop(24)).toEqual(9);
-  expect(titlebarControlTop(28)).toEqual(7);
+  expect(titlebarControlTop(24)).toEqual(8);
+  expect(titlebarControlTop(28)).toEqual(6);
 });
 
 test("draws caption buttons on Windows and Linux only when the system reserves none", () => {
@@ -253,7 +268,12 @@ test("keeps preview journal entries without the engine", async () => {
 });
 
 test("adds a task in preview without the engine", async () => {
-  const app = await open("./widgets-on-fixture.tsx");
+  // The dialog's footer needs a window the app itself would have: at the
+  // harness's tiny default the card is cut and its buttons leave the tree.
+  const app = await open("./widgets-on-fixture.tsx", {
+    width: 1200,
+    height: 800,
+  });
   await app.press("Задачи");
   await app.press("Новая задача");
   await app.type("Название задачи", "купить хлеб");
@@ -386,12 +406,16 @@ test("reverses the sidebar from wherever the width is", () => {
   ).toEqual(SIDEBAR_WIDTH);
 });
 
-test("starts the note chip after the sidebar toggle, not under it", () => {
-  // A hidden sidebar leaves no pane, and the toggle keeps its x: the chip must
-  // clear the 24pt control (and its 8pt gap) instead of landing on top of it.
-  const toggleLeft = 10;
-  expect(noteBackLeft(0, toggleLeft)).toEqual(toggleLeft + 24 + 8);
-  expect(noteBackLeft(SIDEBAR_WIDTH, toggleLeft)).toEqual(SIDEBAR_WIDTH + 8);
+test("stands the notes' arrows against the pane's edge, on the toggle's line", () => {
+  // Two arrows and their gap keep to the right edge of the pane; a hidden pane
+  // leaves nothing to hold them, so they fall back beside the toggle instead of
+  // landing on top of it.
+  const toggleLeft = 8;
+  const trail = 24 + 2 + 24;
+  expect(noteBackLeft(0, toggleLeft)).toEqual(toggleLeft + 24 + 6);
+  expect(noteBackLeft(SIDEBAR_WIDTH, toggleLeft)).toEqual(
+    SIDEBAR_WIDTH - trail,
+  );
 });
 
 test("lifts a recorded bar with the voice", () => {
@@ -414,11 +438,13 @@ test("toggles the sidebar from the keyboard without the engine", async () => {
     width: 1200,
     height: 800,
   });
+  // The row and the page's tab both carry the name, so hiding the pane takes
+  // one away and the tab stays.
+  expect(app.texts().filter((text) => text === "Дневник").length).toEqual(2);
+  await app.keyboard.press("mod+b");
   expect(app.texts().filter((text) => text === "Дневник").length).toEqual(1);
   await app.keyboard.press("mod+b");
-  expect(app.texts().filter((text) => text === "Дневник").length).toEqual(0);
-  await app.keyboard.press("mod+b");
-  expect(app.texts().filter((text) => text === "Дневник").length).toEqual(1);
+  expect(app.texts().filter((text) => text === "Дневник").length).toEqual(2);
 });
 
 test("keeps appearance controls usable in a narrow window", async () => {

@@ -43,6 +43,11 @@ pub(crate) fn initial_snapshot() -> Value {
         "appearance": default_appearance(),
         "appearanceEditable": false,
         "themes": themes,
+        "nshTheme": crate::palettes::nsh_theme(
+            &crate::palettes::THEMES[0].light,
+            &crate::palettes::THEMES[0].dark,
+            None,
+        ),
         "colors": {
             "background": color(palette.bg),
             "foreground": color(palette.fg),
@@ -254,6 +259,7 @@ fn publish(engine: &Engine, context: &ComponentContext, route: &str, entries: &[
         "appearance": appearance.clone().unwrap_or_else(default_appearance),
         "appearanceEditable": response.as_ref().is_some_and(|value| value.policy.editable),
         "themes": theme_choices,
+        "nshTheme": crate::palettes::nsh_theme(&theme.light, &theme.dark, Some(accent)),
         "colors": colors,
         "sidebarVisible": !imago_window_macos::sidebar_collapsed(),
         "chrome": "native"

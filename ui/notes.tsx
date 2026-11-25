@@ -1,6 +1,5 @@
 import {
   Clipboard,
-  Image,
   createMotion,
   Easing,
   effect,
@@ -12,7 +11,6 @@ import {
   View,
 } from "nsh";
 import {
-  Input,
   RichEditor,
   RichEditorPlugin,
   StarterKit,
@@ -24,7 +22,10 @@ import {
   insertTable,
   setNodeAttribute,
 } from "nsh/base";
-import Mono from "./fonts/IBMPlexMono-Regular.ttf";
+import Mono from "./fonts/GeistMono-Regular.ttf";
+// The Medium cut is a face of the same family: importing it is what hands the
+// file to the runtime, and the code styles pick it with `fontWeight: 500`.
+import "./fonts/GeistMono-Medium.ttf";
 import type {
   RichCommand,
   RichEditorPastedFiles,
@@ -32,14 +33,19 @@ import type {
   RichEditorSession,
 } from "nsh/base";
 import type { ViewRef } from "nsh";
-import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import { Menu } from "nsh/desktop";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
-import { colorAlpha, surfaceWash } from "./chrome";
+import { colorAlpha, mixHex, surfaceWash } from "./chrome";
+import { accentMark } from "./themes";
 import { Glyph } from "./glyph";
 import { languageOf, scan, tokenColors } from "./highlight";
 import type { TokenKind } from "./highlight";
-import { commitRecent, forgetRecent, stageRecent } from "./recent";
+import {
+  commitRecent,
+  forgetMissingNotes,
+  forgetRecent,
+  stageRecent,
+} from "./recent";
 import { NotesOutlineRail, activeOutlineIndex } from "./notes-outline";
 import type { OutlineMark } from "./notes-outline";
 import type { Note } from "./state";
@@ -98,27 +104,19 @@ const SAVE_DELAY_MS = 700;
 /// The library's grid: the card's smallest width, the air between cards, and
 /// the page's proportions (quiet.md's card is 236 x 264).
 const CARD_MIN = 196;
+const CARD_MAX = 260;
 const CARD_GAP = 16;
 const CARD_RATIO = 264 / 236;
 /// Beyond five columns a card stops reading as a page.
 const CARD_MAX_COLUMNS = 5;
-/// How many cards stagger in on the first paint: a card that scrolls into view
-/// later arrives with the frame, not after a delay of its own.
-const ENTER_STAGGER_CARDS = 11;
 
-/// How long a card waits before it fades in: the first screen staggers, and a
-/// card that the list mounts while scrolling does not wait at all — a card at
-/// index 105 used to arrive three seconds after the finger.
-export function cardDelay(index: number): number {
-  return Math.max(0, Math.min(index, ENTER_STAGGER_CARDS)) * 32;
-}
 /// Below this width the library is a list of rows, the way a phone shows it.
 const COMPACT_LIBRARY = 560;
 /// Room under the last row for the floating button: it sits over the page, so
 /// the page ends above it rather than behind it.
 const LIBRARY_BOTTOM = 104;
 /// Code is read by its columns. The face is the one the app already ships
-/// (IBM Plex Mono), registered by importing the file.
+/// (Geist Mono), registered by importing the file.
 
 const GRID_PAD = 24;
 /// The note itself opens as one column, not as a pane: the text keeps a
@@ -218,8 +216,6 @@ export const notes = signal<Note[]>([]);
 const editorVersion = signal(0);
 
 /// Two overlapping sheets: the copy button on a code block.
-const COPY_ICON =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect x='8.5' y='8.5' width='11' height='11' rx='2' stroke='%23000' stroke-width='1.6'/%3E%3Cpath d='M6.5 15.5H5.2A2.2 2.2 0 0 1 3 13.3V5.2A2.2 2.2 0 0 1 5.2 3h8.1A2.2 2.2 0 0 1 15.5 5.2V6.5' stroke='%23000' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E";
 
 /// One code block as the page draws it. `node` is the position before the
 /// block (what `pageNodeRect` and the language attribute take). `pos` is its
@@ -473,6 +469,9 @@ export function addNote(note: Note) {
 
 export function setNotes(next: Note[]) {
   loading.set(false);
+  // The sidebar's memory is checked against the library it just received: a
+  // note deleted elsewhere leaves it here, and its row would open nothing.
+  forgetMissingNotes(new Set(next.map((note) => text(note.id))));
   const before = new Set(notes().map((note) => text(note.id)));
   if (openingNew) {
     notes.set(next);
@@ -921,6 +920,7 @@ function open(note: Note | null) {
     const doc = documentOf(note.doc);
     if (hasCodeBlock(doc)) becomeSplit(doc, -1);
     else mountSingle(doc);
+    buildTitleEditor(text(note.title));
     // What is on disk already: a caret move must not look like an edit and
     // send the library back through the host.
     savedBody = JSON.stringify(currentDoc());
@@ -932,6 +932,7 @@ function open(note: Note | null) {
     activeOutlinePos.set(marks[0]?.pos ?? 0);
     paintCode();
   } else {
+    buildTitleEditor("");
     outline.set([]);
     activeOutlinePos.set(0);
   }
@@ -1252,6 +1253,23 @@ function syncOutlineFromViewport() {
   const active = activeOutlineIndex(ys, pageTopY + threshold);
   if (activeOutlinePos() !== marks[active].pos)
     activeOutlinePos.set(marks[active].pos);
+}
+
+let caretSyncTimer: ReturnType<typeof setTimeout> | null = null;
+let caretSyncAt: { segId: number | null; pos: number } | null = null;
+
+/// Which heading the caret is under is read from the editor's geometry, and a
+/// drag fires a selection on every pointer move: the rail may settle a moment
+/// after the drag, the highlight must not wait behind it.
+function scheduleCaretOutline(segId: number | null, pos: number) {
+  caretSyncAt = { segId, pos };
+  if (caretSyncTimer) return;
+  caretSyncTimer = setTimeout(() => {
+    caretSyncTimer = null;
+    const at = caretSyncAt;
+    caretSyncAt = null;
+    if (at) syncOutlineFromCaret(at.segId, at.pos);
+  }, 60);
 }
 
 function scheduleOutlineSync() {
@@ -1697,15 +1715,81 @@ function select(note: Note | null) {
       id: text(note.id),
       title: text(note.title).trim() || "Без названия",
     });
+  visitStep(id ?? "");
 }
 
-/// The open note's name, for the window's title bar.
-export const openNoteTitle = () => (selectedId() ? draftTitle() : "");
+/// The trail of notes walked, the way a browser keeps one: the library is a
+/// step too, so back from the first note lands on the list and forward brings
+/// the note back. A new step drops whatever was ahead of it.
+const TRAIL_LIMIT = 40;
+const trailSteps = signal<string[]>([""]);
+const trailAt = signal(0);
+/// Walking the trail must not write to it.
+let silentNavigation = false;
+
+function visitStep(id: string) {
+  if (silentNavigation) return;
+  const trail = trailSteps();
+  const at = trailAt();
+  if (trail[at] === id) return;
+  const walked = [...trail.slice(0, at + 1), id];
+  const kept = walked.slice(Math.max(0, walked.length - TRAIL_LIMIT));
+  trailSteps.set(kept);
+  trailAt.set(kept.length - 1);
+}
+
+/// One step of the trail, applied without recording it. A note that is gone
+/// since the step was taken takes its step with it.
+function walkTrail(delta: number) {
+  const trail = trailSteps();
+  silentNavigation = true;
+  try {
+    for (
+      let at = trailAt() + delta;
+      at >= 0 && at < trail.length;
+      at += delta
+    ) {
+      const id = trail[at];
+      const note = id ? notes().find((item) => text(item.id) === id) : null;
+      if (id && !note) continue;
+      trailAt.set(at);
+      if (note) select(note);
+      else closeNote();
+      return;
+    }
+  } finally {
+    silentNavigation = false;
+  }
+}
+
+/// Opens a note without writing the trail. Restoring what was open — the note
+/// the host names at start, a tab coming back — is not a walk: recording it
+/// would leave back with a step wherever it stands and forward at the end.
+export function openNoteWithoutHistory(id: string) {
+  const note = notes().find((item) => text(item.id) === id) ?? null;
+  if (!note) return;
+  silentNavigation = true;
+  try {
+    select(note);
+  } finally {
+    silentNavigation = false;
+  }
+}
+
+/// Where the notes' arrows lead: back through what was read, forward again.
+export const canWalkBack = () => trailAt() > 0;
+export const canWalkForward = () => trailAt() < trailSteps().length - 1;
+export const walkBack = () => walkTrail(-1);
+export const walkForward = () => walkTrail(1);
+
+/// The open note's name, for the window's title bar and the tab: one line,
+/// however many the note's own title takes.
+export const openNoteTitle = () =>
+  selectedId() ? draftTitle().replace(/\s+/g, " ").trim() : "";
 /// The open note's id, so the sidebar can highlight it.
 export const openNoteId = () => selectedId();
 /// Whether a note is open, so the title bar names it instead of the page.
 export const hasOpenNote = () => selectedId() !== null;
-export const renameOpenNote = (value: string) => editTitle(value);
 export const closeOpenNote = () => closeNote();
 export const removeOpenNote = () => removeNote();
 /// A new note straight from the keyboard, the way the floating button does it.
@@ -1717,12 +1801,6 @@ export function leaveOpenNote() {
   applyPreview();
   const current = currentRecentEntry();
   if (current) commitRecent(current);
-}
-
-/// Re-stages an already-open note when returning to the notes route.
-export function resumeOpenNote() {
-  const current = currentRecentEntry();
-  if (current) stageRecent(current);
 }
 
 /// Opens a note from elsewhere in the app, the sidebar's recent list first.
@@ -1806,6 +1884,7 @@ function closeNote() {
   selectedId.set(null);
   draftTitle.set("");
   open(null);
+  visitStep("");
 }
 
 function removeNote() {
@@ -1914,13 +1993,16 @@ function LibraryView(props: {
         )}
       </View>
       {/* Out of the header and over the page: the one thing a card list always
-        offers stays within reach of the thumb and of the last row. */}
+        offers stays within reach of the thumb and of the last row. Filled with
+        the accent rather than glassy: a floating button that lets the cards
+        show through reads as disabled. */}
       <View
         onPress={createNote}
         role="button"
         accessibilityLabel="Новая заметка"
         class="absolute flex-row items-center justify-center"
-        hoverStyle={{ backgroundColor: surfaceWash(props.dark, 0.1) }}
+        hoverStyle={{ backgroundColor: filledHover(colors.accent) }}
+        activeStyle={{ backgroundColor: filledPressed(colors.accent) }}
         style={{
           left: "50%",
           marginLeft: -92,
@@ -1929,23 +2011,42 @@ function LibraryView(props: {
           height: 40,
           gap: 8,
           borderRadius: 20,
-          borderWidth: 1,
-          borderColor: colors.border,
-          backgroundColor: colors.background,
+          backgroundColor: colors.accent,
           cursor: "pointer",
           boxShadow: cardShadow(props.dark),
         }}
       >
-        <SharedIcon name="plus" size={15} color={colors.foreground} />
+        <Glyph name="plus" size={15} color={accentMark(colors.accent)} />
         <Text
           class="text-[13px] font-medium"
-          style={{ color: colors.foreground }}
+          style={{ color: accentMark(colors.accent) }}
         >
           Новая заметка
         </Text>
       </View>
     </View>
   );
+}
+
+/// The cards hold a width between `CARD_MIN` and `CARD_MAX`: the grid fits as
+/// many columns as `CARD_MIN` allows, the cards then share the room, and past
+/// `CARD_MAX` the row stops growing — the space left over goes to its sides, so
+/// the next column arrives only when a card would have been squeezed below its
+/// smallest width.
+export function gridMetrics(width: number) {
+  const room = Math.max(width - GRID_PAD * 2, CARD_MIN);
+  const columns = Math.max(
+    1,
+    Math.min(
+      CARD_MAX_COLUMNS,
+      Math.floor((room + CARD_GAP) / (CARD_MIN + CARD_GAP)),
+    ),
+  );
+  const share = (room - CARD_GAP * (columns - 1)) / columns;
+  const cardWidth = Math.round(Math.min(CARD_MAX, share));
+  const used = cardWidth * columns + CARD_GAP * (columns - 1);
+  const sidePad = Math.max(0, Math.round((room - used) / 2));
+  return { columns, cardWidth, sidePad };
 }
 
 /// The cards in rows, as many to a row as their smallest width allows. The rows
@@ -1956,15 +2057,7 @@ function libraryGrid(
   colors: ThemeColors,
   dark: boolean,
 ) {
-  const room = Math.max(gridWidth() - GRID_PAD * 2, CARD_MIN);
-  const columns = Math.max(
-    1,
-    Math.min(
-      CARD_MAX_COLUMNS,
-      Math.floor((room + CARD_GAP) / (CARD_MIN + CARD_GAP)),
-    ),
-  );
-  const cardWidth = (room - CARD_GAP * (columns - 1)) / columns;
+  const { columns, cardWidth, sidePad } = gridMetrics(gridWidth());
   const rows = rowsOf(items, columns);
   const rowHeight = Math.round(cardWidth * CARD_RATIO) + CARD_GAP + 8;
   return (
@@ -1977,21 +2070,20 @@ function libraryGrid(
       testID="notes-grid"
       class="min-h-0 flex-1"
       contentStyle={{
-        paddingLeft: GRID_PAD,
-        paddingRight: GRID_PAD,
+        paddingLeft: GRID_PAD + sidePad,
+        paddingRight: GRID_PAD + sidePad,
         paddingTop: 4,
         paddingBottom: LIBRARY_BOTTOM,
       }}
     >
-      {(row: () => Note[], rowIndex: () => number) => (
+      {(row: () => Note[]) => (
         <View
           class="flex-row"
           style={{ gap: CARD_GAP, paddingBottom: CARD_GAP }}
         >
-          {row().map((note, index) => (
+          {row().map((note) => (
             <NoteCard
               note={note}
-              index={rowIndex() * columns + index}
               width={cardWidth}
               colors={colors}
               dark={dark}
@@ -2013,15 +2105,7 @@ export function rowsOf(notes: readonly Note[], columns: number): Note[][] {
 /// While the host answers with the notes, the library shows the shape of the
 /// page it is about to draw: cards without text, pulsing quietly.
 function skeletonLibrary(colors: ThemeColors, dark: boolean) {
-  const room = Math.max(gridWidth() - GRID_PAD * 2, CARD_MIN);
-  const columns = Math.max(
-    1,
-    Math.min(
-      CARD_MAX_COLUMNS,
-      Math.floor((room + CARD_GAP) / (CARD_MIN + CARD_GAP)),
-    ),
-  );
-  const cardWidth = (room - CARD_GAP * (columns - 1)) / columns;
+  const { columns, cardWidth, sidePad } = gridMetrics(gridWidth());
   const height = Math.round(cardWidth * CARD_RATIO);
   const fill = surfaceWash(dark, 0.06);
   const line = (width: number) => (
@@ -2074,7 +2158,11 @@ function skeletonLibrary(colors: ThemeColors, dark: boolean) {
   return (
     <View
       class="min-h-0 flex-1"
-      style={{ paddingLeft: GRID_PAD, paddingRight: GRID_PAD, paddingTop: 4 }}
+      style={{
+        paddingLeft: GRID_PAD + sidePad,
+        paddingRight: GRID_PAD + sidePad,
+        paddingTop: 4,
+      }}
     >
       <View style={{ gap: CARD_GAP }}>
         {rows.map((row) => (
@@ -2167,7 +2255,6 @@ function listLine(note: Note): string {
 
 function NoteCard(props: {
   note: Note;
-  index: number;
   width: number;
   colors: ThemeColors;
   dark: boolean;
@@ -2176,18 +2263,6 @@ function NoteCard(props: {
   const title = text(props.note.title).trim() || "Без названия";
   const height = Math.round(props.width * CARD_RATIO);
   const blocks = previewOf(props.note.doc);
-  const enter = createMotion({
-    initial: { opacity: 0, translateY: 10 },
-    enter: {
-      keyframes: [
-        { opacity: 0, translateY: 10 },
-        { opacity: 1, translateY: 0 },
-      ],
-      duration: 260,
-      delay: cardDelay(props.index),
-      easing: Easing.bezier(0.16, 1, 0.3, 1),
-    },
-  });
   const lift = createMotion();
   const rise = (on: boolean) => {
     void lift.play({
@@ -2197,49 +2272,52 @@ function NoteCard(props: {
     });
   };
   return (
-    <View style={enter.style}>
+    <View
+      onPress={() => select(props.note)}
+      onMouseEnter={() => rise(true)}
+      onMouseLeave={() => rise(false)}
+      role="button"
+      accessibilityLabel={title}
+      hoverStyle={{ backgroundColor: surfaceWash(props.dark, 0.07) }}
+      style={{
+        width: props.width,
+        height,
+        padding: 4,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.background,
+        cursor: "pointer",
+        boxShadow: cardShadow(props.dark),
+        // The grid hands out a width as the window moves: the card grows into
+        // it rather than jumping from one column to the next.
+        transitionProperty: "width, height",
+        transitionDuration: "200ms",
+        transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+        ...lift.style,
+      }}
+    >
       <View
-        onPress={() => select(props.note)}
-        onMouseEnter={() => rise(true)}
-        onMouseLeave={() => rise(false)}
-        role="button"
-        accessibilityLabel={title}
-        hoverStyle={{ backgroundColor: surfaceWash(props.dark, 0.07) }}
+        class="overflow-hidden"
         style={{
-          width: props.width,
-          height,
-          padding: 4,
-          borderRadius: 20,
-          borderWidth: 1,
-          borderColor: colors.border,
-          backgroundColor: colors.background,
-          cursor: "pointer",
-          boxShadow: cardShadow(props.dark),
-          ...lift.style,
+          flex: 1,
+          borderRadius: 16,
+          backgroundColor: colors.card,
+          padding: 14,
         }}
       >
-        <View
-          class="overflow-hidden"
-          style={{
-            flex: 1,
-            borderRadius: 16,
-            backgroundColor: colors.card,
-            padding: 14,
-          }}
-        >
-          <View class="overflow-hidden" style={{ height: 36 }}>
-            <Text
-              class="text-[13px] font-semibold"
-              style={{ color: colors.foreground, lineHeight: 18 }}
-            >
-              {title}
-            </Text>
-          </View>
-          <View style={{ marginTop: 9, gap: 3 }}>
-            {blocks.map((block) => (
-              <PreviewLine block={block} colors={colors} />
-            ))}
-          </View>
+        <View class="overflow-hidden" style={{ height: 36 }}>
+          <Text
+            class="text-[13px] font-semibold"
+            style={{ color: colors.foreground, lineHeight: 18 }}
+          >
+            {title}
+          </Text>
+        </View>
+        <View style={{ marginTop: 9, gap: 3 }}>
+          {blocks.map((block) => (
+            <PreviewLine block={block} colors={colors} />
+          ))}
         </View>
       </View>
     </View>
@@ -2275,7 +2353,7 @@ function EmptyLibrary(props: { colors: ThemeColors }) {
           cursor: "pointer",
         }}
       >
-        <SharedIcon name="plus" size={13} color={colors.foreground} />
+        <Glyph name="plus" size={13} color={colors.foreground} />
         <Text class="text-[13px]" style={{ color: colors.foreground }}>
           Создать заметку
         </Text>
@@ -2561,10 +2639,7 @@ function CodeCard(props: {
           {copiedId() === props.id ? (
             <Glyph name="check" size={14} color={props.colors.foreground} />
           ) : (
-            <Image
-              src={COPY_ICON}
-              style={{ width: 14, height: 14, tintColor: props.colors.muted }}
-            />
+            <Glyph name="copy" size={14} color={props.colors.muted} />
           )}
         </View>
       </View>
@@ -2599,15 +2674,13 @@ function ProsePiece(props: { id: number; colors: ThemeColors; dark: boolean }) {
       ref={(ref) => attachRef(props.id, ref)}
       accessibilityLabel="Текст заметки"
       placeholder={
-        segmentList()[0]?.id === props.id
-          ? "Пишите. Слэш открывает блоки: заголовок, список, таблица…"
-          : undefined
+        segmentList()[0]?.id === props.id ? NOTE_PLACEHOLDER : undefined
       }
       onContentSizeChange={({ contentSize }) =>
         updateSegHeight(props.id, contentSize.height)
       }
       onSelectionChange={({ selection }) =>
-        syncOutlineFromCaret(props.id, selection.from)
+        scheduleCaretOutline(props.id, selection.from)
       }
       onPasteFiles={(event) => {
         pastePictures(event.paste, seg.session);
@@ -2653,14 +2726,20 @@ function SplitNote(props: {
           splitScrollRef = node;
         }}
         onScroll={(event) => onSplitScroll(event.offset.y)}
+        // No bar: the rail says where the reader is, and a second indicator down
+        // the page's edge only competes with it.
+        scrollbar={false}
         class="min-h-0 flex-1"
         contentStyle={{
-          paddingTop: pageTopPad(),
+          paddingTop: noteTopPad(),
           paddingBottom: 0,
           paddingLeft: pagePad(),
           paddingRight: pagePad(),
         }}
       >
+        {/* The title is the document's first block, not a band over it: it
+            scrolls away with the text the way a heading does. */}
+        <NoteTitle colors={props.colors} />
         <Each
           of={segmentList()}
           key={
@@ -2831,9 +2910,17 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
           class="min-h-0 flex-col"
           style={{
             height: pageTall() > 0 ? pageTall() : undefined,
-            paddingTop: 4,
+            // The page opens with air above the title. A code note keeps the
+            // whole page in its scroll view, title included, so there the air
+            // is the scroll's own inset (SplitNote) and not this padding.
+            paddingTop: codeLayout() ? 0 : noteTopPad(),
           }}
         >
+          {/* The note's name is part of the note: it heads the page the way a
+            document does, and the title bar holds the same name for the bar's
+            own sake. Either one renames the note. A code note draws it inside
+            SplitNote's scroll, so it scrolls with the text. */}
+          {editor && !codeLayout() && <NoteTitle colors={colors} pad />}
           {/* A press on the page below the text belongs to the text: the caret
           goes to the end, the way a word processor takes a click on the
           empty part of a sheet. A split note puts that press target below its
@@ -2863,10 +2950,10 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
                         editorRef = ref;
                       }}
                       class="min-h-0 flex-1"
-                      placeholder="Пишите. Слэш открывает блоки: заголовок, список, таблица…"
+                      placeholder={NOTE_PLACEHOLDER}
                       accessibilityLabel="Текст заметки"
                       onSelectionChange={({ selection }) =>
-                        syncOutlineFromCaret(null, selection.from)
+                        scheduleCaretOutline(null, selection.from)
                       }
                       onPasteFiles={(event) => {
                         pastePictures(event.paste, editor as RichEditorSession);
@@ -2888,7 +2975,7 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
                         Math.max(0, pageTall() - 150),
                         pagePad(),
                         false,
-                        pageTopPad(),
+                        NOTE_TOP_PAD,
                       )}
                     />
                   ) : (
@@ -2906,13 +2993,121 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
           activePos={activeOutlinePos}
           colors={colors}
           dark={props.dark}
-          maxHeight={() => Math.max(180, pageTall() - 80)}
+          maxHeight={() => pageTall()}
           onHoverOpen={syncOutlineFromViewport}
           onSelect={jumpToOutline}
         />
       </View>
     </View>
   );
+}
+
+/// The note's name where the note is written — a page opens with its title.
+/// The title bar carries the same name, so renaming works from either one.
+function NoteTitle(props: { colors: ThemeColors; pad?: boolean }) {
+  const editor = titleEditor();
+  if (!editor) return <View />;
+  return (
+    <View
+      class="shrink-0 flex-col justify-end"
+      style={{
+        minHeight: NOTE_TITLE_BLOCK,
+        marginLeft: props.pad ? pagePad() : 0,
+        marginRight: props.pad ? pagePad() : 0,
+        marginBottom: NOTE_TITLE_GAP,
+      }}
+    >
+      <RichEditor
+        editor={editor}
+        placeholder="\u200BБез названия"
+        accessibilityLabel="Название заметки"
+        styles={titleStyles(props.colors)}
+        class="shrink-0"
+      />
+    </View>
+  );
+}
+
+/// The title is an editor of its own, not a text field: it wraps at the
+/// column's width, grows with its lines, and carries the same caret the body
+/// does — a field's caret is thinner, and that reads as a different cursor.
+let titleSession: RichEditorSession | null = null;
+
+function titleEditor() {
+  return titleSession;
+}
+
+function buildTitleEditor(title: string) {
+  const previous = titleSession;
+  titleSession = null;
+  if (previous) {
+    try {
+      previous.dispose();
+    } catch {
+      /* already gone */
+    }
+  }
+  const made = makeEditor({
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        content: title ? [{ type: "text", text: title }] : [],
+      },
+    ],
+  });
+  made.on("revision", () => editTitle(titleTextOf(made)));
+  titleSession = made;
+}
+
+/// What a title editor holds as plain text: its blocks, a line each.
+function titleTextOf(session: RichEditorSession): string {
+  const doc = session.getJSON() as {
+    content?: { content?: { text?: string }[] }[];
+  };
+  const blocks = Array.isArray(doc?.content) ? doc.content : [];
+  return blocks
+    .map((block) =>
+      (Array.isArray(block.content) ? block.content : [])
+        .map((leaf) => leaf.text ?? "")
+        .join(""),
+    )
+    .join("\n");
+}
+
+let titleStylesCache: { key: string; styles: unknown } | null = null;
+
+function titleStyles(colors: ThemeColors) {
+  const key = `${colors.foreground}|${colors.muted}|${colors.accent}`;
+  if (titleStylesCache?.key !== key) {
+    titleStylesCache = {
+      key,
+      styles: {
+        content: {
+          color: colors.foreground,
+          backgroundColor: "transparent",
+          paddingTop: 0,
+          paddingBottom: 0,
+          paddingLeft: 0,
+          paddingRight: 0,
+          minHeight: 0,
+        },
+        placeholder: { color: colors.muted },
+        caret: { backgroundColor: colors.accent },
+        nodes: {
+          paragraph: {
+            fontSize: 32,
+            fontWeight: 600,
+            lineHeight: 40,
+            marginTop: 0,
+            marginBottom: 0,
+            textAlign: "center",
+          },
+        },
+      },
+    };
+  }
+  return titleStylesCache.styles;
 }
 
 /// The page's side margin: on a phone it is a phone's margin, on a wide page
@@ -2924,14 +3119,32 @@ function pagePad() {
   return Math.max((room - PAGE_MAX) / 2, PAGE_PAD / 2);
 }
 
-/// Top breathing room inside the scrollable note (~34% of the page height) so
-/// writing starts comfortably down the sheet instead of hugged against the top
-/// bar, and scrolls away naturally as the note grows.
-function pageTopPad() {
-  const tall = pageTall();
-  if (!(tall > 0)) return compact() ? 96 : 240;
-  return Math.round(tall * 0.34);
+/// The title's block: exactly two of its own lines (40 each). The text sits at
+/// the block's foot, so the first line leaves one line of air above it and the
+/// second line goes up into that air instead of moving the page. Only a third
+/// line makes the block taller, and then everything below it moves down. The
+/// gap between the block and the note's text is NOTE_TITLE_GAP, never a share
+/// of the page.
+export const NOTE_TITLE_GAP = 20;
+const NOTE_TOP_PAD = 4;
+const NOTE_TITLE_LINE = 40;
+const NOTE_TITLE_MIN_LINES = 2;
+export const NOTE_TITLE_BLOCK = NOTE_TITLE_LINE * NOTE_TITLE_MIN_LINES;
+/// The empty space above the title, where the page opens: a fifth of the
+/// visible page, so the writing does not start against the window's edge.
+const NOTE_TOP_SHARE = 0.2;
+
+function noteTopPad() {
+  return pageTall() > 0
+    ? Math.max(NOTE_TOP_PAD, Math.round(pageTall() * NOTE_TOP_SHARE))
+    : NOTE_TOP_PAD;
 }
+/// The empty note's hint. It opens with a zero-width space: nsh paints the
+/// glyph the caret stands on in the editor's own ink, so the hint's first
+/// letter came out white beside the grey rest — the invisible space takes
+/// that place instead.
+const NOTE_PLACEHOLDER =
+  "\u200BПишите. Слэш открывает блоки: заголовок, список, таблица…";
 
 /// The document's scale, taken from AnyType's blocks: body 16 on 24, headings
 /// 28..14 with clear breathing room above and tighter rhythm below so each
@@ -2995,8 +3208,9 @@ function codeStyles(colors: ThemeColors, dark: boolean) {
         nodes: {
           codeBlock: {
             fontFamily: Mono,
-            fontSize: 13,
-            lineHeight: 21,
+            fontSize: 14,
+            fontWeight: 500,
+            lineHeight: 22,
             paddingTop: 12,
             paddingBottom: 14,
             paddingLeft: 14,
@@ -3007,8 +3221,9 @@ function codeStyles(colors: ThemeColors, dark: boolean) {
           },
           paragraph: {
             fontFamily: Mono,
-            fontSize: 13,
-            lineHeight: 21,
+            fontSize: 14,
+            fontWeight: 500,
+            lineHeight: 22,
             marginTop: 0,
             marginBottom: 0,
           },
@@ -3047,6 +3262,7 @@ function documentStyles(
     nodes: {
       paragraph: {
         fontSize: 16,
+        fontWeight: 500,
         lineHeight: 24,
         marginTop: 2,
         marginBottom: 4,
@@ -3102,11 +3318,12 @@ function documentStyles(
       },
       bulletList: { marginTop: 2, marginBottom: 4, paddingLeft: 6 },
       orderedList: { marginTop: 2, marginBottom: 4, paddingLeft: 6 },
-      listItem: { fontSize: 16, lineHeight: 24 },
+      listItem: { fontSize: 16, fontWeight: 500, lineHeight: 24 },
       codeBlock: {
         fontFamily: Mono,
-        fontSize: 13,
-        lineHeight: 21,
+        fontSize: 14,
+        fontWeight: 500,
+        lineHeight: 22,
         paddingTop: 12,
         paddingBottom: 12,
         paddingLeft: 14,
@@ -3139,7 +3356,8 @@ function documentStyles(
     marks: {
       code: {
         fontFamily: Mono,
-        fontSize: 14,
+        fontSize: 16,
+        fontWeight: 500,
         color: colors.foreground,
         backgroundColor: surfaceWash(dark, 0.08),
       },
@@ -3271,6 +3489,14 @@ function cardShadow(dark: boolean) {
     ? "0 1px 2px rgba(0,0,0,0.45), 0 8px 24px rgba(0,0,0,0.35)"
     : "0 1px 2px rgba(15,23,42,0.06), 0 10px 26px rgba(15,23,42,0.09)";
 }
+
+/// A filled button's hover and press: the accent mixed toward its own ink, so
+/// the shade stays solid (nothing of the page shows through) and the label
+/// keeps its contrast.
+const filledHover = (accent: string) =>
+  mixHex(accent, accentMark(accent), 0.12);
+const filledPressed = (accent: string) =>
+  mixHex(accent, accentMark(accent), 0.22);
 
 const MONTHS_SHORT = [
   "янв",

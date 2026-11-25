@@ -158,6 +158,7 @@ fn snapshot(agenda: &Atlas, route: &str) -> Value {
         "appearance": agenda.appearance,
         "appearanceEditable": agenda.appearance_editable(),
         "themes": crate::palettes::choices_json(),
+        "nshTheme": crate::palettes::nsh_theme(&theme.light, &theme.dark, Some(accent)),
         "colors": {
             "background": color(palette.bg),
             "foreground": color(palette.fg),

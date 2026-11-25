@@ -46,6 +46,9 @@ export type Snapshot = {
   appearanceEditable: boolean;
   themes: AtlasTheme[];
   colors: ThemeColors;
+  /// The same palette as NSH's own tokens (shadcn's shape, both appearances):
+  /// what NSH draws for itself reads them (`ui/shell-theme.ts`).
+  nshTheme?: unknown;
   sidebarVisible: boolean;
   chrome: "native" | "tsx";
   demo?: boolean;

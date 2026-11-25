@@ -9,8 +9,15 @@ export type OutlineMark = { level: number; text: string; pos: number };
 export const OUTLINE_LIMIT = 50;
 export const OUTLINE_INSET = 14;
 
-const TICK_WIDTHS = [24, 18, 13, 10, 8, 6] as const;
+const TICK_WIDTHS = [20, 18, 16, 14, 12, 10] as const;
+/// The tick the reader is on grows past every idle one, the way a chat's
+/// progress rail marks where you are.
+const TICK_ACTIVE_WIDTH = 26;
+const TICK_ROW_HEIGHT = 6;
+const TICK_PAD_TOP = 12;
 const POPOVER_ROW_HEIGHT = 36;
+/// Moving off the rail does not close it at once: the pointer may be on its way
+/// to a row.
 const POPOVER_CLOSE_MS = 140;
 
 /** Direct mapping from heading level (H1..H6) to tick width in points: H1 longest, H6 shortest. */
@@ -19,7 +26,7 @@ export function outlineTickWidth(level: number): number {
   return TICK_WIDTHS[index];
 }
 
-/** Left padding for a row in the outline popover, indented by heading hierarchy. */
+/** Left padding for a row in the outline board, indented by heading hierarchy. */
 export function outlineRowIndent(level: number, minLevel = 1): number {
   const clamped = Math.min(6, Math.max(1, Math.round(level)));
   const base = Math.min(6, Math.max(1, Math.round(minLevel)));
@@ -53,12 +60,15 @@ export function activeOutlinePosForCaret(
   return active;
 }
 
-function popoverShadow(dark: boolean) {
+function boardShadow(dark: boolean) {
   return dark
     ? "0 4px 12px rgba(0,0,0,0.45), 0 12px 32px rgba(0,0,0,0.42)"
     : "0 4px 12px rgba(15,23,42,0.08), 0 12px 32px rgba(15,23,42,0.12)";
 }
 
+/// The page's outline: marks that say where the reader is, and the board of
+/// headings they open into. The marks stay quiet until they are pointed at —
+/// then the board names every heading, the one being read first among them.
 export function NotesOutlineRail(props: {
   marks: () => readonly OutlineMark[];
   activePos: () => number;
@@ -100,7 +110,7 @@ export function NotesOutlineRail(props: {
   };
   const minLevel = () =>
     list().reduce((min, item) => Math.min(min, item.level), 6);
-  const maxBody = () => Math.max(140, props.maxHeight() - 16);
+  const maxBody = () => Math.max(160, props.maxHeight() - 32);
 
   const renderRows = () => {
     const items = list();
@@ -158,14 +168,14 @@ export function NotesOutlineRail(props: {
     const activePos = resolvedActive();
     const tickActive = props.dark ? "#ffffff" : props.colors.foreground;
     const tickIdle = props.dark
-      ? colorAlpha("#ffffff", 0.24)
-      : colorAlpha("#000000", 0.2);
+      ? colorAlpha("#ffffff", 0.26)
+      : colorAlpha("#000000", 0.22);
     return (
       <View
         class="items-end"
         style={{
-          paddingTop: 12,
-          paddingBottom: 12,
+          paddingTop: TICK_PAD_TOP,
+          paddingBottom: TICK_PAD_TOP,
           paddingLeft: 12,
           paddingRight: 2,
           gap: items.length > 25 ? 5 : 8,
@@ -180,14 +190,24 @@ export function NotesOutlineRail(props: {
               accessibilityLabel={mark.text || "Заголовок"}
               accessibilityState={{ selected: active }}
               class="items-end justify-center"
-              style={{ width: 28, height: 6, cursor: "pointer" }}
+              style={{
+                width: 30,
+                height: TICK_ROW_HEIGHT,
+                cursor: "pointer",
+              }}
             >
               <View
                 style={{
-                  width: outlineTickWidth(mark.level),
-                  height: 3,
-                  borderRadius: 1.5,
+                  width: active
+                    ? TICK_ACTIVE_WIDTH
+                    : outlineTickWidth(mark.level),
+                  height: 2,
+                  borderRadius: 1,
                   backgroundColor: active ? tickActive : tickIdle,
+                  // The tick lengthens and lights up as the reader scrolls,
+                  // settling into place on its own physics.
+                  transitionProperty: "width, background-color",
+                  transitionTimingFunction: "spring(320, 26)",
                 }}
               />
             </View>
@@ -197,12 +217,12 @@ export function NotesOutlineRail(props: {
     );
   };
 
-  const renderPopover = () => {
+  const renderBoard = () => {
     const bodyHeight = maxBody();
     const scrollable = list().length * POPOVER_ROW_HEIGHT > bodyHeight;
     return (
       <View
-        testID="notes-outline-popover"
+        testID="notes-outline-board"
         style={{
           width: 256,
           borderRadius: 14,
@@ -212,7 +232,7 @@ export function NotesOutlineRail(props: {
             : props.colors.border,
           backgroundColor: props.colors.card,
           padding: 8,
-          boxShadow: popoverShadow(props.dark),
+          boxShadow: boardShadow(props.dark),
         }}
       >
         {scrollable ? (
@@ -237,7 +257,7 @@ export function NotesOutlineRail(props: {
           onMouseEnter={openRail}
           onMouseLeave={closeRail}
         >
-          {open() ? renderPopover() : renderTicks()}
+          {open() ? renderBoard() : renderTicks()}
         </View>
       )}
     </View>

@@ -114,6 +114,21 @@ export function forgetRecent(kind: RecentKind, id: string) {
   void Storage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
 
+/// A library that no longer holds a note takes its entry with it: the sidebar
+/// names what is there, not what used to be. Games are the library's own
+/// business and stay.
+export function forgetMissingNotes(ids: ReadonlySet<string>) {
+  const before = items();
+  const next = before.filter(
+    (item) => item.kind !== "note" || ids.has(item.id),
+  );
+  if (next.length === before.length) return;
+  if (staged && staged.kind === "note" && !ids.has(staged.id)) staged = null;
+  items.set(next);
+  stamp += 1;
+  void Storage.setItem(STORAGE_KEY, JSON.stringify(next));
+}
+
 function readJson(value: string | null): RecentItem[] {
   if (!value) return [];
   try {

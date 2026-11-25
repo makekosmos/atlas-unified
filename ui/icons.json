@@ -1,0 +1,24 @@
+{
+  "style": "solid",
+  "dooicons": {
+    "search": "search-default",
+    "folder": "folder-open",
+    "note": "notebook",
+    "journal": "calendar-default",
+    "check": "check-tick-circle",
+    "file": "file-02-default",
+    "gamepad": "gaming-pad",
+    "settings": "settings-01",
+    "plus": "plus-circle",
+    "trash": "delete-dustbin-01",
+    "sidebar": "sidebar-default",
+    "more": "three-dots-menu-horizontal-circle",
+    "mic": "mic-microphone",
+    "copy": "copy-default",
+    "arrowLeft": "arrow-left",
+    "arrowRight": "arrow-right"
+  },
+  "local": {
+    "close": "window-close.svg"
+  }
+}

@@ -64,9 +64,14 @@ UI (`atlas-unified/ui`):
   найденные игры уже в библиотеке) и ошибка скана тоже остаются панелью
   результата (`reviewDone` в `game-library.ts`): модалка больше не схлопывается
   назад в меню после нажатия.
-- `glyph.tsx` + `icons.ts` — иконки Hugeicons этого app: `prepare-assets.ps1`
-  собирает их из `assets/icons/*.svg` в data-URI (`search`, `folder`, `file`,
-  `check`, `close`); после добавления новой иконки скрипт надо перезапустить.
+- `glyph.tsx` + `icons.ts` — иконки этого app из набора dooicons
+  (`https://dooicons.vercel.app`, стиль `solid`). `ui/icons.json` держит пары
+  «ключ → имя dooicons»; `fetch-icons.ps1` скачивает SVG в `assets/icons/`
+  (за прокси: `-Proxy http://host:port`), `prepare-assets.ps1` собирает их в
+  data-URI. Ключи: `search`, `folder`, `note`, `journal`, `check`, `file`,
+  `gamepad`, `settings`, `plus`, `trash`, `sidebar`, `more`, `arrowLeft`,
+  `arrowRight`; `close` — единственный локальный (в dooicons нет простого X),
+  он берётся из `assets/icons/window-close.svg`.
 - `game-confirm.tsx` — второй шаг: правимое название, путь, источник, заметка
   про метаданные; «Назад» возвращает в пикер.
 - `game-library.ts` — сигналы `pendingAdd`, `launchError`, `scanCompletedAt`,

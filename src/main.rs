@@ -88,6 +88,9 @@ fn install_window_keys(cx: &mut App) {
 fn atlas_window_options(cx: &mut App) -> WindowOptions {
     WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(window_bounds(cx))),
+        // The page is a rounded card with a sidebar beside it: squeezed past
+        // this, it stops being a page and becomes a stripe.
+        window_min_size: Some(size(px(800.), px(600.))),
         focus: !offscreen(),
         // Windows adaptive pacing owns the background cap and input wakeup.
         // A second focus-only cap would throttle unfocused interaction.

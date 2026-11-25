@@ -15,7 +15,8 @@ import {
 import { Input } from "nsh/base";
 import { Menu, windowState } from "nsh/desktop";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
-import { GhostButton, SolidButton, colorAlpha } from "./chrome";
+import { CARD_RADIUS, GhostButton, SolidButton, colorAlpha } from "./chrome";
+import { Glyph } from "./glyph";
 import {
   buildJournalDays,
   formatJournalDay,
@@ -24,7 +25,7 @@ import {
 import type { JournalEntry } from "./state";
 import { accentMark, journalBubble } from "./themes";
 
-/** Hugeicons `mic-01`, drawn in `currentColor` so a tint applies. */
+/** The mic: the journal's voice button, tinted from the bubble it sits on. */
 const DotScope = nativeComponent<
   { level: number; active: boolean; done: boolean },
   {}
@@ -32,9 +33,6 @@ const DotScope = nativeComponent<
   props: ["level", "active", "done"],
   events: [],
 });
-
-const MIC_ICON =
-  "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M12%202C10.3431%202%209%203.34315%209%205V12C9%2013.6569%2010.3431%2015%2012%2015C13.6569%2015%2015%2013.6569%2015%2012V5C15%203.34315%2013.6569%202%2012%202Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%2011V12C19%2015.866%2015.866%2019%2012%2019C8.13401%2019%205%2015.866%205%2012V11%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12%2019V22%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E";
 
 const COMPOSER_RADIUS = 25;
 const COMPOSER_EXPANDED_RADIUS = 18;
@@ -762,7 +760,7 @@ export function JournalPage(props: {
               style={{
                 width: threadSpan(),
                 minHeight: feedBox().height,
-                paddingTop: props.titlebarInset + 16,
+                paddingTop: props.titlebarInset,
                 paddingBottom: composerBottomInset(),
                 paddingLeft: FEED_PAD,
                 paddingRight: FEED_PAD,
@@ -817,6 +815,9 @@ export function JournalPage(props: {
             style={{
               backgroundColor: props.colors.background,
               opacity: 0.86,
+              // The page is a rounded card now: the gutter follows its curve
+              // instead of squaring off the corner it sits in.
+              borderRadius: CARD_RADIUS,
               pointerEvents: "none",
             }}
           />
@@ -1114,15 +1115,10 @@ export function JournalPage(props: {
                       cursor: "pointer",
                     }}
                   >
-                    <Image
-                      src={MIC_ICON}
-                      style={{
-                        width: 17,
-                        height: 17,
-                        tintColor: accentMark(
-                          journalBubble(props.colors.accent),
-                        ),
-                      }}
+                    <Glyph
+                      name="mic"
+                      size={17}
+                      color={accentMark(journalBubble(props.colors.accent))}
                     />
                   </View>
                 )}

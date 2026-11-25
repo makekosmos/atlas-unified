@@ -7,5 +7,5 @@
     "host": [],
     "clipboard": true
   },
-  "theme": "../node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/theme.json"
+  "theme": "./theme.json"
 }

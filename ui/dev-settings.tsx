@@ -1,5 +1,4 @@
 import { Text, View } from "nsh";
-import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
 import { SettingsRow, SettingsSection } from "./settings";
 import { surfaceWash } from "./chrome";

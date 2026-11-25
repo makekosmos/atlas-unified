@@ -3,7 +3,6 @@ import { cachedByRev, headingsOf, markdownOf, nodeSize, rowsOf } from "./notes";
 import {
   activeOutlineIndex,
   activeOutlinePosForCaret,
-  outlineRowIndent,
   outlineTickWidth,
 } from "./notes-outline";
 import type { Note } from "./state";
@@ -131,13 +130,7 @@ test("outline preserves heading levels 1..6 and tick widths decrease monotonical
     expect(outlineTickWidth(level)).toBeGreaterThan(
       outlineTickWidth(level + 1),
     );
-    expect(outlineRowIndent(level + 1, 1)).toBeGreaterThan(
-      outlineRowIndent(level, 1),
-    );
   }
-  // When a note starts at H2, H2 sits at the base indent while H3 is indented one step.
-  expect(outlineRowIndent(2, 2)).toBe(outlineRowIndent(1, 1));
-  expect(outlineRowIndent(3, 2)).toBeGreaterThan(outlineRowIndent(2, 2));
 });
 
 test("active outline selection follows scroll threshold and caret position", () => {

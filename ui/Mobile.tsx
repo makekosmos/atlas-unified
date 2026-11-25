@@ -8,9 +8,9 @@ import {
   View,
 } from "nsh";
 import { Input } from "nsh/base";
-import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
 import { previewThemes } from "./themes";
+import { Glyph } from "./glyph";
 import type { JournalEntry, Note, Todo } from "./state";
 import { WIDGETS } from "./widgets";
 import {
@@ -283,7 +283,7 @@ function cardHead(
       ) : icon === "note" ? (
         <GlyphPage />
       ) : (
-        <SharedIcon name="check" size={18} color={INK} />
+        <Glyph name="check" size={18} color={INK} />
       )}
       <Text class="text-[16px] font-semibold flex-1" style={{ color: INK }}>
         {title}
@@ -467,7 +467,7 @@ function homeView(onOpen: (screen: Screen) => void) {
               cursor: "pointer",
             }}
           >
-            <SharedIcon name="settings" size={18} color={INK} />
+            <Glyph name="settings" size={18} color={INK} />
           </View>
         </View>
 

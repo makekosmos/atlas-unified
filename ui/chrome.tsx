@@ -1,13 +1,21 @@
 import { LayoutAnimation, Text, View, signal } from "nsh";
-import { Input } from "nsh/base";
 import { titleBar } from "nsh/desktop";
 import { platform } from "os";
 import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
-import type { IconName, ThemeColors } from "@makekosmos/imago-nsh";
+import type { ThemeColors } from "@makekosmos/imago-nsh";
 import { Glyph } from "./glyph";
+import type { GlyphName } from "./icons";
+import { accentMark } from "./themes";
 
-export const TITLEBAR_HEIGHT = 38;
-export const TITLEBAR_TOP_PAD = 4;
+/// As MonoCode's title bar has it.
+export const TITLEBAR_HEIGHT = 40;
+/// The content sits in a rounded card, the way the shell's other surfaces do:
+/// a gap to the window's edges, a radius of its own, a hairline border.
+export const CARD_GAP = 8;
+export const CARD_RADIUS = 14;
+/// How far the bar's controls sit below its top edge. Zero centres a control
+/// of any height in the bar; a positive pad pushed everything down by half of it.
+export const TITLEBAR_TOP_PAD = 0;
 export const SIDEBAR_WIDTH = 282;
 export const ROW_HEIGHT = 32;
 // Sidebar rows follow the reference layout: 40pt tall, 10pt radius.
@@ -16,13 +24,16 @@ const CONTROL_RADIUS = 6;
 const ROW_RADIUS = 8;
 const NAV_ROW_RADIUS = 10;
 const CLUSTER_START_MACOS = 88;
-const CLUSTER_START = 10;
-const TRAILING_INSET = 6;
-const CAPTION_BUTTON_WIDTH = 36;
+const CLUSTER_START = 8;
+const TRAILING_INSET = 8;
+/// MonoCode's caption buttons: 30 wide, 24 tall, glyph 14, in a 106 cluster.
+const CAPTION_BUTTON_WIDTH = 30;
+const CAPTION_BUTTON_HEIGHT = 24;
 const TOGGLE_SIZE = 24;
+/// The two trail arrows and the gap between them.
+const TRAIL_WIDTH = 24 + 2 + 24;
 
 const closeHovered = signal(false);
-const titleFocused = signal(false);
 
 export function animatePanes() {
   LayoutAnimation.configureNext({
@@ -151,12 +162,209 @@ export function titlebarControlTop(size: number) {
 }
 
 /**
- * Where a page's own leading chip (the note's "‹ Заметки") starts. The sidebar
- * toggle keeps a fixed x wherever the pane is, so a hidden sidebar would put
- * the chip straight under it; the chip starts after the toggle instead.
+ * Where the notes' arrows stand: against the pane's right edge, on the
+ * toggle's own line — and after the toggle when there is no pane to hold them.
  */
 export function noteBackLeft(pageInset: number, toggleLeft: number) {
-  return Math.max(pageInset + 8, toggleLeft + TOGGLE_SIZE + 8);
+  const afterToggle = toggleLeft + TOGGLE_SIZE + 6;
+  const againstPane = pageInset - TRAIL_WIDTH;
+  return Math.max(afterToggle, againstPane);
+}
+
+/// What a tab stands for: a page, or one note beside the list it came from.
+export type TabView = {
+  key: string;
+  route: string;
+  /// A note's tab carries the note; a page's carries none.
+  noteId?: string;
+  label: string;
+  active: boolean;
+};
+
+const TAB_HEIGHT = 27;
+/// The icon's tile: 24 × 20 with a 5 corner, as MonoCode's title tabs have it.
+const TAB_TILE_HEIGHT = 20;
+/// The close button and the room kept for it, so a name never shifts when it
+/// shows up.
+const TAB_CLOSE_SIZE = 20;
+const TAB_CLOSE_ROOM = 4 + TAB_CLOSE_SIZE + 4;
+/// MonoCode's tab name: 13 pt, no wider than 224.
+const TAB_TEXT_SIZE = 13;
+const TAB_MAX_WIDTH = 224;
+/// Between two tabs.
+const TAB_GAP = 2;
+
+/// A page's icon, taken from what the page is: the journal is its calendar, a
+/// note a sheet, the list a tick, games a pad, settings a gear.
+function TabIcon(props: { route: string; noteId?: string; color: string }) {
+  if (props.route === "journal") {
+    return <Glyph name="journal" size={14} color={props.color} />;
+  }
+  if (props.route === "games") {
+    return <Glyph name="gamepad" size={14} color={props.color} />;
+  }
+  if (props.route === "settings") {
+    return <Glyph name="settings" size={14} color={props.color} />;
+  }
+  if (props.route === "tasks") {
+    return <Glyph name="check" size={14} color={props.color} />;
+  }
+  return <Glyph name="note" size={14} color={props.color} />;
+}
+
+/// The mark of what a recent row holds: the same icon the page wears.
+/// A note reads as an open book, a game as its pad.
+function recentIcon(kind: string): "note" | "gamepad" {
+  return kind === "game" ? "gamepad" : "note";
+}
+
+/// One chip of the bar's row, the way MonoCode's title tabs are built: a flat
+/// plate on the bar, a small gradient tile under the icon, and room for the
+/// close button kept on every chip so nothing moves when it appears.
+function TabChip(props: {
+  tab: TabView;
+  colors: ThemeColors;
+  dark: boolean;
+  onSelect: () => void;
+  onClose: () => void;
+}) {
+  const over = signal(false);
+  const colors = props.colors;
+  const base = shellFill(colors, props.dark);
+  const ink = (t: number) => mixHex(base, colors.foreground, t);
+  // The plate is the bar's own tone lifted a step: 4% of the ink at rest, 7%
+  // under the pointer, 10% on the page being read.
+  const plate = props.tab.active ? ink(0.1) : over() ? ink(0.07) : ink(0.04);
+  // The tile is the icon's own card: the accent on the page being read (with
+  // the ink that reads on it), a grey one everywhere else.
+  const tileTop = props.tab.active
+    ? mixHex(colors.accent, "#ffffff", 0.12)
+    : ink(0.1);
+  const tileBottom = props.tab.active ? colors.accent : ink(0.04);
+  const tileInk = props.tab.active ? accentMark(colors.accent) : colors.muted;
+  return (
+    <View
+      onPress={props.onSelect}
+      role="button"
+      accessibilityLabel={props.tab.label}
+      accessibilityState={{ selected: props.tab.active }}
+      onMouseEnter={() => over.set(true)}
+      onMouseLeave={() => over.set(false)}
+      desktop={{ windowDrag: false }}
+      class="flex-row items-center"
+      style={{
+        height: TAB_HEIGHT,
+        maxWidth: TAB_MAX_WIDTH,
+        // As far from the tile as the tile is from the top and bottom.
+        paddingLeft: (TAB_HEIGHT - TAB_TILE_HEIGHT) / 2,
+        // The close button's room is part of the chip, not something the label
+        // makes when it appears.
+        paddingRight: TAB_CLOSE_ROOM,
+        gap: 8,
+        borderRadius: 8,
+        backgroundColor: plate,
+        cursor: "pointer",
+      }}
+    >
+      <View
+        class="items-center justify-center"
+        style={{
+          width: 24,
+          height: TAB_TILE_HEIGHT,
+          borderRadius: 5,
+          backgroundImage: `linear-gradient(180deg, ${tileTop} 0%, ${tileBottom} 100%)`,
+          borderWidth: 1,
+          borderColor: props.tab.active
+            ? colorAlpha("#ffffff", 0.14)
+            : ink(0.1),
+        }}
+      >
+        <TabIcon
+          route={props.tab.route}
+          noteId={props.tab.noteId}
+          color={tileInk}
+        />
+      </View>
+      <Text
+        class="truncate"
+        style={{
+          fontSize: TAB_TEXT_SIZE,
+          lineHeight: 20,
+          fontWeight: props.tab.active ? 600 : 500,
+          color: props.tab.active ? colors.foreground : colors.muted,
+        }}
+      >
+        {props.tab.label}
+      </Text>
+      <View
+        onPress={() => props.onClose()}
+        role="button"
+        accessibilityLabel={`Закрыть ${props.tab.label}`}
+        class="absolute items-center justify-center"
+        hoverStyle={{ backgroundColor: ink(0.1) }}
+        desktop={{ windowDrag: false }}
+        style={{
+          right: 4,
+          top: (TAB_HEIGHT - TAB_CLOSE_SIZE) / 2,
+          width: TAB_CLOSE_SIZE,
+          height: TAB_CLOSE_SIZE,
+          borderRadius: 5,
+          // Out of the way until the tab is the one being read or the pointer
+          // is on it — its room stays either way.
+          opacity: props.tab.active || over() ? 1 : 0,
+          cursor: "pointer",
+        }}
+      >
+        <Glyph name="close" size={12} color={colors.muted} />
+      </View>
+    </View>
+  );
+}
+
+/// One of the two arrows that walk the notes' trail: quiet when there is
+/// nowhere to go, and it only takes a press when there is.
+export function TrailArrow(props: {
+  dir: "back" | "forward";
+  label: string;
+  colors: ThemeColors;
+  dark: boolean;
+  enabled?: boolean;
+  onPress?: () => void;
+}) {
+  const enabled = props.enabled === true;
+  return (
+    <View
+      onPress={() => {
+        if (enabled) props.onPress?.();
+      }}
+      role="button"
+      accessibilityLabel={props.label}
+      class="items-center justify-center"
+      hoverStyle={
+        enabled ? { backgroundColor: hoverWash(props.dark) } : undefined
+      }
+      activeStyle={
+        enabled ? { backgroundColor: surfaceWash(props.dark, 0.12) } : undefined
+      }
+      desktop={{ windowDrag: false }}
+      style={{
+        width: 24,
+        height: 24,
+        borderRadius: CONTROL_RADIUS,
+        cursor: enabled ? "pointer" : "default",
+      }}
+    >
+      <Glyph
+        name={props.dir === "back" ? "arrowLeft" : "arrowRight"}
+        size={16}
+        color={
+          enabled
+            ? props.colors.foreground
+            : colorAlpha(props.colors.muted, 0.5)
+        }
+      />
+    </View>
+  );
 }
 
 function channel(hex: string, shift: number) {
@@ -222,15 +430,20 @@ export function TitlebarOverlay(props: {
   dark: boolean;
   showAddGame?: boolean;
   dimmed?: boolean;
-  fadeBackdrop?: boolean;
   pageInset?: number;
-  /// The open note's name: it takes the bar's middle in place of the page.
-  noteTitle?: string;
+  /// The page's tabs: what is open, in the order it was opened.
+  tabs?: readonly TabView[];
+  onSelectTab?: (key: string) => void;
+  onCloseTab?: (key: string) => void;
   noteActive?: boolean;
+  /// The notes' trail: the arrows walk it, on the toggle's own line.
+  noteNav?: boolean;
+  canGoBack?: boolean;
+  canGoForward?: boolean;
   onToggleSidebar: () => void;
   onAddGame?: () => void;
-  onRenameNote?: (value: string) => void;
-  onCloseNote?: () => void;
+  onGoBack?: () => void;
+  onGoForward?: () => void;
   onDeleteNote?: () => void;
   onChrome: (command: string) => void;
 }) {
@@ -253,28 +466,6 @@ export function TitlebarOverlay(props: {
       style={{ height: barHeight }}
       desktop={{ windowDrag: true }}
     >
-      {props.fadeBackdrop ? (
-        <View
-          class="absolute top-0"
-          style={{
-            left: props.pageInset ?? 0,
-            right: 0,
-            height: barHeight + 34,
-            backgroundImage: `linear-gradient(to bottom, ${props.colors.background} 0%, ${colorAlpha(props.colors.background, 0.94)} 34%, ${colorAlpha(props.colors.background, 0.58)} 66%, ${colorAlpha(props.colors.background, 0)} 100%)`,
-            pointerEvents: "none",
-          }}
-        />
-      ) : (
-        <View
-          class="absolute top-0 bottom-0"
-          style={{
-            left: props.pageInset ?? 0,
-            right: 0,
-            backgroundColor: props.colors.background,
-            pointerEvents: "none",
-          }}
-        />
-      )}
       {props.dimmed && (
         <View
           class="absolute top-0 bottom-0"
@@ -313,7 +504,7 @@ export function TitlebarOverlay(props: {
           cursor: "pointer",
         }}
       >
-        <SharedIcon name="sidebar" size={16} color={props.colors.muted} />
+        <Glyph name="sidebar" size={14} color={props.colors.muted} />
       </View>
       {props.showAddGame && (
         <View
@@ -332,103 +523,68 @@ export function TitlebarOverlay(props: {
             cursor: "pointer",
           }}
         >
-          <SharedIcon name="plus" size={16} color={props.colors.muted} />
+          <Glyph name="plus" size={16} color={props.colors.muted} />
         </View>
       )}
-      {props.noteActive && (
+      {props.noteNav && (
         <View
-          onPress={() => {
-            titleFocused.set(false);
-            props.onCloseNote?.();
-          }}
-          role="button"
-          accessibilityLabel="К списку заметок"
           class="absolute flex-row items-center"
-          hoverStyle={{ backgroundColor: wash }}
           desktop={{ windowDrag: false }}
           style={{
             left: noteBackLeft(props.pageInset ?? 0, sidebarLeft),
             top: titlebarControlTop(24),
             height: 24,
-            paddingLeft: 8,
-            paddingRight: 10,
-            gap: 3,
-            borderRadius: CONTROL_RADIUS,
-            cursor: "pointer",
+            gap: 2,
           }}
         >
-          <Text class="text-[15px]" style={{ color: props.colors.muted }}>
-            ‹
-          </Text>
-          <Text class="text-[12px]" style={{ color: props.colors.muted }}>
-            Заметки
-          </Text>
+          <TrailArrow
+            dir="back"
+            label="Назад"
+            dark={props.dark}
+            colors={props.colors}
+            enabled={props.canGoBack}
+            onPress={props.onGoBack}
+          />
+          <TrailArrow
+            dir="forward"
+            label="Вперёд"
+            dark={props.dark}
+            colors={props.colors}
+            enabled={props.canGoForward}
+            onPress={props.onGoForward}
+          />
         </View>
       )}
-      {/* The page's middle, from the sidebar's edge to the window's edge.
-        nsh-platform-gpui 0.4.0 paints single-line placeholders at x=0 instead
-        of applying textAlign, so we draw the empty placeholder centred here. */}
-      {props.noteActive && (
+      {/* What is open, in a row across the bar's middle: a chip a page, a chip
+        a note. The strip is centred; the delete button keeps the right end. */}
+      {props.tabs && props.tabs.length > 0 && (
         <View
           class="absolute flex-row items-center justify-center"
           desktop={{ windowDrag: false }}
           style={{
-            left: props.pageInset ?? 0,
-            right: 0,
-            top: titlebarControlTop(26),
-            height: 26,
+            left: noteBackLeft(props.pageInset ?? 0, sidebarLeft) + 60,
+            right: controlsRight + 44,
+            top: titlebarControlTop(TAB_HEIGHT),
+            height: TAB_HEIGHT,
+            gap: TAB_GAP,
             pointerEvents: "box-none",
           }}
         >
-          <View
-            class="relative items-center justify-center"
-            style={{ width: 360, maxWidth: "70%", height: 26 }}
-          >
-            {!(props.noteTitle ?? "") && !titleFocused() && (
-              <View
-                class="absolute left-0 right-0 top-0 bottom-0 items-center justify-center"
-                style={{ pointerEvents: "none" }}
-              >
-                <Text
-                  class="text-center text-[13px] font-semibold"
-                  style={{
-                    color: colorAlpha(props.colors.foreground, 0.5),
-                    lineHeight: 18,
-                  }}
-                >
-                  Заголовок
-                </Text>
-              </View>
-            )}
-            <Input
-              value={props.noteTitle ?? ""}
-              onChange={(event) => props.onRenameNote?.(event.value)}
-              onFocus={() => titleFocused.set(true)}
-              onBlur={() => titleFocused.set(false)}
-              accessibilityLabel="Заголовок заметки"
-              class="text-center text-[13px] font-semibold"
-              style={{
-                width: "100%",
-                height: 26,
-                textAlign: "center",
-                color: props.colors.foreground,
-                backgroundColor: "transparent",
-                paddingTop: 0,
-                paddingBottom: 0,
-                paddingLeft: 8,
-                paddingRight: 8,
-                lineHeight: 18,
-              }}
+          {props.tabs.map((tab) => (
+            <TabChip
+              key={tab.key}
+              tab={tab}
+              colors={props.colors}
+              dark={props.dark}
+              onSelect={() => props.onSelectTab?.(tab.key)}
+              onClose={() => props.onCloseTab?.(tab.key)}
             />
-          </View>
+          ))}
         </View>
       )}
       {props.noteActive && (
         <View
-          onPress={() => {
-            titleFocused.set(false);
-            props.onDeleteNote?.();
-          }}
+          onPress={() => props.onDeleteNote?.()}
           role="button"
           accessibilityLabel="Удалить заметку"
           class="absolute items-center justify-center"
@@ -443,14 +599,14 @@ export function TitlebarOverlay(props: {
             cursor: "pointer",
           }}
         >
-          <SharedIcon name="trash" size={13} color={props.colors.muted} />
+          <Glyph name="trash" size={13} color={props.colors.muted} />
         </View>
       )}
       {drawCaptions && (
         <View
-          class="absolute right-0 top-0 flex-row"
+          class="absolute right-0 top-0 flex-row items-center"
           desktop={{ windowDrag: false }}
-          style={{ height: TITLEBAR_HEIGHT }}
+          style={{ height: TITLEBAR_HEIGHT, paddingRight: TRAILING_INSET }}
         >
           <View
             onPress={() => props.onChrome("window.minimize")}
@@ -461,15 +617,12 @@ export function TitlebarOverlay(props: {
             hoverStyle={{ backgroundColor: wash }}
             style={{
               width: CAPTION_BUTTON_WIDTH,
-              height: TITLEBAR_HEIGHT,
+              height: CAPTION_BUTTON_HEIGHT,
+              borderRadius: CONTROL_RADIUS,
               cursor: "pointer",
             }}
           >
-            <SharedIcon
-              name="windowMin"
-              color={props.colors.foreground}
-              size={12}
-            />
+            <SharedIcon name="windowMin" color={props.colors.muted} size={14} />
           </View>
           <View
             onPress={() => props.onChrome("window.zoom")}
@@ -480,15 +633,12 @@ export function TitlebarOverlay(props: {
             hoverStyle={{ backgroundColor: wash }}
             style={{
               width: CAPTION_BUTTON_WIDTH,
-              height: TITLEBAR_HEIGHT,
+              height: CAPTION_BUTTON_HEIGHT,
+              borderRadius: CONTROL_RADIUS,
               cursor: "pointer",
             }}
           >
-            <SharedIcon
-              name="windowMax"
-              color={props.colors.foreground}
-              size={12}
-            />
+            <SharedIcon name="windowMax" color={props.colors.muted} size={14} />
           </View>
           <View
             onPress={() => props.onChrome("window.close")}
@@ -501,14 +651,15 @@ export function TitlebarOverlay(props: {
             hoverStyle={{ backgroundColor: "#e81123" }}
             style={{
               width: CAPTION_BUTTON_WIDTH,
-              height: TITLEBAR_HEIGHT,
+              height: CAPTION_BUTTON_HEIGHT,
+              borderRadius: CONTROL_RADIUS,
               cursor: "pointer",
             }}
           >
             <SharedIcon
               name="windowClose"
-              color={closeHovered() ? "#ffffff" : props.colors.foreground}
-              size={12}
+              color={closeHovered() ? "#ffffff" : props.colors.muted}
+              size={14}
             />
           </View>
         </View>
@@ -519,7 +670,7 @@ export function TitlebarOverlay(props: {
 
 export function SidebarRow(props: {
   label: string;
-  icon: IconName | "gamepad" | "file";
+  icon: GlyphName;
   selected: boolean;
   dark: boolean;
   colors: ThemeColors;
@@ -546,15 +697,7 @@ export function SidebarRow(props: {
         cursor: "pointer",
       }}
     >
-      {props.icon === "gamepad" || props.icon === "file" ? (
-        <Glyph name={props.icon} size={16} color={props.colors.foreground} />
-      ) : (
-        <SharedIcon
-          name={props.icon}
-          size={16}
-          color={props.colors.foreground}
-        />
-      )}
+      <Glyph name={props.icon} size={16} color={props.colors.foreground} />
       <Text
         class="text-[14px]"
         style={{
@@ -590,6 +733,7 @@ export function RecentRow(props: {
       hoverStyle={{ backgroundColor: wash }}
       style={{
         height: NAV_ROW_HEIGHT - 6,
+        gap: 10,
         paddingLeft: 10,
         paddingRight: 10,
         borderRadius: NAV_ROW_RADIUS,
@@ -599,12 +743,17 @@ export function RecentRow(props: {
         cursor: "pointer",
       }}
     >
+      <Glyph
+        name={recentIcon(props.entry.kind)}
+        size={14}
+        color={props.colors.foreground}
+      />
       <Text
-        class="text-[12px]"
+        class="text-[14px] truncate"
         style={{
-          color: props.selected ? props.colors.foreground : props.colors.muted,
-          fontWeight: props.selected ? 500 : 400,
-          lineHeight: 18,
+          color: props.colors.foreground,
+          fontWeight: 500,
+          lineHeight: 20,
         }}
       >
         {props.entry.title}

@@ -91,3 +91,101 @@ fn palette_json(palette: &Palette) -> Value {
         "card": color(palette.card),
     })
 }
+
+/// A palette as the component theme NSH draws itself with (`setTheme`): shadcn's
+/// tokens, both appearances in one file. A table's grips, a selection, a scroll
+/// bar and a menu read these, so the accent chosen here reaches them — the
+/// shared `imago-nsh` theme's violet stays out of it.
+pub fn nsh_theme(light: &Palette, dark: &Palette, accent: Option<u32>) -> Value {
+    fn tokens(palette: &Palette, accent: u32) -> Value {
+        let color = |value: u32| format!("#{value:06x}");
+        json!({
+            "background": color(palette.bg),
+            "foreground": color(palette.fg),
+            "card": color(palette.card),
+            "card-foreground": color(palette.fg),
+            "popover": color(palette.popover),
+            "popover-foreground": color(palette.fg),
+            "primary": color(accent),
+            "primary-foreground": color(palette.accent_fg),
+            "secondary": color(palette.secondary),
+            "secondary-foreground": color(palette.fg),
+            "muted": color(palette.secondary),
+            "muted-foreground": color(palette.muted_fg),
+            "accent": color(palette.accent_dim),
+            "accent-foreground": color(palette.fg),
+            "destructive": color(palette.destructive),
+            "border": color(palette.border),
+            "input": color(palette.border),
+            "ring": color(accent),
+            // What a selection is drawn with: the accent, as a wash.
+            "selection": format!("#{accent:06x}38"),
+            "sidebar": color(palette.sidebar_bg),
+            "sidebar-foreground": color(palette.fg),
+            "sidebar-border": color(palette.sidebar_divider),
+        })
+    }
+    json!({
+        "cssVars": {
+            // Atlas's own typography and corners: NSH components read these
+            // instead of borrowing another app's theme.
+            "theme": {
+                "font-sans": "Inter",
+                "font-mono": "Geist Mono",
+                "radius": "0.75rem",
+                "radius-control": "0.5rem",
+            },
+            "light": tokens(light, accent.unwrap_or(light.accent)),
+            "dark": tokens(dark, accent.unwrap_or(dark.accent)),
+        }
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_component_theme_wears_the_palette() {
+        let theme = nsh_theme(&COBALT_FOUNDRY.light, &COBALT_FOUNDRY.dark, Some(0x123456));
+        let css = &theme["cssVars"];
+        // The accent is the app's, in both appearances — the shared violet is
+        // nowhere in what NSH draws itself with.
+        assert_eq!(css["light"]["primary"], "#123456");
+        assert_eq!(css["dark"]["primary"], "#123456");
+        assert_eq!(css["dark"]["ring"], "#123456");
+        assert_eq!(css["dark"]["selection"], "#12345638");
+        // Surfaces come from the palette, each appearance its own.
+        assert_eq!(css["light"]["background"], "#f7f8fa");
+        assert_eq!(css["dark"]["background"], "#090c15");
+        // Without an accent of its own, the palette keeps the one it has.
+        let own = nsh_theme(&COBALT_FOUNDRY.light, &COBALT_FOUNDRY.dark, None);
+        assert_eq!(own["cssVars"]["dark"]["primary"], "#1784fc");
+    }
+
+    /// The theme the app opens with is Atlas's own file, `ui/theme.json`, and it
+    /// is generated from the palette the app defaults to: the first frame
+    /// already wears the scheme `setTheme` then keeps in sync, and nothing is
+    /// borrowed from another app's theme.
+    #[test]
+    fn the_theme_file_is_generated_from_the_palette() {
+        let expected = format!(
+            "{}\n",
+            serde_json::to_string_pretty(&nsh_theme(
+                &COBALT_FOUNDRY.light,
+                &COBALT_FOUNDRY.dark,
+                None,
+            ))
+            .unwrap()
+        );
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/ui/theme.json");
+        if std::env::var_os("ATLAS_THEME_WRITE").is_some() {
+            std::fs::write(path, &expected).unwrap();
+        }
+        let actual = std::fs::read_to_string(path).unwrap_or_default();
+        assert_eq!(
+            actual, expected,
+            "ui/theme.json is stale: regenerate it with `ATLAS_THEME_WRITE=1 cargo test --bin atlas -- theme`"
+        );
+    }
+}

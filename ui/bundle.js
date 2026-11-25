@@ -1,5 +1,5 @@
 import { append, bindProp, component, each, element, font, insert, list, prop, setup, text } from "nsh:rt";
-import { Clipboard, Easing, LayoutAnimation, Storage, createMotion, effect, host, keymap, mount, nativeComponent, pixelRatio, signal } from "nsh";
+import { Clipboard, Easing, LayoutAnimation, Storage, createMotion, effect, host, keymap, mount, nativeComponent, pixelRatio, setTheme, signal } from "nsh";
 import { Menu, currentWindow, titleBar, windowState } from "nsh/desktop";
 import { platform } from "os";
 import { Popover, RichEditor, RichEditorPlugin, StarterKit, TableKit, chain, command, createRichEditor, deleteRange, insertTable, setNodeAttribute } from "nsh/base";
@@ -8,7 +8,7 @@ import { Popover, RichEditor, RichEditorPlugin, StarterKit, TableKit, chain, com
 setup(null, null, null, null, "{\"id\":\"com.mundus.atlas\",\"name\":\"Atlas\",\"version\":\"1.0.0\",\"build\":1,\"development\":true}");
 
 //#endregion
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+9dd5fc97ce2d6b94319606e354e4aa0dd15d4c33/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https_6aac098089f45291b681748c9279272c/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/icons.ts
 const icons = {
 	mundus: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20854%20841%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M848.85895%20312.15771C833.823%20246.3922%20789.67505%20200.34573%20750.2724%20209.29922C719.13416%20216.38741%20414.19922%20453.55243%20336.24701%20504.18228C403.00226%20439.42935%20679.25177%20166.39703%20693.11469%20137.61795C710.65662%20101.21774%20675.57306%2047.923195%20614.73621%2018.664467C553.89935%20-10.594261%20490.39661%20-4.8384075%20472.80139%2031.615091C458.93848%2060.394169%20320.19763%20399.6716%20311.18674%20492.19101C302.17584%20399.6716%20394.95541%2060.447464%20381.0925%2031.615091C363.5506%20-4.8384075%20299.99451%20-10.594261%20239.15767%2018.664467C178.32083%2047.923195%20143.23724%20101.21774%20160.77916%20137.61795C174.64207%20166.39703%20219.37186%20439.48267%20286.12711%20504.18228C208.12158%20453.55243%20134.75906%20216.38741%20103.62083%20209.29922C64.164856%20200.29243%2020.016878%20246.3389%205.0342722%20312.15771C-10.001652%20377.92322%209.7798576%20438.57248%2049.235832%20447.57925C80.374062%20454.66742%20187.75366%20543.08728%20279.99533%20531.3092C191.75259%20560.6745%2094.663284%20517.02222%2069.656731%20536.95441C38.038635%20562.16272%2046.516647%20625.37006%2088.638565%20678.13171C130.70715%20730.89337%20190.47778%20753.22388%20222.09589%20728.01556C247.10245%20708.08337%20249.01703%20632.46222%20297.32394%20553C265.2793%20640.29651%20304.74017%20735.79651%20304.74017%20767.77325C304.74017%20808.22388%20359.44498%20841%20427%20841C494.55502%20841%20549.2605%20808.22388%20549.2605%20767.77325C549.2605%20735.84979%20357.2009%20640.29651%20325.15625%20553C373.46317%20632.46222%20606.89819%20708.08337%20631.90472%20728.01556C663.52283%20753.22388%20723.29346%20730.89337%20765.36206%20678.13171C807.43066%20625.37006%20815.96136%20562.16272%20784.34326%20536.95441C759.33673%20517.02222%20430.72763%20560.6745%20342.48489%20531.3092C434.72656%20543.08728%20773.57263%20454.66742%20804.76416%20447.57925C844.22015%20438.57248%20864.00165%20377.97653%20848.9657%20312.15771L848.85895%20312.15771Z%22%20fill%3D%22currentColor%22%20fill-rule%3D%22nonzero%22%2F%3E%3C%2Fsvg%3E",
 	about: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M16%202V6M8%202V6%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M13%204H11C7.22876%204%205.34315%204%204.17157%205.17157C3%206.34315%203%208.22876%203%2012V14C3%2017.7712%203%2019.6569%204.17157%2020.8284C5.34315%2022%207.22876%2022%2011%2022H13C16.7712%2022%2018.6569%2022%2019.8284%2020.8284C21%2019.6569%2021%2017.7712%2021%2014V12C21%208.22876%2021%206.34315%2019.8284%205.17157C18.6569%204%2016.7712%204%2013%204Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%2010H21%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M10%2018.5002L9.99999%2013.8474C9.99999%2013.6557%209.86325%2013.5002%209.69458%2013.5002H9M14%2018.4983L15.4855%2013.8923C15.4951%2013.8626%2015.5%2013.8315%2015.5%2013.8002C15.5%2013.6346%2015.3657%2013.5002%2015.2%2013.5002L13%2013.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
@@ -51,7 +51,7 @@ const icons = {
 };
 
 //#endregion
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+9dd5fc97ce2d6b94319606e354e4aa0dd15d4c33/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https_6aac098089f45291b681748c9279272c/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/components.tsx
 function Icon(props) {
 	return (() => {
 		const __nsh_hv0 = element("image");
@@ -108,7 +108,7 @@ function PageScroll(props) {
 }
 
 //#endregion
-//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https+++codeload.github.com+makekosmos+imago+tar.gz+9dd5fc97ce2d6b94319606e354e4aa0dd15d4c33/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/palettes.ts
+//#region ../node_modules/.pnpm/@makekosmos+imago-nsh@https_6aac098089f45291b681748c9279272c/node_modules/@makekosmos/imago-nsh/crates/imago-nsh/ui/palettes.ts
 /**
 * Cobalt Foundry: forged steel greys lit by a cobalt arc. The Manager wears it
 * as its signature scheme; every consumer may ship its own palettes next to
@@ -530,12 +530,23 @@ function cycleShortcut(name) {
 //#endregion
 //#region icons.ts
 const glyphs = {
-	search: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M17%2017L21%2021%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%2011C19%206.58172%2015.4183%203%2011%203C6.58172%203%203%206.58172%203%2011C3%2015.4183%206.58172%2019%2011%2019C15.4183%2019%2019%2015.4183%2019%2011Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
-	folder: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M2.5%2020V8.87695C2.5%207.58945%202.5%206.9457%202.78533%206.47048C2.9541%206.18939%203.18939%205.9541%203.47048%205.78533C3.9457%205.5%204.59449%205.5%205.89206%205.5C6.52339%205.5%206.83906%205.5%207.12612%205.58819C7.31759%205.64702%207.49914%205.73428%207.66469%205.84705C7.91289%206.01611%208.10859%206.26074%208.5%206.75C8.89141%207.23926%209.08711%207.48389%209.33531%207.65295C9.50086%207.76572%209.68241%207.85298%209.87388%207.91181C10.1609%208%2010.4742%208%2011.1008%208H15C16.4045%208%2017.1067%208%2017.6111%208.33706C17.8295%208.48298%2018.017%208.67048%2018.1629%208.88886C18.5%209.39331%2018.5%2010.0955%2018.5%2011.5%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M4.42028%2014.0144L3.63368%2016.0144C2.65618%2018.4998%202.16743%2019.7425%202.7524%2020.6213C3.33737%2021.5%204.65337%2021.5%207.28537%2021.5H15.1903C16.4249%2021.5%2017.0422%2021.5%2017.5295%2021.1795C18.0169%2020.859%2018.2702%2020.2865%2018.7769%2019.1415L19.6618%2017.1415C20.7866%2014.5992%2021.349%2013.3281%2020.7679%2012.4141C20.1868%2011.5%2018.8163%2011.5%2016.0752%2011.5H8.07196C6.78232%2011.5%206.1375%2011.5%205.63811%2011.8439C5.13872%2012.1877%204.89924%2012.7966%204.42028%2014.0144Z%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11.5%204.51456C12.4151%203.28409%2013.6662%202.55594%2015.5125%202.50161C16.1155%202.48386%2016.7152%202.61395%2017.2682%202.85544C18.5748%203.42601%2019.4185%204.15644%2020%205.5L21.5%203%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
-	file: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M14.4961%202.00027H9.49609C8.66767%202.00027%207.99609%202.67185%207.99609%203.50027C7.99609%204.3287%208.66767%205.00027%209.49609%205.00027H14.4961C15.3245%205.00027%2015.9961%204.3287%2015.9961%203.50027C15.9961%202.67185%2015.3245%202.00027%2014.4961%202.00027Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M7.99609%2015.0003H11.4247M7.99609%2011.0003H15.9961%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M15.9961%203.50027C17.5496%203.54709%2018.4761%203.72035%2019.1174%204.36164C19.9961%205.24032%2019.9961%206.65451%2019.9961%209.4829L19.9961%2015.9997C19.9961%2018.8282%2019.9961%2020.2424%2019.1174%2021.1211C18.2387%2021.9997%2016.8245%2021.9997%2013.9961%2021.9997L9.99609%2021.9997C7.16767%2021.9997%205.75346%2021.9997%204.87478%2021.1211C3.9961%2020.2424%203.9961%2018.8282%203.99609%2015.9998L3.99611%209.48296C3.9961%206.65453%203.9961%205.24031%204.87478%204.36163C5.51606%203.72034%206.44261%203.54708%207.99599%203.50027%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
-	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5%2013.2592L7.58583%2015.9568C8.2525%2016.6523%208.58583%2017%209.00004%2017C9.41425%2017%209.74759%2016.6523%2010.4143%2015.9568L19%207%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E",
-	close: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m6%206%2012%2012M18%206%206%2018%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A",
-	gamepad: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7.1%207.5h9.8a4.5%204.5%200%200%201%204.4%203.5l1%204.7a2.6%202.6%200%200%201-4.4%202.4l-2-1.9H8.1l-2%201.9a2.6%202.6%200%200%201-4.4-2.4l1-4.7a4.5%204.5%200%200%201%204.4-3.5Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M7%2010.5v4m-2-2h4m7-.8h.01m2%202h.01%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A"
+	search: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M10%202a8%208%200%201%200%204.906%2014.32l5.387%205.387a1%201%200%200%200%201.414-1.414l-5.387-5.387A8%208%200%200%200%2010%202Z%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	folder: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M9.021%202c.306.003.611.019.903.107l.231.083q.342.142.63.378l.113.101c.256.244.45.548.647.845l.574.863.282.411c.051.07.07.086.084.099l.081.053q.045.024.091.039l.128.014c.086.004.233.007.5.007H14.6c1.103%200%201.991-.001%202.709.058.728.06%201.368.185%201.96.487l.175.093a5%205%200%200%201%202.011%202.092l.115.249c.154.363.247.748.308%201.16q.24.074.468.21l.191.13a2.5%202.5%200%200%201%20.9%201.297l.039.158c.075.365.042.72-.016%201.043a9%209%200%200%201-.134.597l-.186.7-.89%203.27c-.409%201.502-.678%202.55-1.233%203.354l-.116.157a5%205%200%200%201-1.752%201.432l-.297.135c-.962.397-2.082.378-3.743.378H7.188c-.654%200-1.21.001-1.66-.033-.427-.032-.855-.102-1.25-.288a4%204%200%200%201-.393-.15l-.155-.074a5%205%200%200%201-2.092-2.01l-.093-.175c-.302-.593-.428-1.233-.487-1.961C.999%2016.59%201%2015.703%201%2014.599V9.4c0-1.103-.001-1.991.058-2.709.06-.728.185-1.368.487-1.96l.093-.175A5%205%200%200%201%203.73%202.545l.224-.106c.53-.227%201.1-.33%201.737-.381C6.41%201.999%207.297%202%208.401%202zm-.62%202c-1.137%200-1.93%200-2.547.05-.529.044-.862.12-1.113.228l-.103.05a3%203%200%200%200-1.196%201.104l-.115.206c-.134.263-.227.611-.276%201.216C3%207.471%203%208.264%203%209.4v5.2c0%201.07.002%201.835.044%202.435l.09-.338%201.259-4.62.15-.55c.15-.53.316-.998.61-1.38l.125-.152a3%203%200%200%201%201.106-.788l.226-.08c.405-.12.848-.144%201.334-.148h11.86a2%202%200%200%200-.077-.226l-.054-.115a3%203%200%200%200-1.105-1.196l-.206-.115c-.263-.134-.611-.227-1.216-.276C16.528%207%2015.735%207%2014.6%207h-1.621a3.6%203.6%200%200%201-.756-.07l-.147-.037a2.5%202.5%200%200%201-.663-.315l-.197-.146c-.236-.194-.419-.439-.591-.692l-.17-.254-.574-.863a12%2012%200%200%200-.282-.411l-.084-.099a.5.5%200%200%200-.081-.053l-.091-.039C9.305%204.011%209.247%204%208.716%204z%22%20clip-rule%3D%22evenodd%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	note: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M11%205.197c0-.892-.588-1.688-1.462-1.866-2.621-.535-5.579-.536-8.034.867A1%201%200%200%200%201%205.067v15.5a1%201%200%200%200%201.394.919c2.607-1.118%205.852-.48%208.606.669z%22%20fill%3D%22currentColor%22%2F%3E%3Cpath%20d%3D%22M13%2022.155c2.754-1.15%205.999-1.787%208.606-.67A1%201%200%200%200%2023%2020.568v-15.5a1%201%200%200%200-.504-.869c-2.455-1.403-5.413-1.402-8.034-.867C13.588%203.51%2013%204.306%2013%205.198z%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	journal: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M8%201a1%201%200%200%201%201%201v1.04C9.805%203%2010.759%203%2011.916%203h.168c1.157%200%202.111%200%202.916.04V2a1%201%200%201%201%202%200v1.305q.35.092.679.228a7%207%200%200%201%203.788%203.788c.214.517.339%201.064.414%201.679H2.12c.074-.615.199-1.162.413-1.679A7%207%200%200%201%206.32%203.533%205%205%200%200%201%207%203.305V2a1%201%200%200%201%201-1Z%22%20fill%3D%22currentColor%22%2F%3E%3Cpath%20d%3D%22M2.01%2011C2%2011.581%202%2012.235%202%2012.974v.063c0%201.366%200%202.443.06%203.314.06.888.186%201.634.473%202.328a7%207%200%200%200%203.788%203.788c.694.287%201.44.413%202.328.474.87.059%201.948.059%203.314.059h.074c1.366%200%202.443%200%203.314-.06.888-.06%201.634-.186%202.328-.473a7%207%200%200%200%203.788-3.788c.287-.694.413-1.44.474-2.328.059-.87.059-1.947.059-3.314v-.063c0-.74%200-1.393-.01-1.974z%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	check: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M1.85%2012C1.85%206.394%206.394%201.85%2012%201.85S22.15%206.394%2022.15%2012%2017.606%2022.15%2012%2022.15%201.85%2017.606%201.85%2012Zm14.214-1.328a1%201%200%201%200-1.128-1.652l-.101.07a16%2016%200%200%200-4.174%204.168l-1.454-1.453a1%201%200%200%200-1.414%201.415l2.341%202.339a1%201%200%200%200%201.575-.211%2014%2014%200%200%201%204.254-4.607z%22%20clip-rule%3D%22evenodd%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	file: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M8%201a5%205%200%200%200-5%205v12a5%205%200%200%200%205%205h8a5%205%200%200%200%205-5v-5.2c0-.857%200-1.439-.038-1.889-.035-.438-.1-.663-.18-.819a2%202%200%200%200-.874-.874c-.156-.08-.38-.145-.819-.18C18.639%209%2018.057%209%2017.2%209h-.038c-.528%200-.982%200-1.357-.03-.395-.033-.789-.104-1.167-.297a3%203%200%200%201-1.311-1.311c-.193-.378-.264-.772-.296-1.167C13%205.82%2013%205.365%2013%204.839V4.8c0-.857%200-1.439-.038-1.889-.035-.438-.1-.663-.18-.819a2%202%200%200%200-.874-.874c-.156-.08-.38-.145-.819-.18C10.639%201%2010.057%201%209.2%201z%22%20fill%3D%22currentColor%22%2F%3E%3Cpath%20d%3D%22M14.664%201.4c.175.423.253.869.292%201.348C15%203.29%2015%203.954%2015%204.758V4.8c0%20.577%200%20.949.024%201.232.022.272.06.373.085.422a1%201%200%200%200%20.437.437c.05.025.15.063.422.085C16.25%207%2016.623%207%2017.2%207h.041c.805%200%201.47%200%202.01.044.48.04.926.117%201.348.292a9.02%209.02%200%200%200-5.935-5.935Z%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	gamepad: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M1%2011.667A7.667%207.667%200%200%201%208.667%204h6.666A7.667%207.667%200%200%201%2023%2011.667v5.243a4.09%204.09%200%200%201-7.748%201.829l-.146-.292A2.62%202.62%200%200%200%2012.764%2017h-1.528c-.992%200-1.898.56-2.342%201.447l-.145.292A4.09%204.09%200%200%201%201%2016.909zM15.982%209.19a1%201%200%200%200-1.964-.382v.001a1%201%200%200%200%201.963.382zM9%209a1%201%200%201%200-2%200v1H6a1%201%200%201%200%200%202h1v1a1%201%200%201%200%202%200v-1h1a1%201%200%201%200%200-2H9zm9.982%203.19a1%201%200%200%200-1.963-.38h0a1%201%200%200%200%201.963.382z%22%20clip-rule%3D%22evenodd%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	settings: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M11.205%202.124a2.6%202.6%200%200%201%201.59%200c.354.114.638.309.889.517.234.196.496.452.79.74l.328.322c.306.3.35.334.387.356q.08.048.171.07c.042.011.098.018.526.022l.46.005c.411.004.777.008%201.08.036.326.03.664.092.995.262.483.249.876.642%201.125%201.125.17.33.232.67.262.994.028.304.032.67.036%201.08l.005.461c.004.428.01.484.021.526q.023.091.07.17c.023.038.058.082.357.388l.323.329c.287.293.543.555.739.79.208.25.403.534.517.888a2.6%202.6%200%200%201%200%201.59c-.114.354-.309.638-.517.889a15%2015%200%200%201-.739.789l-.323.33c-.3.305-.334.35-.356.386a.6.6%200%200%200-.07.171c-.011.042-.018.098-.022.526l-.005.46c-.004.411-.008.777-.036%201.08-.03.326-.092.664-.262.995a2.6%202.6%200%200%201-1.125%201.125c-.33.17-.67.232-.994.262-.304.028-.67.032-1.08.036l-.461.005c-.428.004-.484.01-.526.021a.6.6%200%200%200-.17.07c-.038.023-.082.058-.388.357l-.329.323c-.293.287-.555.543-.79.739-.25.208-.534.403-.888.517a2.6%202.6%200%200%201-1.59%200c-.354-.114-.638-.309-.889-.517a14%2014%200%200%201-.789-.739l-.33-.323c-.305-.3-.35-.334-.386-.356a.6.6%200%200%200-.171-.07c-.042-.011-.098-.018-.526-.022l-.46-.005a14%2014%200%200%201-1.08-.036c-.326-.03-.664-.092-.995-.262a2.6%202.6%200%200%201-1.125-1.125c-.17-.33-.232-.67-.262-.994-.028-.304-.032-.67-.036-1.08l-.005-.461c-.004-.428-.01-.484-.021-.526a.6.6%200%200%200-.07-.17c-.023-.038-.058-.082-.357-.388l-.323-.329a14%2014%200%200%201-.739-.79c-.208-.25-.403-.534-.517-.888a2.6%202.6%200%200%201%200-1.59c.114-.354.309-.638.517-.889.196-.234.452-.496.74-.79l.322-.328c.3-.306.334-.35.356-.387a.6.6%200%200%200%20.07-.171c.011-.042.018-.098.022-.526l.005-.46c.004-.411.008-.777.036-1.08.03-.326.092-.664.262-.995A2.6%202.6%200%200%201%205.58%204.454c.33-.17.67-.232.994-.262.304-.028.67-.032%201.08-.036l.461-.005c.428-.004.484-.01.526-.021a.6.6%200%200%200%20.17-.07c.038-.023.082-.058.388-.357l.329-.323c.293-.287.555-.543.79-.739.25-.208.534-.403.888-.517ZM12%209.9c-1.146%200-2.109.927-2.109%202.1s.963%202.1%202.11%202.1%202.108-.927%202.108-2.1S13.147%209.9%2012%209.9Z%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	plus: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M1.85%2012C1.85%206.394%206.394%201.85%2012%201.85S22.15%206.394%2022.15%2012%2017.606%2022.15%2012%2022.15%201.85%2017.606%201.85%2012ZM13%208.9a1%201%200%201%200-2%200V11H8.9a1%201%200%201%200%200%202H11v2.1a1%201%200%201%200%202%200V13h2.1a1%201%200%201%200%200-2H13z%22%20clip-rule%3D%22evenodd%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	trash: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M12%201a4.24%204.24%200%200%200-3.789%202.342L7.382%205H4a1%201%200%200%200%200%202h1v8.036c0%20.901%200%201.629.04%202.22.042.61.13%201.148.34%201.657a5%205%200%200%200%202.707%202.706c.51.212%201.048.3%201.656.34.592.041%201.32.041%202.221.041h.072c.901%200%201.629%200%202.22-.04.61-.042%201.148-.13%201.657-.34a5%205%200%200%200%202.706-2.707c.212-.51.3-1.048.34-1.656.041-.592.041-1.32.041-2.222V7h1a1%201%200%201%200%200-2h-3.382l-.83-1.658A4.24%204.24%200%200%200%2012%201Zm-2%203.236L9.618%205h4.764L14%204.236a2.236%202.236%200%200%200-4%200Z%22%20clip-rule%3D%22evenodd%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	sidebar: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M18.724%202.654c-.7-.356-1.463-.51-2.359-.583C15.491%202%2014.407%202%2013.044%202h-2.052c-.757%200-1.425%200-2.011.011-1.535.03-2.7.131-3.705.643a6%206%200%200%200-2.622%202.622c-.356.7-.51%201.463-.583%202.359C2%208.509%202%209.593%202%2010.956v2.088c0%201.363%200%202.447.071%203.321.074.896.227%201.66.583%202.359a6%206%200%200%200%202.622%202.622c1.004.512%202.17.613%203.705.643.586.011%201.254.011%202.011.011h2.052c1.363%200%202.447%200%203.321-.071.896-.074%201.66-.227%202.359-.583a6%206%200%200%200%202.622-2.622c.356-.7.51-1.463.583-2.359.071-.874.071-1.958.071-3.321v-2.088c0-1.363%200-2.447-.071-3.321-.074-.896-.227-1.66-.583-2.359a6%206%200%200%200-2.622-2.622ZM13%204c1.417%200%202.419%200%203.203.065.771.063%201.243.182%201.613.371a4%204%200%200%201%201.748%201.748c.189.37.308.842.371%201.613C20%208.581%2020%209.583%2020%2011v2c0%201.417%200%202.419-.065%203.203-.063.771-.182%201.243-.371%201.613a4%204%200%200%201-1.748%201.748c-.37.189-.841.308-1.613.371C15.419%2020%2014.417%2020%2013%2020h-2l-1-.001V4h1z%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	more: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M1.85%2012C1.85%206.394%206.394%201.85%2012%201.85S22.15%206.394%2022.15%2012c0%205.605-4.544%2010.15-10.15%2010.15S1.85%2017.605%201.85%2012ZM8%2010.9a1.1%201.1%200%200%200%200%202.2h.01a1.1%201.1%200%200%200%200-2.2zm4%200a1.1%201.1%200%200%200%200%202.2h.01a1.1%201.1%200%200%200%200-2.2zm4%200a1.1%201.1%200%200%200%200%202.2h.01a1.1%201.1%200%200%200%200-2.2z%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	mic: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M20.453%2011.015a5.26%205.26%200%200%201-3.382%201.535l-9.633%208.619a3.263%203.263%200%200%201-4.607-4.607l8.62-9.633a5.28%205.28%200%201%201%209.003%204.086Zm-7.972-2.239%202.743%202.743-9.12%208.16a1.263%201.263%200%200%201-1.782-1.783z%22%20clip-rule%3D%22evenodd%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	copy: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M13.8%202c-1.668%200-2.748%200-3.654.294a6%206%200%200%200-3.887%203.965l-.113.035a6%206%200%200%200-3.852%203.852C1.999%2011.052%202%2012.132%202%2013.8v.4c0%201.669%200%202.748.294%203.654a6%206%200%200%200%203.852%203.852c.906.295%201.985.294%203.654.294h.4c1.669%200%202.748%200%203.654-.294a6%206%200%200%200%203.887-3.965q.057-.015.113-.035a6%206%200%200%200%203.852-3.852c.295-.906.294-1.985.294-3.654v-.4c0-1.669%200-2.748-.294-3.654a6%206%200%200%200-3.852-3.852C16.948%201.999%2015.87%202%2014.2%202zM9.909%206c-.512%200-.967%200-1.376.007a4%204%200%200%201%202.232-1.811C11.329%204.012%2012.061%204%2014%204s2.672.012%203.236.196a4%204%200%200%201%202.568%202.568C19.988%207.329%2020%208.061%2020%2010s-.012%202.672-.196%203.236a4%204%200%200%201-1.81%202.232c.006-.409.006-.863.006-1.375V13.8c0-1.668%200-2.748-.294-3.654a6%206%200%200%200-3.852-3.852C12.948%205.999%2011.87%206%2010.2%206z%22%20clip-rule%3D%22evenodd%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	arrowLeft: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M10.83%206.05%2010.58%2011H20a1%201%200%201%201%200%202h-9.419l.248%204.95a1%201%200%200%201-1.593.854%2031.2%2031.2%200%200%201-5.807-5.584%201.95%201.95%200%200%201%200-2.44%2031.2%2031.2%200%200%201%205.807-5.584%201%201%200%200%201%201.593.854Z%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	arrowRight: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22m14.17%206.05.25%204.95H3a1%201%200%201%200%200%202h11.419l-.248%204.95a1%201%200%200%200%201.593.854%2031.2%2031.2%200%200%200%205.807-5.584%201.95%201.95%200%200%200%200-2.44%2031.2%2031.2%200%200%200-5.807-5.584%201%201%200%200%200-1.593.854Z%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	close: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m6%206%2012%2012M18%206%206%2018%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E%0A"
 };
 
 //#endregion
@@ -555,7 +566,7 @@ function Glyph(props) {
 
 //#endregion
 //#region chrome.tsx
-const TITLEBAR_HEIGHT = 38;
+const TITLEBAR_HEIGHT = 40;
 const SIDEBAR_WIDTH = 282;
 const ROW_HEIGHT = 32;
 const NAV_ROW_HEIGHT = 40;
@@ -563,11 +574,13 @@ const CONTROL_RADIUS = 6;
 const ROW_RADIUS = 8;
 const NAV_ROW_RADIUS = 10;
 const CLUSTER_START_MACOS = 88;
-const CLUSTER_START = 10;
-const TRAILING_INSET = 6;
-const CAPTION_BUTTON_WIDTH = 36;
+const CLUSTER_START = 8;
+const TRAILING_INSET = 8;
+const CAPTION_BUTTON_WIDTH = 30;
+const CAPTION_BUTTON_HEIGHT = 24;
+const TOGGLE_SIZE = 24;
+const TRAIL_WIDTH = 50;
 const closeHovered = signal(false);
-const titleFocused = signal(false);
 const SIDEBAR_HIDE_MS = 150;
 const SIDEBAR_OPEN_MS = 100;
 const SIDEBAR_MOTION_MS = 150;
@@ -648,7 +661,180 @@ function raisedFill(colors, dark) {
 	return mixHex(colors.background, dark ? "#ffffff" : "#000000", dark ? .065 : .04);
 }
 function titlebarControlTop(size) {
-	return 21 - size / 2;
+	return 20 - size / 2;
+}
+/**
+* Where the notes' arrows stand: against the pane's right edge, on the
+* toggle's own line — and after the toggle when there is no pane to hold them.
+*/
+function noteBackLeft(pageInset, toggleLeft) {
+	const afterToggle = toggleLeft + TOGGLE_SIZE + 6;
+	const againstPane = pageInset - TRAIL_WIDTH;
+	return Math.max(afterToggle, againstPane);
+}
+const TAB_HEIGHT = 27;
+const TAB_TILE_HEIGHT = 20;
+const TAB_CLOSE_SIZE = 20;
+const TAB_CLOSE_ROOM = 28;
+const TAB_TEXT_SIZE = 13;
+const TAB_MAX_WIDTH = 224;
+const TAB_GAP = 2;
+function TabIcon(props) {
+	if (props.route === "journal") return component(Glyph, {
+		name: "journal",
+		size: 14,
+		get color() {
+			return props.color;
+		}
+	});
+	if (props.route === "games") return component(Glyph, {
+		name: "gamepad",
+		size: 14,
+		get color() {
+			return props.color;
+		}
+	});
+	if (props.route === "settings") return component(Glyph, {
+		name: "settings",
+		size: 14,
+		get color() {
+			return props.color;
+		}
+	});
+	if (props.route === "tasks") return component(Glyph, {
+		name: "check",
+		size: 14,
+		get color() {
+			return props.color;
+		}
+	});
+	return component(Glyph, {
+		name: "note",
+		size: 14,
+		get color() {
+			return props.color;
+		}
+	});
+}
+function recentIcon(kind) {
+	return kind === "game" ? "gamepad" : "note";
+}
+function TabChip(props) {
+	const over = signal(false);
+	const colors = props.colors;
+	const base = shellFill(colors, props.dark);
+	const ink = (t) => mixHex(base, colors.foreground, t);
+	const plate = props.tab.active ? ink(.1) : over() ? ink(.07) : ink(.04);
+	const tileTop = props.tab.active ? mixHex(colors.accent, "#ffffff", .12) : ink(.1);
+	const tileBottom = props.tab.active ? colors.accent : ink(.04);
+	const tileInk = props.tab.active ? accentMark(colors.accent) : colors.muted;
+	return (() => {
+		const __nsh_hv0 = element("view");
+		bindProp(__nsh_hv0, "onPress", () => props.onSelect);
+		prop(__nsh_hv0, "role", "button");
+		bindProp(__nsh_hv0, "accessibilityLabel", () => props.tab.label);
+		bindProp(__nsh_hv0, "accessibilityState", () => ({ selected: props.tab.active }));
+		prop(__nsh_hv0, "onMouseEnter", () => over.set(true));
+		prop(__nsh_hv0, "onMouseLeave", () => over.set(false));
+		prop(__nsh_hv0, "desktop", { windowDrag: false });
+		prop(__nsh_hv0, "class", "flex-row items-center");
+		prop(__nsh_hv0, "style", {
+			height: TAB_HEIGHT,
+			maxWidth: TAB_MAX_WIDTH,
+			paddingLeft: 7 / 2,
+			paddingRight: TAB_CLOSE_ROOM,
+			gap: 8,
+			borderRadius: 8,
+			backgroundColor: plate,
+			cursor: "pointer"
+		});
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "class", "items-center justify-center");
+		bindProp(__nsh_hv1, "style", () => ({
+			width: 24,
+			height: TAB_TILE_HEIGHT,
+			borderRadius: 5,
+			backgroundImage: `linear-gradient(180deg, ${tileTop} 0%, ${tileBottom} 100%)`,
+			borderWidth: 1,
+			borderColor: props.tab.active ? colorAlpha("#ffffff", .14) : ink(.1)
+		}));
+		insert(__nsh_hv1, component(TabIcon, {
+			get route() {
+				return props.tab.route;
+			},
+			get noteId() {
+				return props.tab.noteId;
+			},
+			color: tileInk
+		}));
+		const __nsh_hv2 = element("text");
+		prop(__nsh_hv2, "class", "truncate");
+		bindProp(__nsh_hv2, "style", () => ({
+			fontSize: TAB_TEXT_SIZE,
+			lineHeight: 20,
+			fontWeight: props.tab.active ? 600 : 500,
+			color: props.tab.active ? colors.foreground : colors.muted
+		}));
+		insert(__nsh_hv2, () => props.tab.label);
+		const __nsh_hv3 = element("view");
+		prop(__nsh_hv3, "onPress", () => props.onClose());
+		prop(__nsh_hv3, "role", "button");
+		bindProp(__nsh_hv3, "accessibilityLabel", () => `Закрыть ${props.tab.label}`);
+		prop(__nsh_hv3, "class", "absolute items-center justify-center");
+		bindProp(__nsh_hv3, "hoverStyle", () => ({ backgroundColor: ink(.1) }));
+		prop(__nsh_hv3, "desktop", { windowDrag: false });
+		bindProp(__nsh_hv3, "style", () => ({
+			right: 4,
+			top: 7 / 2,
+			width: TAB_CLOSE_SIZE,
+			height: TAB_CLOSE_SIZE,
+			borderRadius: 5,
+			opacity: props.tab.active || over() ? 1 : 0,
+			cursor: "pointer"
+		}));
+		insert(__nsh_hv3, component(Glyph, {
+			name: "close",
+			size: 12,
+			get color() {
+				return colors.muted;
+			}
+		}));
+		append(__nsh_hv0, __nsh_hv1);
+		append(__nsh_hv0, __nsh_hv2);
+		append(__nsh_hv0, __nsh_hv3);
+		return __nsh_hv0;
+	})();
+}
+function TrailArrow(props) {
+	const enabled = props.enabled === true;
+	return (() => {
+		const __nsh_hv4 = element("view");
+		prop(__nsh_hv4, "onPress", () => {
+			if (enabled) props.onPress?.();
+		});
+		prop(__nsh_hv4, "role", "button");
+		bindProp(__nsh_hv4, "accessibilityLabel", () => props.label);
+		prop(__nsh_hv4, "class", "items-center justify-center");
+		bindProp(__nsh_hv4, "hoverStyle", () => enabled ? { backgroundColor: hoverWash(props.dark) } : void 0);
+		bindProp(__nsh_hv4, "activeStyle", () => enabled ? { backgroundColor: surfaceWash(props.dark, .12) } : void 0);
+		prop(__nsh_hv4, "desktop", { windowDrag: false });
+		prop(__nsh_hv4, "style", {
+			width: 24,
+			height: 24,
+			borderRadius: CONTROL_RADIUS,
+			cursor: enabled ? "pointer" : "default"
+		});
+		insert(__nsh_hv4, component(Glyph, {
+			get name() {
+				return props.dir === "back" ? "arrowLeft" : "arrowRight";
+			},
+			size: 16,
+			get color() {
+				return enabled ? props.colors.foreground : colorAlpha(props.colors.muted, .5);
+			}
+		}));
+		return __nsh_hv4;
+	})();
 }
 function channel(hex, shift) {
 	const h = hex.trim().replace("#", "");
@@ -689,88 +875,67 @@ function TitlebarOverlay(props) {
 	const os = hostOs();
 	const macos = os === "macos";
 	const drawCaptions = drawsCaptionButtons(os, controls.right);
-	const captionWidth = drawCaptions ? 108 : controls.right;
+	const captionWidth = drawCaptions ? 90 : controls.right;
 	const sidebarLeft = macos ? Math.max(controls.left, CLUSTER_START_MACOS) : Math.max(controls.left, CLUSTER_START);
 	const controlsRight = captionWidth + TRAILING_INSET;
 	const addGameRight = controlsRight;
 	const wash = hoverWash(props.dark);
-	const barHeight = controls.height || 38;
+	const barHeight = controls.height || 40;
 	const dragLeft = macos ? Math.max(controls.left, 78) : 0;
 	return (() => {
-		const __nsh_hv0 = element("view");
-		prop(__nsh_hv0, "class", "absolute left-0 right-0 top-0 z-20");
-		prop(__nsh_hv0, "style", { height: barHeight });
-		prop(__nsh_hv0, "desktop", { windowDrag: true });
-		const __nsh_hv4 = element("view");
-		prop(__nsh_hv4, "onPressDown", (event) => props.onChrome((event?.clickCount ?? 1) >= 2 ? "window.titlebar-double-click" : "window.drag"));
-		prop(__nsh_hv4, "class", "absolute right-0 top-0 bottom-0");
-		prop(__nsh_hv4, "style", { left: dragLeft });
 		const __nsh_hv5 = element("view");
-		bindProp(__nsh_hv5, "onPress", () => props.onToggleSidebar);
-		prop(__nsh_hv5, "role", "button");
-		prop(__nsh_hv5, "accessibilityLabel", "Боковая панель");
-		prop(__nsh_hv5, "class", "absolute items-center justify-center");
-		prop(__nsh_hv5, "desktop", { windowDrag: false });
-		prop(__nsh_hv5, "hoverStyle", { backgroundColor: wash });
-		bindProp(__nsh_hv5, "style", () => ({
-			top: titlebarControlTop(24),
+		prop(__nsh_hv5, "class", "absolute left-0 right-0 top-0 z-20");
+		prop(__nsh_hv5, "style", { height: barHeight });
+		prop(__nsh_hv5, "desktop", { windowDrag: true });
+		const __nsh_hv7 = element("view");
+		prop(__nsh_hv7, "onPressDown", (event) => props.onChrome((event?.clickCount ?? 1) >= 2 ? "window.titlebar-double-click" : "window.drag"));
+		prop(__nsh_hv7, "class", "absolute right-0 top-0 bottom-0");
+		prop(__nsh_hv7, "style", { left: dragLeft });
+		const __nsh_hv8 = element("view");
+		bindProp(__nsh_hv8, "onPress", () => props.onToggleSidebar);
+		prop(__nsh_hv8, "role", "button");
+		prop(__nsh_hv8, "accessibilityLabel", "Боковая панель");
+		prop(__nsh_hv8, "class", "absolute items-center justify-center");
+		prop(__nsh_hv8, "desktop", { windowDrag: false });
+		prop(__nsh_hv8, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv8, "style", () => ({
+			top: titlebarControlTop(TOGGLE_SIZE),
 			left: sidebarLeft,
-			width: 24,
-			height: 24,
+			width: TOGGLE_SIZE,
+			height: TOGGLE_SIZE,
 			borderRadius: CONTROL_RADIUS,
 			cursor: "pointer"
 		}));
-		insert(__nsh_hv5, component(Icon, {
+		insert(__nsh_hv8, component(Glyph, {
 			name: "sidebar",
-			size: 16,
+			size: 14,
 			get color() {
 				return props.colors.muted;
 			}
 		}));
-		append(__nsh_hv0, __nsh_hv4);
-		append(__nsh_hv0, __nsh_hv5);
-		insert(__nsh_hv0, [() => props.fadeBackdrop ? (() => {
-			const __nsh_hv1 = element("view");
-			prop(__nsh_hv1, "class", "absolute top-0");
-			bindProp(__nsh_hv1, "style", () => ({
-				left: props.pageInset ?? 0,
-				right: 0,
-				height: barHeight + 34,
-				backgroundImage: `linear-gradient(to bottom, ${props.colors.background} 0%, ${colorAlpha(props.colors.background, .94)} 34%, ${colorAlpha(props.colors.background, .58)} 66%, ${colorAlpha(props.colors.background, 0)} 100%)`,
-				pointerEvents: "none"
-			}));
-			return __nsh_hv1;
-		})() : (() => {
-			const __nsh_hv2 = element("view");
-			prop(__nsh_hv2, "class", "absolute top-0 bottom-0");
-			bindProp(__nsh_hv2, "style", () => ({
-				left: props.pageInset ?? 0,
-				right: 0,
-				backgroundColor: props.colors.background,
-				pointerEvents: "none"
-			}));
-			return __nsh_hv2;
-		})(), () => props.dimmed && (() => {
-			const __nsh_hv3 = element("view");
-			prop(__nsh_hv3, "class", "absolute top-0 bottom-0");
-			bindProp(__nsh_hv3, "style", () => ({
+		append(__nsh_hv5, __nsh_hv7);
+		append(__nsh_hv5, __nsh_hv8);
+		insert(__nsh_hv5, () => props.dimmed && (() => {
+			const __nsh_hv6 = element("view");
+			prop(__nsh_hv6, "class", "absolute top-0 bottom-0");
+			bindProp(__nsh_hv6, "style", () => ({
 				left: props.pageInset ?? 0,
 				right: 0,
 				backgroundColor: "#00000080",
 				pointerEvents: "none"
 			}));
-			return __nsh_hv3;
-		})()], __nsh_hv4);
-		insert(__nsh_hv0, [
+			return __nsh_hv6;
+		})(), __nsh_hv7);
+		insert(__nsh_hv5, [
 			() => props.showAddGame && (() => {
-				const __nsh_hv6 = element("view");
-				prop(__nsh_hv6, "onPress", () => props.onAddGame?.());
-				prop(__nsh_hv6, "role", "button");
-				prop(__nsh_hv6, "accessibilityLabel", "Добавить игру");
-				prop(__nsh_hv6, "class", "absolute items-center justify-center");
-				prop(__nsh_hv6, "desktop", { windowDrag: false });
-				prop(__nsh_hv6, "hoverStyle", { backgroundColor: wash });
-				bindProp(__nsh_hv6, "style", () => ({
+				const __nsh_hv9 = element("view");
+				prop(__nsh_hv9, "onPress", () => props.onAddGame?.());
+				prop(__nsh_hv9, "role", "button");
+				prop(__nsh_hv9, "accessibilityLabel", "Добавить игру");
+				prop(__nsh_hv9, "class", "absolute items-center justify-center");
+				prop(__nsh_hv9, "desktop", { windowDrag: false });
+				prop(__nsh_hv9, "hoverStyle", { backgroundColor: wash });
+				bindProp(__nsh_hv9, "style", () => ({
 					top: titlebarControlTop(28),
 					right: addGameRight,
 					width: 28,
@@ -778,118 +943,95 @@ function TitlebarOverlay(props) {
 					borderRadius: CONTROL_RADIUS,
 					cursor: "pointer"
 				}));
-				insert(__nsh_hv6, component(Icon, {
+				insert(__nsh_hv9, component(Glyph, {
 					name: "plus",
 					size: 16,
 					get color() {
 						return props.colors.muted;
 					}
 				}));
-				return __nsh_hv6;
+				return __nsh_hv9;
 			})(),
-			() => props.noteActive && (() => {
-				const __nsh_hv7 = element("view");
-				prop(__nsh_hv7, "onPress", () => {
-					titleFocused.set(false);
-					props.onCloseNote?.();
-				});
-				prop(__nsh_hv7, "role", "button");
-				prop(__nsh_hv7, "accessibilityLabel", "К списку заметок");
-				prop(__nsh_hv7, "class", "absolute flex-row items-center");
-				prop(__nsh_hv7, "hoverStyle", { backgroundColor: wash });
-				prop(__nsh_hv7, "desktop", { windowDrag: false });
-				bindProp(__nsh_hv7, "style", () => ({
-					left: (props.pageInset ?? 0) + 8,
+			() => props.noteNav && (() => {
+				const __nsh_hv10 = element("view");
+				prop(__nsh_hv10, "class", "absolute flex-row items-center");
+				prop(__nsh_hv10, "desktop", { windowDrag: false });
+				bindProp(__nsh_hv10, "style", () => ({
+					left: noteBackLeft(props.pageInset ?? 0, sidebarLeft),
 					top: titlebarControlTop(24),
 					height: 24,
-					paddingLeft: 8,
-					paddingRight: 10,
-					gap: 3,
-					borderRadius: CONTROL_RADIUS,
-					cursor: "pointer"
+					gap: 2
 				}));
-				const __nsh_hv8 = element("text");
-				prop(__nsh_hv8, "class", "text-[15px]");
-				bindProp(__nsh_hv8, "style", () => ({ color: props.colors.muted }));
-				const __nsh_hv9 = text("‹");
-				append(__nsh_hv8, __nsh_hv9);
-				const __nsh_hv10 = element("text");
-				prop(__nsh_hv10, "class", "text-[12px]");
-				bindProp(__nsh_hv10, "style", () => ({ color: props.colors.muted }));
-				const __nsh_hv11 = text("Заметки");
-				append(__nsh_hv10, __nsh_hv11);
-				append(__nsh_hv7, __nsh_hv8);
-				append(__nsh_hv7, __nsh_hv10);
-				return __nsh_hv7;
+				insert(__nsh_hv10, [component(TrailArrow, {
+					dir: "back",
+					label: "Назад",
+					get dark() {
+						return props.dark;
+					},
+					get colors() {
+						return props.colors;
+					},
+					get enabled() {
+						return props.canGoBack;
+					},
+					get onPress() {
+						return props.onGoBack;
+					}
+				}), component(TrailArrow, {
+					dir: "forward",
+					label: "Вперёд",
+					get dark() {
+						return props.dark;
+					},
+					get colors() {
+						return props.colors;
+					},
+					get enabled() {
+						return props.canGoForward;
+					},
+					get onPress() {
+						return props.onGoForward;
+					}
+				})]);
+				return __nsh_hv10;
+			})(),
+			() => props.tabs && props.tabs.length > 0 && (() => {
+				const __nsh_hv11 = element("view");
+				prop(__nsh_hv11, "class", "absolute flex-row items-center justify-center");
+				prop(__nsh_hv11, "desktop", { windowDrag: false });
+				bindProp(__nsh_hv11, "style", () => ({
+					left: noteBackLeft(props.pageInset ?? 0, sidebarLeft) + 60,
+					right: controlsRight + 44,
+					top: titlebarControlTop(TAB_HEIGHT),
+					height: TAB_HEIGHT,
+					gap: TAB_GAP,
+					pointerEvents: "box-none"
+				}));
+				insert(__nsh_hv11, () => props.tabs.map((tab) => component(TabChip, {
+					get key() {
+						return tab.key;
+					},
+					tab,
+					get colors() {
+						return props.colors;
+					},
+					get dark() {
+						return props.dark;
+					},
+					onSelect: () => props.onSelectTab?.(tab.key),
+					onClose: () => props.onCloseTab?.(tab.key)
+				})));
+				return __nsh_hv11;
 			})(),
 			() => props.noteActive && (() => {
 				const __nsh_hv12 = element("view");
-				prop(__nsh_hv12, "class", "absolute flex-row items-center justify-center");
+				prop(__nsh_hv12, "onPress", () => props.onDeleteNote?.());
+				prop(__nsh_hv12, "role", "button");
+				prop(__nsh_hv12, "accessibilityLabel", "Удалить заметку");
+				prop(__nsh_hv12, "class", "absolute items-center justify-center");
+				prop(__nsh_hv12, "hoverStyle", { backgroundColor: wash });
 				prop(__nsh_hv12, "desktop", { windowDrag: false });
 				bindProp(__nsh_hv12, "style", () => ({
-					left: props.pageInset ?? 0,
-					right: 0,
-					top: titlebarControlTop(26),
-					height: 26,
-					pointerEvents: "box-none"
-				}));
-				const __nsh_hv13 = element("view");
-				prop(__nsh_hv13, "class", "relative items-center justify-center");
-				prop(__nsh_hv13, "style", {
-					width: 360,
-					maxWidth: "70%",
-					height: 26
-				});
-				const __nsh_hv17 = element("input");
-				bindProp(__nsh_hv17, "value", () => props.noteTitle ?? "");
-				prop(__nsh_hv17, "onChange", (event) => props.onRenameNote?.(event.value));
-				prop(__nsh_hv17, "onFocus", () => titleFocused.set(true));
-				prop(__nsh_hv17, "onBlur", () => titleFocused.set(false));
-				prop(__nsh_hv17, "accessibilityLabel", "Заголовок заметки");
-				prop(__nsh_hv17, "class", "text-center text-[13px] font-semibold");
-				bindProp(__nsh_hv17, "style", () => ({
-					width: "100%",
-					height: 26,
-					textAlign: "center",
-					color: props.colors.foreground,
-					backgroundColor: "transparent",
-					paddingTop: 0,
-					paddingBottom: 0,
-					paddingLeft: 8,
-					paddingRight: 8,
-					lineHeight: 18
-				}));
-				append(__nsh_hv13, __nsh_hv17);
-				insert(__nsh_hv13, () => !(props.noteTitle ?? "") && !titleFocused() && (() => {
-					const __nsh_hv14 = element("view");
-					prop(__nsh_hv14, "class", "absolute left-0 right-0 top-0 bottom-0 items-center justify-center");
-					prop(__nsh_hv14, "style", { pointerEvents: "none" });
-					const __nsh_hv15 = element("text");
-					prop(__nsh_hv15, "class", "text-center text-[13px] font-semibold");
-					bindProp(__nsh_hv15, "style", () => ({
-						color: colorAlpha(props.colors.foreground, .5),
-						lineHeight: 18
-					}));
-					const __nsh_hv16 = text("Заголовок");
-					append(__nsh_hv15, __nsh_hv16);
-					append(__nsh_hv14, __nsh_hv15);
-					return __nsh_hv14;
-				})(), __nsh_hv17);
-				append(__nsh_hv12, __nsh_hv13);
-				return __nsh_hv12;
-			})(),
-			() => props.noteActive && (() => {
-				const __nsh_hv18 = element("view");
-				prop(__nsh_hv18, "onPress", () => {
-					titleFocused.set(false);
-					props.onDeleteNote?.();
-				});
-				prop(__nsh_hv18, "role", "button");
-				prop(__nsh_hv18, "accessibilityLabel", "Удалить заметку");
-				prop(__nsh_hv18, "class", "absolute items-center justify-center");
-				prop(__nsh_hv18, "hoverStyle", { backgroundColor: wash });
-				prop(__nsh_hv18, "desktop", { windowDrag: false });
-				bindProp(__nsh_hv18, "style", () => ({
 					right: controlsRight + 8,
 					top: titlebarControlTop(24),
 					width: 26,
@@ -897,99 +1039,105 @@ function TitlebarOverlay(props) {
 					borderRadius: CONTROL_RADIUS,
 					cursor: "pointer"
 				}));
-				insert(__nsh_hv18, component(Icon, {
+				insert(__nsh_hv12, component(Glyph, {
 					name: "trash",
 					size: 13,
 					get color() {
 						return props.colors.muted;
 					}
 				}));
-				return __nsh_hv18;
+				return __nsh_hv12;
 			})(),
 			() => drawCaptions && (() => {
-				const __nsh_hv19 = element("view");
-				prop(__nsh_hv19, "class", "absolute right-0 top-0 flex-row");
-				prop(__nsh_hv19, "desktop", { windowDrag: false });
-				prop(__nsh_hv19, "style", { height: 38 });
-				const __nsh_hv20 = element("view");
-				prop(__nsh_hv20, "onPress", () => props.onChrome("window.minimize"));
-				prop(__nsh_hv20, "role", "button");
-				prop(__nsh_hv20, "accessibilityLabel", "Свернуть окно");
-				prop(__nsh_hv20, "class", "items-center justify-center");
-				prop(__nsh_hv20, "desktop", { windowDrag: false });
-				prop(__nsh_hv20, "hoverStyle", { backgroundColor: wash });
-				prop(__nsh_hv20, "style", {
+				const __nsh_hv13 = element("view");
+				prop(__nsh_hv13, "class", "absolute right-0 top-0 flex-row items-center");
+				prop(__nsh_hv13, "desktop", { windowDrag: false });
+				prop(__nsh_hv13, "style", {
+					height: 40,
+					paddingRight: TRAILING_INSET
+				});
+				const __nsh_hv14 = element("view");
+				prop(__nsh_hv14, "onPress", () => props.onChrome("window.minimize"));
+				prop(__nsh_hv14, "role", "button");
+				prop(__nsh_hv14, "accessibilityLabel", "Свернуть окно");
+				prop(__nsh_hv14, "class", "items-center justify-center");
+				prop(__nsh_hv14, "desktop", { windowDrag: false });
+				prop(__nsh_hv14, "hoverStyle", { backgroundColor: wash });
+				prop(__nsh_hv14, "style", {
 					width: CAPTION_BUTTON_WIDTH,
-					height: 38,
+					height: CAPTION_BUTTON_HEIGHT,
+					borderRadius: CONTROL_RADIUS,
 					cursor: "pointer"
 				});
-				insert(__nsh_hv20, component(Icon, {
+				insert(__nsh_hv14, component(Icon, {
 					name: "windowMin",
 					get color() {
-						return props.colors.foreground;
+						return props.colors.muted;
 					},
-					size: 12
+					size: 14
 				}));
-				const __nsh_hv21 = element("view");
-				prop(__nsh_hv21, "onPress", () => props.onChrome("window.zoom"));
-				prop(__nsh_hv21, "role", "button");
-				prop(__nsh_hv21, "accessibilityLabel", "Развернуть окно");
-				prop(__nsh_hv21, "class", "items-center justify-center");
-				prop(__nsh_hv21, "desktop", { windowDrag: false });
-				prop(__nsh_hv21, "hoverStyle", { backgroundColor: wash });
-				prop(__nsh_hv21, "style", {
+				const __nsh_hv15 = element("view");
+				prop(__nsh_hv15, "onPress", () => props.onChrome("window.zoom"));
+				prop(__nsh_hv15, "role", "button");
+				prop(__nsh_hv15, "accessibilityLabel", "Развернуть окно");
+				prop(__nsh_hv15, "class", "items-center justify-center");
+				prop(__nsh_hv15, "desktop", { windowDrag: false });
+				prop(__nsh_hv15, "hoverStyle", { backgroundColor: wash });
+				prop(__nsh_hv15, "style", {
 					width: CAPTION_BUTTON_WIDTH,
-					height: 38,
+					height: CAPTION_BUTTON_HEIGHT,
+					borderRadius: CONTROL_RADIUS,
 					cursor: "pointer"
 				});
-				insert(__nsh_hv21, component(Icon, {
+				insert(__nsh_hv15, component(Icon, {
 					name: "windowMax",
 					get color() {
-						return props.colors.foreground;
+						return props.colors.muted;
 					},
-					size: 12
+					size: 14
 				}));
-				const __nsh_hv22 = element("view");
-				prop(__nsh_hv22, "onPress", () => props.onChrome("window.close"));
-				prop(__nsh_hv22, "onMouseEnter", () => closeHovered.set(true));
-				prop(__nsh_hv22, "onMouseLeave", () => closeHovered.set(false));
-				prop(__nsh_hv22, "role", "button");
-				prop(__nsh_hv22, "accessibilityLabel", "Закрыть окно");
-				prop(__nsh_hv22, "class", "items-center justify-center");
-				prop(__nsh_hv22, "desktop", { windowDrag: false });
-				prop(__nsh_hv22, "hoverStyle", { backgroundColor: "#e81123" });
-				prop(__nsh_hv22, "style", {
+				const __nsh_hv16 = element("view");
+				prop(__nsh_hv16, "onPress", () => props.onChrome("window.close"));
+				prop(__nsh_hv16, "onMouseEnter", () => closeHovered.set(true));
+				prop(__nsh_hv16, "onMouseLeave", () => closeHovered.set(false));
+				prop(__nsh_hv16, "role", "button");
+				prop(__nsh_hv16, "accessibilityLabel", "Закрыть окно");
+				prop(__nsh_hv16, "class", "items-center justify-center");
+				prop(__nsh_hv16, "desktop", { windowDrag: false });
+				prop(__nsh_hv16, "hoverStyle", { backgroundColor: "#e81123" });
+				prop(__nsh_hv16, "style", {
 					width: CAPTION_BUTTON_WIDTH,
-					height: 38,
+					height: CAPTION_BUTTON_HEIGHT,
+					borderRadius: CONTROL_RADIUS,
 					cursor: "pointer"
 				});
-				insert(__nsh_hv22, component(Icon, {
+				insert(__nsh_hv16, component(Icon, {
 					name: "windowClose",
 					get color() {
-						return closeHovered() ? "#ffffff" : props.colors.foreground;
+						return closeHovered() ? "#ffffff" : props.colors.muted;
 					},
-					size: 12
+					size: 14
 				}));
-				append(__nsh_hv19, __nsh_hv20);
-				append(__nsh_hv19, __nsh_hv21);
-				append(__nsh_hv19, __nsh_hv22);
-				return __nsh_hv19;
+				append(__nsh_hv13, __nsh_hv14);
+				append(__nsh_hv13, __nsh_hv15);
+				append(__nsh_hv13, __nsh_hv16);
+				return __nsh_hv13;
 			})()
 		]);
-		return __nsh_hv0;
+		return __nsh_hv5;
 	})();
 }
 function SidebarRow(props) {
 	const wash = hoverWash(props.dark);
 	return (() => {
-		const __nsh_hv23 = element("view");
-		bindProp(__nsh_hv23, "onPress", () => props.onPress);
-		prop(__nsh_hv23, "role", "button");
-		bindProp(__nsh_hv23, "accessibilityState", () => ({ selected: props.selected }));
-		prop(__nsh_hv23, "desktop", { windowDrag: false });
-		prop(__nsh_hv23, "class", "flex-row items-center");
-		prop(__nsh_hv23, "hoverStyle", { backgroundColor: wash });
-		bindProp(__nsh_hv23, "style", () => ({
+		const __nsh_hv17 = element("view");
+		bindProp(__nsh_hv17, "onPress", () => props.onPress);
+		prop(__nsh_hv17, "role", "button");
+		bindProp(__nsh_hv17, "accessibilityState", () => ({ selected: props.selected }));
+		prop(__nsh_hv17, "desktop", { windowDrag: false });
+		prop(__nsh_hv17, "class", "flex-row items-center");
+		prop(__nsh_hv17, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv17, "style", () => ({
 			height: 40,
 			gap: 10,
 			paddingLeft: 10,
@@ -998,16 +1146,16 @@ function SidebarRow(props) {
 			backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent",
 			cursor: "pointer"
 		}));
-		const __nsh_hv24 = element("text");
-		prop(__nsh_hv24, "class", "text-[14px]");
-		bindProp(__nsh_hv24, "style", () => ({
+		const __nsh_hv18 = element("text");
+		prop(__nsh_hv18, "class", "text-[14px]");
+		bindProp(__nsh_hv18, "style", () => ({
 			color: props.colors.foreground,
 			fontWeight: 500,
 			lineHeight: 20
 		}));
-		insert(__nsh_hv24, () => props.label);
-		append(__nsh_hv23, __nsh_hv24);
-		insert(__nsh_hv23, () => props.icon === "gamepad" || props.icon === "file" ? component(Glyph, {
+		insert(__nsh_hv18, () => props.label);
+		append(__nsh_hv17, __nsh_hv18);
+		insert(__nsh_hv17, component(Glyph, {
 			get name() {
 				return props.icon;
 			},
@@ -1015,81 +1163,83 @@ function SidebarRow(props) {
 			get color() {
 				return props.colors.foreground;
 			}
-		}) : component(Icon, {
-			get name() {
-				return props.icon;
-			},
-			size: 16,
-			get color() {
-				return props.colors.foreground;
-			}
-		}), __nsh_hv24);
-		return __nsh_hv23;
+		}), __nsh_hv18);
+		return __nsh_hv17;
 	})();
 }
 function RecentRow(props) {
 	const wash = hoverWash(props.dark);
 	return (() => {
-		const __nsh_hv25 = element("view");
-		bindProp(__nsh_hv25, "onPress", () => props.onPress);
-		prop(__nsh_hv25, "role", "button");
-		bindProp(__nsh_hv25, "accessibilityLabel", () => props.entry.title);
-		bindProp(__nsh_hv25, "accessibilityState", () => ({ selected: Boolean(props.selected) }));
-		prop(__nsh_hv25, "desktop", { windowDrag: false });
-		prop(__nsh_hv25, "class", "flex-row items-center");
-		prop(__nsh_hv25, "hoverStyle", { backgroundColor: wash });
-		bindProp(__nsh_hv25, "style", () => ({
+		const __nsh_hv19 = element("view");
+		bindProp(__nsh_hv19, "onPress", () => props.onPress);
+		prop(__nsh_hv19, "role", "button");
+		bindProp(__nsh_hv19, "accessibilityLabel", () => props.entry.title);
+		bindProp(__nsh_hv19, "accessibilityState", () => ({ selected: Boolean(props.selected) }));
+		prop(__nsh_hv19, "desktop", { windowDrag: false });
+		prop(__nsh_hv19, "class", "flex-row items-center");
+		prop(__nsh_hv19, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv19, "style", () => ({
 			height: 34,
+			gap: 10,
 			paddingLeft: 10,
 			paddingRight: 10,
 			borderRadius: NAV_ROW_RADIUS,
 			backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent",
 			cursor: "pointer"
 		}));
-		const __nsh_hv26 = element("text");
-		prop(__nsh_hv26, "class", "text-[12px]");
-		bindProp(__nsh_hv26, "style", () => ({
-			color: props.selected ? props.colors.foreground : props.colors.muted,
-			fontWeight: props.selected ? 500 : 400,
-			lineHeight: 18
+		const __nsh_hv20 = element("text");
+		prop(__nsh_hv20, "class", "text-[14px] truncate");
+		bindProp(__nsh_hv20, "style", () => ({
+			color: props.colors.foreground,
+			fontWeight: 500,
+			lineHeight: 20
 		}));
-		insert(__nsh_hv26, () => props.entry.title);
-		append(__nsh_hv25, __nsh_hv26);
-		return __nsh_hv25;
+		insert(__nsh_hv20, () => props.entry.title);
+		append(__nsh_hv19, __nsh_hv20);
+		insert(__nsh_hv19, component(Glyph, {
+			get name() {
+				return recentIcon(props.entry.kind);
+			},
+			size: 14,
+			get color() {
+				return props.colors.foreground;
+			}
+		}), __nsh_hv20);
+		return __nsh_hv19;
 	})();
 }
 function GhostButton(props) {
 	return (() => {
-		const __nsh_hv27 = element("view");
-		bindProp(__nsh_hv27, "onPress", () => props.onPress);
-		prop(__nsh_hv27, "role", "button");
-		bindProp(__nsh_hv27, "accessibilityLabel", () => props.label);
-		prop(__nsh_hv27, "class", "items-center justify-center");
-		bindProp(__nsh_hv27, "hoverStyle", () => ({ backgroundColor: props.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }));
-		prop(__nsh_hv27, "style", {
+		const __nsh_hv21 = element("view");
+		bindProp(__nsh_hv21, "onPress", () => props.onPress);
+		prop(__nsh_hv21, "role", "button");
+		bindProp(__nsh_hv21, "accessibilityLabel", () => props.label);
+		prop(__nsh_hv21, "class", "items-center justify-center");
+		bindProp(__nsh_hv21, "hoverStyle", () => ({ backgroundColor: props.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }));
+		prop(__nsh_hv21, "style", {
 			height: 32,
 			paddingLeft: 12,
 			paddingRight: 12,
 			borderRadius: ROW_RADIUS,
 			cursor: "pointer"
 		});
-		const __nsh_hv28 = element("text");
-		bindProp(__nsh_hv28, "class", () => `text-[13px] hover:text-[${props.colors.foreground}]`);
-		bindProp(__nsh_hv28, "style", () => ({ color: props.colors.muted }));
-		insert(__nsh_hv28, () => props.label);
-		append(__nsh_hv27, __nsh_hv28);
-		return __nsh_hv27;
+		const __nsh_hv22 = element("text");
+		bindProp(__nsh_hv22, "class", () => `text-[13px] hover:text-[${props.colors.foreground}]`);
+		bindProp(__nsh_hv22, "style", () => ({ color: props.colors.muted }));
+		insert(__nsh_hv22, () => props.label);
+		append(__nsh_hv21, __nsh_hv22);
+		return __nsh_hv21;
 	})();
 }
 function SolidButton(props) {
 	return (() => {
-		const __nsh_hv29 = element("view");
-		bindProp(__nsh_hv29, "onPress", () => props.onPress);
-		prop(__nsh_hv29, "role", "button");
-		bindProp(__nsh_hv29, "accessibilityLabel", () => props.label);
-		prop(__nsh_hv29, "class", "items-center justify-center");
-		prop(__nsh_hv29, "hoverStyle", { opacity: .9 });
-		bindProp(__nsh_hv29, "style", () => ({
+		const __nsh_hv23 = element("view");
+		bindProp(__nsh_hv23, "onPress", () => props.onPress);
+		prop(__nsh_hv23, "role", "button");
+		bindProp(__nsh_hv23, "accessibilityLabel", () => props.label);
+		prop(__nsh_hv23, "class", "items-center justify-center");
+		prop(__nsh_hv23, "hoverStyle", { opacity: .9 });
+		bindProp(__nsh_hv23, "style", () => ({
 			height: 32,
 			paddingLeft: 12,
 			paddingRight: 12,
@@ -1097,12 +1247,12 @@ function SolidButton(props) {
 			backgroundColor: props.background,
 			cursor: "pointer"
 		}));
-		const __nsh_hv30 = element("text");
-		prop(__nsh_hv30, "class", "text-[13px] font-medium");
-		bindProp(__nsh_hv30, "style", () => ({ color: props.foreground }));
-		insert(__nsh_hv30, () => props.label);
-		append(__nsh_hv29, __nsh_hv30);
-		return __nsh_hv29;
+		const __nsh_hv24 = element("text");
+		prop(__nsh_hv24, "class", "text-[13px] font-medium");
+		bindProp(__nsh_hv24, "style", () => ({ color: props.foreground }));
+		insert(__nsh_hv24, () => props.label);
+		append(__nsh_hv23, __nsh_hv24);
+		return __nsh_hv23;
 	})();
 }
 
@@ -1183,7 +1333,7 @@ function formatJournalStamp(createdAt, _now = /* @__PURE__ */ new Date()) {
 
 //#endregion
 //#region JournalPage.tsx
-/** Hugeicons `mic-01`, drawn in `currentColor` so a tint applies. */
+/** The mic: the journal's voice button, tinted from the bubble it sits on. */
 const DotScope = nativeComponent("atlas.scope", {
 	props: [
 		"level",
@@ -1192,7 +1342,6 @@ const DotScope = nativeComponent("atlas.scope", {
 	],
 	events: []
 });
-const MIC_ICON = "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M12%202C10.3431%202%209%203.34315%209%205V12C9%2013.6569%2010.3431%2015%2012%2015C13.6569%2015%2015%2013.6569%2015%2012V5C15%203.34315%2013.6569%202%2012%202Z%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M19%2011V12C19%2015.866%2015.866%2019%2012%2019C8.13401%2019%205%2015.866%205%2012V11%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M12%2019V22%22%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E";
 const COMPOSER_RADIUS = 25;
 const COMPOSER_EXPANDED_RADIUS = 18;
 const COMPOSER_COMPACT_HEIGHT = 49;
@@ -1862,7 +2011,7 @@ function JournalPage(props) {
 		bindProp(__nsh_hv19, "style", () => ({
 			width: threadSpan(),
 			minHeight: feedBox().height,
-			paddingTop: props.titlebarInset + 16,
+			paddingTop: props.titlebarInset,
 			paddingBottom: composerBottomInset(),
 			paddingLeft: FEED_PAD,
 			paddingRight: FEED_PAD
@@ -1919,6 +2068,7 @@ function JournalPage(props) {
 		bindProp(__nsh_hv25, "style", () => ({
 			backgroundColor: props.colors.background,
 			opacity: .86,
+			borderRadius: 14,
 			pointerEvents: "none"
 		}));
 		append(__nsh_hv17, __nsh_hv18);
@@ -2145,14 +2295,13 @@ function JournalPage(props) {
 					backgroundColor: journalBubble(props.colors.accent),
 					cursor: "pointer"
 				}));
-				const __nsh_hv48 = element("image");
-				prop(__nsh_hv48, "src", MIC_ICON);
-				bindProp(__nsh_hv48, "style", () => ({
-					width: 17,
-					height: 17,
-					tintColor: accentMark(journalBubble(props.colors.accent))
+				insert(__nsh_hv47, component(Glyph, {
+					name: "mic",
+					size: 17,
+					get color() {
+						return accentMark(journalBubble(props.colors.accent));
+					}
 				}));
-				append(__nsh_hv47, __nsh_hv48);
 				return __nsh_hv47;
 			})()
 		]);
@@ -2202,8 +2351,12 @@ function JournalPage(props) {
 }
 
 //#endregion
-//#region fonts/IBMPlexMono-Regular.ttf
-var IBMPlexMono_Regular_default = font("asset:/fonts/IBMPlexMono-Regular.ttf", "IBM Plex Mono");
+//#region fonts/GeistMono-Regular.ttf
+var GeistMono_Regular_default = font("asset:/fonts/GeistMono-Regular.ttf", "Geist Mono");
+
+//#endregion
+//#region fonts/GeistMono-Medium.ttf
+var GeistMono_Medium_default = font("asset:/fonts/GeistMono-Medium.ttf", "Geist Mono");
 
 //#endregion
 //#region highlight.ts
@@ -2568,6 +2721,15 @@ function forgetRecent(kind, id) {
 	stamp$2 += 1;
 	Storage.setItem(STORAGE_KEY$1, JSON.stringify(next));
 }
+function forgetMissingNotes(ids) {
+	const before = items();
+	const next = before.filter((item) => item.kind !== "note" || ids.has(item.id));
+	if (next.length === before.length) return;
+	if (staged && staged.kind === "note" && !ids.has(staged.id)) staged = null;
+	items.set(next);
+	stamp$2 += 1;
+	Storage.setItem(STORAGE_KEY$1, JSON.stringify(next));
+}
 function readJson$2(value) {
 	if (!value) return [];
 	try {
@@ -2589,13 +2751,16 @@ function readJson$2(value) {
 const OUTLINE_LIMIT = 50;
 const OUTLINE_INSET = 14;
 const TICK_WIDTHS = [
-	24,
+	20,
 	18,
-	13,
-	10,
-	8,
-	6
+	16,
+	14,
+	12,
+	10
 ];
+const TICK_ACTIVE_WIDTH = 26;
+const TICK_ROW_HEIGHT = 6;
+const TICK_PAD_TOP = 12;
 const POPOVER_ROW_HEIGHT = 36;
 const POPOVER_CLOSE_MS = 140;
 /** Direct mapping from heading level (H1..H6) to tick width in points: H1 longest, H6 shortest. */
@@ -2603,7 +2768,7 @@ function outlineTickWidth(level) {
 	const index = Math.min(6, Math.max(1, Math.round(level))) - 1;
 	return TICK_WIDTHS[index];
 }
-/** Left padding for a row in the outline popover, indented by heading hierarchy. */
+/** Left padding for a row in the outline board, indented by heading hierarchy. */
 function outlineRowIndent(level, minLevel = 1) {
 	return 12 + Math.max(0, Math.min(6, Math.max(1, Math.round(level))) - Math.min(6, Math.max(1, Math.round(minLevel)))) * 14;
 }
@@ -2616,7 +2781,7 @@ function activeOutlineIndex(ys, threshold) {
 	}
 	return active >= 0 ? active : 0;
 }
-function popoverShadow(dark) {
+function boardShadow(dark) {
 	return dark ? "0 4px 12px rgba(0,0,0,0.45), 0 12px 32px rgba(0,0,0,0.42)" : "0 4px 12px rgba(15,23,42,0.08), 0 12px 32px rgba(15,23,42,0.12)";
 }
 function NotesOutlineRail(props) {
@@ -2649,7 +2814,7 @@ function NotesOutlineRail(props) {
 		return items.some((item) => item.pos === current) ? current : items[0].pos;
 	};
 	const minLevel = () => list().reduce((min, item) => Math.min(min, item.level), 6);
-	const maxBody = () => Math.max(140, props.maxHeight() - 16);
+	const maxBody = () => Math.max(160, props.maxHeight() - 32);
 	const renderRows = () => {
 		const items = list();
 		const activePos = resolvedActive();
@@ -2697,13 +2862,13 @@ function NotesOutlineRail(props) {
 		const items = list();
 		const activePos = resolvedActive();
 		const tickActive = props.dark ? "#ffffff" : props.colors.foreground;
-		const tickIdle = props.dark ? colorAlpha("#ffffff", .24) : colorAlpha("#000000", .2);
+		const tickIdle = props.dark ? colorAlpha("#ffffff", .26) : colorAlpha("#000000", .22);
 		return (() => {
 			const __nsh_hv3 = element("view");
 			prop(__nsh_hv3, "class", "items-end");
 			bindProp(__nsh_hv3, "style", () => ({
-				paddingTop: 12,
-				paddingBottom: 12,
+				paddingTop: TICK_PAD_TOP,
+				paddingBottom: TICK_PAD_TOP,
 				paddingLeft: 12,
 				paddingRight: 2,
 				gap: items.length > 25 ? 5 : 8
@@ -2718,16 +2883,18 @@ function NotesOutlineRail(props) {
 					prop(__nsh_hv4, "accessibilityState", { selected: active });
 					prop(__nsh_hv4, "class", "items-end justify-center");
 					prop(__nsh_hv4, "style", {
-						width: 28,
-						height: 6,
+						width: 30,
+						height: TICK_ROW_HEIGHT,
 						cursor: "pointer"
 					});
 					const __nsh_hv5 = element("view");
 					bindProp(__nsh_hv5, "style", () => ({
-						width: outlineTickWidth(mark.level),
-						height: 3,
-						borderRadius: 1.5,
-						backgroundColor: active ? tickActive : tickIdle
+						width: active ? TICK_ACTIVE_WIDTH : outlineTickWidth(mark.level),
+						height: 2,
+						borderRadius: 1,
+						backgroundColor: active ? tickActive : tickIdle,
+						transitionProperty: "width, background-color",
+						transitionTimingFunction: "spring(320, 26)"
 					}));
 					append(__nsh_hv4, __nsh_hv5);
 					return __nsh_hv4;
@@ -2736,12 +2903,12 @@ function NotesOutlineRail(props) {
 			return __nsh_hv3;
 		})();
 	};
-	const renderPopover = () => {
+	const renderBoard = () => {
 		const bodyHeight = maxBody();
 		const scrollable = list().length * POPOVER_ROW_HEIGHT > bodyHeight;
 		return (() => {
 			const __nsh_hv6 = element("view");
-			prop(__nsh_hv6, "testID", "notes-outline-popover");
+			prop(__nsh_hv6, "testID", "notes-outline-board");
 			bindProp(__nsh_hv6, "style", () => ({
 				width: 256,
 				borderRadius: 14,
@@ -2749,7 +2916,7 @@ function NotesOutlineRail(props) {
 				borderColor: props.dark ? colorAlpha("#ffffff", .1) : props.colors.border,
 				backgroundColor: props.colors.card,
 				padding: 8,
-				boxShadow: popoverShadow(props.dark)
+				boxShadow: boardShadow(props.dark)
 			}));
 			insert(__nsh_hv6, () => scrollable ? (() => {
 				const __nsh_hv7 = element("scroll");
@@ -2774,7 +2941,7 @@ function NotesOutlineRail(props) {
 			prop(__nsh_hv9, "testID", "notes-outline-rail");
 			prop(__nsh_hv9, "onMouseEnter", openRail);
 			prop(__nsh_hv9, "onMouseLeave", closeRail);
-			insert(__nsh_hv9, () => open() ? renderPopover() : renderTicks());
+			insert(__nsh_hv9, () => open() ? renderBoard() : renderTicks());
 			return __nsh_hv9;
 		})());
 		return __nsh_hv8;
@@ -2804,13 +2971,10 @@ let pinnedScrollY = 0;
 let saveTimer = null;
 const SAVE_DELAY_MS = 700;
 const CARD_MIN = 196;
+const CARD_MAX = 260;
 const CARD_GAP = 16;
 const CARD_RATIO = 264 / 236;
 const CARD_MAX_COLUMNS = 5;
-const ENTER_STAGGER_CARDS = 11;
-function cardDelay(index) {
-	return Math.max(0, Math.min(index, ENTER_STAGGER_CARDS)) * 32;
-}
 const COMPACT_LIBRARY = 560;
 const LIBRARY_BOTTOM = 104;
 const GRID_PAD = 24;
@@ -2903,7 +3067,6 @@ const SLASH_ITEMS = [
 ];
 const notes = signal([]);
 const editorVersion = signal(0);
-const COPY_ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect x='8.5' y='8.5' width='11' height='11' rx='2' stroke='%23000' stroke-width='1.6'/%3E%3Cpath d='M6.5 15.5H5.2A2.2 2.2 0 0 1 3 13.3V5.2A2.2 2.2 0 0 1 5.2 3h8.1A2.2 2.2 0 0 1 15.5 5.2V6.5' stroke='%23000' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E";
 function blockSize(node) {
 	const block = node;
 	if (!block) return 1;
@@ -3028,6 +3191,7 @@ function addNote(note) {
 }
 function setNotes(next) {
 	loading.set(false);
+	forgetMissingNotes(new Set(next.map((note) => text$1(note.id))));
 	const before = new Set(notes().map((note) => text$1(note.id)));
 	if (openingNew) {
 		notes.set(next);
@@ -3215,6 +3379,7 @@ function retireSeg(seg) {
 	try {
 		seg.paint?.dispose();
 	} catch {}
+	headingLocsCache.delete(seg.session);
 	segRefs.delete(seg.id);
 	segHeights.delete(seg.id);
 	segTops.delete(seg.id);
@@ -3378,6 +3543,7 @@ function open(note) {
 		const doc = documentOf(note.doc);
 		if (hasCodeBlock(doc)) becomeSplit(doc, -1);
 		else mountSingle(doc);
+		buildTitleEditor(text$1(note.title));
 		savedBody = JSON.stringify(currentDoc());
 		savedTitle = text$1(note.title);
 		const marks = headingsOf(doc);
@@ -3385,6 +3551,7 @@ function open(note) {
 		activeOutlinePos.set(marks[0]?.pos ?? 0);
 		paintCode();
 	} else {
+		buildTitleEditor("");
 		outline.set([]);
 		activeOutlinePos.set(0);
 	}
@@ -3493,11 +3660,25 @@ function headingPmLocations(doc) {
 	}
 	return out;
 }
+function cachedByRev(cache, key, rev, make) {
+	const hit = cache.get(key);
+	if (hit && hit.rev === rev) return hit.value;
+	const value = make();
+	cache.set(key, {
+		rev,
+		value
+	});
+	return value;
+}
+const headingLocsCache = /* @__PURE__ */ new Map();
+function headingLocsOf(session) {
+	return cachedByRev(headingLocsCache, session, bodyRev(), () => headingPmLocations(session.getJSON()));
+}
 function splitHeadingLocations() {
 	const out = [];
 	for (const seg of segments) {
 		if (seg.kind !== "prose") continue;
-		for (const loc of headingPmLocations(seg.session.getJSON())) out.push({
+		for (const loc of headingLocsOf(seg.session)) out.push({
 			segId: seg.id,
 			session: seg.session,
 			nodePos: loc.nodePos,
@@ -3528,7 +3709,7 @@ function syncOutlineFromCaret(segId, localPos) {
 		return;
 	}
 	if (!editor) return;
-	const locs = headingPmLocations(editor.getJSON());
+	const locs = headingLocsOf(editor);
 	const count = Math.min(marks.length, locs.length);
 	if (!count) return;
 	const active = activeOutlineIndex(locs.slice(0, count).map((loc) => loc.nodePos), localPos);
@@ -3564,7 +3745,7 @@ function syncOutlineFromViewport() {
 		return;
 	}
 	if (!editor) return;
-	const locs = headingPmLocations(editor.getJSON());
+	const locs = headingLocsOf(editor);
 	const count = Math.min(marks.length, locs.length);
 	if (!count) return;
 	const ys = [];
@@ -3580,6 +3761,21 @@ function syncOutlineFromViewport() {
 	if (!ys.some((y) => y !== null)) return;
 	const active = activeOutlineIndex(ys, pageTopY + threshold);
 	if (activeOutlinePos() !== marks[active].pos) activeOutlinePos.set(marks[active].pos);
+}
+let caretSyncTimer = null;
+let caretSyncAt = null;
+function scheduleCaretOutline(segId, pos) {
+	caretSyncAt = {
+		segId,
+		pos
+	};
+	if (caretSyncTimer) return;
+	caretSyncTimer = setTimeout(() => {
+		caretSyncTimer = null;
+		const at = caretSyncAt;
+		caretSyncAt = null;
+		if (at) syncOutlineFromCaret(at.segId, at.pos);
+	}, 60);
 }
 function scheduleOutlineSync() {
 	if (outlineSyncTimer) return;
@@ -3641,7 +3837,7 @@ function jumpToOutline(mark) {
 		return;
 	}
 	if (!editor || !editorRef) return;
-	const loc = headingPmLocations(editor.getJSON())[index];
+	const loc = headingLocsOf(editor)[index];
 	const targetPos = loc ? loc.textPos : mark.pos;
 	editorRef.focus();
 	editorRef.setSelection(targetPos, targetPos);
@@ -3669,39 +3865,39 @@ function headingsEnd(doc) {
 	return Math.max(1, pos - 1);
 }
 const US_OF_RU = {
-	"й": "q",
-	"ц": "w",
-	"у": "e",
-	"к": "r",
-	"т": "t",
-	"н": "y",
-	"г": "u",
-	"ш": "i",
-	"щ": "o",
-	"з": "p",
-	"х": "[",
-	"ъ": "]",
-	"ф": "a",
-	"ы": "s",
-	"в": "d",
-	"а": "f",
-	"п": "g",
-	"р": "h",
-	"о": "j",
-	"л": "k",
-	"д": "l",
-	"ж": ";",
-	"э": "'",
-	"я": "z",
-	"ч": "x",
-	"с": "c",
-	"м": "v",
-	"и": "b",
-	"т": "n",
-	"ь": "m",
-	"б": ",",
-	"ю": ".",
-	"ё": "`"
+	й: "q",
+	ц: "w",
+	у: "e",
+	к: "r",
+	т: "t",
+	н: "y",
+	г: "u",
+	ш: "i",
+	щ: "o",
+	з: "p",
+	х: "[",
+	ъ: "]",
+	ф: "a",
+	ы: "s",
+	в: "d",
+	а: "f",
+	п: "g",
+	р: "h",
+	о: "j",
+	л: "k",
+	д: "l",
+	ж: ";",
+	э: "'",
+	я: "z",
+	ч: "x",
+	с: "c",
+	м: "v",
+	и: "b",
+	т: "n",
+	ь: "m",
+	б: ",",
+	ю: ".",
+	ё: "`"
 };
 function usForm(text) {
 	return Array.from(text.toLowerCase()).map((letter) => US_OF_RU[letter] ?? letter).join("");
@@ -3912,11 +4108,56 @@ function select(note) {
 		id: text$1(note.id),
 		title: text$1(note.title).trim() || "Без названия"
 	});
+	visitStep(id ?? "");
 }
-const openNoteTitle = () => selectedId() ? draftTitle() : "";
+const TRAIL_LIMIT = 40;
+const trailSteps = signal([""]);
+const trailAt = signal(0);
+let silentNavigation = false;
+function visitStep(id) {
+	if (silentNavigation) return;
+	const trail = trailSteps();
+	const at = trailAt();
+	if (trail[at] === id) return;
+	const walked = [...trail.slice(0, at + 1), id];
+	const kept = walked.slice(Math.max(0, walked.length - TRAIL_LIMIT));
+	trailSteps.set(kept);
+	trailAt.set(kept.length - 1);
+}
+function walkTrail(delta) {
+	const trail = trailSteps();
+	silentNavigation = true;
+	try {
+		for (let at = trailAt() + delta; at >= 0 && at < trail.length; at += delta) {
+			const id = trail[at];
+			const note = id ? notes().find((item) => text$1(item.id) === id) : null;
+			if (id && !note) continue;
+			trailAt.set(at);
+			if (note) select(note);
+			else closeNote();
+			return;
+		}
+	} finally {
+		silentNavigation = false;
+	}
+}
+function openNoteWithoutHistory(id) {
+	const note = notes().find((item) => text$1(item.id) === id) ?? null;
+	if (!note) return;
+	silentNavigation = true;
+	try {
+		select(note);
+	} finally {
+		silentNavigation = false;
+	}
+}
+const canWalkBack = () => trailAt() > 0;
+const canWalkForward = () => trailAt() < trailSteps().length - 1;
+const walkBack = () => walkTrail(-1);
+const walkForward = () => walkTrail(1);
+const openNoteTitle = () => selectedId() ? draftTitle().replace(/\s+/g, " ").trim() : "";
 const openNoteId = () => selectedId();
 const hasOpenNote = () => selectedId() !== null;
-const renameOpenNote = (value) => editTitle(value);
 const closeOpenNote = () => closeNote();
 const removeOpenNote = () => removeNote();
 const createOpenNote = () => createNote();
@@ -3925,10 +4166,6 @@ function leaveOpenNote() {
 	applyPreview();
 	const current = currentRecentEntry();
 	if (current) commitRecent(current);
-}
-function resumeOpenNote() {
-	const current = currentRecentEntry();
-	if (current) stageRecent(current);
 }
 function openNoteById(id) {
 	const note = notes().find((item) => text$1(item.id) === id);
@@ -3998,6 +4235,7 @@ function closeNote() {
 	selectedId.set(null);
 	draftTitle.set("");
 	open(null);
+	visitStep("");
 }
 function removeNote() {
 	const note = selected();
@@ -4090,7 +4328,8 @@ function LibraryView(props) {
 		prop(__nsh_hv9, "role", "button");
 		prop(__nsh_hv9, "accessibilityLabel", "Новая заметка");
 		prop(__nsh_hv9, "class", "absolute flex-row items-center justify-center");
-		bindProp(__nsh_hv9, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .1) }));
+		bindProp(__nsh_hv9, "hoverStyle", () => ({ backgroundColor: filledHover(colors.accent) }));
+		bindProp(__nsh_hv9, "activeStyle", () => ({ backgroundColor: filledPressed(colors.accent) }));
 		bindProp(__nsh_hv9, "style", () => ({
 			left: "50%",
 			marginLeft: -92,
@@ -4099,23 +4338,21 @@ function LibraryView(props) {
 			height: 40,
 			gap: 8,
 			borderRadius: 20,
-			borderWidth: 1,
-			borderColor: colors.border,
-			backgroundColor: colors.background,
+			backgroundColor: colors.accent,
 			cursor: "pointer",
 			boxShadow: cardShadow(props.dark)
 		}));
 		const __nsh_hv10 = element("text");
 		prop(__nsh_hv10, "class", "text-[13px] font-medium");
-		bindProp(__nsh_hv10, "style", () => ({ color: colors.foreground }));
+		bindProp(__nsh_hv10, "style", () => ({ color: accentMark(colors.accent) }));
 		const __nsh_hv11 = text("Новая заметка");
 		append(__nsh_hv10, __nsh_hv11);
 		append(__nsh_hv9, __nsh_hv10);
-		insert(__nsh_hv9, component(Icon, {
+		insert(__nsh_hv9, component(Glyph, {
 			name: "plus",
 			size: 15,
 			get color() {
-				return colors.foreground;
+				return accentMark(colors.accent);
 			}
 		}), __nsh_hv10);
 		append(__nsh_hv1, __nsh_hv2);
@@ -4124,10 +4361,20 @@ function LibraryView(props) {
 		return __nsh_hv1;
 	})();
 }
-function libraryGrid(items, colors, dark) {
-	const room = Math.max(gridWidth() - 48, CARD_MIN);
+function gridMetrics(width) {
+	const room = Math.max(width - 48, CARD_MIN);
 	const columns = Math.max(1, Math.min(CARD_MAX_COLUMNS, Math.floor((room + CARD_GAP) / 212)));
-	const cardWidth = (room - CARD_GAP * (columns - 1)) / columns;
+	const share = (room - CARD_GAP * (columns - 1)) / columns;
+	const cardWidth = Math.round(Math.min(CARD_MAX, share));
+	const used = cardWidth * columns + CARD_GAP * (columns - 1);
+	return {
+		columns,
+		cardWidth,
+		sidePad: Math.max(0, Math.round((room - used) / 2))
+	};
+}
+function libraryGrid(items, colors, dark) {
+	const { columns, cardWidth, sidePad } = gridMetrics(gridWidth());
 	const rows = rowsOf(items, columns);
 	const rowHeight = Math.round(cardWidth * CARD_RATIO) + CARD_GAP + 8;
 	return component(list, {
@@ -4137,24 +4384,21 @@ function libraryGrid(items, colors, dark) {
 		testID: "notes-grid",
 		class: "min-h-0 flex-1",
 		contentStyle: {
-			paddingLeft: GRID_PAD,
-			paddingRight: GRID_PAD,
+			paddingLeft: GRID_PAD + sidePad,
+			paddingRight: GRID_PAD + sidePad,
 			paddingTop: 4,
 			paddingBottom: LIBRARY_BOTTOM
 		},
 		get children() {
-			return (row, rowIndex) => (() => {
+			return (row) => (() => {
 				const __nsh_hv12 = element("view");
 				prop(__nsh_hv12, "class", "flex-row");
 				prop(__nsh_hv12, "style", {
 					gap: CARD_GAP,
 					paddingBottom: CARD_GAP
 				});
-				insert(__nsh_hv12, () => row().map((note, index) => component(NoteCard, {
+				insert(__nsh_hv12, () => row().map((note) => component(NoteCard, {
 					note,
-					get index() {
-						return rowIndex() * columns + index;
-					},
 					width: cardWidth,
 					colors,
 					dark
@@ -4170,9 +4414,7 @@ function rowsOf(notes, columns) {
 	return rows;
 }
 function skeletonLibrary(colors, dark) {
-	const room = Math.max(gridWidth() - 48, CARD_MIN);
-	const columns = Math.max(1, Math.min(CARD_MAX_COLUMNS, Math.floor((room + CARD_GAP) / 212)));
-	const cardWidth = (room - CARD_GAP * (columns - 1)) / columns;
+	const { columns, cardWidth, sidePad } = gridMetrics(gridWidth());
 	const height = Math.round(cardWidth * CARD_RATIO);
 	const fill = surfaceWash(dark, .06);
 	const line = (width) => (() => {
@@ -4234,8 +4476,8 @@ function skeletonLibrary(colors, dark) {
 		const __nsh_hv18 = element("view");
 		prop(__nsh_hv18, "class", "min-h-0 flex-1");
 		prop(__nsh_hv18, "style", {
-			paddingLeft: GRID_PAD,
-			paddingRight: GRID_PAD,
+			paddingLeft: GRID_PAD + sidePad,
+			paddingRight: GRID_PAD + sidePad,
 			paddingTop: 4
 		});
 		const __nsh_hv19 = element("view");
@@ -4315,24 +4557,6 @@ function NoteCard(props) {
 	const title = text$1(props.note.title).trim() || "Без названия";
 	const height = Math.round(props.width * CARD_RATIO);
 	const blocks = previewOf(props.note.doc);
-	const enter = createMotion({
-		initial: {
-			opacity: 0,
-			translateY: 10
-		},
-		enter: {
-			keyframes: [{
-				opacity: 0,
-				translateY: 10
-			}, {
-				opacity: 1,
-				translateY: 0
-			}],
-			duration: 260,
-			delay: cardDelay(props.index),
-			easing: Easing.bezier(.16, 1, .3, 1)
-		}
-	});
 	const lift = createMotion();
 	const rise = (on) => {
 		lift.play({
@@ -4343,15 +4567,13 @@ function NoteCard(props) {
 	};
 	return (() => {
 		const __nsh_hv25 = element("view");
-		bindProp(__nsh_hv25, "style", () => enter.style);
-		const __nsh_hv26 = element("view");
-		prop(__nsh_hv26, "onPress", () => select(props.note));
-		prop(__nsh_hv26, "onMouseEnter", () => rise(true));
-		prop(__nsh_hv26, "onMouseLeave", () => rise(false));
-		prop(__nsh_hv26, "role", "button");
-		prop(__nsh_hv26, "accessibilityLabel", title);
-		bindProp(__nsh_hv26, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .07) }));
-		bindProp(__nsh_hv26, "style", () => ({
+		prop(__nsh_hv25, "onPress", () => select(props.note));
+		prop(__nsh_hv25, "onMouseEnter", () => rise(true));
+		prop(__nsh_hv25, "onMouseLeave", () => rise(false));
+		prop(__nsh_hv25, "role", "button");
+		prop(__nsh_hv25, "accessibilityLabel", title);
+		bindProp(__nsh_hv25, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .07) }));
+		bindProp(__nsh_hv25, "style", () => ({
 			width: props.width,
 			height,
 			padding: 4,
@@ -4361,39 +4583,41 @@ function NoteCard(props) {
 			backgroundColor: colors.background,
 			cursor: "pointer",
 			boxShadow: cardShadow(props.dark),
+			transitionProperty: "width, height",
+			transitionDuration: "200ms",
+			transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
 			...lift.style
 		}));
-		const __nsh_hv27 = element("view");
-		prop(__nsh_hv27, "class", "overflow-hidden");
-		bindProp(__nsh_hv27, "style", () => ({
+		const __nsh_hv26 = element("view");
+		prop(__nsh_hv26, "class", "overflow-hidden");
+		bindProp(__nsh_hv26, "style", () => ({
 			flex: 1,
 			borderRadius: 16,
 			backgroundColor: colors.card,
 			padding: 14
 		}));
-		const __nsh_hv28 = element("view");
-		prop(__nsh_hv28, "class", "overflow-hidden");
-		prop(__nsh_hv28, "style", { height: 36 });
-		const __nsh_hv29 = element("text");
-		prop(__nsh_hv29, "class", "text-[13px] font-semibold");
-		bindProp(__nsh_hv29, "style", () => ({
+		const __nsh_hv27 = element("view");
+		prop(__nsh_hv27, "class", "overflow-hidden");
+		prop(__nsh_hv27, "style", { height: 36 });
+		const __nsh_hv28 = element("text");
+		prop(__nsh_hv28, "class", "text-[13px] font-semibold");
+		bindProp(__nsh_hv28, "style", () => ({
 			color: colors.foreground,
 			lineHeight: 18
 		}));
-		insert(__nsh_hv29, title);
-		append(__nsh_hv28, __nsh_hv29);
-		const __nsh_hv30 = element("view");
-		prop(__nsh_hv30, "style", {
+		insert(__nsh_hv28, title);
+		append(__nsh_hv27, __nsh_hv28);
+		const __nsh_hv29 = element("view");
+		prop(__nsh_hv29, "style", {
 			marginTop: 9,
 			gap: 3
 		});
-		insert(__nsh_hv30, () => blocks.map((block) => component(PreviewLine, {
+		insert(__nsh_hv29, () => blocks.map((block) => component(PreviewLine, {
 			block,
 			colors
 		})));
-		append(__nsh_hv27, __nsh_hv28);
-		append(__nsh_hv27, __nsh_hv30);
 		append(__nsh_hv26, __nsh_hv27);
+		append(__nsh_hv26, __nsh_hv29);
 		append(__nsh_hv25, __nsh_hv26);
 		return __nsh_hv25;
 	})();
@@ -4401,29 +4625,29 @@ function NoteCard(props) {
 function EmptyLibrary(props) {
 	const colors = props.colors;
 	return (() => {
-		const __nsh_hv31 = element("view");
-		prop(__nsh_hv31, "class", "items-center");
-		prop(__nsh_hv31, "style", {
+		const __nsh_hv30 = element("view");
+		prop(__nsh_hv30, "class", "items-center");
+		prop(__nsh_hv30, "style", {
 			paddingTop: 96,
 			gap: 10
 		});
-		const __nsh_hv32 = element("text");
-		prop(__nsh_hv32, "class", "text-[15px]");
-		bindProp(__nsh_hv32, "style", () => ({ color: colors.foreground }));
-		const __nsh_hv33 = text("Заметок пока нет");
-		append(__nsh_hv32, __nsh_hv33);
-		const __nsh_hv34 = element("text");
-		prop(__nsh_hv34, "class", "text-[12px]");
-		bindProp(__nsh_hv34, "style", () => ({ color: colors.muted }));
-		const __nsh_hv35 = text("Первая заметка — как чистый лист.");
-		append(__nsh_hv34, __nsh_hv35);
-		const __nsh_hv36 = element("view");
-		prop(__nsh_hv36, "onPress", createNote);
-		prop(__nsh_hv36, "role", "button");
-		prop(__nsh_hv36, "accessibilityLabel", "Создать заметку");
-		prop(__nsh_hv36, "class", "flex-row items-center");
-		bindProp(__nsh_hv36, "hoverStyle", () => ({ backgroundColor: surfaceWash(false, .07) }));
-		bindProp(__nsh_hv36, "style", () => ({
+		const __nsh_hv31 = element("text");
+		prop(__nsh_hv31, "class", "text-[15px]");
+		bindProp(__nsh_hv31, "style", () => ({ color: colors.foreground }));
+		const __nsh_hv32 = text("Заметок пока нет");
+		append(__nsh_hv31, __nsh_hv32);
+		const __nsh_hv33 = element("text");
+		prop(__nsh_hv33, "class", "text-[12px]");
+		bindProp(__nsh_hv33, "style", () => ({ color: colors.muted }));
+		const __nsh_hv34 = text("Первая заметка — как чистый лист.");
+		append(__nsh_hv33, __nsh_hv34);
+		const __nsh_hv35 = element("view");
+		prop(__nsh_hv35, "onPress", createNote);
+		prop(__nsh_hv35, "role", "button");
+		prop(__nsh_hv35, "accessibilityLabel", "Создать заметку");
+		prop(__nsh_hv35, "class", "flex-row items-center");
+		bindProp(__nsh_hv35, "hoverStyle", () => ({ backgroundColor: surfaceWash(false, .07) }));
+		bindProp(__nsh_hv35, "style", () => ({
 			marginTop: 6,
 			height: 30,
 			paddingLeft: 12,
@@ -4435,23 +4659,23 @@ function EmptyLibrary(props) {
 			backgroundColor: colors.card,
 			cursor: "pointer"
 		}));
-		const __nsh_hv37 = element("text");
-		prop(__nsh_hv37, "class", "text-[13px]");
-		bindProp(__nsh_hv37, "style", () => ({ color: colors.foreground }));
-		const __nsh_hv38 = text("Создать заметку");
-		append(__nsh_hv37, __nsh_hv38);
+		const __nsh_hv36 = element("text");
+		prop(__nsh_hv36, "class", "text-[13px]");
+		bindProp(__nsh_hv36, "style", () => ({ color: colors.foreground }));
+		const __nsh_hv37 = text("Создать заметку");
 		append(__nsh_hv36, __nsh_hv37);
-		insert(__nsh_hv36, component(Icon, {
+		append(__nsh_hv35, __nsh_hv36);
+		insert(__nsh_hv35, component(Glyph, {
 			name: "plus",
 			size: 13,
 			get color() {
 				return colors.foreground;
 			}
-		}), __nsh_hv37);
-		append(__nsh_hv31, __nsh_hv32);
-		append(__nsh_hv31, __nsh_hv34);
-		append(__nsh_hv31, __nsh_hv36);
-		return __nsh_hv31;
+		}), __nsh_hv36);
+		append(__nsh_hv30, __nsh_hv31);
+		append(__nsh_hv30, __nsh_hv33);
+		append(__nsh_hv30, __nsh_hv35);
+		return __nsh_hv30;
 	})();
 }
 function codeFields(id, rev) {
@@ -4567,8 +4791,8 @@ function CodeCard(props) {
 		return element("view");
 	})();
 	return (() => {
-		const __nsh_hv40 = element("view");
-		bindProp(__nsh_hv40, "style", () => ({
+		const __nsh_hv39 = element("view");
+		bindProp(__nsh_hv39, "style", () => ({
 			marginTop: 4,
 			marginBottom: 8,
 			borderRadius: 10,
@@ -4577,21 +4801,21 @@ function CodeCard(props) {
 			backgroundColor: surfaceWash(props.dark, .06),
 			overflow: "hidden"
 		}));
-		const __nsh_hv41 = element("view");
-		prop(__nsh_hv41, "class", "flex-row items-center justify-between");
-		bindProp(__nsh_hv41, "style", () => ({
+		const __nsh_hv40 = element("view");
+		prop(__nsh_hv40, "class", "flex-row items-center justify-between");
+		bindProp(__nsh_hv40, "style", () => ({
 			height: 36,
 			paddingLeft: 12,
 			paddingRight: 4,
 			borderBottomWidth: 1,
 			borderColor: props.colors.border
 		}));
-		const __nsh_hv42 = element("view");
-		prop(__nsh_hv42, "onPress", (event) => codeLanguageMenu(props.id, event.pagePosition));
-		prop(__nsh_hv42, "role", "button");
-		bindProp(__nsh_hv42, "accessibilityLabel", () => languageLabel(codeFields(props.id, bodyRev()).language));
-		bindProp(__nsh_hv42, "hoverStyle", () => ({ backgroundColor: props.wash }));
-		prop(__nsh_hv42, "style", {
+		const __nsh_hv41 = element("view");
+		prop(__nsh_hv41, "onPress", (event) => codeLanguageMenu(props.id, event.pagePosition));
+		prop(__nsh_hv41, "role", "button");
+		bindProp(__nsh_hv41, "accessibilityLabel", () => languageLabel(codeFields(props.id, bodyRev()).language));
+		bindProp(__nsh_hv41, "hoverStyle", () => ({ backgroundColor: props.wash }));
+		prop(__nsh_hv41, "style", {
 			height: 26,
 			paddingLeft: 8,
 			paddingRight: 8,
@@ -4599,43 +4823,40 @@ function CodeCard(props) {
 			cursor: "pointer",
 			justifyContent: "center"
 		});
-		const __nsh_hv43 = element("text");
-		prop(__nsh_hv43, "class", "text-[12px] font-medium");
-		bindProp(__nsh_hv43, "style", () => ({ color: props.colors.muted }));
-		insert(__nsh_hv43, () => languageLabel(codeFields(props.id, bodyRev()).language));
-		append(__nsh_hv42, __nsh_hv43);
-		const __nsh_hv44 = element("view");
-		prop(__nsh_hv44, "onPress", () => copyBlock(codeFields(props.id).text, props.id));
-		prop(__nsh_hv44, "role", "button");
-		prop(__nsh_hv44, "accessibilityLabel", "Скопировать");
-		prop(__nsh_hv44, "class", "items-center justify-center");
-		bindProp(__nsh_hv44, "hoverStyle", () => ({ backgroundColor: props.wash }));
-		prop(__nsh_hv44, "style", {
+		const __nsh_hv42 = element("text");
+		prop(__nsh_hv42, "class", "text-[12px] font-medium");
+		bindProp(__nsh_hv42, "style", () => ({ color: props.colors.muted }));
+		insert(__nsh_hv42, () => languageLabel(codeFields(props.id, bodyRev()).language));
+		append(__nsh_hv41, __nsh_hv42);
+		const __nsh_hv43 = element("view");
+		prop(__nsh_hv43, "onPress", () => copyBlock(codeFields(props.id).text, props.id));
+		prop(__nsh_hv43, "role", "button");
+		prop(__nsh_hv43, "accessibilityLabel", "Скопировать");
+		prop(__nsh_hv43, "class", "items-center justify-center");
+		bindProp(__nsh_hv43, "hoverStyle", () => ({ backgroundColor: props.wash }));
+		prop(__nsh_hv43, "style", {
 			width: 28,
 			height: 28,
 			borderRadius: 6,
 			cursor: "pointer"
 		});
-		insert(__nsh_hv44, () => copiedId() === props.id ? component(Glyph, {
+		insert(__nsh_hv43, () => copiedId() === props.id ? component(Glyph, {
 			name: "check",
 			size: 14,
 			get color() {
 				return props.colors.foreground;
 			}
-		}) : (() => {
-			const __nsh_hv45 = element("image");
-			prop(__nsh_hv45, "src", COPY_ICON);
-			bindProp(__nsh_hv45, "style", () => ({
-				width: 14,
-				height: 14,
-				tintColor: props.colors.muted
-			}));
-			return __nsh_hv45;
-		})());
-		append(__nsh_hv41, __nsh_hv42);
-		append(__nsh_hv41, __nsh_hv44);
+		}) : component(Glyph, {
+			name: "copy",
+			size: 14,
+			get color() {
+				return props.colors.muted;
+			}
+		}));
 		append(__nsh_hv40, __nsh_hv41);
-		insert(__nsh_hv40, component(RichEditor, {
+		append(__nsh_hv40, __nsh_hv43);
+		append(__nsh_hv39, __nsh_hv40);
+		insert(__nsh_hv39, component(RichEditor, {
 			get editor() {
 				return seg.session;
 			},
@@ -4650,7 +4871,7 @@ function CodeCard(props) {
 				return codeStyles(props.colors, props.dark);
 			}
 		}));
-		return __nsh_hv40;
+		return __nsh_hv39;
 	})();
 }
 function ProsePiece(props) {
@@ -4665,10 +4886,10 @@ function ProsePiece(props) {
 		ref: (ref) => attachRef(props.id, ref),
 		accessibilityLabel: "Текст заметки",
 		get placeholder() {
-			return segmentList()[0]?.id === props.id ? "Пишите. Слэш открывает блоки: заголовок, список, таблица…" : void 0;
+			return segmentList()[0]?.id === props.id ? NOTE_PLACEHOLDER : void 0;
 		},
 		onContentSizeChange: ({ contentSize }) => updateSegHeight(props.id, contentSize.height),
-		onSelectionChange: ({ selection }) => syncOutlineFromCaret(props.id, selection.from),
+		onSelectionChange: ({ selection }) => scheduleCaretOutline(props.id, selection.from),
 		onPasteFiles: (event) => {
 			pastePictures(event.paste, seg.session);
 		},
@@ -4691,36 +4912,39 @@ function ProsePiece(props) {
 }
 function SplitNote(props) {
 	return (() => {
-		const __nsh_hv47 = element("view");
-		prop(__nsh_hv47, "class", "relative min-h-0 flex-1");
-		prop(__nsh_hv47, "ref", (node) => {
+		const __nsh_hv45 = element("view");
+		prop(__nsh_hv45, "class", "relative min-h-0 flex-1");
+		prop(__nsh_hv45, "ref", (node) => {
 			menuAnchor = node;
 		});
-		const __nsh_hv48 = element("scroll");
-		prop(__nsh_hv48, "ref", (node) => {
+		const __nsh_hv46 = element("scroll");
+		prop(__nsh_hv46, "ref", (node) => {
 			splitScrollRef = node;
 		});
-		prop(__nsh_hv48, "onScroll", (event) => onSplitScroll(event.offset.y));
-		prop(__nsh_hv48, "class", "min-h-0 flex-1");
-		bindProp(__nsh_hv48, "contentStyle", () => ({
-			paddingTop: pageTopPad(),
+		prop(__nsh_hv46, "onScroll", (event) => onSplitScroll(event.offset.y));
+		prop(__nsh_hv46, "scrollbar", false);
+		prop(__nsh_hv46, "class", "min-h-0 flex-1");
+		bindProp(__nsh_hv46, "contentStyle", () => ({
+			paddingTop: noteTopPad(),
 			paddingBottom: 0,
 			paddingLeft: pagePad(),
 			paddingRight: pagePad()
 		}));
-		const __nsh_hv50 = element("view");
-		prop(__nsh_hv50, "onPress", caretToEnd);
-		prop(__nsh_hv50, "testID", "split-note-tail");
-		prop(__nsh_hv50, "style", { height: 120 });
-		append(__nsh_hv48, __nsh_hv50);
-		insert(__nsh_hv48, each(() => segmentList(), (row) => {
+		const __nsh_hv48 = element("view");
+		prop(__nsh_hv48, "onPress", caretToEnd);
+		prop(__nsh_hv48, "testID", "split-note-tail");
+		prop(__nsh_hv48, "style", { height: 120 });
+		append(__nsh_hv46, __nsh_hv48);
+		insert(__nsh_hv46, [component(NoteTitle, { get colors() {
+			return props.colors;
+		} }), each(() => segmentList(), (row) => {
 			const item = row();
 			return (() => {
-				const __nsh_hv49 = element("view");
-				prop(__nsh_hv49, "onLayout", (event) => {
+				const __nsh_hv47 = element("view");
+				prop(__nsh_hv47, "onLayout", (event) => {
 					segTops.set(item.id, event.bounds.origin.y);
 				});
-				insert(__nsh_hv49, () => item.kind === "code" ? component(CodeCard, {
+				insert(__nsh_hv47, () => item.kind === "code" ? component(CodeCard, {
 					get id() {
 						return item.id;
 					},
@@ -4744,34 +4968,34 @@ function SplitNote(props) {
 						return props.dark;
 					}
 				}));
-				return __nsh_hv49;
+				return __nsh_hv47;
 			})();
-		}, ((row) => String(row.id))), __nsh_hv50);
-		append(__nsh_hv47, __nsh_hv48);
-		return __nsh_hv47;
+		}, ((row) => String(row.id)))], __nsh_hv48);
+		append(__nsh_hv45, __nsh_hv46);
+		return __nsh_hv45;
 	})();
 }
 function slashKeyboard() {
 	return (() => {
-		const __nsh_hv51 = element("view");
-		prop(__nsh_hv51, "ref", (node) => {
+		const __nsh_hv49 = element("view");
+		prop(__nsh_hv49, "ref", (node) => {
 			slashFocus = node;
 		});
-		prop(__nsh_hv51, "focusable", true);
-		prop(__nsh_hv51, "style", {
+		prop(__nsh_hv49, "focusable", true);
+		prop(__nsh_hv49, "style", {
 			position: "absolute",
 			width: 1,
 			height: 1,
 			opacity: 0
 		});
-		return __nsh_hv51;
+		return __nsh_hv49;
 	})();
 }
 function slashMenu(colors, wash) {
 	return (() => {
-		const __nsh_hv52 = element("view");
-		prop(__nsh_hv52, "class", "absolute rounded-lg border");
-		bindProp(__nsh_hv52, "style", () => ({
+		const __nsh_hv50 = element("view");
+		prop(__nsh_hv50, "class", "absolute rounded-lg border");
+		bindProp(__nsh_hv50, "style", () => ({
 			left: slashLeft(),
 			top: slashTop(),
 			width: 264,
@@ -4780,17 +5004,17 @@ function slashMenu(colors, wash) {
 			paddingTop: 4,
 			paddingBottom: 4
 		}));
-		insert(__nsh_hv52, () => filtered(slashQuery()).map((item, index) => (() => {
-			const __nsh_hv53 = element("view");
-			prop(__nsh_hv53, "onPress", () => {
+		insert(__nsh_hv50, () => filtered(slashQuery()).map((item, index) => (() => {
+			const __nsh_hv51 = element("view");
+			prop(__nsh_hv51, "onPress", () => {
 				slashIndex.set(index);
 				pick();
 			});
-			prop(__nsh_hv53, "role", "button");
-			bindProp(__nsh_hv53, "accessibilityLabel", () => item.label);
-			prop(__nsh_hv53, "class", "flex-row items-center");
-			prop(__nsh_hv53, "hoverStyle", { backgroundColor: wash });
-			bindProp(__nsh_hv53, "style", () => ({
+			prop(__nsh_hv51, "role", "button");
+			bindProp(__nsh_hv51, "accessibilityLabel", () => item.label);
+			prop(__nsh_hv51, "class", "flex-row items-center");
+			prop(__nsh_hv51, "hoverStyle", { backgroundColor: wash });
+			bindProp(__nsh_hv51, "style", () => ({
 				height: 28,
 				paddingLeft: 10,
 				paddingRight: 10,
@@ -4798,19 +5022,19 @@ function slashMenu(colors, wash) {
 				cursor: "pointer",
 				backgroundColor: index === slashIndex() ? wash : "transparent"
 			}));
-			const __nsh_hv54 = element("text");
-			prop(__nsh_hv54, "class", "text-[13px] flex-1");
-			bindProp(__nsh_hv54, "style", () => ({ color: colors.foreground }));
-			insert(__nsh_hv54, () => item.label);
-			const __nsh_hv55 = element("text");
-			prop(__nsh_hv55, "class", "text-[11px]");
-			bindProp(__nsh_hv55, "style", () => ({ color: colors.muted }));
-			insert(__nsh_hv55, () => item.hint);
-			append(__nsh_hv53, __nsh_hv54);
-			append(__nsh_hv53, __nsh_hv55);
-			return __nsh_hv53;
+			const __nsh_hv52 = element("text");
+			prop(__nsh_hv52, "class", "text-[13px] flex-1");
+			bindProp(__nsh_hv52, "style", () => ({ color: colors.foreground }));
+			insert(__nsh_hv52, () => item.label);
+			const __nsh_hv53 = element("text");
+			prop(__nsh_hv53, "class", "text-[11px]");
+			bindProp(__nsh_hv53, "style", () => ({ color: colors.muted }));
+			insert(__nsh_hv53, () => item.hint);
+			append(__nsh_hv51, __nsh_hv52);
+			append(__nsh_hv51, __nsh_hv53);
+			return __nsh_hv51;
 		})()));
-		return __nsh_hv52;
+		return __nsh_hv50;
 	})();
 }
 let noteEnterId = "";
@@ -4853,33 +5077,33 @@ function NoteView(props) {
 	}
 	const enter = noteEntrance(id);
 	return (() => {
-		const __nsh_hv56 = element("view");
-		prop(__nsh_hv56, "class", "min-h-0 flex-1 flex-col");
-		bindProp(__nsh_hv56, "style", () => enter.style);
-		const __nsh_hv57 = element("view");
-		prop(__nsh_hv57, "class", "relative min-h-0 flex-1");
-		prop(__nsh_hv57, "onLayout", (event) => {
+		const __nsh_hv54 = element("view");
+		prop(__nsh_hv54, "class", "min-h-0 flex-1 flex-col");
+		bindProp(__nsh_hv54, "style", () => enter.style);
+		const __nsh_hv55 = element("view");
+		prop(__nsh_hv55, "class", "relative min-h-0 flex-1");
+		prop(__nsh_hv55, "onLayout", (event) => {
 			pageRoom.set(event.bounds.size.width);
 			pageTall.set(event.bounds.size.height);
 			menuAnchor?.measure().then((box) => {
 				if (box) pageTopY = box.pagePosition.y;
 			});
 		});
-		const __nsh_hv58 = element("view");
-		prop(__nsh_hv58, "class", "min-h-0 flex-col");
-		bindProp(__nsh_hv58, "style", () => ({
+		const __nsh_hv56 = element("view");
+		prop(__nsh_hv56, "class", "min-h-0 flex-col");
+		bindProp(__nsh_hv56, "style", () => ({
 			height: pageTall() > 0 ? pageTall() : void 0,
-			paddingTop: 4
+			paddingTop: codeLayout() ? 0 : noteTopPad()
 		}));
-		const __nsh_hv59 = element("view");
-		prop(__nsh_hv59, "class", "relative min-h-0 flex-1 overflow-hidden");
-		prop(__nsh_hv59, "ref", (node) => {
+		const __nsh_hv57 = element("view");
+		prop(__nsh_hv57, "class", "relative min-h-0 flex-1 overflow-hidden");
+		prop(__nsh_hv57, "ref", (node) => {
 			menuAnchor = node;
 		});
-		prop(__nsh_hv59, "onPress", onPageSpacePress);
-		prop(__nsh_hv59, "onWheel", onSingleWheel);
-		prop(__nsh_hv59, "testID", "note-page-space");
-		insert(__nsh_hv59, [
+		prop(__nsh_hv57, "onPress", onPageSpacePress);
+		prop(__nsh_hv57, "onWheel", onSingleWheel);
+		prop(__nsh_hv57, "testID", "note-page-space");
+		insert(__nsh_hv57, [
 			() => codeLayout() ? component(SplitNote, {
 				colors,
 				get dark() {
@@ -4892,9 +5116,9 @@ function NoteView(props) {
 					editorRef = ref;
 				},
 				class: "min-h-0 flex-1",
-				placeholder: "Пишите. Слэш открывает блоки: заголовок, список, таблица…",
+				placeholder: NOTE_PLACEHOLDER,
 				accessibilityLabel: "Текст заметки",
-				onSelectionChange: ({ selection }) => syncOutlineFromCaret(null, selection.from),
+				onSelectionChange: ({ selection }) => scheduleCaretOutline(null, selection.from),
 				onPasteFiles: (event) => {
 					pastePictures(event.paste, editor);
 				},
@@ -4908,32 +5132,118 @@ function NoteView(props) {
 					closeSlash();
 				},
 				get styles() {
-					return noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad(), false, pageTopPad());
+					return noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad(), false, NOTE_TOP_PAD);
 				}
 			}) : (() => {
-				const __nsh_hv60 = element("view");
-				prop(__nsh_hv60, "class", "h-full");
-				return __nsh_hv60;
+				const __nsh_hv58 = element("view");
+				prop(__nsh_hv58, "class", "h-full");
+				return __nsh_hv58;
 			})(), ((row) => row.stamp)),
 			() => slashOpen() && slashKeyboard(),
 			() => slashOpen() && slashMenu(colors, wash)
 		]);
-		append(__nsh_hv58, __nsh_hv59);
-		append(__nsh_hv57, __nsh_hv58);
-		insert(__nsh_hv57, component(NotesOutlineRail, {
+		append(__nsh_hv56, __nsh_hv57);
+		insert(__nsh_hv56, () => editor && !codeLayout() && component(NoteTitle, {
+			colors,
+			pad: true
+		}), __nsh_hv57);
+		append(__nsh_hv55, __nsh_hv56);
+		insert(__nsh_hv55, component(NotesOutlineRail, {
 			marks: outline,
 			activePos: activeOutlinePos,
 			colors,
 			get dark() {
 				return props.dark;
 			},
-			maxHeight: () => Math.max(180, pageTall() - 80),
+			maxHeight: () => pageTall(),
 			onHoverOpen: syncOutlineFromViewport,
 			onSelect: jumpToOutline
 		}));
-		append(__nsh_hv56, __nsh_hv57);
-		return __nsh_hv56;
+		append(__nsh_hv54, __nsh_hv55);
+		return __nsh_hv54;
 	})();
+}
+function NoteTitle(props) {
+	const editor = titleEditor();
+	if (!editor) return (() => {
+		return element("view");
+	})();
+	return (() => {
+		const __nsh_hv60 = element("view");
+		prop(__nsh_hv60, "class", "shrink-0 flex-col justify-end");
+		bindProp(__nsh_hv60, "style", () => ({
+			minHeight: 80,
+			marginLeft: props.pad ? pagePad() : 0,
+			marginRight: props.pad ? pagePad() : 0,
+			marginBottom: 20
+		}));
+		insert(__nsh_hv60, component(RichEditor, {
+			editor,
+			placeholder: "\\u200BБез названия",
+			accessibilityLabel: "Название заметки",
+			get styles() {
+				return titleStyles(props.colors);
+			},
+			class: "shrink-0"
+		}));
+		return __nsh_hv60;
+	})();
+}
+let titleSession = null;
+function titleEditor() {
+	return titleSession;
+}
+function buildTitleEditor(title) {
+	const previous = titleSession;
+	titleSession = null;
+	if (previous) try {
+		previous.dispose();
+	} catch {}
+	const made = makeEditor({
+		type: "doc",
+		content: [{
+			type: "paragraph",
+			content: title ? [{
+				type: "text",
+				text: title
+			}] : []
+		}]
+	});
+	made.on("revision", () => editTitle(titleTextOf(made)));
+	titleSession = made;
+}
+function titleTextOf(session) {
+	const doc = session.getJSON();
+	return (Array.isArray(doc?.content) ? doc.content : []).map((block) => (Array.isArray(block.content) ? block.content : []).map((leaf) => leaf.text ?? "").join("")).join("\n");
+}
+let titleStylesCache = null;
+function titleStyles(colors) {
+	const key = `${colors.foreground}|${colors.muted}|${colors.accent}`;
+	if (titleStylesCache?.key !== key) titleStylesCache = {
+		key,
+		styles: {
+			content: {
+				color: colors.foreground,
+				backgroundColor: "transparent",
+				paddingTop: 0,
+				paddingBottom: 0,
+				paddingLeft: 0,
+				paddingRight: 0,
+				minHeight: 0
+			},
+			placeholder: { color: colors.muted },
+			caret: { backgroundColor: colors.accent },
+			nodes: { paragraph: {
+				fontSize: 32,
+				fontWeight: 600,
+				lineHeight: 40,
+				marginTop: 0,
+				marginBottom: 0,
+				textAlign: "center"
+			} }
+		}
+	};
+	return titleStylesCache.styles;
 }
 function pagePad() {
 	const room = pageRoom();
@@ -4941,11 +5251,14 @@ function pagePad() {
 	if (compact()) return 16;
 	return Math.max((room - PAGE_MAX) / 2, PAGE_PAD / 2);
 }
-function pageTopPad() {
-	const tall = pageTall();
-	if (!(tall > 0)) return compact() ? 96 : 240;
-	return Math.round(tall * .34);
+const NOTE_TITLE_GAP = 20;
+const NOTE_TOP_PAD = 4;
+const NOTE_TITLE_BLOCK = 80;
+const NOTE_TOP_SHARE = .2;
+function noteTopPad() {
+	return pageTall() > 0 ? Math.max(NOTE_TOP_PAD, Math.round(pageTall() * NOTE_TOP_SHARE)) : NOTE_TOP_PAD;
 }
+const NOTE_PLACEHOLDER = "​Пишите. Слэш открывает блоки: заголовок, список, таблица…";
 let documentStylesCache = null;
 function segmentAt(markPos) {
 	let pos = 1;
@@ -4988,9 +5301,10 @@ function codeStyles(colors, dark) {
 			caret: { backgroundColor: colors.accent },
 			nodes: {
 				codeBlock: {
-					fontFamily: IBMPlexMono_Regular_default,
-					fontSize: 13,
-					lineHeight: 21,
+					fontFamily: GeistMono_Regular_default,
+					fontSize: 14,
+					fontWeight: 500,
+					lineHeight: 22,
 					paddingTop: 12,
 					paddingBottom: 14,
 					paddingLeft: 14,
@@ -5000,9 +5314,10 @@ function codeStyles(colors, dark) {
 					backgroundColor: "transparent"
 				},
 				paragraph: {
-					fontFamily: IBMPlexMono_Regular_default,
-					fontSize: 13,
-					lineHeight: 21,
+					fontFamily: GeistMono_Regular_default,
+					fontSize: 14,
+					fontWeight: 500,
+					lineHeight: 22,
 					marginTop: 0,
 					marginBottom: 0
 				}
@@ -5028,6 +5343,7 @@ function documentStyles(colors, dark, minHeight, pad, piece = false, topPad = 2)
 		nodes: {
 			paragraph: {
 				fontSize: 16,
+				fontWeight: 500,
 				lineHeight: 24,
 				marginTop: 2,
 				marginBottom: 4
@@ -5093,12 +5409,14 @@ function documentStyles(colors, dark, minHeight, pad, piece = false, topPad = 2)
 			},
 			listItem: {
 				fontSize: 16,
+				fontWeight: 500,
 				lineHeight: 24
 			},
 			codeBlock: {
-				fontFamily: IBMPlexMono_Regular_default,
-				fontSize: 13,
-				lineHeight: 21,
+				fontFamily: GeistMono_Regular_default,
+				fontSize: 14,
+				fontWeight: 500,
+				lineHeight: 22,
 				paddingTop: 12,
 				paddingBottom: 12,
 				paddingLeft: 14,
@@ -5133,8 +5451,9 @@ function documentStyles(colors, dark, minHeight, pad, piece = false, topPad = 2)
 		},
 		marks: {
 			code: {
-				fontFamily: IBMPlexMono_Regular_default,
-				fontSize: 14,
+				fontFamily: GeistMono_Regular_default,
+				fontSize: 16,
+				fontWeight: 500,
 				color: colors.foreground,
 				backgroundColor: surfaceWash(dark, .08)
 			},
@@ -5266,7 +5585,7 @@ function PreviewLine(props) {
 			fontSize: scale.size,
 			lineHeight: scale.line,
 			fontWeight: scale.weight,
-			fontFamily: block.kind === "code" ? IBMPlexMono_Regular_default : void 0,
+			fontFamily: block.kind === "code" ? GeistMono_Regular_default : void 0,
 			color: ink,
 			marginTop: scale.gap,
 			paddingLeft: block.kind === "item" ? 9 : 0
@@ -5278,6 +5597,8 @@ function PreviewLine(props) {
 function cardShadow(dark) {
 	return dark ? "0 1px 2px rgba(0,0,0,0.45), 0 8px 24px rgba(0,0,0,0.35)" : "0 1px 2px rgba(15,23,42,0.06), 0 10px 26px rgba(15,23,42,0.09)";
 }
+const filledHover = (accent) => mixHex(accent, accentMark(accent), .12);
+const filledPressed = (accent) => mixHex(accent, accentMark(accent), .22);
 const MONTHS_SHORT = [
 	"янв",
 	"фев",
@@ -7208,10 +7529,10 @@ function GameDetailsDialog(props) {
 					const __nsh_hv7 = element("text");
 					prop(__nsh_hv7, "class", "mt-2 text-[12px]");
 					bindProp(__nsh_hv7, "style", () => ({ color: props.colors.muted }));
-					const __nsh_hv8 = text(" · ");
+					const __nsh_hv8 = text(" ·");
 					append(__nsh_hv7, __nsh_hv8);
 					insert(__nsh_hv7, genres, __nsh_hv8);
-					insert(__nsh_hv7, () => props.card.releaseDateText || props.card.released || "дата выхода неизвестна");
+					insert(__nsh_hv7, [" ", () => props.card.releaseDateText || props.card.released || "дата выхода неизвестна"]);
 					return __nsh_hv7;
 				})(),
 				() => props.card.description && (() => {
@@ -7653,8 +7974,20 @@ function isTodo(value) {
 }
 
 //#endregion
+//#region shell-theme.ts
+let applied = "";
+function applyShellTheme(theme) {
+	if (!theme || typeof theme !== "object") return;
+	if (typeof setTheme !== "function") return;
+	const json = JSON.stringify(theme);
+	if (json === applied) return;
+	applied = json;
+	setTheme(theme);
+}
+
+//#endregion
 //#region App.tsx
-setup(null, "{\n  \"cssVars\": {\n    \"theme\": {\n      \"font-sans\": \"Inter, sans-serif\",\n      \"radius\": \"0.625rem\",\n      \"radius-control\": \"0.5rem\",\n      \"spacing-sidebar\": \"240px\",\n      \"spacing-titlebar\": \"40px\",\n      \"spacing-row\": \"32px\",\n      \"font-size-body\": \"13px\",\n      \"font-size-label\": \"12px\"\n    },\n    \"light\": {\n      \"background\": \"#faf9fb\",\n      \"foreground\": \"#26242a\",\n      \"card\": \"#f2f0f4\",\n      \"card-foreground\": \"#26242a\",\n      \"muted\": \"#ece9ef\",\n      \"muted-foreground\": \"#77727e\",\n      \"primary\": \"#7152bf\",\n      \"primary-foreground\": \"#ffffff\",\n      \"border\": \"#dedbe2\",\n      \"input\": \"#dedbe2\",\n      \"ring\": \"#b18aff\"\n    },\n    \"dark\": {\n      \"background\": \"#0d0c10\",\n      \"foreground\": \"#e7e5ea\",\n      \"card\": \"#131216\",\n      \"card-foreground\": \"#e7e5ea\",\n      \"muted\": \"#27262a\",\n      \"muted-foreground\": \"#8d8a94\",\n      \"primary\": \"#af94f9\",\n      \"primary-foreground\": \"#0d0c10\",\n      \"border\": \"#27262a\",\n      \"input\": \"#27262a\",\n      \"ring\": \"#af94f9\"\n    }\n  }\n}\n", null, null);
+setup(null, "{\n  \"cssVars\": {\n    \"theme\": {\n      \"font-sans\": \"Inter\",\n      \"font-mono\": \"Geist Mono\",\n      \"radius\": \"0.75rem\",\n      \"radius-control\": \"0.5rem\"\n    },\n    \"light\": {\n      \"background\": \"#f7f8fa\",\n      \"foreground\": \"#111820\",\n      \"card\": \"#ffffff\",\n      \"card-foreground\": \"#111820\",\n      \"popover\": \"#ffffff\",\n      \"popover-foreground\": \"#111820\",\n      \"primary\": \"#1f6df5\",\n      \"primary-foreground\": \"#ffffff\",\n      \"secondary\": \"#eef1f6\",\n      \"secondary-foreground\": \"#111820\",\n      \"muted\": \"#eef1f6\",\n      \"muted-foreground\": \"#5f6a7a\",\n      \"accent\": \"#a8c5fb\",\n      \"accent-foreground\": \"#111820\",\n      \"destructive\": \"#d5373c\",\n      \"border\": \"#dde2ea\",\n      \"input\": \"#dde2ea\",\n      \"ring\": \"#1f6df5\",\n      \"selection\": \"#1f6df538\",\n      \"sidebar\": \"#eff1f5\",\n      \"sidebar-foreground\": \"#111820\",\n      \"sidebar-border\": \"#dde2ea\"\n    },\n    \"dark\": {\n      \"background\": \"#090c15\",\n      \"foreground\": \"#ffffff\",\n      \"card\": \"#101318\",\n      \"card-foreground\": \"#ffffff\",\n      \"popover\": \"#181c25\",\n      \"popover-foreground\": \"#ffffff\",\n      \"primary\": \"#1784fc\",\n      \"primary-foreground\": \"#101318\",\n      \"secondary\": \"#181c25\",\n      \"secondary-foreground\": \"#ffffff\",\n      \"muted\": \"#181c25\",\n      \"muted-foreground\": \"#717580\",\n      \"accent\": \"#104888\",\n      \"accent-foreground\": \"#ffffff\",\n      \"destructive\": \"#e67b71\",\n      \"border\": \"#1e222b\",\n      \"input\": \"#1e222b\",\n      \"ring\": \"#1784fc\",\n      \"selection\": \"#1784fc38\",\n      \"sidebar\": \"#0d1019\",\n      \"sidebar-foreground\": \"#ffffff\",\n      \"sidebar-border\": \"#1e222b\"\n    }\n  }\n}\n", null, null);
 const initialValue = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__") ?? host.params.atlas;
 const hosted = isSnapshot(initialValue);
 const initial = hosted ? initialValue : fallback;
@@ -7714,9 +8047,9 @@ const Bridge = nativeComponent("atlas.bridge", {
 });
 function iconForNavigation(id) {
 	switch (id) {
-		case "journal": return "logbook";
-		case "notes": return "file";
-		case "tasks": return "week";
+		case "journal": return "journal";
+		case "notes": return "note";
+		case "tasks": return "check";
 		case "games": return "gamepad";
 		default: return "settings";
 	}
@@ -7739,7 +8072,7 @@ function TaskRows() {
 			borderColor: todo().is_completed ? snapshot().colors.accent : snapshot().colors.muted,
 			backgroundColor: todo().is_completed ? snapshot().colors.accent : "transparent"
 		}));
-		insert(__nsh_hv1, () => todo().is_completed && component(Icon, {
+		insert(__nsh_hv1, () => todo().is_completed && component(Glyph, {
 			name: "check",
 			size: 10,
 			get color() {
@@ -7781,7 +8114,7 @@ function TaskPage() {
 	return (() => {
 		const __nsh_hv3 = element("scroll");
 		prop(__nsh_hv3, "class", "min-h-0 flex-1 px-7 pb-5");
-		prop(__nsh_hv3, "style", { paddingTop: 38 + 20 });
+		bindProp(__nsh_hv3, "style", () => ({ paddingTop: snapshot().chrome === "tsx" ? 0 : 40 }));
 		const __nsh_hv4 = element("view");
 		prop(__nsh_hv4, "class", "mx-auto w-full max-w-[640px]");
 		insert(__nsh_hv4, () => snapshot().todos.length === 0 ? (() => {
@@ -7980,9 +8313,10 @@ function SettingsPage() {
 	});
 }
 function App() {
+	effect(() => applyShellTheme(snapshot().nshTheme));
 	effect(() => currentWindow().set({ titleBar: {
 		style: "hidden",
-		height: 38
+		height: 40
 	} }));
 	effect(() => visiblePages.set(pageNavigation.filter((item) => widgetOn(item.id))));
 	effect(() => {
@@ -7999,16 +8333,93 @@ function App() {
 	};
 	const shell = snapshot().chrome === "tsx";
 	const dark = snapshot().appearance?.settings.mode !== "light";
+	const pageTab = (target) => ({
+		key: `page:${target}`,
+		route: target
+	});
+	const pageLabel = (target) => navigation_default.find((item) => item.id === target)?.label ?? target;
+	const tabs = signal([{
+		...pageTab(route()),
+		label: pageLabel(route()),
+		active: true
+	}]);
+	const activeTabKey = signal(`page:${route()}`);
+	const tabViews = () => tabs().map((tab) => ({
+		...tab,
+		active: tab.key === activeTabKey(),
+		label: tab.noteId ? tab.noteId === openNoteId() ? openNoteTitle() || "Без названия" : notes().find((item) => item.id === tab.noteId)?.title ?? "Без названия" : pageLabel(tab.route)
+	}));
+	const activateTab = (key, record = true) => {
+		const tab = tabs().find((item) => item.key === key);
+		if (!tab) return;
+		activeTabKey.set(key);
+		if (tab.route !== route()) {
+			if (route() === "notes" && tab.route !== "notes") leaveOpenNote();
+			route.set(tab.route);
+		}
+		if (tab.noteId) {
+			if (openNoteId() !== tab.noteId) {
+				if (record) openNoteById(tab.noteId);
+				else openNoteWithoutHistory(tab.noteId);
+			}
+		} else if (openNoteId()) closeOpenNote();
+	};
+	const openPageTab = (target) => {
+		if (!isRoute(target)) return;
+		const key = `page:${target}`;
+		if (!tabs().some((tab) => tab.key === key)) tabs.set([...tabs(), {
+			...pageTab(target),
+			label: pageLabel(target),
+			active: false
+		}]);
+		activateTab(key);
+	};
+	const closeTab = (key) => {
+		const list = tabs();
+		if (list.length < 2) return;
+		const at = list.findIndex((tab) => tab.key === key);
+		if (at < 0) return;
+		const rest = list.filter((tab) => tab.key !== key);
+		tabs.set(rest);
+		if (activeTabKey() === key) {
+			const next = rest[Math.min(at, rest.length - 1)];
+			activateTab(next.key);
+		}
+	};
+	effect(() => {
+		const id = openNoteId();
+		if (!id) {
+			if (activeTabKey().startsWith("note:")) activateTab(`page:notes`, false);
+			return;
+		}
+		const key = `note:${id}`;
+		if (activeTabKey() === key) return;
+		if (!tabs().some((tab) => tab.key === key)) {
+			const at = tabs().findIndex((tab) => tab.key === activeTabKey());
+			const tab = {
+				key,
+				route: "notes",
+				noteId: id,
+				label: openNoteTitle() || "Без названия",
+				active: true
+			};
+			const list = tabs();
+			tabs.set([
+				...list.slice(0, at + 1),
+				tab,
+				...list.slice(at + 1)
+			]);
+		}
+		activeTabKey.set(key);
+	});
 	const changeRoute = (target) => {
 		if (!isRoute(target)) return;
-		const prev = route();
-		if (prev === "notes" && target !== "notes") leaveOpenNote();
-		route.set(target);
-		if (prev !== "notes" && target === "notes") resumeOpenNote();
+		openPageTab(target);
 	};
 	const selectSidebarPage = (target) => {
-		if (target === "notes" && route() === "notes" && hasOpenNote()) {
-			closeOpenNote();
+		if (target === "notes") {
+			if (hasOpenNote()) closeOpenNote();
+			openPageTab("notes");
 			return;
 		}
 		changeRoute(target);
@@ -8027,11 +8438,22 @@ function App() {
 	return (() => {
 		const __nsh_hv10 = element("view");
 		prop(__nsh_hv10, "class", "relative h-full w-full");
-		bindProp(__nsh_hv10, "style", () => ({ backgroundColor: snapshot().colors.background }));
+		bindProp(__nsh_hv10, "style", () => ({ backgroundColor: shell ? shellFill(snapshot().colors, dark) : snapshot().colors.background }));
 		const __nsh_hv11 = element("view");
 		prop(__nsh_hv11, "class", "h-full w-full flex-row");
 		const __nsh_hv21 = element("view");
 		prop(__nsh_hv21, "class", "relative min-h-0 min-w-0 flex-1");
+		bindProp(__nsh_hv21, "style", () => shell ? {
+			marginLeft: 8,
+			marginRight: 8,
+			marginTop: 40 + 8,
+			marginBottom: 8,
+			borderRadius: 14,
+			borderWidth: 1,
+			borderColor: snapshot().colors.border,
+			backgroundColor: snapshot().colors.background,
+			overflow: "hidden"
+		} : void 0);
 		insert(__nsh_hv21, [
 			() => route() === "journal" && component(JournalPage, {
 				entries: () => snapshot().journalEntries,
@@ -8048,7 +8470,7 @@ function App() {
 				onStartRecording: startRecording,
 				onStopRecording: stopRecording,
 				onPlayVoice: playVoice,
-				titlebarInset: shell ? 38 : 0,
+				titlebarInset: 0,
 				dark
 			}),
 			() => route() === "notes" && component(NotesPage, {
@@ -8056,7 +8478,7 @@ function App() {
 					return snapshot().colors;
 				},
 				dark,
-				titlebarInset: shell ? 38 : 0
+				titlebarInset: 0
 			}),
 			() => route() === "tasks" && (() => {
 				const __nsh_hv22 = element("view");
@@ -8076,7 +8498,7 @@ function App() {
 						backgroundColor: snapshot().colors.foreground,
 						cursor: "pointer"
 					}));
-					insert(__nsh_hv23, component(Icon, {
+					insert(__nsh_hv23, component(Glyph, {
 						name: "plus",
 						size: 16,
 						get color() {
@@ -8090,7 +8512,6 @@ function App() {
 			() => route() === "games" && widgetOn("games") && (() => {
 				const __nsh_hv24 = element("view");
 				prop(__nsh_hv24, "class", "min-h-0 flex-1");
-				prop(__nsh_hv24, "style", { paddingTop: shell ? 38 : 0 });
 				insert(__nsh_hv24, component(GamesLibrary, {
 					get colors() {
 						return snapshot().colors;
@@ -8121,7 +8542,6 @@ function App() {
 			() => route() === "settings" && (() => {
 				const __nsh_hv25 = element("view");
 				prop(__nsh_hv25, "class", "min-h-0 flex-1");
-				prop(__nsh_hv25, "style", { paddingTop: shell ? 38 : 0 });
 				insert(__nsh_hv25, component(SettingsPage, {}));
 				return __nsh_hv25;
 			})(),
@@ -8196,16 +8616,16 @@ function App() {
 			prop(__nsh_hv13, "class", "relative box-border h-full");
 			bindProp(__nsh_hv13, "style", () => ({
 				width: 282,
-				paddingTop: 38 + 8,
+				paddingTop: 40 + 8,
 				paddingBottom: 16,
 				paddingLeft: 8,
-				paddingRight: 8,
+				paddingRight: shell ? 0 : 8,
 				backgroundColor: shellFill(snapshot().colors, dark)
 			}));
 			const __nsh_hv14 = element("view");
 			prop(__nsh_hv14, "onPressDown", () => askEngine("window.drag"));
 			prop(__nsh_hv14, "class", "absolute left-0 right-0 bottom-0");
-			prop(__nsh_hv14, "style", { top: 38 });
+			prop(__nsh_hv14, "style", { top: 40 });
 			const __nsh_hv15 = element("view");
 			prop(__nsh_hv15, "style", {
 				gap: 2,
@@ -8330,7 +8750,7 @@ function App() {
 				const first = snapshot().openNote;
 				if (first && !startNoteOpened) {
 					startNoteOpened = true;
-					openNoteById(first);
+					openNoteWithoutHistory(first);
 				}
 			},
 			onNotesCreated: (note) => addNote(note),
@@ -8368,17 +8788,25 @@ function App() {
 			get dimmed() {
 				return addTaskOpen() || gameLibrary.addOpen() || pickedExes().length > 1;
 			},
-			get fadeBackdrop() {
-				return route() === "journal";
+			get noteNav() {
+				return route() === "notes";
 			},
+			get canGoBack() {
+				return canWalkBack();
+			},
+			get canGoForward() {
+				return canWalkForward();
+			},
+			get tabs() {
+				return tabViews();
+			},
+			onSelectTab: activateTab,
+			onCloseTab: closeTab,
 			get noteActive() {
 				return route() === "notes" && hasOpenNote();
 			},
-			get noteTitle() {
-				return route() === "notes" ? openNoteTitle() : "";
-			},
-			onRenameNote: renameOpenNote,
-			onCloseNote: closeOpenNote,
+			onGoBack: walkBack,
+			onGoForward: walkForward,
 			onDeleteNote: removeOpenNote,
 			onToggleSidebar: toggleSidebar,
 			get onAddGame() {
