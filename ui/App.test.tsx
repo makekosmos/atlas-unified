@@ -459,6 +459,26 @@ test("keeps appearance controls usable in a narrow window", async () => {
   await app.waitUntil(() => app.texts().includes("14 px"));
 });
 
+// A recent row opens its note in a tab of its own, and that tab is the one
+// being read: going through the page tab instead put the note away again and
+// left the new chip inert.
+test("a recent note opens as the tab being read", async () => {
+  const app = await open("./tabs-fixture.tsx", {
+    storage: {
+      "mundus.atlas.recent.v1": JSON.stringify([
+        { kind: "note", id: "seed:long", title: "Долгая заметка", at: 1 },
+      ]),
+    },
+  });
+  await app.waitFor("label:Долгая заметка");
+  await app.press("label:Долгая заметка");
+  await app.wait(400);
+  // The note itself, not the list of them.
+  expect(app.texts().join(" | ")).toContain(
+    "Тело заметки, открытой из недавних.",
+  );
+});
+
 // `mod+t` is the keyboard's way to a new note, from any page.
 test("mod+t opens the notes page", async () => {
   const app = await open("./App.tsx");

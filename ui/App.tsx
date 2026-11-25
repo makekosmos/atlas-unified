@@ -10,7 +10,7 @@ import {
   keymap,
 } from "nsh";
 import { Input } from "nsh/base";
-import { currentWindow } from "nsh/desktop";
+import { windows } from "nsh/desktop";
 import { Button as SharedButton } from "@makekosmos/imago-nsh";
 import type { Appearance } from "@makekosmos/imago-nsh";
 import navigation from "./navigation.json";
@@ -66,6 +66,7 @@ import {
   TITLEBAR_HEIGHT,
   TitlebarOverlay,
   animateSidebar,
+  animateTabs,
   sidebarPaneWidth,
   shellFill,
   RecentRow,
@@ -465,8 +466,10 @@ function App() {
   // grips and cell selection, a scroll bar, a menu) wears the app's accent
   // instead of the shared theme's violet, and follows it when it changes.
   effect(() => applyShellTheme(snapshot().nshTheme));
+  // NSH 0.7 asks the window for its title bar: an inline root (a host's
+  // window) has none of its own, and then the bar keeps the height it draws.
   effect(() =>
-    currentWindow().set({
+    windows()[0]?.set({
       titleBar: { style: "hidden", height: TITLEBAR_HEIGHT },
     }),
   );
@@ -543,6 +546,7 @@ function App() {
     if (!isRoute(target)) return;
     const key = `page:${target}`;
     if (!tabs().some((tab) => tab.key === key)) {
+      animateTabs();
       tabs.set([
         ...tabs(),
         {
@@ -561,6 +565,7 @@ function App() {
     const at = list.findIndex((tab) => tab.key === key);
     if (at < 0) return;
     const rest = list.filter((tab) => tab.key !== key);
+    animateTabs();
     tabs.set(rest);
     if (activeTabKey() === key) {
       const next = rest[Math.min(at, rest.length - 1)];
@@ -578,6 +583,7 @@ function App() {
     const key = `note:${id}`;
     if (activeTabKey() === key) return;
     if (!tabs().some((tab) => tab.key === key)) {
+      animateTabs();
       const at = tabs().findIndex((tab) => tab.key === activeTabKey());
       const tab: TabView = {
         key,
@@ -618,10 +624,12 @@ function App() {
     id: string;
     title: string;
   }) => {
-    if (entry.kind === "note") {
-      openNoteById(entry.id);
-      changeRoute("notes");
-    }
+    if (entry.kind !== "note") return;
+    // The note's own tab is the one that becomes active — the effect that adds
+    // it does that. Going through `changeRoute` would activate the list's page
+    // tab and put the note away again, which left the new tab inert.
+    openNoteById(entry.id);
+    if (route() !== "notes") route.set("notes");
   };
   return (
     <View

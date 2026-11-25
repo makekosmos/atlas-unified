@@ -13,7 +13,7 @@ import {
   nativeComponent,
 } from "nsh";
 import { Input } from "nsh/base";
-import { Menu, windowState } from "nsh/desktop";
+import { Menu, windows } from "nsh/desktop";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
 import { CARD_RADIUS, GhostButton, SolidButton, colorAlpha } from "./chrome";
 import { Glyph } from "./glyph";
@@ -138,7 +138,7 @@ function createCaretState(initial: CaretRect) {
     const range = selection();
     return (
       focused() &&
-      (windowState()?.focused ?? true) &&
+      (windows()[0]?.state()?.focused ?? true) &&
       range.start === range.end &&
       !composing()
     );

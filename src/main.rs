@@ -136,8 +136,15 @@ fn open_atlas_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Atlas
             let nsh = cx.new(|cx| {
                 let initial = nsh_bridge::initial_snapshot(agenda.read(cx));
                 let demo = agenda.read(cx).demo;
-                let view =
-                    imago_nsh::AppView::new(nsh_platform_gpui::AppOptions::default(), window, cx);
+                let mut options = nsh_platform_gpui::AppOptions::default();
+                // NSH 0.7 mounts a plain JS root by default in a *desktop
+                // window of its own*; Atlas draws the app inside the host
+                // window it made (its own custom title bar, sidebar and all),
+                // so the root goes inline. Without this, the app opens a
+                // second OS window with the system's title bar and the host
+                // window stays empty.
+                options.inline_root = true;
+                let view = imago_nsh::AppView::new(options, window, cx);
                 view.register_component(
                     "atlas.bridge",
                     std::rc::Rc::new({

@@ -1,6 +1,6 @@
 import { append, bindProp, component, each, element, font, insert, list, prop, setup, text } from "nsh:rt";
 import { Clipboard, Easing, LayoutAnimation, Storage, createMotion, effect, host, keymap, mount, nativeComponent, pixelRatio, setTheme, signal } from "nsh";
-import { Menu, currentWindow, titleBar, windowState } from "nsh/desktop";
+import { Menu, windows } from "nsh/desktop";
 import { platform } from "os";
 import { Popover, RichEditor, RichEditorPlugin, StarterKit, TableKit, chain, command, createRichEditor, deleteRange, insertTable, setNodeAttribute } from "nsh/base";
 
@@ -581,6 +581,23 @@ const CAPTION_BUTTON_HEIGHT = 24;
 const TOGGLE_SIZE = 24;
 const TRAIL_WIDTH = 50;
 const closeHovered = signal(false);
+function animateTabs() {
+	LayoutAnimation.configureNext({
+		duration: 160,
+		create: {
+			type: "easeOut",
+			duration: 160
+		},
+		update: {
+			type: "easeOut",
+			duration: 160
+		},
+		delete: {
+			type: "easeIn",
+			duration: 120
+		}
+	});
+}
 const SIDEBAR_HIDE_MS = 150;
 const SIDEBAR_OPEN_MS = 100;
 const SIDEBAR_MOTION_MS = 150;
@@ -871,7 +888,11 @@ function drawsCaptionButtons(os, reservedRight) {
 	return (os === "windows" || os === "linux") && reservedRight === 0;
 }
 function TitlebarOverlay(props) {
-	const controls = titleBar();
+	const controls = windows()[0]?.titleBar() ?? {
+		height: 0,
+		left: 0,
+		right: 0
+	};
 	const os = hostOs();
 	const macos = os === "macos";
 	const drawCaptions = drawsCaptionButtons(os, controls.right);
@@ -1442,7 +1463,7 @@ function createCaretState(initial) {
 	};
 	const active = () => {
 		const range = selection();
-		return focused() && (windowState()?.focused ?? true) && range.start === range.end && !composing();
+		return focused() && (windows()[0]?.state()?.focused ?? true) && range.start === range.end && !composing();
 	};
 	const focus = () => {
 		focused.set(true);
@@ -8316,7 +8337,7 @@ function SettingsPage() {
 }
 function App() {
 	effect(() => applyShellTheme(snapshot().nshTheme));
-	effect(() => currentWindow().set({ titleBar: {
+	effect(() => windows()[0]?.set({ titleBar: {
 		style: "hidden",
 		height: 40
 	} }));
@@ -8369,11 +8390,14 @@ function App() {
 	const openPageTab = (target) => {
 		if (!isRoute(target)) return;
 		const key = `page:${target}`;
-		if (!tabs().some((tab) => tab.key === key)) tabs.set([...tabs(), {
-			...pageTab(target),
-			label: pageLabel(target),
-			active: false
-		}]);
+		if (!tabs().some((tab) => tab.key === key)) {
+			animateTabs();
+			tabs.set([...tabs(), {
+				...pageTab(target),
+				label: pageLabel(target),
+				active: false
+			}]);
+		}
 		activateTab(key);
 	};
 	const closeTab = (key) => {
@@ -8382,6 +8406,7 @@ function App() {
 		const at = list.findIndex((tab) => tab.key === key);
 		if (at < 0) return;
 		const rest = list.filter((tab) => tab.key !== key);
+		animateTabs();
 		tabs.set(rest);
 		if (activeTabKey() === key) {
 			const next = rest[Math.min(at, rest.length - 1)];
@@ -8397,6 +8422,7 @@ function App() {
 		const key = `note:${id}`;
 		if (activeTabKey() === key) return;
 		if (!tabs().some((tab) => tab.key === key)) {
+			animateTabs();
 			const at = tabs().findIndex((tab) => tab.key === activeTabKey());
 			const tab = {
 				key,
@@ -8432,10 +8458,9 @@ function App() {
 		return id !== null && recent().some((entry) => entry.kind === "note" && entry.id === id);
 	};
 	const openRecentEntry = (entry) => {
-		if (entry.kind === "note") {
-			openNoteById(entry.id);
-			changeRoute("notes");
-		}
+		if (entry.kind !== "note") return;
+		openNoteById(entry.id);
+		if (route() !== "notes") route.set("notes");
 	};
 	return (() => {
 		const __nsh_hv10 = element("view");

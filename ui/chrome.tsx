@@ -1,5 +1,6 @@
 import { LayoutAnimation, Text, View, signal } from "nsh";
-import { titleBar } from "nsh/desktop";
+import { windows } from "nsh/desktop";
+import type { TitleBarArea } from "nsh/desktop";
 import { platform } from "os";
 import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
@@ -34,6 +35,17 @@ const TOGGLE_SIZE = 24;
 const TRAIL_WIDTH = 24 + 2 + 24;
 
 const closeHovered = signal(false);
+
+/// A tab joining or leaving the bar: the strip is a row of chips, so the ones
+/// beside it slide over and the new one grows into the space it takes.
+export function animateTabs() {
+  LayoutAnimation.configureNext({
+    duration: 160,
+    create: { type: "easeOut", duration: 160 },
+    update: { type: "easeOut", duration: 160 },
+    delete: { type: "easeIn", duration: 120 },
+  });
+}
 
 export function animatePanes() {
   LayoutAnimation.configureNext({
@@ -447,7 +459,15 @@ export function TitlebarOverlay(props: {
   onDeleteNote?: () => void;
   onChrome: (command: string) => void;
 }) {
-  const controls = titleBar();
+  // NSH 0.7: an inline root (a host's window, not the app's own) has no
+  // current window, so `titleBar()` throws there. Ask the app's window when
+  // there is one and keep the bar's own layout when there is not: the host
+  // puts its own controls where the system's would be.
+  const controls: TitleBarArea = windows()[0]?.titleBar() ?? {
+    height: 0,
+    left: 0,
+    right: 0,
+  };
   const os = hostOs();
   const macos = os === "macos";
   const drawCaptions = drawsCaptionButtons(os, controls.right);
