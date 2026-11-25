@@ -10,7 +10,8 @@ import {
   keymap,
 } from "nsh";
 import { Input } from "nsh/base";
-import { windows } from "nsh/desktop";
+import type { Point } from "nsh";
+import { Menu, windows } from "nsh/desktop";
 import { Button as SharedButton } from "@makekosmos/imago-nsh";
 import type { Appearance } from "@makekosmos/imago-nsh";
 import navigation from "./navigation.json";
@@ -48,6 +49,7 @@ import {
   openNoteWithoutHistory,
   openNoteTitle,
   removeOpenNote,
+  requestNoteTitleFocus,
   setNotes,
   walkBack,
   walkForward,
@@ -572,6 +574,58 @@ function App() {
       activateTab(next.key);
     }
   };
+  // A tab's own menu, on the secondary button: what the bar offers for this
+  // page, where the pointer is. Renaming puts the caret in the note's name,
+  // so it is done in place rather than in a dialog.
+  const tabMenu = (key: string, at: Point) => {
+    const tab = tabs().find((item) => item.key === key);
+    if (!tab) return;
+    const note = tab.noteId;
+    void Menu.popup(
+      [
+        ...(note
+          ? [
+              {
+                label: "Переименовать",
+                onSelect: () => {
+                  activateTab(key);
+                  requestNoteTitleFocus();
+                },
+              },
+            ]
+          : []),
+        { label: "Закрыть", onSelect: () => closeTab(key) },
+        ...(tabs().length > 1
+          ? [
+              {
+                label: "Закрыть остальные",
+                onSelect: () => closeOtherTabs(key),
+              },
+            ]
+          : []),
+        ...(note
+          ? [
+              {
+                label: "Удалить заметку",
+                onSelect: () => {
+                  activateTab(key);
+                  removeOpenNote();
+                  closeTab(key);
+                },
+              },
+            ]
+          : []),
+      ],
+      at,
+    );
+  };
+  const closeOtherTabs = (keep: string) => {
+    const rest = tabs().filter((tab) => tab.key !== keep);
+    if (rest.length === 0) return;
+    animateTabs();
+    tabs.set(tabs().filter((tab) => tab.key === keep));
+    activateTab(keep);
+  };
   // A note opened anywhere — a card, the sidebar, a new one — becomes its own
   // tab beside the list's, and leaving it goes back to the list's.
   effect(() => {
@@ -974,10 +1028,9 @@ function App() {
           tabs={tabViews()}
           onSelectTab={activateTab}
           onCloseTab={closeTab}
-          noteActive={route() === "notes" && hasOpenNote()}
+          onTabMenu={tabMenu}
           onGoBack={walkBack}
           onGoForward={walkForward}
-          onDeleteNote={removeOpenNote}
           onToggleSidebar={toggleSidebar}
           onAddGame={gameLibrary.openAddDialog}
           onChrome={(command) => askEngine(command)}

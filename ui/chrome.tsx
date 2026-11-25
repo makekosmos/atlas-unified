@@ -1,4 +1,5 @@
 import { LayoutAnimation, Text, View, signal } from "nsh";
+import type { Point } from "nsh";
 import { windows } from "nsh/desktop";
 import type { TitleBarArea } from "nsh/desktop";
 import { platform } from "os";
@@ -246,6 +247,8 @@ function TabChip(props: {
   dark: boolean;
   onSelect: () => void;
   onClose: () => void;
+  /// The secondary button: the tab's own menu (rename, close, delete).
+  onMenu?: (at: Point) => void;
 }) {
   const over = signal(false);
   const closeOver = signal(false);
@@ -265,6 +268,8 @@ function TabChip(props: {
   return (
     <View
       onPress={props.onSelect}
+      onContextMenu={(event) => props.onMenu?.(event.pagePosition)}
+      testID={`tab-${props.tab.key}`}
       role="button"
       accessibilityLabel={props.tab.label}
       accessibilityState={{ selected: props.tab.active }}
@@ -494,7 +499,8 @@ export function TitlebarOverlay(props: {
   tabs?: readonly TabView[];
   onSelectTab?: (key: string) => void;
   onCloseTab?: (key: string) => void;
-  noteActive?: boolean;
+  /// The secondary button over a tab: its menu, at that point of the window.
+  onTabMenu?: (key: string, at: Point) => void;
   /// The notes' trail: the arrows walk it, on the toggle's own line.
   noteNav?: boolean;
   canGoBack?: boolean;
@@ -503,7 +509,6 @@ export function TitlebarOverlay(props: {
   onAddGame?: () => void;
   onGoBack?: () => void;
   onGoForward?: () => void;
-  onDeleteNote?: () => void;
   onChrome: (command: string) => void;
 }) {
   // NSH 0.7: an inline root (a host's window, not the app's own) has no
@@ -645,28 +650,9 @@ export function TitlebarOverlay(props: {
               dark={props.dark}
               onSelect={() => props.onSelectTab?.(tab.key)}
               onClose={() => props.onCloseTab?.(tab.key)}
+              onMenu={(at) => props.onTabMenu?.(tab.key, at)}
             />
           ))}
-        </View>
-      )}
-      {props.noteActive && (
-        <View
-          onPress={() => props.onDeleteNote?.()}
-          role="button"
-          accessibilityLabel="Удалить заметку"
-          class="absolute items-center justify-center"
-          hoverStyle={{ backgroundColor: wash }}
-          desktop={{ windowDrag: false }}
-          style={{
-            right: controlsRight + 8,
-            top: titlebarControlTop(24),
-            width: 26,
-            height: 24,
-            borderRadius: CONTROL_RADIUS,
-            cursor: "pointer",
-          }}
-        >
-          <Glyph name="trash" size={13} color={props.colors.muted} />
         </View>
       )}
       {drawCaptions && (

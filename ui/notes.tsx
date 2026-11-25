@@ -20,6 +20,7 @@ import {
   createRichEditor,
   deleteRange,
   insertTable,
+  selectAll,
   setNodeAttribute,
 } from "nsh/base";
 import Mono from "./fonts/GeistMono-Regular.ttf";
@@ -1885,6 +1886,27 @@ function closeNote() {
   draftTitle.set("");
   open(null);
   visitStep("");
+}
+
+/// Puts the caret in the open note's own name, where a document is renamed:
+/// the tab's "Переименовать" goes here. The page mounts in the frame the tab
+/// brings it in, so the name may not be there yet and this is asked again.
+export function requestNoteTitleFocus() {
+  const tryFocus = (tries: number) => {
+    const session = titleSession;
+    if (session) {
+      try {
+        session.focus();
+        // The whole name is selected, as a rename starts: typing replaces it.
+        session.run(selectAll());
+      } catch {
+        /* the editor went away between the two lines */
+      }
+      return;
+    }
+    if (tries > 0) setTimeout(() => tryFocus(tries - 1), 16);
+  };
+  tryFocus(8);
 }
 
 function removeNote() {

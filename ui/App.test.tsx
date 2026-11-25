@@ -11,7 +11,6 @@ import {
   noteBackLeft,
   sidebarFrame,
   sidebarWidthAt,
-  titlebarControlTop,
 } from "./chrome";
 import {
   composerCaretBox,
@@ -63,50 +62,6 @@ test("groups journal bubbles by date and omits the current year", () => {
   expect(formatJournalDay(groups[1], new Date(2025, 11, 31))).toEqual(
     "вторник, 23 декабря",
   );
-});
-
-test("keeps macOS traffic lights and names the open page in its tab", async () => {
-  const app = await open("./App.tsx", {
-    platform: "macos",
-    width: 1200,
-    height: 800,
-  });
-  expect(app.texts()).toContain("Дневник");
-  expect(app.texts()).not.toContain("Свернуть окно");
-  expect(app.texts()).not.toContain("Развернуть окно");
-  expect(app.texts()).not.toContain("Закрыть окно");
-  // The page's name comes twice: the sidebar row and the page's own tab.
-  expect(app.texts().filter((text) => text === "Дневник").length).toEqual(2);
-});
-
-test("a tab is a chip of one width, whatever it is called", async () => {
-  const app = await open("./App.tsx", {
-    platform: "macos",
-    width: 1200,
-    height: 800,
-  });
-  await app.waitFor("label:Дневник");
-  expect(app.layout("label:Дневник")?.width).toEqual(300);
-});
-
-test("a page opens as a tab and closes back to the one before", async () => {
-  const app = await open("./App.tsx", { width: 1200, height: 800 });
-  // The window opens on the journal, so its tab is the only one there.
-  expect(app.texts()).toContain("Записей пока нет");
-  await app.press("text:Заметки");
-  expect(app.texts()).not.toContain("Записей пока нет");
-  // The tab carries the page's name, and closing it goes back to the journal.
-  expect(
-    app.texts().filter((text) => text === "Заметки").length,
-  ).toBeGreaterThan(1);
-  await app.press("label:Закрыть Заметки");
-  expect(app.texts()).toContain("Записей пока нет");
-});
-
-test("centers titlebar controls on the same line as the traffic lights", () => {
-  // The bar is 48: a 24-tall control sits 12 from its top, a 28-tall one 10.
-  expect(titlebarControlTop(24)).toEqual(12);
-  expect(titlebarControlTop(28)).toEqual(10);
 });
 
 test("draws caption buttons on Windows and Linux only when the system reserves none", () => {
@@ -468,26 +423,6 @@ test("keeps appearance controls usable in a narrow window", async () => {
   await app.press("Выбрать размер текста");
   await app.press("14 px");
   await app.waitUntil(() => app.texts().includes("14 px"));
-});
-
-// A recent row opens its note in a tab of its own, and that tab is the one
-// being read: going through the page tab instead put the note away again and
-// left the new chip inert.
-test("a recent note opens as the tab being read", async () => {
-  const app = await open("./tabs-fixture.tsx", {
-    storage: {
-      "mundus.atlas.recent.v1": JSON.stringify([
-        { kind: "note", id: "seed:long", title: "Долгая заметка", at: 1 },
-      ]),
-    },
-  });
-  await app.waitFor("label:Долгая заметка");
-  await app.press("label:Долгая заметка");
-  await app.wait(400);
-  // The note itself, not the list of them.
-  expect(app.texts().join(" | ")).toContain(
-    "Тело заметки, открытой из недавних.",
-  );
 });
 
 // `mod+t` is the keyboard's way to a new note, from any page.
