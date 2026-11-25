@@ -694,7 +694,7 @@ const TAB_TILE_HEIGHT = 20;
 const TAB_CLOSE_SIZE = 20;
 const TAB_CLOSE_ROOM = 28;
 const TAB_TEXT_SIZE = 14;
-const TAB_WIDTH = 350;
+const TAB_WIDTH = 300;
 const TAB_MIN_WIDTH = 88;
 const TAB_FADE = 22;
 const TAB_GAP = 2;
@@ -8492,6 +8492,10 @@ function App() {
 	return (() => {
 		const __nsh_hv10 = element("view");
 		prop(__nsh_hv10, "class", "relative h-full w-full");
+		prop(__nsh_hv10, "onMouseUp", (event) => {
+			if (event.button === "back") walkBack();
+			if (event.button === "forward") walkForward();
+		});
 		bindProp(__nsh_hv10, "style", () => ({ backgroundColor: shell ? shellFill(snapshot().colors, dark) : snapshot().colors.background }));
 		const __nsh_hv11 = element("view");
 		prop(__nsh_hv11, "class", "h-full w-full flex-row");

@@ -86,7 +86,7 @@ test("a tab is a chip of one width, whatever it is called", async () => {
     height: 800,
   });
   await app.waitFor("label:Дневник");
-  expect(app.layout("label:Дневник")?.width).toEqual(350);
+  expect(app.layout("label:Дневник")?.width).toEqual(300);
 });
 
 test("a page opens as a tab and closes back to the one before", async () => {
@@ -104,8 +104,9 @@ test("a page opens as a tab and closes back to the one before", async () => {
 });
 
 test("centers titlebar controls on the same line as the traffic lights", () => {
-  expect(titlebarControlTop(24)).toEqual(8);
-  expect(titlebarControlTop(28)).toEqual(6);
+  // The bar is 48: a 24-tall control sits 12 from its top, a 28-tall one 10.
+  expect(titlebarControlTop(24)).toEqual(12);
+  expect(titlebarControlTop(28)).toEqual(10);
 });
 
 test("draws caption buttons on Windows and Linux only when the system reserves none", () => {

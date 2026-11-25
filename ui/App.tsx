@@ -634,6 +634,14 @@ function App() {
   return (
     <View
       class="relative h-full w-full"
+      // The mouse's own back and forward buttons walk the notes' trail, as the
+      // bar's arrows do: a desktop's back button is a gesture people already
+      // have, and reaching for the title bar for it is what they do not do.
+      // Only those two buttons are taken; a click goes where it always went.
+      onMouseUp={(event) => {
+        if (event.button === "back") walkBack();
+        if (event.button === "forward") walkForward();
+      }}
       // The window's own ground: the sidebar's tone, so the page reads as a sheet
       // lying on it rather than as the window's edge.
       style={{
