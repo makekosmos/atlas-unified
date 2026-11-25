@@ -805,7 +805,9 @@ function App() {
               ? {
                   marginLeft: CARD_GAP,
                   marginRight: CARD_GAP,
-                  marginTop: TITLEBAR_HEIGHT + CARD_GAP,
+                  // MonoCode's rhythm: the bar is 48, the page starts right
+                  // under it, its own hairline border the only separator.
+                  marginTop: TITLEBAR_HEIGHT,
                   marginBottom: CARD_GAP,
                   borderRadius: CARD_RADIUS,
                   borderWidth: 1,

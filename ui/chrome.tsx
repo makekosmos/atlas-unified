@@ -8,8 +8,9 @@ import { Glyph } from "./glyph";
 import type { GlyphName } from "./icons";
 import { accentMark } from "./themes";
 
-/// As MonoCode's title bar has it.
-export const TITLEBAR_HEIGHT = 40;
+/// As MonoCode's title bar has it: 48 tall, the tabs 32 inside it, 8 points
+/// of air above and below them.
+export const TITLEBAR_HEIGHT = 48;
 /// The content sits in a rounded card, the way the shell's other surfaces do:
 /// a gap to the window's edges, a radius of its own, a hairline border.
 export const CARD_GAP = 8;
@@ -193,15 +194,15 @@ export type TabView = {
   active: boolean;
 };
 
-const TAB_HEIGHT = 27;
+const TAB_HEIGHT = 32;
 /// The icon's tile: 24 × 20 with a 5 corner, as MonoCode's title tabs have it.
 const TAB_TILE_HEIGHT = 20;
 /// The close button and the room kept for it, so a name never shifts when it
 /// shows up.
 const TAB_CLOSE_SIZE = 20;
 const TAB_CLOSE_ROOM = 4 + TAB_CLOSE_SIZE + 4;
-/// MonoCode's tab name: 13 pt, no wider than 224.
-const TAB_TEXT_SIZE = 13;
+/// MonoCode's tab name: 14 pt, no wider than 224.
+const TAB_TEXT_SIZE = 14;
 const TAB_MAX_WIDTH = 224;
 /// Between two tabs.
 const TAB_GAP = 2;

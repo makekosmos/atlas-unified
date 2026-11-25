@@ -566,7 +566,7 @@ function Glyph(props) {
 
 //#endregion
 //#region chrome.tsx
-const TITLEBAR_HEIGHT = 40;
+const TITLEBAR_HEIGHT = 48;
 const SIDEBAR_WIDTH = 282;
 const ROW_HEIGHT = 32;
 const NAV_ROW_HEIGHT = 40;
@@ -678,7 +678,7 @@ function raisedFill(colors, dark) {
 	return mixHex(colors.background, dark ? "#ffffff" : "#000000", dark ? .065 : .04);
 }
 function titlebarControlTop(size) {
-	return 20 - size / 2;
+	return 24 - size / 2;
 }
 /**
 * Where the notes' arrows stand: against the pane's right edge, on the
@@ -689,11 +689,11 @@ function noteBackLeft(pageInset, toggleLeft) {
 	const againstPane = pageInset - TRAIL_WIDTH;
 	return Math.max(afterToggle, againstPane);
 }
-const TAB_HEIGHT = 27;
+const TAB_HEIGHT = 32;
 const TAB_TILE_HEIGHT = 20;
 const TAB_CLOSE_SIZE = 20;
 const TAB_CLOSE_ROOM = 28;
-const TAB_TEXT_SIZE = 13;
+const TAB_TEXT_SIZE = 14;
 const TAB_MAX_WIDTH = 224;
 const TAB_GAP = 2;
 function TabIcon(props) {
@@ -758,7 +758,7 @@ function TabChip(props) {
 		prop(__nsh_hv0, "style", {
 			height: TAB_HEIGHT,
 			maxWidth: TAB_MAX_WIDTH,
-			paddingLeft: 7 / 2,
+			paddingLeft: 6,
 			paddingRight: TAB_CLOSE_ROOM,
 			gap: 8,
 			borderRadius: 8,
@@ -802,7 +802,7 @@ function TabChip(props) {
 		prop(__nsh_hv3, "desktop", { windowDrag: false });
 		bindProp(__nsh_hv3, "style", () => ({
 			right: 4,
-			top: 7 / 2,
+			top: 6,
 			width: TAB_CLOSE_SIZE,
 			height: TAB_CLOSE_SIZE,
 			borderRadius: 5,
@@ -901,7 +901,7 @@ function TitlebarOverlay(props) {
 	const controlsRight = captionWidth + TRAILING_INSET;
 	const addGameRight = controlsRight;
 	const wash = hoverWash(props.dark);
-	const barHeight = controls.height || 40;
+	const barHeight = controls.height || 48;
 	const dragLeft = macos ? Math.max(controls.left, 78) : 0;
 	return (() => {
 		const __nsh_hv5 = element("view");
@@ -1074,7 +1074,7 @@ function TitlebarOverlay(props) {
 				prop(__nsh_hv13, "class", "absolute right-0 top-0 flex-row items-center");
 				prop(__nsh_hv13, "desktop", { windowDrag: false });
 				prop(__nsh_hv13, "style", {
-					height: 40,
+					height: 48,
 					paddingRight: TRAILING_INSET
 				});
 				const __nsh_hv14 = element("view");
@@ -8137,7 +8137,7 @@ function TaskPage() {
 	return (() => {
 		const __nsh_hv3 = element("scroll");
 		prop(__nsh_hv3, "class", "min-h-0 flex-1 px-7 pb-5");
-		bindProp(__nsh_hv3, "style", () => ({ paddingTop: snapshot().chrome === "tsx" ? 0 : 40 }));
+		bindProp(__nsh_hv3, "style", () => ({ paddingTop: snapshot().chrome === "tsx" ? 0 : 48 }));
 		const __nsh_hv4 = element("view");
 		prop(__nsh_hv4, "class", "mx-auto w-full max-w-[640px]");
 		insert(__nsh_hv4, () => snapshot().todos.length === 0 ? (() => {
@@ -8339,7 +8339,7 @@ function App() {
 	effect(() => applyShellTheme(snapshot().nshTheme));
 	effect(() => windows()[0]?.set({ titleBar: {
 		style: "hidden",
-		height: 40
+		height: 48
 	} }));
 	effect(() => visiblePages.set(pageNavigation.filter((item) => widgetOn(item.id))));
 	effect(() => {
@@ -8473,7 +8473,7 @@ function App() {
 		bindProp(__nsh_hv21, "style", () => shell ? {
 			marginLeft: 8,
 			marginRight: 8,
-			marginTop: 40 + 8,
+			marginTop: 48,
 			marginBottom: 8,
 			borderRadius: 14,
 			borderWidth: 1,
@@ -8643,7 +8643,7 @@ function App() {
 			prop(__nsh_hv13, "class", "relative box-border h-full");
 			bindProp(__nsh_hv13, "style", () => ({
 				width: 282,
-				paddingTop: 40 + 8,
+				paddingTop: 48 + 8,
 				paddingBottom: 16,
 				paddingLeft: 8,
 				paddingRight: shell ? 0 : 8,
@@ -8652,7 +8652,7 @@ function App() {
 			const __nsh_hv14 = element("view");
 			prop(__nsh_hv14, "onPressDown", () => askEngine("window.drag"));
 			prop(__nsh_hv14, "class", "absolute left-0 right-0 bottom-0");
-			prop(__nsh_hv14, "style", { top: 40 });
+			prop(__nsh_hv14, "style", { top: 48 });
 			const __nsh_hv15 = element("view");
 			prop(__nsh_hv15, "style", {
 				gap: 2,
