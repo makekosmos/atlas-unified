@@ -792,8 +792,10 @@ function TabChip(props) {
 		const __nsh_hv2 = element("view");
 		prop(__nsh_hv2, "class", "relative");
 		prop(__nsh_hv2, "style", {
+			flexGrow: 1,
 			flexShrink: 1,
-			minWidth: 0
+			minWidth: 0,
+			overflow: "hidden"
 		});
 		const __nsh_hv3 = element("text");
 		prop(__nsh_hv3, "class", "truncate");

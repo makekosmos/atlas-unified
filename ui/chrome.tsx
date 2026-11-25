@@ -309,7 +309,18 @@ function TabChip(props: {
           color={tileInk}
         />
       </View>
-      <View class="relative" style={{ flexShrink: 1, minWidth: 0 }}>
+      {/* The name is confined to the room the tile and the close button
+          leave: fixed, so a name never changes the chip, and clipped, so it
+          never reaches under the cross. */}
+      <View
+        class="relative"
+        style={{
+          flexGrow: 1,
+          flexShrink: 1,
+          minWidth: 0,
+          overflow: "hidden",
+        }}
+      >
         <Text
           class="truncate"
           style={{
@@ -321,8 +332,9 @@ function TabChip(props: {
         >
           {props.tab.label}
         </Text>
-        {/* A long name does not end in an ellipsis: the plate's tone comes in
-            from the right and hides it, so it reads as going on. */}
+        {/* A long name does not end in a hard cut or an ellipsis: the plate's
+            own tone comes in from the room's right edge and hides it. Over a
+            name that fits it is plate over plate, so it is not seen at all. */}
         <View
           class="absolute"
           style={{
