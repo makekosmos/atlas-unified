@@ -75,8 +75,10 @@ test("keeps macOS traffic lights and names the open page in its tab", async () =
   expect(app.texts()).not.toContain("Свернуть окно");
   expect(app.texts()).not.toContain("Развернуть окно");
   expect(app.texts()).not.toContain("Закрыть окно");
-  // The page's name comes twice: the sidebar row and the page's own tab.
-  expect(app.texts().filter((text) => text === "Дневник").length).toEqual(2);
+  // The page's name reads three times: the sidebar's row, the page's own tab,
+  // and the tab's hidden copy that keeps the label's room measured on its
+  // heaviest weight.
+  expect(app.texts().filter((text) => text === "Дневник").length).toEqual(3);
 });
 
 test("a page opens as a tab and closes back to the one before", async () => {

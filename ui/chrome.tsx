@@ -298,17 +298,40 @@ function TabChip(props: {
           color={tileInk}
         />
       </View>
-      <Text
-        class="truncate"
-        style={{
-          fontSize: TAB_TEXT_SIZE,
-          lineHeight: 20,
-          fontWeight: props.tab.active ? 600 : 500,
-          color: props.tab.active ? colors.foreground : colors.muted,
-        }}
-      >
-        {props.tab.label}
-      </Text>
+      <View class="relative" style={{ flexShrink: 1, minWidth: 0 }}>
+        {/* The room the name takes is measured on its heaviest weight, and the
+            copy that is read floats over the hidden one: a tab that becomes
+            the one being read thickens without resizing, so the strip never
+            reshuffles under the pointer. */}
+        <Text
+          class="truncate"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={{
+            fontSize: TAB_TEXT_SIZE,
+            lineHeight: 20,
+            fontWeight: 600,
+            opacity: 0,
+          }}
+        >
+          {props.tab.label}
+        </Text>
+        <Text
+          class="truncate"
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: 0,
+            fontSize: TAB_TEXT_SIZE,
+            lineHeight: 20,
+            fontWeight: props.tab.active ? 600 : 500,
+            color: props.tab.active ? colors.foreground : colors.muted,
+          }}
+        >
+          {props.tab.label}
+        </Text>
+      </View>
       <View
         onPress={() => props.onClose()}
         role="button"
