@@ -75,10 +75,18 @@ test("keeps macOS traffic lights and names the open page in its tab", async () =
   expect(app.texts()).not.toContain("Свернуть окно");
   expect(app.texts()).not.toContain("Развернуть окно");
   expect(app.texts()).not.toContain("Закрыть окно");
-  // The page's name reads three times: the sidebar's row, the page's own tab,
-  // and the tab's hidden copy that keeps the label's room measured on its
-  // heaviest weight.
-  expect(app.texts().filter((text) => text === "Дневник").length).toEqual(3);
+  // The page's name comes twice: the sidebar row and the page's own tab.
+  expect(app.texts().filter((text) => text === "Дневник").length).toEqual(2);
+});
+
+test("a tab is a chip of one width, whatever it is called", async () => {
+  const app = await open("./App.tsx", {
+    platform: "macos",
+    width: 1200,
+    height: 800,
+  });
+  await app.waitFor("label:Дневник");
+  expect(app.layout("label:Дневник")?.width).toEqual(200);
 });
 
 test("a page opens as a tab and closes back to the one before", async () => {

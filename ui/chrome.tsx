@@ -201,9 +201,15 @@ const TAB_TILE_HEIGHT = 20;
 /// shows up.
 const TAB_CLOSE_SIZE = 20;
 const TAB_CLOSE_ROOM = 4 + TAB_CLOSE_SIZE + 4;
-/// MonoCode's tab name: 14 pt, no wider than 224.
+/// MonoCode's tab name: 14 pt.
 const TAB_TEXT_SIZE = 14;
-const TAB_MAX_WIDTH = 224;
+/// A tab is this wide, its name or not: the strip reads as a row of equal
+/// chips. It shrinks when the strip runs out of room, down to `TAB_MIN_WIDTH`.
+const TAB_WIDTH = 200;
+const TAB_MIN_WIDTH = 88;
+/// How far the name fades out at the chip's right edge when it is longer than
+/// the chip: the plate's own tone covers the cut.
+const TAB_FADE = 22;
 /// Between two tabs.
 const TAB_GAP = 2;
 
@@ -242,6 +248,7 @@ function TabChip(props: {
   onClose: () => void;
 }) {
   const over = signal(false);
+  const closeOver = signal(false);
   const colors = props.colors;
   const base = shellFill(colors, props.dark);
   const ink = (t: number) => mixHex(base, colors.foreground, t);
@@ -267,7 +274,11 @@ function TabChip(props: {
       class="flex-row items-center"
       style={{
         height: TAB_HEIGHT,
-        maxWidth: TAB_MAX_WIDTH,
+        // One width for every chip, the same whether its name is long or not;
+        // it gives way only when the strip is full.
+        width: TAB_WIDTH,
+        minWidth: TAB_MIN_WIDTH,
+        flexShrink: 1,
         // As far from the tile as the tile is from the top and bottom.
         paddingLeft: (TAB_HEIGHT - TAB_TILE_HEIGHT) / 2,
         // The close button's room is part of the chip, not something the label
@@ -299,30 +310,9 @@ function TabChip(props: {
         />
       </View>
       <View class="relative" style={{ flexShrink: 1, minWidth: 0 }}>
-        {/* The room the name takes is measured on its heaviest weight, and the
-            copy that is read floats over the hidden one: a tab that becomes
-            the one being read thickens without resizing, so the strip never
-            reshuffles under the pointer. */}
-        <Text
-          class="truncate"
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={{
-            fontSize: TAB_TEXT_SIZE,
-            lineHeight: 20,
-            fontWeight: 600,
-            opacity: 0,
-          }}
-        >
-          {props.tab.label}
-        </Text>
         <Text
           class="truncate"
           style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            top: 0,
             fontSize: TAB_TEXT_SIZE,
             lineHeight: 20,
             fontWeight: props.tab.active ? 600 : 500,
@@ -331,27 +321,45 @@ function TabChip(props: {
         >
           {props.tab.label}
         </Text>
+        {/* A long name does not end in an ellipsis: the plate's tone comes in
+            from the right and hides it, so it reads as going on. */}
+        <View
+          class="absolute"
+          style={{
+            right: 0,
+            top: 0,
+            width: TAB_FADE,
+            height: 20,
+            backgroundImage: `linear-gradient(90deg, ${colorAlpha(plate, 0)} 0%, ${plate} 100%)`,
+          }}
+        />
       </View>
       <View
         onPress={() => props.onClose()}
         role="button"
         accessibilityLabel={`Закрыть ${props.tab.label}`}
+        onMouseEnter={() => closeOver.set(true)}
+        onMouseLeave={() => closeOver.set(false)}
         class="absolute items-center justify-center"
-        hoverStyle={{ backgroundColor: ink(0.1) }}
+        hoverStyle={{ backgroundColor: ink(0.18) }}
         desktop={{ windowDrag: false }}
         style={{
           right: 4,
           top: (TAB_HEIGHT - TAB_CLOSE_SIZE) / 2,
           width: TAB_CLOSE_SIZE,
           height: TAB_CLOSE_SIZE,
-          borderRadius: 5,
+          borderRadius: 6,
           // Out of the way until the tab is the one being read or the pointer
           // is on it — its room stays either way.
           opacity: props.tab.active || over() ? 1 : 0,
           cursor: "pointer",
         }}
       >
-        <Glyph name="close" size={12} color={colors.muted} />
+        <Glyph
+          name="close"
+          size={13}
+          color={closeOver() ? colors.foreground : colors.muted}
+        />
       </View>
     </View>
   );

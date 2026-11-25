@@ -694,7 +694,9 @@ const TAB_TILE_HEIGHT = 20;
 const TAB_CLOSE_SIZE = 20;
 const TAB_CLOSE_ROOM = 28;
 const TAB_TEXT_SIZE = 14;
-const TAB_MAX_WIDTH = 224;
+const TAB_WIDTH = 200;
+const TAB_MIN_WIDTH = 88;
+const TAB_FADE = 22;
 const TAB_GAP = 2;
 function TabIcon(props) {
 	if (props.route === "journal") return component(Glyph, {
@@ -738,6 +740,7 @@ function recentIcon(kind) {
 }
 function TabChip(props) {
 	const over = signal(false);
+	const closeOver = signal(false);
 	const colors = props.colors;
 	const base = shellFill(colors, props.dark);
 	const ink = (t) => mixHex(base, colors.foreground, t);
@@ -757,7 +760,9 @@ function TabChip(props) {
 		prop(__nsh_hv0, "class", "flex-row items-center");
 		prop(__nsh_hv0, "style", {
 			height: TAB_HEIGHT,
-			maxWidth: TAB_MAX_WIDTH,
+			width: TAB_WIDTH,
+			minWidth: TAB_MIN_WIDTH,
+			flexShrink: 1,
 			paddingLeft: 6,
 			paddingRight: TAB_CLOSE_ROOM,
 			gap: 8,
@@ -792,51 +797,47 @@ function TabChip(props) {
 		});
 		const __nsh_hv3 = element("text");
 		prop(__nsh_hv3, "class", "truncate");
-		prop(__nsh_hv3, "accessibilityElementsHidden", true);
-		prop(__nsh_hv3, "importantForAccessibility", "no-hide-descendants");
-		prop(__nsh_hv3, "style", {
-			fontSize: TAB_TEXT_SIZE,
-			lineHeight: 20,
-			fontWeight: 600,
-			opacity: 0
-		});
-		insert(__nsh_hv3, () => props.tab.label);
-		const __nsh_hv4 = element("text");
-		prop(__nsh_hv4, "class", "truncate");
-		bindProp(__nsh_hv4, "style", () => ({
-			position: "absolute",
-			left: 0,
-			right: 0,
-			top: 0,
+		bindProp(__nsh_hv3, "style", () => ({
 			fontSize: TAB_TEXT_SIZE,
 			lineHeight: 20,
 			fontWeight: props.tab.active ? 600 : 500,
 			color: props.tab.active ? colors.foreground : colors.muted
 		}));
-		insert(__nsh_hv4, () => props.tab.label);
+		insert(__nsh_hv3, () => props.tab.label);
+		const __nsh_hv4 = element("view");
+		prop(__nsh_hv4, "class", "absolute");
+		bindProp(__nsh_hv4, "style", () => ({
+			right: 0,
+			top: 0,
+			width: TAB_FADE,
+			height: 20,
+			backgroundImage: `linear-gradient(90deg, ${colorAlpha(plate, 0)} 0%, ${plate} 100%)`
+		}));
 		append(__nsh_hv2, __nsh_hv3);
 		append(__nsh_hv2, __nsh_hv4);
 		const __nsh_hv5 = element("view");
 		prop(__nsh_hv5, "onPress", () => props.onClose());
 		prop(__nsh_hv5, "role", "button");
 		bindProp(__nsh_hv5, "accessibilityLabel", () => `Закрыть ${props.tab.label}`);
+		prop(__nsh_hv5, "onMouseEnter", () => closeOver.set(true));
+		prop(__nsh_hv5, "onMouseLeave", () => closeOver.set(false));
 		prop(__nsh_hv5, "class", "absolute items-center justify-center");
-		bindProp(__nsh_hv5, "hoverStyle", () => ({ backgroundColor: ink(.1) }));
+		bindProp(__nsh_hv5, "hoverStyle", () => ({ backgroundColor: ink(.18) }));
 		prop(__nsh_hv5, "desktop", { windowDrag: false });
 		bindProp(__nsh_hv5, "style", () => ({
 			right: 4,
 			top: 6,
 			width: TAB_CLOSE_SIZE,
 			height: TAB_CLOSE_SIZE,
-			borderRadius: 5,
+			borderRadius: 6,
 			opacity: props.tab.active || over() ? 1 : 0,
 			cursor: "pointer"
 		}));
 		insert(__nsh_hv5, component(Glyph, {
 			name: "close",
-			size: 12,
+			size: 13,
 			get color() {
-				return colors.muted;
+				return closeOver() ? colors.foreground : colors.muted;
 			}
 		}));
 		append(__nsh_hv0, __nsh_hv1);
