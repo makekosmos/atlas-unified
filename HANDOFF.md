@@ -69,8 +69,8 @@ UI (`atlas-unified/ui`):
   «ключ → имя dooicons»; `fetch-icons.ps1` скачивает SVG в `assets/icons/`
   (за прокси: `-Proxy http://host:port`), `prepare-assets.ps1` собирает их в
   data-URI. Ключи: `search`, `folder`, `note`, `journal`, `check`, `file`,
-  `gamepad`, `settings`, `plus`, `trash`, `sidebar`, `more`, `arrowLeft`,
-  `arrowRight`; `close` — единственный локальный (в dooicons нет простого X),
+  `gamepad`, `settings`, `plus`, `trash`, `sidebar`, `more`, `arrowLeft` (`chevron-left`),
+  `arrowRight` (`chevron-right`); `close` — единственный локальный (в dooicons нет простого X),
   он берётся из `assets/icons/window-close.svg`.
 - `game-confirm.tsx` — второй шаг: правимое название, путь, источник, заметка
   про метаданные; «Назад» возвращает в пикер.

@@ -15,8 +15,8 @@
     "more": "three-dots-menu-horizontal-circle",
     "mic": "mic-microphone",
     "copy": "copy-default",
-    "arrowLeft": "arrow-left",
-    "arrowRight": "arrow-right"
+    "arrowLeft": "chevron-left",
+    "arrowRight": "chevron-right"
   },
   "local": {
     "close": "window-close.svg"
