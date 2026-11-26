@@ -871,6 +871,13 @@ impl NativeComponent for AtlasBridge {
         match name {
             "benchmark.sample" => {
                 if let Some(run_id) = args["runId"].as_u64() {
+                    // An immediate reply, before the sampler starts: JS learns
+                    // that the command arrived even when the sampler's own
+                    // `ready` never does.
+                    self.context.emit(
+                        "benchmarkReady",
+                        json!({"runId": run_id, "data": {"command": true}}),
+                    );
                     benchmark::sample(self.context.clone(), run_id);
                 }
             }

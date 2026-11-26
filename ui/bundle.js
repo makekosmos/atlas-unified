@@ -8014,16 +8014,26 @@ let hardwareReply;
 let framesReply;
 let readyReply;
 let activeRun = 0;
+const events = {
+	ready: null,
+	hardware: null,
+	frames: null
+};
 function benchmarkHardware(event) {
 	if (event.runId !== activeRun) return;
+	events.hardware = Date.now();
 	readyReply?.();
 	hardwareReply?.(event.data);
 }
 function benchmarkReady(event) {
-	if (event.runId === activeRun) readyReply?.();
+	if (event.runId !== activeRun) return;
+	events.ready = Date.now();
+	readyReply?.();
 }
 function benchmarkFrames(event) {
-	if (event.runId === activeRun) framesReply?.(event.data);
+	if (event.runId !== activeRun) return;
+	events.frames = Date.now();
+	framesReply?.(event.data);
 }
 function frame() {
 	return new Promise((resolve, reject) => {
@@ -8050,6 +8060,9 @@ async function runBenchmark(options) {
 	report.set("");
 	summary.set("");
 	const runId = ++activeRun;
+	events.ready = null;
+	events.hardware = null;
+	events.frames = null;
 	const ready = new Promise((resolve) => {
 		readyReply = resolve;
 	});
@@ -8174,11 +8187,13 @@ async function runBenchmark(options) {
 			load,
 			nativeMeasurements: {
 				resources,
-				presentedFrames
+				presentedFrames,
+				events: { ...events }
 			}
 		}, null, 2));
 		const seconds = ((endedAt - startedAt) / 1e3).toFixed(1);
-		summary.set(load ? `${stages.length} этапов · ${seconds} с · CPU до ${formatPercent(load.peaks.cpuPercentOfMachine)} · RAM до ${formatBytes(load.peaks.residentBytes)}` : `${stages.length} этапов · ${seconds} с · нагрузку не измерили`);
+		const lost = resources.unavailable ?? "нет сэмплов";
+		summary.set(load ? `${stages.length} этапов · ${seconds} с · CPU до ${formatPercent(load.peaks.cpuPercentOfMachine)} · RAM до ${formatBytes(load.peaks.residentBytes)}` : `${stages.length} этапов · ${seconds} с · нагрузку не измерили: ${lost}`);
 	} catch (error) {
 		report.set(JSON.stringify({
 			startedAt,
@@ -9291,7 +9306,7 @@ function App() {
 							beginFrames: () => askEngine("benchmark.begin"),
 							version: snapshot().version,
 							sample: (runId) => {
-								if (!hosted) return false;
+								if (!hosted || !commandRef) return false;
 								askEngine("benchmark.sample", { runId });
 								return true;
 							},

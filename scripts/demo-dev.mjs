@@ -8,6 +8,13 @@
 //   pnpm demo --release       # release-сборка Atlas
 //   pnpm demo --offscreen     # окно вне экрана и без фокуса: агент снимает его,
 //                             # а человек продолжает работать за своими окнами
+//   pnpm demo --watch         # правки в src/, assets/, windows/ и манифестах
+//                             # пересобирают и перезапускают окно (правки в ui/
+//                             # по-прежнему идут через hot reload сервера)
+//
+// Окно, которое упало само (например, hot reload не пережил module-level
+// правку и хост умер), поднимается обратно без вмешательства: три падения
+// подряд за минуту — и скрипт останавливается, чтобы не крутиться в цикле.
 //
 // Приложение получает ATLAS_DEMO=1 и ATLAS_NSH_DEV_SERVER: Engine не нужен,
 // ничего не сохраняется. ATLAS_ROUTE открывает окно на другой странице
@@ -23,6 +30,7 @@ import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { watchSources } from "./demo-watch.mjs";
 
 const execFileAsync = promisify(execFile);
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -30,7 +38,7 @@ const uiDir = join(root, "ui");
 const logsDir = join(root, ".dev-logs");
 const isWindows = process.platform === "win32";
 const usage =
-  "использование: pnpm demo [--restart] [--no-server] [--port N] [--release] [--offscreen]";
+  "использование: pnpm demo [--restart] [--no-server] [--port N] [--release] [--offscreen] [--watch]";
 
 function parseArgs(argv) {
   const options = {
@@ -39,6 +47,7 @@ function parseArgs(argv) {
     server: true,
     release: false,
     offscreen: false,
+    watch: false,
   };
   // pnpm иногда передаёт разделитель `--` как обычный аргумент.
   const args = argv[0] === "--" ? argv.slice(1) : argv;
@@ -48,6 +57,7 @@ function parseArgs(argv) {
     else if (arg === "--no-server") options.server = false;
     else if (arg === "--release") options.release = true;
     else if (arg === "--offscreen") options.offscreen = true;
+    else if (arg === "--watch" || arg === "-w") options.watch = true;
     else if (arg === "--port") options.port = Number(args[++index]);
     else if (arg.startsWith("--port=")) options.port = Number(arg.slice(7));
     else if (arg === "--help" || arg === "-h") throw new Error(usage);
@@ -183,7 +193,17 @@ function stopDevServer(child) {
   else child.kill("SIGTERM");
 }
 
-function runAtlas(options) {
+let atlas = null;
+// "run" — окно работает; "stop" — его гасит сам скрипт, и обработчик выхода
+// не должен принять это за падение.
+let intent = "run";
+let restartQueued = false;
+let restarting = false;
+let restartedInARow = 0;
+let firstRestartAt = 0;
+let closeWatch = () => {};
+
+function spawnAtlas(options) {
   const env = childEnv();
   env.ATLAS_DEMO = "1";
   // Окно в стороне от рабочего стола: фокус, клавиатура и мышь остаются
@@ -203,16 +223,81 @@ function runAtlas(options) {
     shell: isWindows,
   });
   child.on("exit", (code, signal) => {
-    if (code === 0 && Date.now() - startedAt < 3_000) {
-      log(
-        "Atlas вышел сразу: проверь другой запущенный экземпляр или лог окна",
-      );
+    if (atlas === child) atlas = null;
+    if (intent !== "run") return;
+    if (code === 0) {
+      if (Date.now() - startedAt < 3_000) {
+        log(
+          "Atlas вышел сразу: проверь другой запущенный экземпляр или лог окна",
+        );
+      }
+      log("Atlas закрыт");
+      finish(0);
+      return;
     }
-    log(`Atlas завершился (${code === null ? signal : `код ${code}`})`);
-    stopDevServer(server);
-    process.exit(code ?? 0);
+    // Окно умерло само: не пережило правку модуля в UI или упало на старте.
+    const now = Date.now();
+    if (!firstRestartAt || now - firstRestartAt > 60_000) {
+      firstRestartAt = now;
+      restartedInARow = 0;
+    }
+    restartedInARow += 1;
+    if (restartedInARow > 3) {
+      log(
+        `Atlas падает ${restartedInARow}-й раз за минуту, останавливаюсь: смотри вывод выше`,
+      );
+      finish(code ?? 1);
+      return;
+    }
+    log(
+      `Atlas завершился (${code === null ? signal : `код ${code}`}), перезапускаю`,
+    );
+    restartAtlas(options, 500);
   });
   return child;
+}
+
+function finish(code) {
+  closeWatch();
+  stopDevServer(server);
+  process.exit(code);
+}
+
+function stopAtlas() {
+  const child = atlas;
+  if (!child || child.exitCode !== null) return Promise.resolve();
+  intent = "stop";
+  return new Promise((resolve) => {
+    const done = () => {
+      intent = "run";
+      resolve();
+    };
+    child.once("exit", done);
+    if (isWindows)
+      spawn("taskkill", ["/pid", String(child.pid), "/t", "/f"], {
+        stdio: "ignore",
+      });
+    else child.kill("SIGTERM");
+    // Окно, которое не умирает, не должно держать перезапуск вечно.
+    setTimeout(done, 5_000);
+  });
+}
+
+function restartAtlas(options, delay) {
+  if (restarting) {
+    restartQueued = true;
+    return;
+  }
+  restarting = true;
+  setTimeout(async () => {
+    await stopAtlas();
+    atlas = spawnAtlas(options);
+    restarting = false;
+    if (restartQueued) {
+      restartQueued = false;
+      restartAtlas(options, 0);
+    }
+  }, delay);
 }
 
 let options;
@@ -224,10 +309,12 @@ try {
 }
 let server = null;
 process.on("SIGINT", () => {
+  closeWatch();
   stopDevServer(server);
   process.exit(130);
 });
 process.on("SIGTERM", () => {
+  closeWatch();
   stopDevServer(server);
   process.exit(143);
 });
@@ -258,4 +345,13 @@ if (options.server) {
   process.exit(1);
 }
 
-runAtlas(options);
+atlas = spawnAtlas(options);
+if (options.watch) {
+  closeWatch = watchSources(root, () => {
+    log("исходники изменились: пересобираю и перезапускаю Atlas");
+    restartAtlas(options, 0);
+  });
+  log(
+    "слежение включено: src/, assets/, windows/, build.rs, Cargo.toml — перезапуск; ui/ — hot reload сервера",
+  );
+}

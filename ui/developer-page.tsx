@@ -13,18 +13,36 @@ let hardwareReply: ((data: unknown) => void) | undefined;
 let framesReply: ((data: unknown) => void) | undefined;
 let readyReply: (() => void) | undefined;
 let activeRun = 0;
+// When JS saw each native reply (null: it never came), for a run that lost its
+// measurements.
+const events: {
+  ready: number | null;
+  hardware: number | null;
+  frames: number | null;
+} = {
+  ready: null,
+  hardware: null,
+  frames: null,
+};
 export type BenchmarkEvent = { runId: number; data: unknown };
 
 export function benchmarkHardware(event: BenchmarkEvent) {
   if (event.runId !== activeRun) return;
+  // Recorded because a missing reply is otherwise indistinguishable from a
+  // reply the bridge never delivered (`nativeEvents` in the report).
+  events.hardware = Date.now();
   readyReply?.();
   hardwareReply?.(event.data);
 }
 export function benchmarkReady(event: BenchmarkEvent) {
-  if (event.runId === activeRun) readyReply?.();
+  if (event.runId !== activeRun) return;
+  events.ready = Date.now();
+  readyReply?.();
 }
 export function benchmarkFrames(event: BenchmarkEvent) {
-  if (event.runId === activeRun) framesReply?.(event.data);
+  if (event.runId !== activeRun) return;
+  events.frames = Date.now();
+  framesReply?.(event.data);
 }
 
 function frame(): Promise<number> {
@@ -71,6 +89,9 @@ export async function runBenchmark(options: {
   report.set("");
   summary.set("");
   const runId = ++activeRun;
+  events.ready = null;
+  events.hardware = null;
+  events.frames = null;
   const ready = new Promise<void>((resolve) => {
     readyReply = resolve;
   });
@@ -205,17 +226,22 @@ export async function runBenchmark(options: {
             "Stage timings use animation callbacks. Presented frames are reported separately by GPUI. Resource timestamps are Unix milliseconds: CPU and memory come from 100 ms process samples (per stage), GPU, disk and free RAM from 3 s CIM probes (run-level; nativeMeasurements.resources.cadenceMilliseconds).",
           stages,
           load,
-          nativeMeasurements: { resources, presentedFrames },
+          nativeMeasurements: {
+            resources,
+            presentedFrames,
+            events: { ...events },
+          },
         },
         null,
         2,
       ),
     );
     const seconds = ((endedAt - startedAt) / 1000).toFixed(1);
+    const lost = resources.unavailable ?? "нет сэмплов";
     summary.set(
       load
         ? `${stages.length} этапов · ${seconds} с · CPU до ${formatPercent(load.peaks.cpuPercentOfMachine)} · RAM до ${formatBytes(load.peaks.residentBytes)}`
-        : `${stages.length} этапов · ${seconds} с · нагрузку не измерили`,
+        : `${stages.length} этапов · ${seconds} с · нагрузку не измерили: ${lost}`,
     );
   } catch (error) {
     report.set(

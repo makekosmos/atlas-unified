@@ -1246,7 +1246,9 @@ function App() {
                       beginFrames: () => askEngine("benchmark.begin"),
                       version: snapshot().version,
                       sample: (runId) => {
-                        if (!hosted) return false;
+                        // No command channel means no sampler: say so now, not
+                        // after a deadline.
+                        if (!hosted || !commandRef) return false;
                         askEngine("benchmark.sample", { runId });
                         return true;
                       },
