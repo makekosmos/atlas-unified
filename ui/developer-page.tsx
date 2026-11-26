@@ -5,6 +5,28 @@ import { DevelopersSection } from "./dev-settings";
 import type { Route } from "./state";
 import { jumpBenchmarkLibrary } from "./notes";
 import { Glyph } from "./glyph";
+import {
+  formatBytes,
+  formatPercent,
+  runProbes,
+  stageLoad,
+  type NativeResources,
+  type StageLoad,
+} from "./benchmark-load";
+
+// One stage of the run: a page visit (with its frames) or a synthetic library.
+type Stage = {
+  route: string;
+  round?: number;
+  startedAt: number;
+  firstFrameCallbackMs: number;
+  frameIntervalsMs?: number[];
+  callbackFps?: number;
+  syntheticNotes?: number;
+  generatedMs?: number;
+  scrollJumps?: { fraction: number; frameCallbackMs: number }[];
+  load?: StageLoad;
+};
 
 export const benchmarkRunning = signal(false);
 const report = signal("");
@@ -102,7 +124,7 @@ export async function runBenchmark(options: {
     native = options.sample(runId);
     if (!native) resolve({ unavailable: "native host unavailable" });
   });
-  const stages = [];
+  const stages: Stage[] = [];
   try {
     if (native) {
       await withDeadline(ready, 8_000, undefined);

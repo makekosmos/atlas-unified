@@ -8006,6 +8006,67 @@ function DevButton(props) {
 }
 
 //#endregion
+//#region benchmark-load.ts
+function within(list, window) {
+	return (list ?? []).filter((sample) => sample.at >= window.start && sample.at < window.end);
+}
+function peak(values) {
+	const known = values.filter((value) => typeof value === "number");
+	return known.length ? Math.max(...known) : null;
+}
+function lowest(values) {
+	const known = values.filter((value) => typeof value === "number");
+	return known.length ? Math.min(...known) : null;
+}
+function mean(values) {
+	const known = values.filter((value) => typeof value === "number");
+	return known.length ? known.reduce((sum, value) => sum + value, 0) / known.length : null;
+}
+const gpuUtilization = (sample) => sample.gpuEngines.reduce((sum, engine) => sum + (engine.utilizationPercent ?? 0), 0);
+const gpuMemory = (sample) => sample.gpuMemory.reduce((sum, entry) => sum + (entry.dedicatedBytes ?? 0), 0);
+function stageLoad(resources, window) {
+	const process = within(resources.samples, window);
+	const io = within(resources.processIoSamples, window);
+	return {
+		samples: process.length,
+		cpuPeakPercentOfMachine: peak(process.map((sample) => sample.cpuPercentOfMachine)),
+		cpuMeanPercentOfMachine: mean(process.map((sample) => sample.cpuPercentOfMachine)),
+		residentPeakBytes: peak(process.map((sample) => sample.residentBytes)),
+		residentMeanBytes: mean(process.map((sample) => sample.residentBytes)),
+		privatePeakBytes: peak(process.map((sample) => sample.privateBytes)),
+		threadsPeak: peak(process.map((sample) => sample.threadCount)),
+		handlesPeak: peak(process.map((sample) => sample.handleCount)),
+		ioReadPeakBytesPerSecond: peak(io.map((sample) => sample.readBytesPerSecond)),
+		ioWritePeakBytesPerSecond: peak(io.map((sample) => sample.writeBytesPerSecond))
+	};
+}
+function runProbes(resources, window) {
+	const system = within(resources.systemSamples, window);
+	return {
+		samples: system.length,
+		gpuCountersAvailable: system.some((sample) => sample.gpuCountersAvailable),
+		gpuUtilizationPeakPercent: peak(system.map(gpuUtilization)),
+		gpuMemoryDedicatedPeakBytes: peak(system.map(gpuMemory)),
+		systemCpuPeakPercent: peak(system.map((sample) => sample.systemCpuPercent)),
+		systemFreeRamMinBytes: lowest(system.map((sample) => sample.systemFreeRamBytes)),
+		diskBusyPeakPercent: peak(system.map((sample) => sample.diskBusyPercent)),
+		diskReadPeakBytesPerSecond: peak(system.map((sample) => sample.diskReadBytesPerSecond)),
+		diskWritePeakBytesPerSecond: peak(system.map((sample) => sample.diskWriteBytesPerSecond))
+	};
+}
+function formatBytes(bytes) {
+	if (bytes === null) return "—";
+	const megabytes = bytes / 1048576;
+	if (megabytes < 1) return `${Math.round(bytes / 1024)} КБ`;
+	if (megabytes < 1024) return `${Math.round(megabytes)} МБ`;
+	return `${(megabytes / 1024).toFixed(1)} ГБ`;
+}
+function formatPercent(value) {
+	if (value === null) return "—";
+	return `${value < 10 ? value.toFixed(1) : Math.round(value)}%`;
+}
+
+//#endregion
 //#region developer-page.tsx
 const benchmarkRunning = signal(false);
 const report = signal("");
