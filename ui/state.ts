@@ -1,7 +1,8 @@
 import type { Appearance, ThemeColors } from "@makekosmos/imago-nsh";
 import { previewThemes, systemAccent } from "./themes";
 
-export type Route = "journal" | "notes" | "tasks" | "games" | "settings";
+export type Route =
+  "journal" | "notes" | "tasks" | "games" | "settings" | "developers";
 export type Todo = {
   id: string;
   title: string;
@@ -18,6 +19,17 @@ export type Note = {
   createdAt: string;
   updatedAt: string;
 };
+/** What a note without a name is called. */
+export const NOTE_UNTITLED = "Без названия";
+
+/**
+ * A note's name as it is shown: a note with no name keeps one that reads, so a
+ * tab, a row or a card never stands blank because the name is an empty string.
+ */
+export function noteLabel(title: unknown): string {
+  return String(title ?? "").trim() || NOTE_UNTITLED;
+}
+
 /** A voice note: Opus in base64, plus what the bubble draws. */
 export type JournalVoice = {
   durationMs: number;
@@ -146,7 +158,8 @@ export function isRoute(value: unknown): value is Route {
     value === "notes" ||
     value === "tasks" ||
     value === "games" ||
-    value === "settings"
+    value === "settings" ||
+    value === "developers"
   );
 }
 

@@ -9,6 +9,12 @@
   { "id": "tasks", "label": "Задачи", "icon": "checklist", "footer": false },
   { "id": "games", "label": "Игры", "icon": "folder", "footer": false },
   {
+    "id": "developers",
+    "label": "Для разработчиков",
+    "icon": "gearshape",
+    "footer": true
+  },
+  {
     "id": "settings",
     "label": "Настройки",
     "icon": "gearshape",

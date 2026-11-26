@@ -3,7 +3,7 @@ import { Popover } from "nsh/base";
 import { PageScroll, SectionTitle } from "@makekosmos/imago-nsh";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
 import { hoverWash } from "./chrome";
-import { WIDGETS, widgetOn, toggleWidget } from "./widgets";
+import { interfaceSize } from "./reading-size";
 
 const openSelect = signal<string | null>(null);
 
@@ -86,6 +86,7 @@ export function SettingsRow(props: {
   first?: boolean;
   onPress?: () => void;
   accessibilityLabel?: string;
+  leading?: any;
   children?: any;
 }) {
   const colors = props.colors;
@@ -102,8 +103,9 @@ export function SettingsRow(props: {
         borderColor: colors.border,
       }}
     >
+      {props.leading}
       <View class="min-w-0 flex-1">
-        <Text class="text-[13px]" style={{ color: colors.foreground }}>
+        <Text style={{ color: colors.foreground, fontSize: interfaceSize() }}>
           {props.title}
         </Text>
         {props.description ? (
@@ -160,35 +162,6 @@ export function Toggle(props: {
         onChange={() => props.onPress()}
       />
     </View>
-  );
-}
-
-/// Which widgets the sidebar shows: one row per type, a switch on each. A
-/// widget is a type of thing the app can open, so turning one off hides its
-/// page and leaves its data alone.
-export function WidgetsSection(props: { colors: ThemeColors }) {
-  return (
-    <SettingsSection
-      colors={props.colors}
-      title="Виджеты"
-      note="Какие типы показывать в боковой панели. Хотя бы один остаётся"
-    >
-      {WIDGETS.map((widget, index) => (
-        <SettingsRow
-          colors={props.colors}
-          title={widget.label}
-          description={widget.description}
-          first={index === 0}
-        >
-          <Toggle
-            colors={props.colors}
-            label={widget.label}
-            on={widgetOn(widget.id)}
-            onPress={() => toggleWidget(widget.id)}
-          />
-        </SettingsRow>
-      ))}
-    </SettingsSection>
   );
 }
 
@@ -281,51 +254,6 @@ export function SettingsSelect(props: {
           ))}
         </Scroll>
       </Popover>
-    </View>
-  );
-}
-
-/** A set of pills where exactly one is chosen. */
-export function SettingsSegments(props: {
-  colors: ThemeColors;
-  value: string;
-  options: { value: string; label: string }[];
-  onSelect: (value: string) => void;
-  disabled?: boolean;
-}) {
-  const colors = props.colors;
-  return (
-    <View class="flex-row flex-wrap items-center" style={{ gap: 6 }}>
-      {props.options.map((option) => {
-        const selected = option.value === props.value;
-        return (
-          <View
-            onPress={
-              props.disabled ? undefined : () => props.onSelect(option.value)
-            }
-            role="button"
-            accessibilityLabel={option.label}
-            accessibilityState={{ selected, disabled: !!props.disabled }}
-            class="h-7 shrink-0 flex-row items-center justify-center rounded-md border"
-            hoverStyle={{ backgroundColor: hoverWash(darkColors(colors)) }}
-            style={{
-              paddingLeft: 10,
-              paddingRight: 10,
-              backgroundColor: selected ? colors.card : colors.background,
-              borderColor: selected ? colors.accent : colors.border,
-              opacity: props.disabled ? 0.6 : 1,
-              cursor: props.disabled ? "default" : "pointer",
-            }}
-          >
-            <Text
-              class="text-[12px]"
-              style={{ color: selected ? colors.foreground : colors.muted }}
-            >
-              {option.label}
-            </Text>
-          </View>
-        );
-      })}
     </View>
   );
 }

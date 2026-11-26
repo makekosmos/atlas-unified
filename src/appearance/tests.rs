@@ -53,24 +53,3 @@ fn default_material_is_opaque_and_wallpaper_accent_arrives_later() {
     assert_ne!(pending, sampled);
     assert_eq!(sampled.accent(), Some(0xdead00));
 }
-
-#[test]
-fn poller_publishes_only_good_responses_and_survives_failed_fetch() {
-    use std::sync::atomic::AtomicUsize;
-    let calls = Arc::new(AtomicUsize::new(0));
-    let count = calls.clone();
-    let poller = Poller::start_with(Duration::from_millis(2), move || {
-        let n = count.fetch_add(1, Ordering::Relaxed);
-        if n == 1 {
-            None
-        } else {
-            let mut value = sample();
-            value["settings"]["revision"] = json!(n);
-            Response::parse(&value).is_ok().then_some(value)
-        }
-    });
-    let first = poller.replies.recv_timeout(Duration::from_secs(1)).unwrap();
-    let second = poller.replies.recv_timeout(Duration::from_secs(1)).unwrap();
-    assert_eq!(first["settings"]["revision"], 0);
-    assert_eq!(second["settings"]["revision"], 2);
-}

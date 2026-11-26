@@ -1,3 +1,4 @@
+import { textSize } from "./reading-size";
 import {
   Clipboard,
   createMotion,
@@ -42,15 +43,15 @@ const SCOPE_HEIGHT = 64;
 const SCOPE_RADIUS = 26;
 const COMPOSER_SEND = 31;
 const COMPOSER_BUTTON_INSET = 8;
-const COMPOSER_FONT = 15;
-const COMPOSER_LINE = 22;
+const composerFont = () => textSize() - 1;
+const composerLine = () => Math.round((composerFont() * 22) / 15);
 const COMPOSER_PAD_X = 16;
 const COMPOSER_PAD_Y = 12;
 const COMPOSER_MAX_WINDOW_SHARE = 0.7;
 const COMPOSER_MAX_HEIGHT_FALLBACK = 168;
 /** Matches RichEditor's caret in notes (`nsh-base`: 1.5 pt wide, ~0.85 * asc+desc tall, 530 ms blink). */
 const CARET_WIDTH = 1.5;
-const CARET_HEIGHT = COMPOSER_FONT * 1.02;
+const caretHeight = () => composerFont() * 1.02;
 const CARET_BLINK_MS = 530;
 const COMPOSER_BOTTOM_MARGIN = 18;
 const COMPOSER_FEED_GAP = 14;
@@ -175,13 +176,13 @@ function createCaretState(initial: CaretRect) {
 }
 
 const journalDraft = signal("");
-const journalDraftContentHeight = signal(COMPOSER_LINE);
+const journalDraftContentHeight = signal(composerLine());
 const composerCaret = createCaretState({
   x: COMPOSER_PAD_X,
   y: COMPOSER_PAD_Y,
-  height: COMPOSER_LINE,
+  height: composerLine(),
 });
-const editCaret = createCaretState({ x: 8, y: 4, height: COMPOSER_LINE });
+const editCaret = createCaretState({ x: 8, y: 4, height: composerLine() });
 const journalScrollY = signal(0);
 const editingJournalId = signal<string | null>(null);
 const editingJournalText = signal("");
@@ -268,19 +269,19 @@ export function composerMaxHeight(windowHeight: number) {
 
 function composerMaxContent() {
   return Math.max(
-    COMPOSER_LINE,
+    composerLine(),
     composerMaxHeight(feedBox().height) - COMPOSER_PAD_Y * 2,
   );
 }
 
 function clampDraftHeight(height: number) {
   return Math.round(
-    Math.max(COMPOSER_LINE, Math.min(composerMaxContent(), height)),
+    Math.max(composerLine(), Math.min(composerMaxContent(), height)),
   );
 }
 
 function composerContentHeight() {
-  return Math.max(COMPOSER_LINE, journalDraftContentHeight());
+  return Math.max(composerLine(), journalDraftContentHeight());
 }
 
 function composerInputHeight() {
@@ -338,7 +339,7 @@ function composerFadeBottom() {
 }
 
 function composerExpanded() {
-  return journalDraftContentHeight() > COMPOSER_LINE + 1;
+  return journalDraftContentHeight() > composerLine() + 1;
 }
 
 export function composerCorners(expanded: boolean, scoped: boolean) {
@@ -358,7 +359,7 @@ export function composerCaretBox(caret: CaretRect, ratio: number) {
   const dpr = Math.max(1, ratio);
   const snap = (value: number) => Math.round(value * dpr) / dpr;
   const width = Math.max(1 / dpr, snap(CARET_WIDTH));
-  const height = snap(Math.min(caret.height, CARET_HEIGHT));
+  const height = snap(Math.min(caret.height, caretHeight()));
   const top = snap(caret.y + (caret.height - height) * 0.5);
   const left = Math.max(0, snap(caret.x - width * 0.5));
   return { left, top, width, height };
@@ -593,6 +594,8 @@ function JournalBubble(props: {
                 accessibilityLabel="Текст записи"
                 class="min-h-[56px] w-full rounded-lg px-2 py-1 text-[15px]"
                 style={{
+                  fontSize: composerFont(),
+                  lineHeight: composerLine(),
                   color: props.colors.foreground,
                   backgroundColor: props.colors.background,
                   selectionColor: props.colors.accent,
@@ -631,6 +634,8 @@ function JournalBubble(props: {
             class="select-text text-[15px] leading-5"
             style={{
               color: bubbleInk(),
+              fontSize: composerFont(),
+              lineHeight: composerLine(),
               fontWeight: 500,
               selectionColor: bubbleInk(),
             }}
@@ -673,7 +678,7 @@ export function JournalPage(props: {
     const max = composerMaxScroll();
     const top = Math.max(0, caret.y - COMPOSER_PAD_Y);
     const bottom =
-      caret.y + Math.max(caret.height, COMPOSER_LINE) + COMPOSER_PAD_Y;
+      caret.y + Math.max(caret.height, composerLine()) + COMPOSER_PAD_Y;
     let next = journalScrollY();
     if (top < next) next = top;
     else if (bottom > next + viewport) next = bottom - viewport;
@@ -730,7 +735,7 @@ export function JournalPage(props: {
     animateSend();
     props.onCreate(value, id);
     journalDraft.set("");
-    journalDraftContentHeight.set(COMPOSER_LINE);
+    journalDraftContentHeight.set(composerLine());
     journalScrollY.set(0);
     composerScrollRef?.scrollTo({ y: 0, animated: false });
     composerCaret.reset();
@@ -916,7 +921,7 @@ export function JournalPage(props: {
                           }}
                           onContentSizeChange={({ size }) => {
                             const raw = Math.max(
-                              COMPOSER_LINE,
+                              composerLine(),
                               Math.round(size.height),
                             );
                             if (raw === journalDraftContentHeight()) return;
@@ -950,8 +955,8 @@ export function JournalPage(props: {
                           style={{
                             height: composerInputHeight(),
                             maxHeight: composerInputHeight(),
-                            fontSize: COMPOSER_FONT,
-                            lineHeight: COMPOSER_LINE,
+                            fontSize: composerFont(),
+                            lineHeight: composerLine(),
                             paddingLeft: COMPOSER_PAD_X,
                             paddingRight: 8,
                             paddingTop: COMPOSER_PAD_Y,

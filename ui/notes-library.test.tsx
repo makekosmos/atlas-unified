@@ -5,12 +5,20 @@ import { expect, open, test } from "nsh/test";
 
 test("the library draws the cards with their previews", async () => {
   const app = await open("./notes-fixture.tsx", { width: 1180, height: 820 });
-  // The page is named, not counted.
-  expect(app.texts()).toContain("Заметки");
+  // The page does not name itself: the name is on the tab, and no count is
+  // drawn anywhere.
+  expect(app.texts()).not.toContain("Заметки");
   expect(app.texts()).not.toContain("24 шт.");
   expect(app.texts()).toContain("Заметка 1");
   // A card carries its note's first blocks, not only its title.
   expect(app.texts()).toContain("Текст заметки 1");
+});
+
+test("the note grid has the same top and side inset", async () => {
+  const app = await open("./notes-fixture.tsx", { width: 1440, height: 900 });
+  const grid = app.layout("id:notes-grid")!;
+  const card = app.layout("label:Заметка 1")!;
+  expect(card.y - grid.y).toEqual(card.x - grid.x);
 });
 
 test("a card opens the note, and its headings become the rails", async () => {
@@ -67,7 +75,6 @@ test("a thousand notes show the cards near the viewport, not the whole list", as
     height: 820,
   });
   const spent = Date.now() - started;
-  expect(app.texts()).toContain("Заметки");
   expect(app.texts()).toContain("Заметка 1");
   // The list is virtualized: the last card waits for its scroll.
   expect(app.texts()).not.toContain("Заметка 1000");

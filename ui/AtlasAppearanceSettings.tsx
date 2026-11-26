@@ -1,11 +1,11 @@
-import { Text, View, keymap } from "nsh";
+import { Text, View, colorScheme, keymap } from "nsh";
 import type { Appearance, ThemeColors } from "@makekosmos/imago-nsh";
 import { SectionTitle } from "@makekosmos/imago-nsh";
+import { codeSize, textSize, setReadingSize } from "./reading-size";
 import {
   KeyChip,
   SettingsRow,
   SettingsSection,
-  SettingsSegments,
   SettingsSelect,
   Toggle,
 } from "./settings";
@@ -24,11 +24,6 @@ const modePreviews: { value: Appearance["settings"]["mode"]; label: string }[] =
     { value: "light", label: "Светлая" },
     { value: "dark", label: "Тёмная" },
   ];
-const materialLabels: Record<string, string> = {
-  default: "Сплошной",
-  frosted: "Стекло",
-  mica: "Системный",
-};
 const fontSizes = [12, 13, 14, 15, 16, 18];
 
 export function AtlasAppearanceSettings(props: {
@@ -146,8 +141,7 @@ export function AtlasAppearanceSettings(props: {
   };
 
   const swatch = (accent: (typeof systemAccents)[number]) => {
-    const shown = () =>
-      current().mode !== "light" ? accent.dark : accent.light;
+    const shown = () => (colorScheme() === "dark" ? accent.dark : accent.light);
     const selected = () => {
       const stored = current().accent_color?.toLowerCase();
       return current().accent_source === "custom"
@@ -157,7 +151,7 @@ export function AtlasAppearanceSettings(props: {
         : current().accent_source !== "wallpaper" && accent.key === "blue";
     };
     const label = () =>
-      current().mode !== "light" && accent.darkName
+      colorScheme() === "dark" && accent.darkName
         ? accent.darkName
         : accent.name;
     return (
@@ -188,19 +182,6 @@ export function AtlasAppearanceSettings(props: {
 
   return (
     <View>
-      {appearance()?.policy.following ? (
-        <Text class="mb-4 text-[12px]" style={{ color: colors().accent }}>
-          Общий стиль задаётся в Mundus Manager. Настройки доступны только для
-          просмотра.
-        </Text>
-      ) : null}
-      {!props.editable() && !appearance()?.policy.following ? (
-        <Text class="mb-4 text-[12px]" style={{ color: colors().muted }}>
-          Engine не подключён. Можно временно менять оформление; выбор действует
-          только до закрытия Atlas.
-        </Text>
-      ) : null}
-
       <SectionTitle colors={colors()}>Тема</SectionTitle>
       <View class="mb-5 flex-row gap-3">{modePreviews.map(modeCard)}</View>
 
@@ -208,7 +189,7 @@ export function AtlasAppearanceSettings(props: {
         <SettingsRow
           colors={colors()}
           title="Цвет акцента"
-          description="Из системной палитры"
+          description="Палитра Atlas"
           first
         >
           <View class="flex-row flex-wrap items-center" style={{ gap: 6 }}>
@@ -238,31 +219,8 @@ export function AtlasAppearanceSettings(props: {
         ) : null}
       </SettingsSection>
 
-      <SettingsSection colors={colors()} title="Окно">
-        <SettingsRow
-          colors={colors()}
-          title="Материал окна"
-          description="Чем рисуется фон под содержимым"
-          first
-        >
-          <SettingsSegments
-            colors={colors()}
-            value={current().material}
-            disabled={!canEdit()}
-            options={(appearance()?.capabilities.materials ?? []).map(
-              (material) => ({
-                value: material,
-                label: materialLabels[material] ?? material,
-              }),
-            )}
-            onSelect={(next) => patch({ material: next })}
-          />
-        </SettingsRow>
-        <SettingsRow
-          colors={colors()}
-          title="Размер текста"
-          description={`Размер интерфейсного текста · ${current().font_size} px`}
-        >
+      <SettingsSection colors={colors()} title="Размер текста">
+        <SettingsRow colors={colors()} title="Интерфейс" first>
           {SettingsSelect({
             id: "font-size",
             colors: colors(),
@@ -276,6 +234,27 @@ export function AtlasAppearanceSettings(props: {
             onSelect: (value) => patch({ font_size: Number(value) }),
           })}
         </SettingsRow>
+        {(
+          [
+            ["text", "Текст заметок и дневника", textSize],
+            ["code", "Код в заметках", codeSize],
+          ] as const
+        ).map(([kind, label, size]) => (
+          <SettingsRow colors={colors()} title={label}>
+            {SettingsSelect({
+              id: `reading-${kind}`,
+              colors: colors(),
+              label,
+              width: 120,
+              value: String(size()),
+              options: [12, 14, 16, 18, 20, 22, 24].map((px) => ({
+                value: String(px),
+                label: `${px} px`,
+              })),
+              onSelect: (value) => setReadingSize(kind, Number(value)),
+            })}
+          </SettingsRow>
+        ))}
       </SettingsSection>
 
       <SettingsSection
@@ -311,15 +290,16 @@ export function AtlasAppearanceSettings(props: {
             onPress={() => props.onChangeShortcut("search")}
           />
         </SettingsRow>
-        <SettingsRow colors={colors()} title="Обновить данные из Engine">
-          <KeyChip
-            colors={colors()}
-            label={keymap.label(props.shortcuts.reload)}
-            accessibilityLabel="Изменить сочетание: Обновить данные из Engine"
-            onPress={() => props.onChangeShortcut("reload")}
-          />
+        <SettingsRow colors={colors()} title="Новая заметка">
+          <KeyChip colors={colors()} label={keymap.label("mod+t")} muted />
         </SettingsRow>
-        <SettingsRow colors={colors()} title="Закрыть панель / поиск">
+        <SettingsRow colors={colors()} title="Следующая вкладка">
+          <KeyChip colors={colors()} label={keymap.label("ctrl+tab")} muted />
+        </SettingsRow>
+        <SettingsRow colors={colors()} title="Закрыть вкладку">
+          <KeyChip colors={colors()} label={keymap.label("mod+w")} muted />
+        </SettingsRow>
+        <SettingsRow colors={colors()} title="Закрыть поиск">
           <KeyChip colors={colors()} label="Esc" muted />
         </SettingsRow>
       </SettingsSection>

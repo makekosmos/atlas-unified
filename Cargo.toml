@@ -88,7 +88,7 @@ objc2-foundation = "=0.3.2"
 objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSApplication", "NSMenu", "NSMenuItem", "NSPanel", "NSResponder", "NSSavePanel", "NSWindow"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-gpui-fast-backend = { package = "gpui-fast", version = "=0.1.19", features = ["windows-manifest-provided-by-host"] }
+gpui-fast-backend = { package = "gpui-fast", version = "=0.1.19", features = ["windows-manifest-provided-by-host", "profiler"] }
 raw-window-handle = "0.6"
 
 
@@ -98,3 +98,18 @@ raw-window-handle = "0.6"
 # gpui-fast feature and doesn't import gpui-pre itself.
 gpui-fast = { git = "https://github.com/makekosmos/imago.git", branch = "nsh-0.7" }
 gpui-pre = { git = "https://github.com/makekosmos/imago.git", branch = "nsh-0.7" }
+# NSH 0.7.1 from the fork: a checklist needs the editor's
+# `taskCheckboxIndicator` and `taskCheckboxChecked` parts, which upstream
+# declined (longbridge/nsh#3390); the capability that replaces them, a node view
+# with editable content, is tracked in longbridge/nsh#3414.
+nsh-base = { git = "https://github.com/ksanrse/nsh.git", rev = "c054a86c0221a626b615788178480a673e07fcf7" }
+nsh-core = { git = "https://github.com/ksanrse/nsh.git", rev = "c054a86c0221a626b615788178480a673e07fcf7" }
+nsh-dev = { git = "https://github.com/ksanrse/nsh.git", rev = "c054a86c0221a626b615788178480a673e07fcf7" }
+nsh-engine = { git = "https://github.com/ksanrse/nsh.git", rev = "c054a86c0221a626b615788178480a673e07fcf7" }
+nsh-i18n = { git = "https://github.com/ksanrse/nsh.git", rev = "c054a86c0221a626b615788178480a673e07fcf7" }
+nsh-js = { git = "https://github.com/ksanrse/nsh.git", rev = "c054a86c0221a626b615788178480a673e07fcf7" }
+nsh-macros = { git = "https://github.com/ksanrse/nsh.git", rev = "c054a86c0221a626b615788178480a673e07fcf7" }
+nsh-package = { git = "https://github.com/ksanrse/nsh.git", rev = "c054a86c0221a626b615788178480a673e07fcf7" }
+nsh-testing = { git = "https://github.com/ksanrse/nsh.git", rev = "c054a86c0221a626b615788178480a673e07fcf7" }
+nsh-updater = { git = "https://github.com/ksanrse/nsh.git", rev = "c054a86c0221a626b615788178480a673e07fcf7" }
+nsh-platform-gpui = { git = "https://github.com/ksanrse/nsh.git", rev = "c054a86c0221a626b615788178480a673e07fcf7" }

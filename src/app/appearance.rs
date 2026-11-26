@@ -2,42 +2,9 @@ use gpui::Context;
 use serde_json::{json, Value};
 
 use super::Atlas;
-use crate::appearance::{Mode, Response, Writer};
+use crate::appearance::{Mode, Response};
 
 impl Atlas {
-    pub(crate) fn start_appearance(&mut self, cx: &mut Context<Self>) {
-        if self.demo {
-            return;
-        }
-        self.appearance_poller = Some(crate::appearance::Poller::start());
-        cx.spawn(async move |this, cx| loop {
-            cx.background_executor()
-                .timer(std::time::Duration::from_millis(200))
-                .await;
-            if this
-                .update(cx, |this, cx| {
-                    let latest = this.appearance_poller.as_ref().and_then(|poller| {
-                        let mut last = None;
-                        while let Ok(reply) = poller.replies.try_recv() {
-                            last = Some(reply);
-                        }
-                        last
-                    });
-                    if let Some(reply) = latest {
-                        if let Ok(response) = Response::parse(&reply) {
-                            this.receive_appearance(response);
-                            cx.notify();
-                        }
-                    }
-                })
-                .is_err()
-            {
-                break;
-            }
-        })
-        .detach();
-    }
-
     fn receive_appearance(&mut self, response: Response) {
         self.theme_sel = match response.settings.mode {
             Mode::Light => 0,
@@ -53,7 +20,7 @@ impl Atlas {
             .is_some_and(|response| response.policy.editable)
     }
 
-    pub(crate) fn persist_appearance_patch(&mut self, patch: Value, cx: &mut Context<Self>) {
+    pub(crate) fn apply_local_appearance(&mut self, patch: Value, cx: &mut Context<Self>) {
         if !self.appearance_editable() {
             return;
         }
@@ -74,15 +41,10 @@ impl Atlas {
                 self.receive_appearance(response);
             }
         }
-        if !self.demo {
-            self.appearance_writer
-                .get_or_insert_with(Writer::start)
-                .set(patch);
-        }
         cx.notify();
     }
 
-    pub(crate) fn demo_appearance() -> Response {
+    pub(crate) fn default_appearance() -> Response {
         Response::parse(&json!({
             "settings": {
                 "schema_version": 1,

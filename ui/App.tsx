@@ -1,4 +1,11 @@
 import {
+  Animated,
+  Storage,
+  colorScheme,
+  setColorScheme,
+  batch,
+  Easing,
+  createAnimatedValue,
   effect,
   host,
   mount,
@@ -8,6 +15,7 @@ import {
   View,
   nativeComponent,
   keymap,
+  untracked,
 } from "nsh";
 import { Input } from "nsh/base";
 import type { Point } from "nsh";
@@ -17,6 +25,7 @@ import type { Appearance } from "@makekosmos/imago-nsh";
 import navigation from "./navigation.json";
 import {
   fallback,
+  noteLabel,
   isRoute,
   isSnapshot,
   resolveAppearanceColors,
@@ -36,35 +45,39 @@ import { JournalPage, markJournalArriving } from "./JournalPage";
 import {
   addNote,
   bindNoteCommands,
-  canWalkBack,
-  canWalkForward,
   closeOpenNote,
   createOpenNote,
   hasOpenNote,
-  leaveOpenNote,
   notes,
   NotesPage,
   openNoteById,
   openNoteId,
-  openNoteWithoutHistory,
   openNoteTitle,
   removeOpenNote,
   requestNoteTitleFocus,
   setNotes,
-  walkBack,
-  walkForward,
 } from "./notes";
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
-import { GamesLibrary, GamesSettings, livePrograms } from "./games";
-import { SettingsPage as SettingsPageScroll, WidgetsSection } from "./settings";
-import { DevelopersSection } from "./dev-settings";
+import { GamesLibrary, livePrograms } from "./games";
+import { SettingsPage as SettingsPageScroll } from "./settings";
+import {
+  DevelopersPage,
+  runBenchmark,
+  benchmarkHardware,
+  benchmarkFrames,
+  benchmarkReady,
+  benchmarkRunning,
+} from "./developer-page";
+import type { BenchmarkEvent } from "./developer-page";
 import { loadRecent, recent } from "./recent";
-import { loadWidgets, widgetOn } from "./widgets";
 import type { ProgramUsage } from "./games";
 import {
   CARD_GAP,
   CARD_RADIUS,
+  PAGE_SLIDE,
+  PAGE_SLIDE_MS,
   SIDEBAR_WIDTH,
+  slideDirection,
   TITLEBAR_HEIGHT,
   TitlebarOverlay,
   animateSidebar,
@@ -79,12 +92,118 @@ import { loadPreview, persistPreview } from "./preview";
 import { gameLibrary } from "./game-library";
 import { Modal, ModalGhost } from "./modal";
 import { applyShellTheme } from "./shell-theme";
+import { QuickSearch } from "./quick-search";
+import { interfaceSize } from "./reading-size";
 
 const initialValue: unknown =
   Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__") ?? host.params.atlas;
 const hosted = isSnapshot(initialValue);
 const initial = hosted ? initialValue : fallback;
 const snapshot = signal(initial);
+const appearanceKey = "mundus.atlas.appearance.v1";
+const appearanceDefaults = fallback.appearance!;
+const inheritedAppearance =
+  initial.appearance?.settings ?? appearanceDefaults.settings;
+const localAppearance = signal<Appearance>({
+  ...appearanceDefaults,
+  settings: {
+    ...appearanceDefaults.settings,
+    mode: inheritedAppearance.mode,
+    accent_source:
+      inheritedAppearance.accent_source === "custom" ? "custom" : "theme",
+    accent_color: inheritedAppearance.accent_color,
+    font_size: inheritedAppearance.font_size,
+  },
+});
+let localAppearanceEdited = false;
+let importAppearancePending = false;
+let importAppearanceTimer: ReturnType<typeof setTimeout> | undefined;
+function finishAppearanceImport(legacy?: Appearance) {
+  if (!importAppearancePending) return;
+  importAppearancePending = false;
+  if (importAppearanceTimer !== undefined) clearTimeout(importAppearanceTimer);
+  if (localAppearanceEdited) return;
+  const current = localAppearance();
+  const old = legacy?.settings;
+  if (old) {
+    localAppearance.set({
+      ...current,
+      settings: {
+        ...current.settings,
+        mode: old.mode,
+        accent_source: old.accent_source === "custom" ? "custom" : "theme",
+        accent_color: old.accent_color,
+        font_size: old.font_size,
+      },
+    });
+  }
+  void Storage.setItem(
+    appearanceKey,
+    JSON.stringify(localAppearance().settings),
+  );
+}
+function requestAppearanceImport() {
+  if (
+    !importAppearancePending ||
+    !commandRef ||
+    importAppearanceTimer !== undefined
+  )
+    return;
+  importAppearanceTimer = setTimeout(() => finishAppearanceImport(), 2_000);
+  askEngine("appearance.import");
+}
+void Storage.getItem(appearanceKey).then((value) => {
+  if (localAppearanceEdited) return;
+  if (value) {
+    try {
+      const settings = JSON.parse(value) as Appearance["settings"];
+      if (["light", "dark", "system"].includes(settings.mode)) {
+        localAppearance.set({
+          ...appearanceDefaults,
+          settings: { ...localAppearance().settings, ...settings },
+        });
+        return;
+      }
+    } catch {
+      /* Use the starting palette for invalid preferences. */
+    }
+  }
+  importAppearancePending = true;
+  if (hosted) requestAppearanceImport();
+  else finishAppearanceImport();
+});
+function localColors(appearance: Appearance) {
+  const settings = appearance.settings;
+  return resolveAppearanceColors(
+    {
+      ...appearance,
+      settings: {
+        ...settings,
+        mode: settings.mode === "system" ? colorScheme() : settings.mode,
+      },
+    },
+    previewThemes,
+    fallback.colors,
+  );
+}
+effect(() => {
+  const mode = localAppearance().settings.mode;
+  setColorScheme(mode === "light" || mode === "dark" ? mode : "system");
+});
+effect(() => {
+  const appearance = localAppearance();
+  interfaceSize.set(appearance.settings.font_size);
+  const colors = localColors(appearance);
+  untracked(() =>
+    snapshot.set({
+      ...snapshot(),
+      appearance,
+      appearanceEditable: true,
+      colors,
+    }),
+  );
+});
+const benchmarkNotes = signal<Note[] | null>(null);
 const route = signal<Route>(initial.route);
 /// The note a demo run was asked to open, done once, after the first list.
 let startNoteOpened = false;
@@ -92,6 +211,13 @@ let startNoteOpened = false;
 /// the page is the UI's, and an echoed route would only undo a click.
 let routeReady = false;
 const addTaskOpen = signal(false);
+const searchOpen = signal(false);
+effect(() => {
+  if (searchOpen())
+    return keymap.bind("escape", () => searchOpen.set(false), {
+      overFocused: true,
+    });
+});
 const newTaskTitle = signal("");
 const sidebarVisible = signal(true);
 // Voice notes: the recorder runs in the host, the UI only draws it.
@@ -105,8 +231,6 @@ const pickSource = signal("manual");
 /// The sidebar's page list. A component body runs once, so the list a
 /// setting hides lives in a signal the effect below keeps current.
 const pageNavigation = navigation.filter((item) => !item.footer);
-const visiblePages = signal(pageNavigation);
-loadWidgets();
 loadRecent();
 if (!hosted) {
   void loadPreview().then((saved) => {
@@ -145,6 +269,10 @@ const Bridge = nativeComponent<
     imported: unknown;
     launched: unknown;
     metadata: unknown;
+    benchmark: BenchmarkEvent;
+    benchmarkFrames: BenchmarkEvent;
+    benchmarkReady: BenchmarkEvent;
+    appearanceImported: Appearance | null;
   }
 >("atlas.bridge", {
   props: ["route"],
@@ -165,6 +293,10 @@ const Bridge = nativeComponent<
     "imported",
     "launched",
     "metadata",
+    "benchmark",
+    "benchmarkFrames",
+    "benchmarkReady",
+    "appearanceImported",
   ],
 });
 
@@ -236,28 +368,17 @@ function TaskRows() {
 }
 
 let commandRef: ((name: string, args?: unknown) => void) | undefined;
+effect(() => {
+  const settings = localAppearance().settings;
+  askEngine("appearance.set", settings);
+});
 
 function setAppearance(patch: Record<string, unknown>) {
-  const current = snapshot();
-  if (current.appearance && !current.appearance.policy.following) {
-    const appearance = {
-      ...current.appearance,
-      settings: {
-        ...current.appearance.settings,
-        ...patch,
-      } as Appearance["settings"],
-    };
-    snapshot.set({
-      ...current,
-      appearance,
-      colors: resolveAppearanceColors(
-        appearance,
-        current.themes,
-        current.colors,
-      ),
-    });
-  }
-  if (current.appearanceEditable) commandRef?.("appearance.set", patch);
+  localAppearanceEdited = true;
+  const appearance = localAppearance();
+  const settings = { ...appearance.settings, ...patch };
+  localAppearance.set({ ...appearance, settings });
+  void Storage.setItem(appearanceKey, JSON.stringify(settings));
 }
 
 function TaskPage() {
@@ -411,6 +532,9 @@ function completeTodo(id: string) {
 effect(() => {
   const active = shortcuts();
   const unbind = [
+    // The sidebar's own key is the shifted one: plain mod+b is the note
+    // editor's bold, and a binding the focused editor makes wins over the
+    // app's, so the unshifted key would look dead while a note is open.
     keymap.bind(active.sidebar, () => toggleSidebar(), { repeat: true }),
     keymap.bind(
       active.create,
@@ -423,10 +547,18 @@ effect(() => {
     keymap.bind(active.reload, () => commandRef?.("reload"), {
       when: "notEditing",
     }),
-    keymap.bind("mod+t", () => {
-      route.set("notes");
-      createOpenNote();
+    keymap.bind(active.search, () => searchOpen.set(true), {
+      overFocused: true,
     }),
+    keymap.bind(
+      "mod+t",
+      () => {
+        route.set("notes");
+        createOpenNote();
+      },
+      // Once per press: a held key must not leave a stack of empty notes.
+      { repeat: false },
+    ),
   ];
   return () => unbind.forEach((remove) => remove());
 });
@@ -448,17 +580,6 @@ function SettingsPage() {
         onPatch={setAppearance}
         onChangeShortcut={cycleShortcut}
       />
-      <WidgetsSection colors={snapshot().colors} />
-      {snapshot().demo ? (
-        <DevelopersSection
-          colors={snapshot().colors}
-          dark={snapshot().appearance?.settings.mode !== "light"}
-          size={notes().length}
-          onStress={(count) => askEngine("notes.stress", { count })}
-          onReset={() => askEngine("notes.reset")}
-        />
-      ) : null}
-      {widgetOn("games") && <GamesSettings colors={snapshot().colors} />}
     </SettingsPageScroll>
   );
 }
@@ -476,29 +597,53 @@ function App() {
     }),
   );
   // The sidebar lists the widgets that are on, in their order.
-  effect(() =>
-    visiblePages.set(
-      pageNavigation.filter((item) => widgetOn(item.id as never)),
-    ),
-  );
-  // A widget turned off takes its page with it; the app moves to the first one
-  // still on.
-  effect(() => {
-    const pages = visiblePages();
-    // Only a widget's page moves when its widget goes: the settings page is a
-    // footer row and is always reachable.
-    if (!pageNavigation.some((item) => item.id === route())) return;
-    if (pages.some((item) => item.id === route())) return;
-    const next = pages[0]?.id;
-    if (next) route.set(next as never);
-  });
   const footerNavigation = navigation.filter((item) => item.footer);
   const openNewTask = () => {
     newTaskTitle.set("");
     addTaskOpen.set(true);
   };
+  // The page's own box, measured from the layout: the bar's row of tabs starts
+  // at its left edge and fits into its width, so it never runs over the list
+  // and never guesses. Zero until the first layout.
+  const pageLeft = signal(0);
+  const pageWidth = signal(0);
   const shell = snapshot().chrome === "tsx";
-  const dark = snapshot().appearance?.settings.mode !== "light";
+  const dark = () =>
+    (localAppearance().settings.mode === "system"
+      ? colorScheme()
+      : localAppearance().settings.mode) === "dark";
+  // The page arrives the way the row of tabs moves: from the right when the
+  // tab picked is to the right of the one being read, from the left when it is
+  // to the left. A shift of a third of a finger's width, short enough to read as
+  // the same gesture as the press.
+  // Only the position moves: a fade would put the page on a layer of its own,
+  // and the note's editors — native components — do not survive that, they
+  // blink and land in the wrong place. Tabs travel sideways, sidebar rows up
+  // and down: the page moves the way the list it was picked from does.
+  const pageSlideX = createAnimatedValue(0);
+  const pageSlideY = createAnimatedValue(0);
+  // The shift lives for the length of the motion and not a frame longer: a
+  // transform in the style is a layer over the page for as long as it is there,
+  // and the note's native editors are placed by their own frames — an idle
+  // layer over them put the note's first line over the title and clipped it.
+  const sliding = signal(false);
+  // The sidebar picks a row and then hands over to the tab code, which knows
+  // nothing of rows: the axis is chosen here once, and the tab's own sideways
+  // slide steps aside for it.
+  let slidFromSidebar = false;
+  const slidePage = (dir: number, axis: "x" | "y" = "x") => {
+    const vertical = axis === "y";
+    pageSlideX.set(vertical ? 0 : dir * PAGE_SLIDE);
+    pageSlideY.set(vertical ? dir * PAGE_SLIDE : 0);
+    sliding.set(true);
+    void Animated.timing(vertical ? pageSlideY : pageSlideX, {
+      toValue: 0,
+      duration: PAGE_SLIDE_MS,
+      easing: Easing.out(Easing.cubic),
+    })
+      .start()
+      .then(() => sliding.set(false));
+  };
 
   /// What the bar holds: a tab a page, a tab a note opened from the list. They
   /// live for the session only — a start opens the page the host asked for.
@@ -512,38 +657,86 @@ function App() {
     { ...pageTab(route()), label: pageLabel(route()), active: true },
   ]);
   const activeTabKey = signal(`page:${route()}`);
+  type Destination = { route: Route; noteId: string | null };
+  const destination = (): Destination => ({
+    route: route(),
+    noteId: route() === "notes" ? openNoteId() : null,
+  });
+  const sameDestination = (left: Destination, right: Destination) =>
+    left.route === right.route && left.noteId === right.noteId;
+  const history = signal({ entries: [destination()], index: 0 });
+  effect(() => {
+    const next = destination();
+    untracked(() => {
+      if (benchmarkRunning()) return;
+      const { entries, index } = history();
+      if (sameDestination(entries[index], next)) return;
+      const kept = [...entries.slice(0, index + 1), next].slice(-40);
+      history.set({ entries: kept, index: kept.length - 1 });
+    });
+  });
+  const historyTarget = (step: -1 | 1) => {
+    const { entries, index } = history();
+    for (let at = index + step; at >= 0 && at < entries.length; at += step) {
+      const target = entries[at];
+      if (
+        sameDestination(entries[index], target) ||
+        (target.noteId &&
+          !notes().some((note) => String(note.id) === target.noteId))
+      )
+        continue;
+      return at;
+    }
+    return -1;
+  };
+  const walkHistory = (step: -1 | 1) =>
+    batch(() => {
+      const index = historyTarget(step);
+      if (index < 0) return;
+      const { entries } = history();
+      const target = entries[index];
+      // Move the cursor before restoring the destination, so the observer
+      // recognizes it as the current entry and preserves the forward stack.
+      history.set({ entries, index });
+      if (target.noteId) {
+        route.set("notes");
+        openNoteById(target.noteId);
+      } else {
+        openPageTab(target.route);
+      }
+    });
   /// The tabs as the bar draws them: labels follow the notes as they are now.
+  /// A note's name for its tab: the draft while it is being read, the
+  /// library's own title otherwise, and the untitled name for a note that has
+  /// no name — an empty string is still no name, not a name that reads blank.
+  const noteTabLabel = (tab: TabView) => {
+    if (tab.noteId === openNoteId()) return noteLabel(openNoteTitle());
+    const note = notes().find((item) => String(item.id) === tab.noteId);
+    return noteLabel(note?.title);
+  };
   const tabViews = () =>
     tabs().map((tab) => ({
       ...tab,
       active: tab.key === activeTabKey(),
-      label: tab.noteId
-        ? tab.noteId === openNoteId()
-          ? openNoteTitle() || "Без названия"
-          : (notes().find((item) => item.id === tab.noteId)?.title ??
-            "Без названия")
-        : pageLabel(tab.route),
+      label: tab.noteId ? noteTabLabel(tab) : pageLabel(tab.route),
     }));
-  // `record` says whether the press walks the notes' trail: a tab the bar
-  // brings back by itself restores what was open, it does not walk.
-  const activateTab = (key: string, record = true) => {
-    const tab = tabs().find((item) => item.key === key);
-    if (!tab) return;
-    activeTabKey.set(key);
-    if (tab.route !== route()) {
-      if (route() === "notes" && tab.route !== "notes") leaveOpenNote();
-      route.set(tab.route as Route);
-    }
-    // A note's tab opens the note; the list's tab puts it away.
-    if (tab.noteId) {
-      if (openNoteId() !== tab.noteId) {
-        if (record) openNoteById(tab.noteId);
-        else openNoteWithoutHistory(tab.noteId);
-      }
-    } else if (openNoteId()) {
-      closeOpenNote();
-    }
-  };
+  const activateTab = (key: string) =>
+    batch(() => {
+      const list = tabs();
+      const to = list.findIndex((item) => item.key === key);
+      if (to < 0) return;
+      const tab = list[to];
+      const from = list.findIndex((item) => item.key === activeTabKey());
+      const slidByRow = slidFromSidebar;
+      slidFromSidebar = false;
+      if (from >= 0 && from !== to && !slidByRow)
+        slidePage(slideDirection(from, to));
+      activeTabKey.set(key);
+      if (tab.route !== route()) route.set(tab.route as Route);
+      if (openNoteId() === (tab.noteId ?? null)) return;
+      if (tab.noteId) openNoteById(tab.noteId);
+      else closeOpenNote();
+    });
   const openPageTab = (target: string) => {
     if (!isRoute(target)) return;
     const key = `page:${target}`;
@@ -568,11 +761,14 @@ function App() {
     if (at < 0) return;
     const rest = list.filter((tab) => tab.key !== key);
     animateTabs();
-    tabs.set(rest);
+    // The neighbour takes over first, and the tab leaves the bar after it: a
+    // bar without the tab while its note is still open brought the tab
+    // straight back — a note that is open is a tab of its own.
     if (activeTabKey() === key) {
       const next = rest[Math.min(at, rest.length - 1)];
       activateTab(next.key);
     }
+    tabs.set(rest);
   };
   // A tab's own menu, on the secondary button: what the bar offers for this
   // page, where the pointer is. Renaming puts the caret in the note's name,
@@ -626,36 +822,71 @@ function App() {
     tabs.set(tabs().filter((tab) => tab.key === keep));
     activateTab(keep);
   };
+  /// The next tab (or the one before, with -1), around the ends: what
+  /// Control+Tab does in every browser.
+  const cycleTab = (step: number) => {
+    const list = tabs();
+    if (list.length < 2) return;
+    const at = list.findIndex((tab) => tab.key === activeTabKey());
+    const next =
+      list[(((at + step) % list.length) + list.length) % list.length];
+    if (next) activateTab(next.key);
+  };
+  // The browser's own way between open pages: Control+Tab goes to the next
+  // one and around the last, Control+Shift+Tab the other way.
+  effect(
+    () =>
+      keymap.bind(
+        { "ctrl+tab": () => cycleTab(1), "ctrl+shift+tab": () => cycleTab(-1) },
+        { overFocused: true },
+      ),
+    // What closes a tab, as every window with tabs does: the one being read.
+    // It lives here, with the tabs, and not with the app's other keys: the bar
+    // is the window's, and so is this.
+    keymap.bind("mod+w", () => closeTab(activeTabKey()), { repeat: false }),
+  );
   // A note opened anywhere — a card, the sidebar, a new one — becomes its own
   // tab beside the list's, and leaving it goes back to the list's.
   effect(() => {
     const id = openNoteId();
-    if (!id) {
-      if (activeTabKey().startsWith("note:")) activateTab(`page:notes`, false);
-      return;
-    }
-    const key = `note:${id}`;
-    if (activeTabKey() === key) return;
-    if (!tabs().some((tab) => tab.key === key)) {
-      animateTabs();
-      const at = tabs().findIndex((tab) => tab.key === activeTabKey());
-      const tab: TabView = {
-        key,
-        route: "notes",
-        noteId: id,
-        label: openNoteTitle() || "Без названия",
-        active: true,
-      };
+    // Only a change to the open note can override the active tab.
+    untracked(() => {
+      if (!id) {
+        if (activeTabKey().startsWith("note:")) openPageTab("notes");
+        return;
+      }
+      const key = `note:${id}`;
+      if (activeTabKey() === key) return;
       const list = tabs();
-      tabs.set([...list.slice(0, at + 1), tab, ...list.slice(at + 1)]);
-    }
-    activeTabKey.set(key);
+      if (!list.some((tab) => tab.key === key)) {
+        animateTabs();
+        const at = list.findIndex((tab) => tab.key === activeTabKey());
+        const tab: TabView = {
+          key,
+          route: "notes",
+          noteId: id,
+          label: noteLabel(openNoteTitle()),
+          active: true,
+        };
+        tabs.set([...list.slice(0, at + 1), tab, ...list.slice(at + 1)]);
+      }
+      activeTabKey.set(key);
+    });
   });
   const changeRoute = (target: string) => {
     if (!isRoute(target)) return;
     openPageTab(target);
   };
   const selectSidebarPage = (target: string) => {
+    // The rows run down the sidebar: the page comes in from below when the row
+    // picked is below the one being read, from above when it is above it.
+    const rows = navigation.map((item) => item.id);
+    const fromRow = rows.indexOf(route());
+    const toRow = rows.indexOf(target);
+    if (fromRow >= 0 && toRow >= 0 && fromRow !== toRow) {
+      slidFromSidebar = true;
+      slidePage(slideDirection(fromRow, toRow), "y");
+    }
     // "Заметки" is the library, not the note last read: a note left open on the
     // way out is put away, so the page always lands on all of them.
     if (target === "notes") {
@@ -682,25 +913,27 @@ function App() {
     // The note's own tab is the one that becomes active — the effect that adds
     // it does that. Going through `changeRoute` would activate the list's page
     // tab and put the note away again, which left the new tab inert.
-    openNoteById(entry.id);
-    if (route() !== "notes") route.set("notes");
+    batch(() => {
+      openNoteById(entry.id);
+      if (openNoteId() === entry.id) route.set("notes");
+    });
   };
   return (
     <View
       class="relative h-full w-full"
-      // The mouse's own back and forward buttons walk the notes' trail, as the
+      // The mouse's own back and forward buttons walk the window history, as the
       // bar's arrows do: a desktop's back button is a gesture people already
       // have, and reaching for the title bar for it is what they do not do.
       // Only those two buttons are taken; a click goes where it always went.
       onMouseUp={(event) => {
-        if (event.button === "back") walkBack();
-        if (event.button === "forward") walkForward();
+        if (event.button === "back") walkHistory(-1);
+        if (event.button === "forward") walkHistory(1);
       }}
       // The window's own ground: the sidebar's tone, so the page reads as a sheet
       // lying on it rather than as the window's edge.
       style={{
         backgroundColor: shell
-          ? shellFill(snapshot().colors, dark)
+          ? shellFill(snapshot().colors, dark())
           : snapshot().colors.background,
       }}
     >
@@ -708,6 +941,8 @@ function App() {
         class="absolute left-0 top-0 h-px w-px"
         ref={(node) => {
           commandRef = (name, args) => node.command(name, args);
+          requestAppearanceImport();
+          askEngine("appearance.set", localAppearance().settings);
           gameLibrary.bindCommand((name, args) => node.command(name, args));
           bindNoteCommands({
             create: (title, doc) =>
@@ -724,17 +959,20 @@ function App() {
           // late, and taking the echo would unmount the page it names.
           if (!routeReady) {
             routeReady = true;
-            route.set(next.route);
+            batch(() => {
+              route.set(next.route);
+              history.set({ entries: [destination()], index: 0 });
+            });
           }
-          const appearance = next.appearance ?? snapshot().appearance;
+          const appearance = localAppearance();
           snapshot.set({
             ...next,
+            appearance,
+            appearanceEditable: true,
             themes: previewThemes,
             journalEntries: snapshot().journalEntries,
             sidebarVisible: sidebarVisible(),
-            colors: appearance
-              ? resolveAppearanceColors(appearance, previewThemes, next.colors)
-              : next.colors,
+            colors: localColors(appearance),
           });
         }}
         onJournal={(entries) =>
@@ -747,7 +985,10 @@ function App() {
           const first = (snapshot() as { openNote?: string | null }).openNote;
           if (first && !startNoteOpened) {
             startNoteOpened = true;
-            openNoteWithoutHistory(first);
+            batch(() => {
+              openNoteById(first);
+              history.set({ entries: [destination()], index: 0 });
+            });
           }
         }}
         onNotesCreated={(note) => addNote(note as Note)}
@@ -773,6 +1014,12 @@ function App() {
           stopVoiceTicker = null;
         }}
         onNavigate={(event) => changeRoute(event.route)}
+        onBenchmark={benchmarkHardware}
+        onBenchmarkFrames={benchmarkFrames}
+        onBenchmarkReady={benchmarkReady}
+        onAppearanceImported={(appearance) =>
+          finishAppearanceImport(appearance ?? undefined)
+        }
       />
       <View class="h-full w-full flex-row">
         {shell && (
@@ -785,13 +1032,15 @@ function App() {
               style={{
                 width: SIDEBAR_WIDTH,
                 paddingTop: TITLEBAR_HEIGHT + 8,
-                paddingBottom: 16,
+                // The card's own gap and no more: the last rows of the list
+                // end on the page's bottom edge, not above it.
+                paddingBottom: CARD_GAP,
                 paddingLeft: 8,
                 // The card brings its own gap: the sidebar keeps only the
                 // window's, so the page sits as far from the rows as from the
                 // window's edge.
                 paddingRight: shell ? 0 : 8,
-                backgroundColor: shellFill(snapshot().colors, dark),
+                backgroundColor: shellFill(snapshot().colors, dark()),
               }}
             >
               <View
@@ -801,7 +1050,7 @@ function App() {
               />
               {/* The notes' trail moved to the bar, on the toggle's line. */}
               <View style={{ gap: 2, pointerEvents: "box-none" }}>
-                {visiblePages().map((item) => (
+                {pageNavigation.map((item) => (
                   <SidebarRow
                     label={item.label}
                     icon={iconForNavigation(item.id)}
@@ -809,7 +1058,7 @@ function App() {
                       route() === item.id &&
                       !(item.id === "notes" && activeRecentNote())
                     }
-                    dark={dark}
+                    dark={dark()}
                     colors={snapshot().colors}
                     onPress={() => selectSidebarPage(item.id)}
                   />
@@ -833,7 +1082,7 @@ function App() {
                           openNoteId() === entry.id
                         }
                         colors={snapshot().colors}
-                        dark={dark}
+                        dark={dark()}
                         onPress={() => openRecentEntry(entry)}
                       />
                     ))}
@@ -841,7 +1090,7 @@ function App() {
                 </View>
               )}
               <View
-                class="mt-auto mb-2"
+                class="mt-auto"
                 style={{ gap: 2, pointerEvents: "box-none" }}
               >
                 {footerNavigation.map((item) => (
@@ -849,7 +1098,7 @@ function App() {
                     label={item.label}
                     icon={iconForNavigation(item.id)}
                     selected={route() === item.id}
-                    dark={dark}
+                    dark={dark()}
                     colors={snapshot().colors}
                     onPress={() => changeRoute(item.id)}
                   />
@@ -860,10 +1109,16 @@ function App() {
         )}
         <View
           class="relative min-h-0 min-w-0 flex-1"
+          // Where the page actually starts, measured rather than computed: the
+          // bar's row of tabs keeps to it, so it can never run over the list.
+          onLayout={(event) => {
+            pageLeft.set(event.bounds.origin.x);
+            pageWidth.set(event.bounds.size.width);
+          }}
           // Round the page off from the sidebar and the window's edges: the
           // content is a sheet, the shell's tone shows in the gap around it.
-          style={
-            shell
+          style={{
+            ...(shell
               ? {
                   marginLeft: CARD_GAP,
                   marginRight: CARD_GAP,
@@ -877,89 +1132,172 @@ function App() {
                   backgroundColor: snapshot().colors.background,
                   overflow: "hidden",
                 }
-              : undefined
-          }
+              : {}),
+          }}
         >
-          {route() === "journal" && (
-            <JournalPage
-              entries={() => snapshot().journalEntries}
-              colors={snapshot().colors}
-              onCreate={createJournal}
-              onUpdate={updateJournal}
-              onDelete={deleteJournal}
-              recording={voiceRecording}
-              level={voiceLevel}
-              elapsed={voiceElapsed}
-              playing={voicePlaying}
-              onStartRecording={startRecording}
-              onStopRecording={stopRecording}
-              onPlayVoice={playVoice}
-              titlebarInset={0}
-              dark={dark}
-            />
-          )}
-          {route() === "notes" && (
-            <NotesPage
-              colors={snapshot().colors}
-              dark={dark}
-              titlebarInset={0}
-            />
-          )}
-          {route() === "tasks" && (
-            <View class="min-h-0 flex-1">
-              <TaskPage />
-              {shell && (
-                <View
-                  onPress={openNewTask}
-                  role="button"
-                  accessibilityLabel="Новая задача"
-                  class="absolute items-center justify-center rounded-full"
-                  hoverStyle={{ opacity: 0.85 }}
-                  style={{
-                    right: 16,
-                    bottom: 16,
-                    width: 32,
-                    height: 32,
-                    backgroundColor: snapshot().colors.foreground,
-                    cursor: "pointer",
-                  }}
-                >
-                  <Glyph
-                    name="plus"
-                    size={16}
-                    color={snapshot().colors.background}
-                  />
-                </View>
-              )}
-            </View>
-          )}
-          {route() === "games" && widgetOn("games") && (
-            <View class="min-h-0 flex-1">
-              <GamesLibrary
+          {/* The swipe is the page's, not the sheet's: the card keeps its own
+            ground, so nothing of the window's background flashes through. */}
+          <View
+            class="min-h-0 min-w-0 flex-col"
+            style={{
+              flex: 1,
+              transform: sliding()
+                ? [{ translateX: pageSlideX }, { translateY: pageSlideY }]
+                : undefined,
+            }}
+          >
+            {route() === "journal" && (
+              <JournalPage
+                entries={() => snapshot().journalEntries}
                 colors={snapshot().colors}
-                pickedExes={pickedExes()}
-                pickSource={pickSource()}
-                onPick={(path) => askEngine("games.pick", { path })}
-                onBrowse={() => {
-                  pickSource.set("manual");
-                  askEngine("games.browse");
-                }}
-                onBrowseFolder={() => {
-                  pickSource.set("folder");
-                  askEngine("games.browse-folder");
-                }}
-                onLaunch={(path) => askEngine("games.launch", { path })}
-                onClearPick={() => {
-                  pickedExes.set([]);
-                  askEngine("games.clear-pick");
-                }}
+                onCreate={createJournal}
+                onUpdate={updateJournal}
+                onDelete={deleteJournal}
+                recording={voiceRecording}
+                level={voiceLevel}
+                elapsed={voiceElapsed}
+                playing={voicePlaying}
+                onStartRecording={startRecording}
+                onStopRecording={stopRecording}
+                onPlayVoice={playVoice}
+                titlebarInset={0}
+                dark={dark()}
               />
-            </View>
-          )}
-          {route() === "settings" && (
-            <View class="min-h-0 flex-1">
-              <SettingsPage />
-            </View>
+            )}
+            {route() === "notes" && (
+              <NotesPage
+                colors={snapshot().colors}
+                dark={dark()}
+                titlebarInset={0}
+                benchmarkNotes={benchmarkNotes()}
+              />
+            )}
+            {route() === "tasks" && (
+              <View class="min-h-0 flex-1">
+                <TaskPage />
+                {shell && (
+                  <View
+                    onPress={openNewTask}
+                    role="button"
+                    accessibilityLabel="Новая задача"
+                    class="absolute items-center justify-center rounded-full"
+                    hoverStyle={{ opacity: 0.85 }}
+                    style={{
+                      right: 16,
+                      bottom: 16,
+                      width: 32,
+                      height: 32,
+                      backgroundColor: snapshot().colors.foreground,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Glyph
+                      name="plus"
+                      size={16}
+                      color={snapshot().colors.background}
+                    />
+                  </View>
+                )}
+              </View>
+            )}
+            {route() === "games" && (
+              <View class="min-h-0 flex-1">
+                <GamesLibrary
+                  colors={snapshot().colors}
+                  pickedExes={pickedExes()}
+                  pickSource={pickSource()}
+                  onPick={(path) => askEngine("games.pick", { path })}
+                  onBrowse={() => {
+                    pickSource.set("manual");
+                    askEngine("games.browse");
+                  }}
+                  onBrowseFolder={() => {
+                    pickSource.set("folder");
+                    askEngine("games.browse-folder");
+                  }}
+                  onLaunch={(path) => askEngine("games.launch", { path })}
+                  onClearPick={() => {
+                    pickedExes.set([]);
+                    askEngine("games.clear-pick");
+                  }}
+                />
+              </View>
+            )}
+            {route() === "settings" && (
+              <View class="min-h-0 flex-1">
+                <SettingsPage />
+              </View>
+            )}
+            {route() === "developers" && (
+              <SettingsPageScroll colors={snapshot().colors}>
+                <DevelopersPage
+                  colors={snapshot().colors}
+                  dark={dark()}
+                  demo={Boolean(snapshot().demo)}
+                  size={notes().length}
+                  run={() =>
+                    void runBenchmark({
+                      visit: (target) => {
+                        if (route() !== target) slidePage(1);
+                        route.set(target);
+                      },
+                      frames: (runId) =>
+                        askEngine("benchmark.frames", { runId }),
+                      beginFrames: () => askEngine("benchmark.begin"),
+                      version: snapshot().version,
+                      sample: (runId) => {
+                        if (!hosted) return false;
+                        askEngine("benchmark.sample", { runId });
+                        return true;
+                      },
+                      fixture: (size) => {
+                        const text = "Абзац для проверки списка заметок.";
+                        const doc = {
+                          type: "doc",
+                          content: [
+                            {
+                              type: "paragraph",
+                              content: [{ type: "text", text }],
+                            },
+                          ],
+                        };
+                        const date = new Date().toISOString();
+                        benchmarkNotes.set(
+                          size
+                            ? Array.from({ length: size }, (_, index) => ({
+                                id: `benchmark:${index}`,
+                                title: `Тестовая заметка ${index + 1}`,
+                                text,
+                                doc,
+                                createdAt: date,
+                                updatedAt: date,
+                              }))
+                            : null,
+                        );
+                      },
+                    })
+                  }
+                  stress={(count) => askEngine("notes.stress", { count })}
+                  reset={() => askEngine("notes.reset")}
+                />
+              </SettingsPageScroll>
+            )}
+          </View>
+          {searchOpen() && (
+            <QuickSearch
+              colors={snapshot().colors}
+              notes={notes()}
+              journal={snapshot().journalEntries}
+              onDismiss={() => searchOpen.set(false)}
+              onNote={(id) => {
+                searchOpen.set(false);
+                openRecentEntry({ kind: "note", id, title: "" });
+              }}
+              onJournal={() => {
+                searchOpen.set(false);
+                openPageTab("journal");
+              }}
+            />
           )}
           {addTaskOpen() && (
             <Modal
@@ -1016,21 +1354,25 @@ function App() {
       {shell && (
         <TitlebarOverlay
           colors={snapshot().colors}
-          dark={dark}
-          showAddGame={route() === "games" && widgetOn("games")}
-          pageInset={sidebarPaneWidth()}
-          dimmed={
-            addTaskOpen() || gameLibrary.addOpen() || pickedExes().length > 1
+          dark={dark()}
+          showAddGame={route() === "games"}
+          pageInset={
+            pageLeft() > 0 ? pageLeft() : sidebarPaneWidth() + CARD_GAP
           }
-          noteNav={route() === "notes"}
-          canGoBack={canWalkBack()}
-          canGoForward={canWalkForward()}
+          dimmed={
+            searchOpen() ||
+            addTaskOpen() ||
+            gameLibrary.addOpen() ||
+            pickedExes().length > 1
+          }
+          canGoBack={historyTarget(-1) >= 0}
+          canGoForward={historyTarget(1) >= 0}
           tabs={tabViews()}
           onSelectTab={activateTab}
           onCloseTab={closeTab}
           onTabMenu={tabMenu}
-          onGoBack={walkBack}
-          onGoForward={walkForward}
+          onGoBack={() => walkHistory(-1)}
+          onGoForward={() => walkHistory(1)}
           onToggleSidebar={toggleSidebar}
           onAddGame={gameLibrary.openAddDialog}
           onChrome={(command) => askEngine(command)}

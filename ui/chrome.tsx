@@ -8,6 +8,7 @@ import type { ThemeColors } from "@makekosmos/imago-nsh";
 import { Glyph } from "./glyph";
 import type { GlyphName } from "./icons";
 import { accentMark } from "./themes";
+import { interfaceSize } from "./reading-size";
 
 /// As MonoCode's title bar has it: 48 tall, the tabs 32 inside it, 8 points
 /// of air above and below them.
@@ -16,6 +17,16 @@ export const TITLEBAR_HEIGHT = 48;
 /// a gap to the window's edges, a radius of its own, a hairline border.
 export const CARD_GAP = 8;
 export const CARD_RADIUS = 14;
+/// A page lands the way the tabs move: it starts this far to the side it comes
+/// from and takes this long to settle.
+export const PAGE_SLIDE = 34;
+
+/// Which side the page comes in from: +1 for a tab to the right of the one
+/// being read, -1 for one to its left.
+export function slideDirection(from: number, to: number) {
+  return to > from ? 1 : -1;
+}
+export const PAGE_SLIDE_MS = 200;
 /// How far the bar's controls sit below its top edge. Zero centres a control
 /// of any height in the bar; a positive pad pushed everything down by half of it.
 export const TITLEBAR_TOP_PAD = 0;
@@ -203,11 +214,26 @@ const TAB_TILE_HEIGHT = 20;
 const TAB_CLOSE_SIZE = 20;
 const TAB_CLOSE_ROOM = 4 + TAB_CLOSE_SIZE + 4;
 /// MonoCode's tab name: 14 pt.
-const TAB_TEXT_SIZE = 14;
 /// A tab is this wide, its name or not: the strip reads as a row of equal
-/// chips. It shrinks when the strip runs out of room, down to `TAB_MIN_WIDTH`.
+/// chips. It shrinks when the strip runs out of room — its name and then its
+/// cross give way — and stops at the icon's plate: `TAB_ICON_ONLY`.
 const TAB_WIDTH = 300;
-const TAB_MIN_WIDTH = 88;
+/// The plate's own air on each side of the icon.
+const TAB_TILE_PAD = (TAB_HEIGHT - TAB_TILE_HEIGHT) / 2;
+/// The smallest chip there is: the icon with its plate and that air, nothing
+/// else — no name and no room for the cross.
+const TAB_ICON_ONLY = TAB_TILE_PAD + 24 + TAB_TILE_PAD;
+/// Under this the name is gone anyway, so the chip drops it and the cross room
+/// with it and becomes the plate itself.
+const TAB_NAME_FITS = 96;
+
+/// One width for every chip of the strip: `TAB_WIDTH` while they fit and the
+/// icon's plate — `TAB_ICON_ONLY` — when they do not.
+export function tabChipWidth(room: number, count: number) {
+  if (!(room > 0) || count < 1) return TAB_WIDTH;
+  const fit = Math.floor((room - TAB_GAP * (count - 1)) / count);
+  return Math.max(TAB_ICON_ONLY, Math.min(TAB_WIDTH, fit));
+}
 /// How far the name fades out at the chip's right edge when it is longer than
 /// the chip: the plate's own tone covers the cut.
 const TAB_FADE = 22;
@@ -245,6 +271,10 @@ function TabChip(props: {
   tab: TabView;
   colors: ThemeColors;
   dark: boolean;
+  /// The chip's own width, worked out from the room the strip has.
+  width: number;
+  /// Too narrow for a name: the icon's plate and nothing else.
+  compact: boolean;
   onSelect: () => void;
   onClose: () => void;
   /// The secondary button: the tab's own menu (rename, close, delete).
@@ -280,16 +310,19 @@ function TabChip(props: {
       style={{
         height: TAB_HEIGHT,
         // One width for every chip, the same whether its name is long or not;
-        // it gives way only when the strip is full.
-        width: TAB_WIDTH,
-        minWidth: TAB_MIN_WIDTH,
+        // the strip works it out from the room it has.
+        width: props.width,
+        // The room the strip measured can be a frame behind the window: a chip
+        // gives way rather than run over the list, and the plate is the end of
+        // the line — 36, no name, no cross.
+        minWidth: TAB_ICON_ONLY,
         flexShrink: 1,
         // As far from the tile as the tile is from the top and bottom.
-        paddingLeft: (TAB_HEIGHT - TAB_TILE_HEIGHT) / 2,
+        paddingLeft: TAB_TILE_PAD,
         // The close button's room is part of the chip, not something the label
-        // makes when it appears.
-        paddingRight: TAB_CLOSE_ROOM,
-        gap: 8,
+        // makes when it appears. The plate alone needs none of it.
+        paddingRight: props.compact ? TAB_TILE_PAD : TAB_CLOSE_ROOM,
+        gap: props.compact ? 0 : 8,
         borderRadius: 8,
         backgroundColor: plate,
         cursor: "pointer",
@@ -316,7 +349,9 @@ function TabChip(props: {
       </View>
       {/* The name is confined to the room the tile and the close button
           leave: fixed, so a name never changes the chip, and clipped, so it
-          never reaches under the cross. */}
+          never reaches under the cross. A chip that is only a plate gives the
+          name no room at all: it stays there for the screen reader and for the
+          tests, and takes no pixels. */}
       <View
         class="relative"
         style={{
@@ -328,7 +363,7 @@ function TabChip(props: {
       >
         <Text
           style={{
-            fontSize: TAB_TEXT_SIZE,
+            fontSize: interfaceSize() + 1,
             lineHeight: 20,
             // One line, cut where the room ends and no ellipsis: the fade is
             // what hides the cut.
@@ -354,40 +389,42 @@ function TabChip(props: {
           }}
         />
       </View>
-      <View
-        onPress={() => props.onClose()}
-        role="button"
-        accessibilityLabel={`Закрыть ${props.tab.label}`}
-        onMouseEnter={() => closeOver.set(true)}
-        onMouseLeave={() => closeOver.set(false)}
-        class="absolute items-center justify-center"
-        hoverStyle={{ backgroundColor: ink(0.18) }}
-        desktop={{ windowDrag: false }}
-        style={{
-          right: 4,
-          top: (TAB_HEIGHT - TAB_CLOSE_SIZE) / 2,
-          width: TAB_CLOSE_SIZE,
-          height: TAB_CLOSE_SIZE,
-          borderRadius: 6,
-          // Out of the way until the tab is the one being read or the pointer
-          // is on it — its room stays either way.
-          opacity: props.tab.active || over() ? 1 : 0,
-          cursor: "pointer",
-        }}
-      >
-        <Glyph
-          name="close"
-          size={13}
-          color={closeOver() ? colors.foreground : colors.muted}
-        />
-      </View>
+      {!props.compact && (
+        <View
+          onPress={() => props.onClose()}
+          role="button"
+          accessibilityLabel={`Закрыть ${props.tab.label}`}
+          onMouseEnter={() => closeOver.set(true)}
+          onMouseLeave={() => closeOver.set(false)}
+          class="absolute items-center justify-center"
+          hoverStyle={{ backgroundColor: ink(0.18) }}
+          desktop={{ windowDrag: false }}
+          style={{
+            right: 4,
+            top: (TAB_HEIGHT - TAB_CLOSE_SIZE) / 2,
+            width: TAB_CLOSE_SIZE,
+            height: TAB_CLOSE_SIZE,
+            borderRadius: 6,
+            // Out of the way until the tab is the one being read or the pointer
+            // is on it — its room stays either way.
+            opacity: props.tab.active || over() ? 1 : 0,
+            cursor: "pointer",
+          }}
+        >
+          <Glyph
+            name="close"
+            size={13}
+            color={closeOver() ? colors.foreground : colors.muted}
+          />
+        </View>
+      )}
     </View>
   );
 }
 
 /// One of the two arrows that walk the notes' trail: quiet when there is
 /// nowhere to go, and it only takes a press when there is.
-export function TrailArrow(props: {
+function TrailArrow(props: {
   dir: "back" | "forward";
   label: string;
   colors: ThemeColors;
@@ -395,34 +432,37 @@ export function TrailArrow(props: {
   enabled?: boolean;
   onPress?: () => void;
 }) {
-  const enabled = props.enabled === true;
+  const enabled = () => props.enabled === true;
   return (
     <View
       onPress={() => {
-        if (enabled) props.onPress?.();
+        if (enabled()) props.onPress?.();
       }}
       role="button"
       accessibilityLabel={props.label}
+      accessibilityState={{ disabled: !enabled() }}
       class="items-center justify-center"
       hoverStyle={
-        enabled ? { backgroundColor: hoverWash(props.dark) } : undefined
+        enabled() ? { backgroundColor: hoverWash(props.dark) } : undefined
       }
       activeStyle={
-        enabled ? { backgroundColor: surfaceWash(props.dark, 0.12) } : undefined
+        enabled()
+          ? { backgroundColor: surfaceWash(props.dark, 0.12) }
+          : undefined
       }
       desktop={{ windowDrag: false }}
       style={{
         width: 24,
         height: 24,
         borderRadius: CONTROL_RADIUS,
-        cursor: enabled ? "pointer" : "default",
+        cursor: enabled() ? "pointer" : "default",
       }}
     >
       <Glyph
         name={props.dir === "back" ? "arrowLeft" : "arrowRight"}
         size={16}
         color={
-          enabled
+          enabled()
             ? props.colors.foreground
             : colorAlpha(props.colors.muted, 0.5)
         }
@@ -495,6 +535,8 @@ export function TitlebarOverlay(props: {
   showAddGame?: boolean;
   dimmed?: boolean;
   pageInset?: number;
+  /// The page's own width: the row of tabs fits itself into it.
+  pageWidth?: number;
   /// The page's tabs: what is open, in the order it was opened.
   tabs?: readonly TabView[];
   onSelectTab?: (key: string) => void;
@@ -502,7 +544,6 @@ export function TitlebarOverlay(props: {
   /// The secondary button over a tab: its menu, at that point of the window.
   onTabMenu?: (key: string, at: Point) => void;
   /// The notes' trail: the arrows walk it, on the toggle's own line.
-  noteNav?: boolean;
   canGoBack?: boolean;
   canGoForward?: boolean;
   onToggleSidebar: () => void;
@@ -532,6 +573,29 @@ export function TitlebarOverlay(props: {
   const wash = hoverWash(props.dark);
   const barHeight = controls.height || TITLEBAR_HEIGHT;
   const dragLeft = macos ? Math.max(controls.left, 78) : 0;
+  // The chips share the strip: one width for all of them, `TAB_WIDTH` at most
+  // and the icon's plate at least. Its room comes from the window's own size
+  // and the two ends the strip keeps to, not from its own layout pass: a
+  // measured box is a frame behind the window, and a strip that thinks it has
+  // room runs over the list. A window that cannot say its size — a headless
+  // run — leaves the chips at their full width.
+  const trailLeft = () => noteBackLeft(props.pageInset ?? 0, sidebarLeft);
+  const stripLeft = () => trailLeft() + TRAIL_WIDTH + CARD_GAP;
+  const controlsRoom = controlsRight + 44;
+  const windowWidth =
+    windows()[0]?.state()?.contentBounds.size.width ??
+    windows()[0]?.state()?.bounds.size.width ??
+    0;
+  const chipWidth = () => {
+    const pageRight =
+      props.pageWidth && props.pageWidth > 0
+        ? (props.pageInset ?? CARD_GAP) + props.pageWidth
+        : windowWidth;
+    return tabChipWidth(
+      Math.max(0, pageRight - stripLeft() - controlsRoom),
+      props.tabs?.length ?? 0,
+    );
+  };
   return (
     <View
       class="absolute left-0 right-0 top-0 z-20"
@@ -598,44 +662,41 @@ export function TitlebarOverlay(props: {
           <Glyph name="plus" size={16} color={props.colors.muted} />
         </View>
       )}
-      {props.noteNav && (
+      <View
+        class="absolute flex-row items-center"
+        desktop={{ windowDrag: false }}
+        style={{
+          left: trailLeft(),
+          top: titlebarControlTop(24),
+          height: 24,
+          gap: 2,
+        }}
+      >
+        <TrailArrow
+          dir="back"
+          label="Назад"
+          dark={props.dark}
+          colors={props.colors}
+          enabled={props.canGoBack}
+          onPress={props.onGoBack}
+        />
+        <TrailArrow
+          dir="forward"
+          label="Вперёд"
+          dark={props.dark}
+          colors={props.colors}
+          enabled={props.canGoForward}
+          onPress={props.onGoForward}
+        />
+      </View>
+      {/* The tabs line up with the page and clear the navigation controls. */}
+      {props.tabs && props.tabs.length > 0 && (
         <View
           class="absolute flex-row items-center"
           desktop={{ windowDrag: false }}
           style={{
-            left: noteBackLeft(props.pageInset ?? 0, sidebarLeft),
-            top: titlebarControlTop(24),
-            height: 24,
-            gap: 2,
-          }}
-        >
-          <TrailArrow
-            dir="back"
-            label="Назад"
-            dark={props.dark}
-            colors={props.colors}
-            enabled={props.canGoBack}
-            onPress={props.onGoBack}
-          />
-          <TrailArrow
-            dir="forward"
-            label="Вперёд"
-            dark={props.dark}
-            colors={props.colors}
-            enabled={props.canGoForward}
-            onPress={props.onGoForward}
-          />
-        </View>
-      )}
-      {/* What is open, in a row across the bar's middle: a chip a page, a chip
-        a note. The strip is centred; the delete button keeps the right end. */}
-      {props.tabs && props.tabs.length > 0 && (
-        <View
-          class="absolute flex-row items-center justify-center"
-          desktop={{ windowDrag: false }}
-          style={{
-            left: noteBackLeft(props.pageInset ?? 0, sidebarLeft) + 60,
-            right: controlsRight + 44,
+            left: stripLeft(),
+            right: controlsRoom,
             top: titlebarControlTop(TAB_HEIGHT),
             height: TAB_HEIGHT,
             gap: TAB_GAP,
@@ -648,6 +709,10 @@ export function TitlebarOverlay(props: {
               tab={tab}
               colors={props.colors}
               dark={props.dark}
+              // A chip that loses its name does not stay wide: it becomes the
+              // plate itself, so the row fits more of them.
+              width={chipWidth() < TAB_NAME_FITS ? TAB_ICON_ONLY : chipWidth()}
+              compact={chipWidth() < TAB_NAME_FITS}
               onSelect={() => props.onSelectTab?.(tab.key)}
               onClose={() => props.onCloseTab?.(tab.key)}
               onMenu={(at) => props.onTabMenu?.(tab.key, at)}

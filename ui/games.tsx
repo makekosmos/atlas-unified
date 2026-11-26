@@ -2,7 +2,6 @@ import { Input } from "nsh/base";
 import { effect, signal, Text, View } from "nsh";
 import { Button as SharedButton } from "@makekosmos/imago-nsh";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
-import { SettingsRow, SettingsSection } from "./settings";
 import { gameLibrary, guessTitle, visibleGameCards } from "./game-library";
 import { AddGamesDialog } from "./games-add";
 import { ConfirmGameDialog } from "./game-confirm";
@@ -259,23 +258,5 @@ export function GamesLibrary(props: {
         />
       )}
     </View>
-  );
-}
-
-export function GamesSettings(props: { colors: ThemeColors }) {
-  return (
-    <SettingsSection colors={props.colors} title="Игры">
-      <SettingsRow
-        colors={props.colors}
-        title="Метаданные и обложки"
-        description="Загружаются без ключей и кэшируются в каталоге данных Engine"
-        first
-      />
-      <SettingsRow
-        colors={props.colors}
-        title="Источники"
-        description="Порядок загрузки задаётся в game-metadata.json"
-      />
-    </SettingsSection>
   );
 }

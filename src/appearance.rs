@@ -4,10 +4,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serde_json::Value;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::Sender;
-use std::sync::mpsc::{self, Receiver};
-use std::sync::Arc;
 use std::time::Duration;
 
 use crate::store::Engine;
@@ -160,97 +156,12 @@ impl Response {
     }
 }
 
-/// The poller owns the authenticated transport and never runs on the UI thread.
-/// Replies carry the raw scoped `appearance.get` payload so the shared editor
-/// can ingest it unchanged.
-pub struct Poller {
-    pub replies: Receiver<Value>,
-    stop: Arc<AtomicBool>,
-}
-
-impl Poller {
-    pub fn start() -> Self {
-        let engine = Engine::with_timeout(Duration::from_millis(700));
-        Self::start_with(Duration::from_secs(2), move || {
-            engine
-                .rpc("appearance.get", json!({"app_id": APP_ID}))
-                .ok()
-                .filter(|value| Response::parse(value).is_ok())
-        })
-    }
-
-    fn start_with(
-        interval: Duration,
-        mut fetch: impl FnMut() -> Option<Value> + Send + 'static,
-    ) -> Self {
-        let (sender, replies) = mpsc::channel();
-        let stop = Arc::new(AtomicBool::new(false));
-        let thread_stop = stop.clone();
-        std::thread::spawn(move || {
-            while !thread_stop.load(Ordering::Relaxed) {
-                if let Some(response) = fetch() {
-                    if sender.send(response).is_err() {
-                        break;
-                    }
-                }
-                std::thread::sleep(interval);
-            }
-        });
-        Self { replies, stop }
-    }
-}
-
-impl Drop for Poller {
-    fn drop(&mut self) {
-        self.stop.store(true, Ordering::Relaxed);
-    }
-}
-
-/// Coalescing scoped `appearance.set` writer: rapid edits fold into one
-/// merged patch per flush, mirroring the old local writer's debounce. Replies
-/// are ignored — the poller refreshes the authoritative snapshot.
-pub struct Writer {
-    sender: Sender<Value>,
-    stop: Arc<AtomicBool>,
-}
-
-impl Writer {
-    pub fn start() -> Self {
-        let (sender, receiver) = mpsc::channel::<Value>();
-        let stop = Arc::new(AtomicBool::new(false));
-        let thread_stop = stop.clone();
-        std::thread::spawn(move || {
-            let engine = Engine::with_timeout(Duration::from_millis(1500));
-            while !thread_stop.load(Ordering::Relaxed) {
-                let Ok(first) = receiver.recv_timeout(Duration::from_millis(250)) else {
-                    continue;
-                };
-                let mut merged = first.as_object().cloned().unwrap_or_default();
-                while let Ok(next) = receiver.try_recv() {
-                    if let Some(object) = next.as_object() {
-                        for (key, item) in object {
-                            merged.insert(key.clone(), item.clone());
-                        }
-                    }
-                }
-                let params = json!({"app_id": APP_ID, "patch": Value::Object(merged)});
-                if let Err(error) = engine.rpc("appearance.set", params) {
-                    eprintln!("[appearance] scoped set failed: {error:?}");
-                }
-            }
-        });
-        Self { sender, stop }
-    }
-
-    pub fn set(&self, patch: Value) {
-        let _ = self.sender.send(patch);
-    }
-}
-
-impl Drop for Writer {
-    fn drop(&mut self) {
-        self.stop.store(true, Ordering::Relaxed);
-    }
+/// One-time import for installations that used Engine appearance.
+pub fn import_legacy() -> Option<Value> {
+    Engine::with_timeout(Duration::from_millis(700))
+        .rpc("appearance.get", json!({"app_id": APP_ID}))
+        .ok()
+        .filter(|value| Response::parse(value).is_ok())
 }
 
 #[cfg(test)]

@@ -1,3 +1,4 @@
+mod benchmark;
 mod games;
 pub(crate) mod toggle;
 
@@ -36,6 +37,8 @@ pub(crate) struct AtlasBridge {
     journal_reload_pending: Arc<AtomicBool>,
     _notes_reload_pending: Arc<AtomicBool>,
     voice: Voice,
+    #[cfg(target_os = "windows")]
+    benchmark_baseline: Option<gpui::FrameDurationSnapshot>,
 }
 
 /// The microphone and the speaker, one of each at a time.
@@ -82,6 +85,8 @@ impl AtlasBridge {
             journal_reload_pending,
             _notes_reload_pending: notes_reload_pending,
             voice: Voice::default(),
+            #[cfg(target_os = "windows")]
+            benchmark_baseline: None,
         }
     }
 
@@ -562,16 +567,38 @@ fn demo_notes() -> Vec<Note> {
             }),
             "2026-11-09T10:40:00.000Z",
         ),
-        Note::demo(
+        Note::demo_doc(
             "demo:ideas",
             "Идеи",
-            "- быстрый поиск по заметкам\n- связи между заметками\n- экспорт в папку `.md`\n- рельсы оглавления справа",
+            &json!({
+                "type": "doc",
+                "content": [
+                    {"type": "paragraph", "content": [{"type": "text", "text": "Что стоит попробовать в этом году."}]},
+                    {"type": "bulletList", "content": [
+                        {"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Быстрый поиск по заметкам"}]}]},
+                        {"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Связи между заметками"}]}]},
+                        {"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Экспорт в папку "}, {"type": "text", "marks": [{"type": "code"}], "text": ".md"}]}]},
+                        {"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Рельсы оглавления справа"}]}]},
+                    ]},
+                ]
+            }),
             "2026-11-09T11:20:00.000Z",
         ),
-        Note::demo(
+        Note::demo_doc(
             "demo:week",
             "План недели",
-            "1. Разобрать входящие\n2. Свести макеты\n3. Проверить долгую заметку на прокрутку\n4. Созвон в четверг",
+            &json!({
+                "type": "doc",
+                "content": [
+                    {"type": "paragraph", "content": [{"type": "text", "text": "Четыре дела, дальше — как пойдёт."}]},
+                    {"type": "orderedList", "content": [
+                        {"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Разобрать входящие"}]}]},
+                        {"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Свести макеты"}]}]},
+                        {"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Проверить долгую заметку на прокрутку"}]}]},
+                        {"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Созвон в четверг"}]}]},
+                    ]},
+                ]
+            }),
             "2026-11-08T18:05:00.000Z",
         ),
         Note::demo_doc(
@@ -580,7 +607,7 @@ fn demo_notes() -> Vec<Note> {
             &json!({
                 "type": "doc",
                 "content": [
-                    {"type": "paragraph", "content": [{"type": "text", "text": "Таблица на всю ширину: видно, как ведут себя границы и заголовок."}]},
+                    {"type": "paragraph", "content": [{"type": "text", "text": "Таблица в колонке заметки: границы, заголовок и числа по столбцам."}]},
                     {"type": "table", "content": [
                         {"type": "tableRow", "content": [
                             {"type": "tableHeader", "attrs": {"colspan": 1, "rowspan": 1, "colwidth": null}, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Статья"}]}]},
@@ -675,22 +702,61 @@ fn demo_notes() -> Vec<Note> {
             }),
             "2026-11-10T09:00:00.000Z",
         ),
-        Note::demo(
+        Note::demo_doc(
             "demo:quotes",
             "Цитаты",
-            "> Простота — это не отсутствие сложности, а её порядок.\n\n> Пиши так, как будто читатель устал.",
+            &json!({
+                "type": "doc",
+                "content": [
+                    {"type": "paragraph", "content": [{"type": "text", "text": "Две фразы, которые стоит держать под рукой."}]},
+                    {"type": "blockquote", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Простота — это не отсутствие сложности, а её порядок."}]}]},
+                    {"type": "blockquote", "content": [{"type": "paragraph", "content": [{"type": "text", "marks": [{"type": "italic"}], "text": "Пиши так, как будто читатель устал."}]}]},
+                ]
+            }),
             "2026-11-04T21:15:00.000Z",
         ),
-        Note::demo(
+        // A real checklist: a press on a square marks its task done.
+        Note::demo_doc(
             "demo:moving",
             "Переезд: чек-лист",
-            "- [x] выбрать район\n- [x] посчитать расходы\n- [ ] собрать коробки\n- [ ] отключить интернет\n- [ ] передать показания",
+            &json!({
+                "type": "doc",
+                "content": [
+                    {"type": "paragraph", "content": [{"type": "text", "text": "Две недели до переезда. Отметка ставится по квадрату."}]},
+                    {"type": "taskList", "content": [
+                        {"type": "taskItem", "attrs": {"checked": true}, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Выбрать район"}]}]},
+                        {"type": "taskItem", "attrs": {"checked": true}, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Посчитать расходы"}]}]},
+                        {"type": "taskItem", "attrs": {"checked": false}, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Собрать коробки"}]}]},
+                        {"type": "taskItem", "attrs": {"checked": false}, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Отключить интернет"}]}]},
+                        {"type": "taskItem", "attrs": {"checked": false}, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Передать показания"}]}]},
+                    ]},
+                ]
+            }),
             "2026-11-03T08:45:00.000Z",
         ),
-        Note::demo(
+        Note::demo_doc(
             "demo:links",
             "Ссылки и закладки",
-            "- документация ProseMirror — https://prosemirror.net\n- любой-тип — https://anytype.io\n- заметки в Markdown — https://spec.commonmark.org",
+            &json!({
+                "type": "doc",
+                "content": [
+                    {"type": "paragraph", "content": [{"type": "text", "text": "Куда смотреть, когда что-то не сходится."}]},
+                    {"type": "bulletList", "content": [
+                        {"type": "listItem", "content": [{"type": "paragraph", "content": [
+                            {"type": "text", "text": "Документация ProseMirror — "},
+                            {"type": "text", "marks": [{"type": "link", "attrs": {"href": "https://prosemirror.net", "target": "_blank"}}], "text": "prosemirror.net"}
+                        ]}]},
+                        {"type": "listItem", "content": [{"type": "paragraph", "content": [
+                            {"type": "text", "text": "Любой тип — "},
+                            {"type": "text", "marks": [{"type": "link", "attrs": {"href": "https://anytype.io", "target": "_blank"}}], "text": "anytype.io"}
+                        ]}]},
+                        {"type": "listItem", "content": [{"type": "paragraph", "content": [
+                            {"type": "text", "text": "Markdown — "},
+                            {"type": "text", "marks": [{"type": "link", "attrs": {"href": "https://spec.commonmark.org", "target": "_blank"}}], "text": "spec.commonmark.org"}
+                        ]}]},
+                    ]},
+                ]
+            }),
             "2026-11-02T17:20:00.000Z",
         ),
         Note::demo_doc(
@@ -803,6 +869,31 @@ impl NativeComponent for AtlasBridge {
 
     fn command(&mut self, name: &str, args: &Value, window: &mut Window, cx: &mut App) {
         match name {
+            "benchmark.sample" => {
+                if let Some(run_id) = args["runId"].as_u64() {
+                    benchmark::sample(self.context.clone(), run_id);
+                }
+            }
+            "benchmark.begin" => {
+                #[cfg(target_os = "windows")]
+                {
+                    self.benchmark_baseline = Some(window.frame_duration_snapshot());
+                }
+            }
+            "benchmark.frames" => {
+                let Some(run_id) = args["runId"].as_u64() else {
+                    return;
+                };
+                #[cfg(target_os = "windows")]
+                benchmark::frames(
+                    &self.context,
+                    window,
+                    self.benchmark_baseline.take(),
+                    run_id,
+                );
+                #[cfg(not(target_os = "windows"))]
+                benchmark::frames(&self.context, run_id);
+            }
             "notes.create" => {
                 let title = args
                     .get("title")
@@ -906,10 +997,22 @@ impl NativeComponent for AtlasBridge {
                     self.publish(cx);
                 }
             }
+            "appearance.import" => {
+                let context = self.context.clone();
+                let demo = self.agenda.read(cx).demo;
+                std::thread::spawn(move || {
+                    let imported = if demo {
+                        None
+                    } else {
+                        crate::appearance::import_legacy()
+                    };
+                    context.emit("appearanceImported", imported.unwrap_or(Value::Null));
+                });
+            }
             "appearance.set" => {
                 if let Some(patch) = args.as_object() {
                     self.agenda.update(cx, |agenda, cx| {
-                        agenda.persist_appearance_patch(Value::Object(patch.clone()), cx);
+                        agenda.apply_local_appearance(Value::Object(patch.clone()), cx);
                     });
                     self.publish(cx);
                 }
@@ -1034,6 +1137,57 @@ impl AtlasBridge {
 #[cfg(test)]
 mod demo_tests {
     use super::*;
+
+    /// The editor draws the blocks its schema names and flattens the rest into
+    /// plain paragraphs: a note built from another block kind (a task list, a
+    /// block from a newer schema) opens as a bare page of text, and the save
+    /// writes that flattened page back. The mocks stay inside the list above.
+    #[test]
+    fn demo_notes_use_blocks_the_editor_draws() {
+        const KNOWN: [&str; 16] = [
+            "doc",
+            "paragraph",
+            "heading",
+            "bulletList",
+            "orderedList",
+            "listItem",
+            "blockquote",
+            "codeBlock",
+            "horizontalRule",
+            "table",
+            "tableRow",
+            "tableHeader",
+            "tableCell",
+            "text",
+            "taskList",
+            "taskItem",
+        ];
+        fn walk(node: &Value, unknown: &mut Vec<String>) {
+            let Some(kind) = node.get("type").and_then(Value::as_str) else {
+                return;
+            };
+            if !KNOWN.contains(&kind) {
+                unknown.push(kind.to_owned());
+            }
+            for child in node
+                .get("content")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+            {
+                walk(child, unknown);
+            }
+        }
+        for note in demo_notes() {
+            let mut unknown = Vec::new();
+            walk(&note.doc, &mut unknown);
+            assert!(
+                unknown.is_empty(),
+                "{} holds blocks the editor drops: {unknown:?}",
+                note.id
+            );
+        }
+    }
 
     /// The demo library is what the screens are checked against: every block
     /// kind present, one long page, one with a table, one empty.

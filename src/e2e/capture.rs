@@ -46,7 +46,10 @@ impl Run {
             })
             .expect("window alive")
         } else {
-            self.sleep(cx, 150).await;
+            // `ATLAS_E2E_SETTLE` lets a run look at a page that has already
+            // settled (motion, a remount, a second frame) instead of the first
+            // frame after the window opens.
+            self.sleep(cx, settle_ms()).await;
             cx.update_window(self.window, |_, window, cx| {
                 window.refresh();
                 window.draw(cx).clear(cx);
@@ -69,4 +72,13 @@ impl Run {
             Err(e) => self.check(&format!("screenshot {name}: {e}"), false),
         }
     }
+}
+
+/// How long a run waits before it draws: 150 ms unless `ATLAS_E2E_SETTLE`
+/// asks for a page that has settled.
+fn settle_ms() -> u64 {
+    std::env::var("ATLAS_E2E_SETTLE")
+        .ok()
+        .and_then(|value| value.trim().parse().ok())
+        .unwrap_or(150)
 }

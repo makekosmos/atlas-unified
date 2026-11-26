@@ -124,3 +124,41 @@ test("a press outside the list closes it", async () => {
   await app.type("label:Текст заметки", "!");
   expect(app.texts().join("")).toContain("!");
 });
+
+// A block added to a note with a heading, a list and a quote: the note keeps
+// every line it had, once. The pieces a split note is made of are joined back
+// on every save, and a slice that lands in the wrong place would rewrite the
+// note as a page of plain paragraphs — twice over.
+test("a block added to a note with lists keeps the note whole", async () => {
+  const app = await open("./notes-fixture.tsx", { width: 1180, height: 820 });
+  await app.press("label:Борщ");
+  await app.press("label:Текст заметки");
+  await app.keyboard.press("mod+ArrowDown");
+  await app.keyboard.press("/");
+  expect(app.texts()).toContain("Код");
+  await app.press("label:Код");
+  await app.wait(400);
+  for (const line of [
+    "На четыре порции, полтора часа.",
+    "Продукты",
+    "свёкла — 2 шт",
+    "капуста — 300 г",
+    "Свёклу не варить, а тушить.",
+  ]) {
+    expect(app.count(`text:${line}`)).toEqual(1);
+  }
+});
+
+// NSH's StarterKit carries task lists (`[ ] ` is a task input rule). The rule
+// eats the brackets when the schema has the node, and leaves them as text when
+// it does not — which is how a task list turns into a plain line.
+test("[ ] makes a task, not text", async () => {
+  const app = await open("./notes-fixture.tsx", { width: 1180, height: 820 });
+  await app.press("label:Заметка 2");
+  await app.press("label:Текст заметки");
+  await app.keyboard.press("mod+ArrowDown");
+  await app.keyboard.press("enter");
+  await app.type("label:Текст заметки", "[ ] ");
+  await app.wait(200);
+  expect(app.texts()).not.toContain("[ ]");
+});

@@ -30,8 +30,9 @@ test("shows the shared Atlas navigation and journal composer", async () => {
   const app = await open("./App.tsx");
   expect(app.texts()).toContain("Дневник");
   expect(app.texts()).toContain("Заметки");
-  expect(app.texts()).not.toContain("Задачи");
-  expect(app.texts()).not.toContain("Игры");
+  expect(app.texts()).toContain("Задачи");
+  expect(app.texts()).toContain("Игры");
+  expect(app.texts()).toContain("Для разработчиков");
   expect(app.texts()).toContain("Настройки");
   expect(app.texts()).not.toContain("О приложении");
   expect(app.texts()).toContain("Записей пока нет");
@@ -236,7 +237,7 @@ test("keeps preview journal entries without the engine", async () => {
 test("adds a task in preview without the engine", async () => {
   // The dialog's footer needs a window the app itself would have: at the
   // harness's tiny default the card is cut and its buttons leave the tree.
-  const app = await open("./widgets-on-fixture.tsx", {
+  const app = await open("./App.tsx", {
     width: 1200,
     height: 800,
   });
@@ -252,7 +253,7 @@ test("adds a task in preview without the engine", async () => {
   );
 });
 test("routes to the all-tasks screen", async () => {
-  const app = await open("./widgets-on-fixture.tsx");
+  const app = await open("./App.tsx");
   await app.press("Задачи");
   expect(app.texts()).toContain("Задач пока нет");
 });
@@ -267,12 +268,25 @@ test("keeps appearance settings and configurable keyboard shortcuts", async () =
   expect(app.texts()).toContain("Размер текста");
   expect(app.texts()).not.toContain("Светлая тема");
   expect(app.texts()).toContain("Акцент");
-  expect(app.texts()).toContain(
-    "Engine не подключён. Можно временно менять оформление; выбор действует только до закрытия Atlas.",
-  );
+  expect(app.texts()).not.toContain("Материал окна");
+  expect(app.texts()).not.toContain("Виджеты");
   await app.press("Акцент Красный");
   await app.press("Светлая");
-  await app.press("Изменить сочетание: Боковая панель — открыть/скрыть");
+  await app.waitUntil(
+    () =>
+      app
+        .storage()
+        ["mundus.atlas.appearance.v1"]?.includes('"mode":"light"') === true,
+  );
+  const step = async () =>
+    app.press("Изменить сочетание: Боковая панель — открыть/скрыть");
+  await step();
+  await app.waitUntil(
+    () =>
+      app.storage()["mundus.atlas.shortcuts.v1"]?.includes("mod+alt+b") ===
+      true,
+  );
+  await step();
   await app.waitUntil(
     () =>
       app.storage()["mundus.atlas.shortcuts.v1"]?.includes("mod+shift+b") ===
@@ -407,9 +421,11 @@ test("toggles the sidebar from the keyboard without the engine", async () => {
   // The row and the page's tab both carry the name, so hiding the pane takes
   // one away and the tab stays.
   expect(app.texts().filter((text) => text === "Дневник").length).toEqual(2);
-  await app.keyboard.press("mod+b");
+  // Shifted: plain mod+b is the note editor's bold, so the sidebar takes the
+  // shifted key everywhere.
+  await app.keyboard.press("mod+shift+b");
   expect(app.texts().filter((text) => text === "Дневник").length).toEqual(1);
-  await app.keyboard.press("mod+b");
+  await app.keyboard.press("mod+shift+b");
   expect(app.texts().filter((text) => text === "Дневник").length).toEqual(2);
 });
 
@@ -421,7 +437,9 @@ test("keeps appearance controls usable in a narrow window", async () => {
   });
   await app.press("Настройки");
   await app.press("Выбрать размер текста");
-  await app.press("14 px");
+  // The reading-size rows show their own "14 px" values: the option list is
+  // the only place a press there means the interface size.
+  await app.press("Варианты выбора >> 14 px");
   await app.waitUntil(() => app.texts().includes("14 px"));
 });
 

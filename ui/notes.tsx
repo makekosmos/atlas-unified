@@ -20,6 +20,7 @@ import {
   createRichEditor,
   deleteRange,
   insertTable,
+  markdown,
   selectAll,
   setNodeAttribute,
 } from "nsh/base";
@@ -33,10 +34,10 @@ import type {
   RichEditorRef,
   RichEditorSession,
 } from "nsh/base";
-import type { ViewRef } from "nsh";
-import { Menu } from "nsh/desktop";
+import type { ListRef, ViewRef } from "nsh";
+import { Menu, windows } from "nsh/desktop";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
-import { colorAlpha, mixHex, surfaceWash } from "./chrome";
+import { colorAlpha, mixHex, surfaceWash, TITLEBAR_HEIGHT } from "./chrome";
 import { accentMark } from "./themes";
 import { Glyph } from "./glyph";
 import { languageOf, scan, tokenColors } from "./highlight";
@@ -49,7 +50,9 @@ import {
 } from "./recent";
 import { NotesOutlineRail, activeOutlineIndex } from "./notes-outline";
 import type { OutlineMark } from "./notes-outline";
+import { noteLabel } from "./state";
 import type { Note } from "./state";
+import { textSize, codeSize } from "./reading-size";
 
 export type { OutlineMark };
 
@@ -120,6 +123,7 @@ const LIBRARY_BOTTOM = 104;
 /// (Geist Mono), registered by importing the file.
 
 const GRID_PAD = 24;
+const LIBRARY_LIST_PAD = 12;
 /// The note itself opens as one column, not as a pane: the text keeps a
 /// readable measure however wide the window is.
 const PAGE_MAX = 720;
@@ -226,12 +230,22 @@ type CodeBlock = { node: number; pos: number; language: string; text: string };
 /// A block's size in the editor's positions: a text is its letters, a leaf is
 /// one, and every other block is its content plus the two positions around it.
 function blockSize(node: unknown): number {
-  const block = node as { text?: string; content?: unknown[] } | null;
+  const block = node as {
+    type?: string;
+    text?: string;
+    content?: unknown[];
+  } | null;
   if (!block) return 1;
   if (typeof block.text === "string") return block.text.length;
-  if (!Array.isArray(block.content)) return 1;
+  if (
+    block.type === "image" ||
+    block.type === "hardBreak" ||
+    block.type === "horizontalRule"
+  ) {
+    return 1;
+  }
   let size = 2;
-  for (const child of block.content) size += blockSize(child);
+  for (const child of block.content ?? []) size += blockSize(child);
   return size;
 }
 
@@ -383,6 +397,36 @@ function copyBlock(text: string, id: number) {
 
 /// The plugin the code block's colours are handed to.
 const highlight = new RichEditorPlugin("highlight");
+const proseGutter = new RichEditorPlugin("note-prose-gutter");
+const TABLE_BLEED = 8;
+const gutterSignature = new WeakMap<RichEditorSession, string>();
+
+// The table's horizontal scroll view fills the editor's content width.
+// Inset the other root blocks so the table can use the wider viewport.
+function applyProseGutter(session: RichEditorSession, revisions: Set<number>) {
+  const doc = session.getJSON() as { content?: { type: string }[] };
+  let from = 0;
+  const decorations = [];
+  for (const block of doc.content ?? []) {
+    const to = from + blockSize(block);
+    if (block.type !== "table") {
+      decorations.push({
+        from,
+        to,
+        kind: "node" as const,
+        attrs: { class: "mx-2" },
+      });
+    }
+    from = to;
+  }
+  const signature = decorations
+    .map(({ from, to }) => `${from}:${to}`)
+    .join(",");
+  if (gutterSignature.get(session) === signature) return;
+  gutterSignature.set(session, signature);
+  session.setDecorations(proseGutter.key, decorations);
+  revisions.add(session.revision);
+}
 /// The theme the code colours were picked for, so a switch repaints them.
 let paintedDark = true;
 const selectedId = signal<string | null>(null);
@@ -439,6 +483,7 @@ let split = false;
 const codeLayout = signal(false);
 const segmentList = signal<{ id: number; kind: "prose" | "code" }[]>([]);
 const bodyRev = signal(0);
+const singleBodyEmpty = signal(true);
 const segRefs = new Map<number, RichEditorRef>();
 const segHeights = new Map<number, number>();
 const segTops = new Map<number, number>();
@@ -619,7 +664,7 @@ function editorExtensions(trailing = true) {
       // shapeDrifted(), rebuilds the split note, and hijacks focus/scroll.
       ...(trailing ? {} : { trailingNode: false }),
     }),
-    TableKit.configure({}),
+    TableKit.configure({ table: { resizable: false } }),
   ];
 }
 
@@ -757,21 +802,30 @@ function createSeg(group: Group): Seg {
     group.kind === "code" ? new RichEditorPlugin(`paint-${id}`) : null;
   const content =
     group.kind === "code" ? docOf([group.node]) : docOf(group.nodes);
-  const plugins = paint ? [paint] : [];
   const epochAt = epoch;
-  const make = (body: unknown) =>
-    createRichEditor({
+  const make = (body: unknown) => {
+    const paste = paint ? null : new RichEditorPlugin("note-markdown-paste");
+    const session = createRichEditor({
       extensions: editorExtensions(false),
-      plugins,
+      plugins: paste
+        ? [proseGutter, markdownPaste(), paste]
+        : paint
+          ? [paint]
+          : [],
       content: body as never,
       format: "json",
     });
+    if (paste) bindMarkdownPaste(paste, session);
+    return session;
+  };
   let session: RichEditorSession;
   try {
     session = make(content);
   } catch {
     session = make(docOf([{ type: "paragraph" }]));
   }
+  const paintRevs = new Set<number>();
+  if (group.kind === "prose") applyProseGutter(session, paintRevs);
   bindSeg(session, epochAt);
   return {
     id,
@@ -779,8 +833,49 @@ function createSeg(group: Group): Seg {
     session,
     paint,
     painted: "",
-    paintRevs: new Set<number>(),
+    paintRevs,
   };
+}
+
+function markdownPaste() {
+  return markdown({
+    blockRules: false,
+    inlineRules: false,
+    copyAsMarkdown: false,
+  });
+}
+
+const MARKDOWN_BLOCK =
+  /^ {0,3}(?:#{1,6}[ \t]+|>[ \t]+|[-*+][ \t]+|\d+[.)][ \t]+|`{3,}|~{3,}|---[ \t]*$)/m;
+
+// A browser can wrap copied Markdown source in HTML, which NSH reads first.
+// Only recover source from unformatted blocks, preserving rich HTML pastes.
+function bindMarkdownPaste(
+  plugin: RichEditorPlugin,
+  session: RichEditorSession,
+) {
+  plugin.handlePaste((slice, { text, html }) => {
+    if (!html || session.findParentNode("codeBlock")) return false;
+    const blocks = slice.content ?? [];
+    if (
+      !MARKDOWN_BLOCK.test(text) ||
+      !blocks.length ||
+      html.includes("data-pm-slice") ||
+      !blocks.every(
+        (block) =>
+          (block.type === "paragraph" ||
+            (block.type === "codeBlock" && !block.attrs?.language)) &&
+          (block.content ?? []).every(
+            (node) =>
+              node.type === "hardBreak" ||
+              (node.type === "text" && !node.marks?.length),
+          ),
+      )
+    ) {
+      return false;
+    }
+    return session.insertContent(text, "markdown");
+  });
 }
 
 /// Replaces the open editors with one session per run of prose and per code
@@ -943,7 +1038,11 @@ function open(note: Note | null) {
 /// One editor for the whole note. A code block inserted later becomes a card.
 function mountSingle(doc: unknown) {
   const epochAt = epoch;
-  const made = makeEditor(doc);
+  const paste = new RichEditorPlugin("note-markdown-paste");
+  const made = makeEditor(doc, paste);
+  singleBodyEmpty.set(made.getText().length === 0);
+  bindMarkdownPaste(paste, made);
+  applyProseGutter(made, singlePaintRevs);
   made.on("revision", (event) => {
     if (epoch !== epochAt || editor !== made) return;
     if (
@@ -972,10 +1071,15 @@ function mountSingle(doc: unknown) {
 
 /// The editor for a document when the schema takes it, an empty one
 /// otherwise, so a broken note still opens.
-function makeEditor(doc: unknown): RichEditorSession {
+/// The classes every note editor wears. A task's checkbox is drawn inside a
+/// box the editor makes from the app's classes: without a size there is
+/// nothing to see and nothing to press.
+const TASK_CLASSES = { taskCheckbox: "w-4 h-4" };
+
+function makeEditor(doc: unknown, paste?: RichEditorPlugin): RichEditorSession {
   const options = (content: unknown) => ({
     extensions: editorExtensions(),
-    plugins: [highlight],
+    plugins: paste ? [highlight, proseGutter, markdownPaste(), paste] : [],
     content: content as never,
     format: "json" as const,
   });
@@ -1439,7 +1543,7 @@ let slashRange: SlashMatch | null = null;
 
 function slashMatch(): SlashMatch | null {
   const live = editor;
-  if (!live) return null;
+  if (!live || live.findParentNode("codeBlock")) return null;
   const selection = live.selection as {
     type?: string;
     anchor?: number;
@@ -1690,10 +1794,7 @@ function unbindSlashKeysNow() {
 function currentRecentEntry() {
   const id = selectedId();
   if (!id) return null;
-  const title =
-    draftTitle().trim() ||
-    text(selected()?.title ?? "").trim() ||
-    "Без названия";
+  const title = noteLabel(draftTitle() || text(selected()?.title ?? ""));
   return { kind: "note" as const, id, title };
 }
 
@@ -1714,74 +1815,9 @@ function select(note: Note | null) {
     stageRecent({
       kind: "note",
       id: text(note.id),
-      title: text(note.title).trim() || "Без названия",
+      title: noteLabel(note.title),
     });
-  visitStep(id ?? "");
 }
-
-/// The trail of notes walked, the way a browser keeps one: the library is a
-/// step too, so back from the first note lands on the list and forward brings
-/// the note back. A new step drops whatever was ahead of it.
-const TRAIL_LIMIT = 40;
-const trailSteps = signal<string[]>([""]);
-const trailAt = signal(0);
-/// Walking the trail must not write to it.
-let silentNavigation = false;
-
-function visitStep(id: string) {
-  if (silentNavigation) return;
-  const trail = trailSteps();
-  const at = trailAt();
-  if (trail[at] === id) return;
-  const walked = [...trail.slice(0, at + 1), id];
-  const kept = walked.slice(Math.max(0, walked.length - TRAIL_LIMIT));
-  trailSteps.set(kept);
-  trailAt.set(kept.length - 1);
-}
-
-/// One step of the trail, applied without recording it. A note that is gone
-/// since the step was taken takes its step with it.
-function walkTrail(delta: number) {
-  const trail = trailSteps();
-  silentNavigation = true;
-  try {
-    for (
-      let at = trailAt() + delta;
-      at >= 0 && at < trail.length;
-      at += delta
-    ) {
-      const id = trail[at];
-      const note = id ? notes().find((item) => text(item.id) === id) : null;
-      if (id && !note) continue;
-      trailAt.set(at);
-      if (note) select(note);
-      else closeNote();
-      return;
-    }
-  } finally {
-    silentNavigation = false;
-  }
-}
-
-/// Opens a note without writing the trail. Restoring what was open — the note
-/// the host names at start, a tab coming back — is not a walk: recording it
-/// would leave back with a step wherever it stands and forward at the end.
-export function openNoteWithoutHistory(id: string) {
-  const note = notes().find((item) => text(item.id) === id) ?? null;
-  if (!note) return;
-  silentNavigation = true;
-  try {
-    select(note);
-  } finally {
-    silentNavigation = false;
-  }
-}
-
-/// Where the notes' arrows lead: back through what was read, forward again.
-export const canWalkBack = () => trailAt() > 0;
-export const canWalkForward = () => trailAt() < trailSteps().length - 1;
-export const walkBack = () => walkTrail(-1);
-export const walkForward = () => walkTrail(1);
 
 /// The open note's name, for the window's title bar and the tab: one line,
 /// however many the note's own title takes.
@@ -1794,7 +1830,28 @@ export const hasOpenNote = () => selectedId() !== null;
 export const closeOpenNote = () => closeNote();
 export const removeOpenNote = () => removeNote();
 /// A new note straight from the keyboard, the way the floating button does it.
-export const createOpenNote = () => createNote();
+/// On a note that is still blank this is nothing: a held or repeated press must
+/// not leave a stack of empty notes behind, and the blank note already open is
+/// the new note the press asked for.
+export function createOpenNote() {
+  if (openNoteIsBlank()) return;
+  createNote();
+}
+
+/// Whether the note being read has nothing in it yet: no name and no words.
+export function openNoteIsBlank(): boolean {
+  if (selectedId() === null) return false;
+  if (openNoteTitle() !== "") return false;
+  return isBlankDoc(currentDoc());
+}
+
+function isBlankDoc(node: unknown): boolean {
+  if (!node || typeof node !== "object") return true;
+  const block = node as { text?: unknown; content?: unknown[] };
+  if (typeof block.text === "string" && block.text.trim() !== "") return false;
+  if (Array.isArray(block.content)) return block.content.every(isBlankDoc);
+  return true;
+}
 
 /// Commits the open note to the top of the recent list when leaving its page.
 export function leaveOpenNote() {
@@ -1843,7 +1900,7 @@ function flushSave() {
   if (!dirty()) return;
   const note = selected();
   if (!note || (!editor && !split)) return;
-  const title = draftTitle().trim() || "Без названия";
+  const title = noteLabel(draftTitle());
   const doc = currentDoc();
   const body = currentText();
   const serialized = JSON.stringify(doc);
@@ -1885,7 +1942,6 @@ function closeNote() {
   selectedId.set(null);
   draftTitle.set("");
   open(null);
-  visitStep("");
 }
 
 /// Puts the caret in the open note's own name, where a document is renamed:
@@ -1930,6 +1986,7 @@ export function NotesPage(props: {
   dark: boolean;
   titlebarInset: number;
   onBack?: () => void;
+  benchmarkNotes?: Note[] | null;
 }) {
   if (!asked) {
     // The page owns the read: the host answers with the current notes.
@@ -1954,6 +2011,7 @@ export function NotesPage(props: {
           colors={props.colors}
           dark={props.dark}
           onBack={props.onBack}
+          benchmarkNotes={props.benchmarkNotes}
         />
       )}
     </View>
@@ -1966,20 +2024,19 @@ function LibraryView(props: {
   colors: ThemeColors;
   dark: boolean;
   onBack?: () => void;
+  benchmarkNotes?: Note[] | null;
 }) {
   const colors = props.colors;
+  const items = () => props.benchmarkNotes ?? notes();
   return (
     <View class="relative min-h-0 flex-1 flex-col">
-      <View
-        class="flex-row items-center"
-        style={{
-          height: 54,
-          paddingLeft: compact() ? 12 : GRID_PAD,
-          paddingRight: compact() ? 12 : GRID_PAD - 6,
-          gap: 10,
-        }}
-      >
-        {compact() && props.onBack ? (
+      {/* No heading of its own: the page's name is on its tab, and the cards
+        say what they are. A phone keeps the way back, and nothing else. */}
+      {compact() && props.onBack ? (
+        <View
+          class="flex-row items-center"
+          style={{ height: 44, paddingLeft: 12, gap: 10 }}
+        >
           <View
             onPress={props.onBack}
             role="button"
@@ -1991,27 +2048,31 @@ function LibraryView(props: {
               ‹
             </Text>
           </View>
-        ) : null}
-        {/* The page's name stays put: this screen is the library, not a count. */}
-        <Text
-          class="text-[17px] font-semibold flex-1"
-          style={{ color: colors.foreground }}
-        >
-          Заметки
-        </Text>
-      </View>
+        </View>
+      ) : null}
       <View
         class="min-h-0 flex-1"
+        style={{ pointerEvents: props.benchmarkNotes ? "none" : "auto" }}
         onLayout={(event) => gridWidth.set(event.bounds.size.width)}
       >
-        {loading() ? (
+        {loading() && !props.benchmarkNotes ? (
           skeletonLibrary(colors, props.dark)
-        ) : notes().length === 0 ? (
+        ) : items().length === 0 ? (
           <EmptyLibrary colors={colors} />
         ) : compact() ? (
-          libraryList(notes(), colors, props.dark)
+          libraryList(
+            items(),
+            colors,
+            props.dark,
+            Boolean(props.benchmarkNotes),
+          )
         ) : (
-          libraryGrid(notes(), colors, props.dark)
+          libraryGrid(
+            items(),
+            colors,
+            props.dark,
+            Boolean(props.benchmarkNotes),
+          )
         )}
       </View>
       {/* Out of the header and over the page: the one thing a card list always
@@ -2019,7 +2080,9 @@ function LibraryView(props: {
         the accent rather than glassy: a floating button that lets the cards
         show through reads as disabled. */}
       <View
-        onPress={createNote}
+        onPress={() => {
+          if (!props.benchmarkNotes) createNote();
+        }}
         role="button"
         accessibilityLabel="Новая заметка"
         class="absolute flex-row items-center justify-center"
@@ -2074,16 +2137,37 @@ export function gridMetrics(width: number) {
 /// The cards in rows, as many to a row as their smallest width allows. The rows
 /// go through a virtualized list: a library of ten thousand notes makes the
 /// cards that are in view and no others.
+let benchmarkList: { ref: ListRef; count: number } | null = null;
+
+export function jumpBenchmarkLibrary(fraction: number) {
+  if (!benchmarkList) return false;
+  const { ref, count } = benchmarkList;
+  ref.scrollToIndex({
+    index: Math.floor((count - 1) * fraction),
+    animated: false,
+  });
+  return true;
+}
+
 function libraryGrid(
   items: readonly Note[],
   colors: ThemeColors,
   dark: boolean,
+  benchmark = false,
 ) {
   const { columns, cardWidth, sidePad } = gridMetrics(gridWidth());
+  const inset = GRID_PAD + sidePad;
   const rows = rowsOf(items, columns);
   const rowHeight = Math.round(cardWidth * CARD_RATIO) + CARD_GAP + 8;
   return (
     <List
+      ref={
+        benchmark
+          ? (ref) => {
+              benchmarkList = ref ? { ref, count: rows.length } : null;
+            }
+          : undefined
+      }
       each={rows}
       keyExtractor={(row: Note[]) =>
         "row:" + (row[0] ? text(row[0].id) : "empty")
@@ -2092,9 +2176,9 @@ function libraryGrid(
       testID="notes-grid"
       class="min-h-0 flex-1"
       contentStyle={{
-        paddingLeft: GRID_PAD + sidePad,
-        paddingRight: GRID_PAD + sidePad,
-        paddingTop: 4,
+        paddingLeft: inset,
+        paddingRight: inset,
+        paddingTop: inset,
         paddingBottom: LIBRARY_BOTTOM,
       }}
     >
@@ -2128,6 +2212,7 @@ export function rowsOf(notes: readonly Note[], columns: number): Note[][] {
 /// page it is about to draw: cards without text, pulsing quietly.
 function skeletonLibrary(colors: ThemeColors, dark: boolean) {
   const { columns, cardWidth, sidePad } = gridMetrics(gridWidth());
+  const inset = GRID_PAD + sidePad;
   const height = Math.round(cardWidth * CARD_RATIO);
   const fill = surfaceWash(dark, 0.06);
   const line = (width: number) => (
@@ -2181,9 +2266,9 @@ function skeletonLibrary(colors: ThemeColors, dark: boolean) {
     <View
       class="min-h-0 flex-1"
       style={{
-        paddingLeft: GRID_PAD + sidePad,
-        paddingRight: GRID_PAD + sidePad,
-        paddingTop: 4,
+        paddingLeft: inset,
+        paddingRight: inset,
+        paddingTop: inset,
       }}
     >
       <View style={{ gap: CARD_GAP }}>
@@ -2205,24 +2290,32 @@ function libraryList(
   items: readonly Note[],
   colors: ThemeColors,
   dark: boolean,
+  benchmark = false,
 ) {
   const wash = surfaceWash(dark, 0.07);
   return (
     <List
+      ref={
+        benchmark
+          ? (ref) => {
+              benchmarkList = ref ? { ref, count: items.length } : null;
+            }
+          : undefined
+      }
       each={items}
       keyExtractor={(note: Note) => "note:" + text(note.id)}
       estimatedItemSize={78}
       class="min-h-0 flex-1"
       contentStyle={{
-        paddingLeft: 12,
-        paddingRight: 12,
-        paddingTop: 4,
+        paddingLeft: LIBRARY_LIST_PAD,
+        paddingRight: LIBRARY_LIST_PAD,
+        paddingTop: LIBRARY_LIST_PAD,
         paddingBottom: LIBRARY_BOTTOM,
       }}
     >
       {(note: () => Note) => {
         const item = note();
-        const title = text(item.title).trim() || "Без названия";
+        const title = noteLabel(item.title);
         return (
           <View
             onPress={() => select(item)}
@@ -2282,7 +2375,7 @@ function NoteCard(props: {
   dark: boolean;
 }) {
   const colors = props.colors;
-  const title = text(props.note.title).trim() || "Без названия";
+  const title = noteLabel(props.note.title);
   const height = Math.round(props.width * CARD_RATIO);
   const blocks = previewOf(props.note.doc);
   const lift = createMotion();
@@ -2583,15 +2676,36 @@ function proseBoxHeight(id: number, room: number, rev?: number): number {
   return Math.max(28, Math.ceil(height));
 }
 
+/// How far a code card runs past the text column on each side. The card is a
+/// ground of its own, and a ground wants the room the words do not; the code
+/// and the language label sit that far inside it and so keep the column's own
+/// left edge. On a narrow page the card gives way before it reaches the page's
+/// edge.
+const CODE_BLEED = 20;
+const CODE_EDGE = 8;
+
+export function codeBleedFor(pad: number): number {
+  return Math.max(0, Math.min(CODE_BLEED, pad - CODE_EDGE));
+}
+
+function codeBleed(): number {
+  return codeBleedFor(pagePad());
+}
+
+/// Initial height estimate for a code card: the code runs the column's width
+/// whatever the bleed is, so a line wraps where the prose beside it would.
 function codeBoxHeight(text: string, room: number): number {
-  const per = Math.max(8, Math.floor(Math.max(80, pieceWidth(room) - 28) / 8));
+  const per = Math.max(
+    8,
+    Math.floor(Math.max(80, pieceWidth(room)) / (codeSize() * 0.6)),
+  );
   const lines = (text.length ? text : " ")
     .split("\n")
     .reduce(
       (count, line) => count + Math.max(1, Math.ceil(line.length / per)),
       0,
     );
-  return 12 + 14 + lines * 21;
+  return 12 + 14 + lines * Math.round(codeSize() * 1.57);
 }
 
 /// A code block as shadcn draws it: a header row, then the code. The row is
@@ -2605,11 +2719,17 @@ function CodeCard(props: {
 }) {
   const seg = segments.find((item) => item.id === props.id);
   if (!seg) return <View />;
+  const bleed = codeBleed();
   return (
     <View
+      testID="note-code-card"
       style={{
         marginTop: 4,
         marginBottom: 8,
+        // Wider than the column: the card's ground carries the code, and the
+        // code stays where the text is.
+        marginLeft: -bleed,
+        marginRight: -bleed,
         borderRadius: 10,
         borderWidth: 1,
         borderColor: props.colors.border,
@@ -2621,8 +2741,10 @@ function CodeCard(props: {
         class="flex-row items-center justify-between"
         style={{
           height: 36,
-          paddingLeft: 12,
-          paddingRight: 4,
+          // The language chip's own 8 px of padding carries the rest: the
+          // label reads on the column's left edge, the way the code does.
+          paddingLeft: Math.max(0, bleed - 8),
+          paddingRight: bleed + 4,
           borderBottomWidth: 1,
           borderColor: props.colors.border,
         }}
@@ -2681,7 +2803,7 @@ function CodeCard(props: {
             codeBoxHeight(codeFields(props.id, bodyRev()).text, pageRoom()),
           ),
         }}
-        styles={codeStyles(props.colors, props.dark)}
+        styles={codeStyles(props.colors, props.dark, bleed - 1)}
       />
     </View>
   );
@@ -2694,6 +2816,7 @@ function ProsePiece(props: { id: number; colors: ThemeColors; dark: boolean }) {
     <RichEditor
       editor={seg.session}
       ref={(ref) => attachRef(props.id, ref)}
+      classes={TASK_CLASSES}
       accessibilityLabel="Текст заметки"
       placeholder={
         segmentList()[0]?.id === props.id ? NOTE_PLACEHOLDER : undefined
@@ -2701,6 +2824,7 @@ function ProsePiece(props: { id: number; colors: ThemeColors; dark: boolean }) {
       onContentSizeChange={({ contentSize }) =>
         updateSegHeight(props.id, contentSize.height)
       }
+      onChange={() => applyProseGutter(seg.session, seg.paintRevs)}
       onSelectionChange={({ selection }) =>
         scheduleCaretOutline(props.id, selection.from)
       }
@@ -2719,12 +2843,14 @@ function ProsePiece(props: { id: number; colors: ThemeColors; dark: boolean }) {
         closeSlash();
       }}
       style={{
+        marginLeft: -TABLE_BLEED,
+        marginRight: -TABLE_BLEED,
         height: measuredSegHeight(
           props.id,
           proseBoxHeight(props.id, pageRoom(), bodyRev()),
         ),
       }}
-      styles={noteStyles(props.colors, props.dark, 0, 0, true)}
+      styles={noteStyles(props.colors, props.dark, 0, true)}
     />
   );
 }
@@ -2870,27 +2996,6 @@ function slashMenu(colors: ThemeColors, wash: string) {
   );
 }
 
-/// One entrance per open note. The page function runs again when the library
-/// arrives, and a new motion would fade the page in from nothing each time.
-let noteEnterId = "";
-let noteEnter: ReturnType<typeof createMotion> | null = null;
-
-function noteEntrance(id: string) {
-  if (noteEnter && noteEnterId === id) return noteEnter;
-  noteEnterId = id;
-  noteEnter = createMotion({
-    enter: {
-      keyframes: [
-        { opacity: 0, translateY: 8 },
-        { opacity: 1, translateY: 0 },
-      ],
-      duration: 220,
-      easing: Easing.bezier(0.16, 1, 0.3, 1),
-    },
-  });
-  return noteEnter;
-}
-
 function onPageSpacePress() {
   if (slashOpen()) {
     closeSlash();
@@ -2918,9 +3023,12 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
     paintedDark = props.dark;
     queueMicrotask(paintCode);
   }
-  const enter = noteEntrance(id);
+  // No entrance motion on the page: the note's name and its text are native
+  // editors, and a translate or an opacity over them is composited once, at
+  // the frame the motion starts — the text stays drawn those few pixels up,
+  // and the page's clip then shaves the top of its first line.
   return (
-    <View class="min-h-0 flex-1 flex-col" style={enter.style}>
+    <View class="min-h-0 flex-1 flex-col">
       {/* The sheet is the page, not the column: the scroll view takes the whole
         width, so its indicator sits at the page's edge, and the text is inset
         to the column's width instead. */}
@@ -2938,24 +3046,19 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
           class="min-h-0 flex-col"
           style={{
             height: pageTall() > 0 ? pageTall() : undefined,
-            // The page opens with air above the title. A code note keeps the
-            // whole page in its scroll view, title included, so there the air
-            // is the scroll's own inset (SplitNote) and not this padding.
-            paddingTop: codeLayout() ? 0 : noteTopPad(),
           }}
         >
-          {/* The note's name is part of the note: it heads the page the way a
-            document does, and the title bar holds the same name for the bar's
-            own sake. Either one renames the note. A code note draws it inside
-            SplitNote's scroll, so it scrolls with the text. */}
-          {editor && !codeLayout() && <NoteTitle colors={colors} pad />}
           {/* A press on the page below the text belongs to the text: the caret
           goes to the end, the way a word processor takes a click on the
           empty part of a sheet. A split note puts that press target below its
           last block inside the scroll view so margins, gaps, and code headers
-          never yank focus and scroll to the bottom. */}
+          never yank focus and scroll to the bottom.
+          No clip on this box. The editor is a native surface, and it draws a
+          few pixels above its frame: the clip here shaved the top of the
+          note's first line on every note without a code block. The page card
+          has a clip of its own, and that is the one that matters. */}
           <View
-            class="relative min-h-0 flex-1 overflow-hidden"
+            class="relative min-h-0 flex-1"
             ref={(node) => {
               menuAnchor = node;
             }}
@@ -2978,6 +3081,24 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
                         editorRef = ref;
                       }}
                       class="min-h-0 flex-1"
+                      classes={TASK_CLASSES}
+                      onChange={() => {
+                        if (editor && !split) {
+                          singleBodyEmpty.set(editor.getText().length === 0);
+                          applyProseGutter(editor, singlePaintRevs);
+                        }
+                      }}
+                      contentLayer={
+                        <View
+                          class="absolute left-0 right-0"
+                          style={{
+                            top: noteTopPad(),
+                            pointerEvents: "box-none",
+                          }}
+                        >
+                          <NoteTitle colors={colors} pad />
+                        </View>
+                      }
                       placeholder={NOTE_PLACEHOLDER}
                       accessibilityLabel="Текст заметки"
                       onSelectionChange={({ selection }) =>
@@ -3000,10 +3121,13 @@ function NoteView(props: { colors: ThemeColors; dark: boolean }) {
                       styles={noteStyles(
                         colors,
                         props.dark,
-                        Math.max(0, pageTall() - 150),
-                        pagePad(),
+                        pagePad() - TABLE_BLEED,
                         false,
-                        NOTE_TOP_PAD,
+                        noteTopPad() +
+                          titleHeight() +
+                          NOTE_TITLE_GAP +
+                          NOTE_TOP_PAD,
+                        singleBodyEmpty(),
                       )}
                     />
                   ) : (
@@ -3038,6 +3162,11 @@ function NoteTitle(props: { colors: ThemeColors; pad?: boolean }) {
   return (
     <View
       class="shrink-0 flex-col justify-end"
+      onLayout={
+        props.pad
+          ? (event) => titleHeight.set(event.bounds.size.height)
+          : undefined
+      }
       style={{
         minHeight: NOTE_TITLE_BLOCK,
         marginLeft: props.pad ? pagePad() : 0,
@@ -3047,9 +3176,9 @@ function NoteTitle(props: { colors: ThemeColors; pad?: boolean }) {
     >
       <RichEditor
         editor={editor}
-        placeholder="\u200BБез названия"
+        placeholder={NOTE_TITLE_HINT}
         accessibilityLabel="Название заметки"
-        styles={titleStyles(props.colors)}
+        styles={titleStyles(props.colors, draftTitle().length === 0)}
         class="shrink-0"
       />
     </View>
@@ -3066,6 +3195,7 @@ function titleEditor() {
 }
 
 function buildTitleEditor(title: string) {
+  titleHeight.set(NOTE_TITLE_BLOCK);
   const previous = titleSession;
   titleSession = null;
   if (previous) {
@@ -3105,14 +3235,15 @@ function titleTextOf(session: RichEditorSession): string {
 
 let titleStylesCache: { key: string; styles: unknown } | null = null;
 
-function titleStyles(colors: ThemeColors) {
-  const key = `${colors.foreground}|${colors.muted}|${colors.accent}`;
+function titleStyles(colors: ThemeColors, empty: boolean) {
+  const foreground = empty ? colors.muted : colors.foreground;
+  const key = `${foreground}|${colors.muted}|${colors.accent}`;
   if (titleStylesCache?.key !== key) {
     titleStylesCache = {
       key,
       styles: {
         content: {
-          color: colors.foreground,
+          color: foreground,
           backgroundColor: "transparent",
           paddingTop: 0,
           paddingBottom: 0,
@@ -3158,21 +3289,43 @@ const NOTE_TOP_PAD = 4;
 const NOTE_TITLE_LINE = 40;
 const NOTE_TITLE_MIN_LINES = 2;
 export const NOTE_TITLE_BLOCK = NOTE_TITLE_LINE * NOTE_TITLE_MIN_LINES;
+const titleHeight = signal(NOTE_TITLE_BLOCK);
 /// The empty space above the title, where the page opens: a fifth of the
 /// visible page, so the writing does not start against the window's edge.
 const NOTE_TOP_SHARE = 0.2;
 
-function noteTopPad() {
-  return pageTall() > 0
-    ? Math.max(NOTE_TOP_PAD, Math.round(pageTall() * NOTE_TOP_SHARE))
-    : NOTE_TOP_PAD;
+/// The visible page's height: the page itself once it is measured, and before
+/// the first layout pass the window's content area below the title bar — the
+/// page never opens with its name against the edge and then jumps down.
+function pageVisibleTall(): number {
+  if (pageTall() > 0) return pageTall();
+  const bounds = windows()[0]?.state()?.contentBounds;
+  const tall = Number(bounds?.size?.height ?? 0);
+  return tall > 0 ? tall - TITLEBAR_HEIGHT : 0;
 }
-/// The empty note's hint. It opens with a zero-width space: nsh paints the
+
+/// The air above the note's name: a fifth of the visible page. The name's own
+/// block keeps a line of air over the text, so that line comes off the padding
+/// — the words start a fifth of the page down, not a fifth and a line.
+export function noteTopPadFor(tall: number): number {
+  if (!(tall > 0)) return NOTE_TOP_PAD;
+  return Math.max(0, Math.round(tall * NOTE_TOP_SHARE) - NOTE_TITLE_LINE);
+}
+
+function noteTopPad() {
+  return noteTopPadFor(pageVisibleTall());
+}
+/// The empty page's hints. They open with a zero-width space: nsh paints the
 /// glyph the caret stands on in the editor's own ink, so the hint's first
-/// letter came out white beside the grey rest — the invisible space takes
-/// that place instead.
-const NOTE_PLACEHOLDER =
-  "\u200BПишите. Слэш открывает блоки: заголовок, список, таблица…";
+/// letter came out white beside the grey rest — the invisible space takes that
+/// place instead. Written through one helper, because a JSX attribute is a
+/// plain string: `placeholder="\u200B…"` there reaches the page as the six
+/// characters `\u200B`, and the title did show exactly that.
+export const emptyHint = (text: string) => `\u200B${text}`;
+export const NOTE_PLACEHOLDER = emptyHint(
+  "Пишите. Слэш открывает блоки: заголовок, список, таблица…",
+);
+export const NOTE_TITLE_HINT = emptyHint("Без названия");
 
 /// The document's scale, taken from AnyType's blocks: body 16 on 24, headings
 /// 28..14 with clear breathing room above and tighter rhythm below so each
@@ -3199,16 +3352,16 @@ function segmentAt(markPos: number): { id: number; local: number } | null {
 function noteStyles(
   colors: ThemeColors,
   dark: boolean,
-  minHeight: number,
   pad: number,
   piece = false,
   topPad = 2,
+  empty = false,
 ) {
-  const key = `${piece}|${dark}|${minHeight}|${pad}|${topPad}|${colors.background}|${colors.foreground}|${colors.muted}|${colors.border}`;
+  const key = `${piece}|${dark}|${pad}|${topPad}|${empty}|${textSize()}|${codeSize()}|${colors.background}|${colors.foreground}|${colors.muted}|${colors.border}`;
   if (documentStylesCache?.key !== key) {
     documentStylesCache = {
       key,
-      styles: documentStyles(colors, dark, minHeight, pad, piece, topPad),
+      styles: documentStyles(colors, dark, pad, piece, topPad, empty),
     };
   }
   return documentStylesCache.styles as ReturnType<typeof documentStyles>;
@@ -3216,8 +3369,8 @@ function noteStyles(
 
 let codeStylesCache: { key: string; styles: unknown } | null = null;
 
-function codeStyles(colors: ThemeColors, dark: boolean) {
-  const key = `${dark}|${colors.foreground}|${colors.accent}|${colors.muted}`;
+function codeStyles(colors: ThemeColors, dark: boolean, pad: number) {
+  const key = `${dark}|${colors.foreground}|${colors.accent}|${colors.muted}|${pad}|${codeSize()}`;
   if (codeStylesCache?.key !== key) {
     codeStylesCache = {
       key,
@@ -3236,22 +3389,22 @@ function codeStyles(colors: ThemeColors, dark: boolean) {
         nodes: {
           codeBlock: {
             fontFamily: Mono,
-            fontSize: 14,
+            fontSize: codeSize(),
             fontWeight: 500,
-            lineHeight: 22,
+            lineHeight: Math.round(codeSize() * 1.57),
             paddingTop: 12,
             paddingBottom: 14,
-            paddingLeft: 14,
-            paddingRight: 14,
+            paddingLeft: pad,
+            paddingRight: pad,
             marginTop: 0,
             marginBottom: 0,
             backgroundColor: "transparent",
           },
           paragraph: {
             fontFamily: Mono,
-            fontSize: 14,
+            fontSize: codeSize(),
             fontWeight: 500,
-            lineHeight: 22,
+            lineHeight: Math.round(codeSize() * 1.57),
             marginTop: 0,
             marginBottom: 0,
           },
@@ -3266,32 +3419,54 @@ function codeStyles(colors: ThemeColors, dark: boolean) {
 function documentStyles(
   colors: ThemeColors,
   dark: boolean,
-  minHeight: number,
   pad: number,
   piece = false,
   topPad = 2,
+  empty = false,
 ) {
   return {
-    // The page's text fills at least the room it is in: a press below the last
-    // line lands on the editable area, and the caret goes where writing goes.
-    // The side margins keep the text in its column while the scroll view keeps
-    // the page's whole width. A piece sits in the column's own padding.
+    // The text is as tall as the note and no taller: the page's own box takes
+    // the presses below the last line, and the editor needs no min height to
+    // be reachable. The side margins keep the text in its column while the
+    // scroll view keeps the page's whole width. A piece sits in the column's
+    // own padding.
     content: {
-      color: colors.foreground,
+      // GPUI can paint the first hint glyph with the empty block's text color.
+      color: empty ? colors.muted : colors.foreground,
       backgroundColor: "transparent",
       paddingTop: piece ? 0 : topPad,
       paddingBottom: piece ? 0 : 120,
       paddingLeft: piece ? 0 : pad,
       paddingRight: piece ? 0 : pad,
-      minHeight: piece ? 0 : minHeight,
+      minHeight: 0,
     },
     placeholder: { color: colors.muted },
     caret: { backgroundColor: colors.accent },
+    // The box a task's checkbox sits in: the editor keeps room for it, and the
+    // square inside is `taskCheckboxIndicator` — a `Checkbox` draws nothing of
+    // its own, so these two entries are what make a checklist a checklist. The
+    // checked one is the same square with the accent fill.
+    taskCheckbox: { marginRight: 8, marginTop: 3 },
+    taskCheckboxIndicator: {
+      width: 16,
+      height: 16,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      borderRadius: 4,
+    },
+    taskCheckboxChecked: {
+      width: 16,
+      height: 16,
+      borderWidth: 1.5,
+      borderColor: colors.accent,
+      borderRadius: 4,
+      backgroundColor: colors.accent,
+    },
     nodes: {
       paragraph: {
-        fontSize: 16,
+        fontSize: textSize(),
         fontWeight: 500,
-        lineHeight: 24,
+        lineHeight: Math.round(textSize() * 1.5),
         marginTop: 2,
         marginBottom: 4,
       },
@@ -3344,14 +3519,41 @@ function documentStyles(
         borderLeftWidth: 2,
         borderColor: colors.border,
       },
-      bulletList: { marginTop: 2, marginBottom: 4, paddingLeft: 6 },
-      orderedList: { marginTop: 2, marginBottom: 4, paddingLeft: 6 },
-      listItem: { fontSize: 16, fontWeight: 500, lineHeight: 24 },
+      // NSH draws markers to the left of each item, inside the list's indent.
+      bulletList: {
+        marginTop: 2,
+        marginBottom: 4,
+        paddingLeft: 24,
+      },
+      orderedList: {
+        marginTop: 2,
+        marginBottom: 4,
+        paddingLeft: 38,
+      },
+      listItem: {
+        fontSize: textSize(),
+        fontWeight: 500,
+        lineHeight: Math.round(textSize() * 1.5),
+      },
+      // A task list is a list with a box instead of a marker, and the box sits
+      // in the same padding. Its own entries matter: without them the editor
+      // lays the tasks out as plain lines, which is what a checklist turned
+      // into before these two lines.
+      taskList: {
+        marginTop: 2,
+        marginBottom: 4,
+        paddingLeft: piece ? 24 : 6,
+      },
+      taskItem: {
+        fontSize: textSize(),
+        fontWeight: 500,
+        lineHeight: Math.round(textSize() * 1.5),
+      },
       codeBlock: {
         fontFamily: Mono,
-        fontSize: 14,
+        fontSize: codeSize(),
         fontWeight: 500,
-        lineHeight: 22,
+        lineHeight: Math.round(codeSize() * 1.57),
         paddingTop: 12,
         paddingBottom: 12,
         paddingLeft: 14,
@@ -3384,7 +3586,7 @@ function documentStyles(
     marks: {
       code: {
         fontFamily: Mono,
-        fontSize: 16,
+        fontSize: codeSize(),
         fontWeight: 500,
         color: colors.foreground,
         backgroundColor: surfaceWash(dark, 0.08),

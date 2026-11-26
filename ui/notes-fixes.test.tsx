@@ -1,6 +1,19 @@
 import { open, expect, test } from "nsh/test";
 import { addNote, gridMetrics, notes, setNotes } from "./notes";
-import { NOTE_TITLE_BLOCK, NOTE_TITLE_GAP } from "./notes";
+import {
+  bindNoteCommands,
+  codeBleedFor,
+  noteTopPadFor,
+  createOpenNote,
+  openNoteById,
+  openNoteIsBlank,
+  NOTE_PLACEHOLDER,
+  NOTE_TITLE_BLOCK,
+  NOTE_TITLE_GAP,
+  NOTE_TITLE_HINT,
+  emptyHint,
+} from "./notes";
+import { noteLabel } from "./state";
 import type { Note } from "./state";
 import {
   commitRecent,
@@ -141,47 +154,78 @@ test("recent notes stay in place while open and move to the top when left", () =
   expect(recent().map((item) => item.id)).toEqual(["n4", "n3", "n1"]);
 });
 
-test("the notes' arrows walk back to the list and forward into the note", async () => {
-  const app = await open("./notes-trail-fixture.tsx", {
-    width: 1180,
-    height: 820,
-  });
-  await app.press("label:Заметка 2");
-  // The list keeps its "Новая заметка" button; a note is the note itself.
-  expect(app.texts()).toContain("Текст заметки 2");
-  expect(app.texts()).not.toContain("Новая заметка");
-
-  // Back from the first note opened is the list it came from — the arrow is
-  // the way out, so a note has no separate "close" — and forward is the note
-  // again, as the trail remembers it.
-  await app.press("label:Назад");
-  expect(app.texts()).toContain("Новая заметка");
-
-  await app.press("label:Вперёд");
-  expect(app.texts()).not.toContain("Новая заметка");
-  expect(app.texts()).toContain("Текст заметки 2");
-
-  // A note opened from the list drops what was ahead: the trail is the way
-  // walked, not everything ever visited.
-  await app.press("label:Назад");
-  await app.press("label:Заметка 1");
-  await app.press("label:Вперёд");
-  expect(app.texts()).not.toContain("Новая заметка");
-  expect(app.texts()).toContain("Текст заметки 1");
+// A JSX attribute is a plain string: an escape written there reaches the page as
+// text, and a fresh note showed `\u200BБез названия` over its title.
+test("a hint carries the zero-width space, not its spelling", () => {
+  expect(emptyHint("x")).toEqual("\u200Bx");
+  expect(NOTE_TITLE_HINT).toEqual("\u200BБез названия");
+  expect(NOTE_TITLE_HINT).not.toContain("\\");
+  expect(NOTE_PLACEHOLDER).not.toContain("\\");
 });
 
-test("a note restored without a walk leaves both arrows still", async () => {
-  const app = await open("./notes-trail-fixture.tsx", {
-    width: 1180,
-    height: 820,
+// `mod+t` leaves one new note, never a stack: the blank note it already opened
+// is the new note, so a held key or a second press opens nothing else.
+test("a new note is opened once, not once per repeat", () => {
+  let created = 0;
+  bindNoteCommands({
+    create: () => {
+      created += 1;
+    },
+    save() {},
+    remove() {},
+    reload() {},
   });
-  // The page opens with nowhere behind it and nowhere ahead.
-  expect(app.texts()).toContain("нет:нет");
+  const made = (id: string, text: string): Note => ({
+    id,
+    title: "",
+    doc: {
+      type: "doc",
+      content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+    },
+    text,
+    createdAt: "2026-11-10T09:00:00.000Z",
+    updatedAt: "2026-11-10T09:00:00.000Z",
+  });
+  setNotes([made("blank:1", "")]);
+  openNoteById("blank:1");
+  expect(openNoteIsBlank()).toEqual(true);
+  createOpenNote();
+  expect(created).toEqual(0);
+  setNotes([made("blank:2", "слова")]);
+  openNoteById("blank:2");
+  expect(openNoteIsBlank()).toEqual(false);
+  createOpenNote();
+  expect(created).toEqual(1);
+});
 
-  // What the host and the bar's tabs do: bring a note back without walking.
-  // A step recorded here would leave back lit wherever the reader stands and
-  // forward dark at the end of the trail.
-  await app.press("label:Восстановить заметку");
-  expect(app.texts()).toContain("Текст заметки 2");
-  expect(app.texts()).toContain("нет:нет");
+// The rule for every place a note is shown — tab, row, card: a name that reads.
+// An empty string is no name, and it used to slip past a `??` fallback and
+// leave the tab blank.
+test("a note with no name keeps a name that reads", () => {
+  expect(noteLabel("")).toEqual("Без названия");
+  expect(noteLabel("   ")).toEqual("Без названия");
+  expect(noteLabel(null)).toEqual("Без названия");
+  expect(noteLabel(" Борщ ")).toEqual("Борщ");
+});
+
+// The page opens a fifth of the way down: the name's block keeps one line of
+// air over the text by itself, so the padding carries the rest, and the first
+// frame of an unmeasured page is not a name against the window's edge.
+test("the page opens a fifth of the way down", () => {
+  expect(noteTopPadFor(1000)).toEqual(160);
+  expect(noteTopPadFor(900)).toEqual(140);
+  expect(noteTopPadFor(400)).toEqual(40);
+  // Nothing measured yet: a small air, never a negative one.
+  expect(noteTopPadFor(0)).toBeGreaterThanOrEqual(0);
+});
+
+// A code card runs past the text column, and gives way before the page's own
+// edge: the code and the language land on the column's left edge either way.
+test("a code card is wider than the column, never wider than the page", () => {
+  // A wide page has the room: the card may take its whole margin of 20.
+  expect(codeBleedFor(430)).toEqual(20);
+  expect(codeBleedFor(40)).toEqual(20);
+  // A narrow one keeps its edge: the card stops 8 px short of the page.
+  expect(codeBleedFor(16)).toEqual(8);
+  expect(codeBleedFor(0)).toEqual(0);
 });

@@ -1,8 +1,8 @@
 import { append, bindProp, component, each, element, font, insert, list, prop, setup, text } from "nsh:rt";
-import { Clipboard, Easing, LayoutAnimation, Storage, createMotion, effect, host, keymap, mount, nativeComponent, pixelRatio, setTheme, signal } from "nsh";
+import { Animated, Clipboard, Easing, LayoutAnimation, Storage, batch, colorScheme, createAnimatedValue, createMotion, effect, host, keymap, mount, nativeComponent, pixelRatio, setColorScheme, setTheme, signal, untracked } from "nsh";
 import { Menu, windows } from "nsh/desktop";
 import { platform } from "os";
-import { Popover, RichEditor, RichEditorPlugin, StarterKit, TableKit, chain, command, createRichEditor, deleteRange, insertTable, selectAll, setNodeAttribute } from "nsh/base";
+import { Popover, RichEditor, RichEditorPlugin, StarterKit, TableKit, chain, command, createRichEditor, deleteRange, insertTable, markdown, selectAll, setNodeAttribute } from "nsh/base";
 
 //#region \0nsh-app
 setup(null, null, null, null, "{\"id\":\"com.mundus.atlas\",\"name\":\"Atlas\",\"version\":\"1.0.0\",\"build\":1,\"development\":true}");
@@ -281,6 +281,12 @@ var navigation_default = [
 		"footer": false
 	},
 	{
+		"id": "developers",
+		"label": "Для разработчиков",
+		"icon": "gearshape",
+		"footer": true
+	},
+	{
 		"id": "settings",
 		"label": "Настройки",
 		"icon": "gearshape",
@@ -418,6 +424,15 @@ function accentMark(hex) {
 
 //#endregion
 //#region state.ts
+/** What a note without a name is called. */
+const NOTE_UNTITLED = "Без названия";
+/**
+* A note's name as it is shown: a note with no name keeps one that reads, so a
+* tab, a row or a card never stands blank because the name is an empty string.
+*/
+function noteLabel(title) {
+	return String(title ?? "").trim() || "Без названия";
+}
 const fallback = {
 	route: "journal",
 	title: "Дневник",
@@ -471,7 +486,7 @@ function isSnapshot(value) {
 	return "version" in value && typeof value.version === "string" && "appearanceEditable" in value && typeof value.appearanceEditable === "boolean" && "themes" in value && Array.isArray(value.themes) && "colors" in value && isColors(value.colors) && "sidebarVisible" in value && typeof value.sidebarVisible === "boolean" && "chrome" in value && (value.chrome === "native" || value.chrome === "tsx");
 }
 function isRoute(value) {
-	return value === "journal" || value === "notes" || value === "tasks" || value === "games" || value === "settings";
+	return value === "journal" || value === "notes" || value === "tasks" || value === "games" || value === "settings" || value === "developers";
 }
 function isTodo$1(value) {
 	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string" && "title" in value && typeof value.title === "string" && "is_completed" in value && typeof value.is_completed === "boolean";
@@ -496,13 +511,13 @@ const shortcutNames = [
 	"reload"
 ];
 const defaultShortcuts = {
-	sidebar: "mod+b",
+	sidebar: "mod+shift+b",
 	create: "mod+n",
 	search: "mod+k",
 	reload: "mod+r"
 };
 const shortcutOptions = {
-	sidebar: ["mod+b", "mod+shift+b"],
+	sidebar: ["mod+shift+b", "mod+alt+b"],
 	create: ["mod+n", "mod+shift+n"],
 	search: ["mod+k", "mod+shift+k"],
 	reload: ["mod+r", "mod+shift+r"]
@@ -542,7 +557,7 @@ const glyphs = {
 	trash: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M12%201a4.24%204.24%200%200%200-3.789%202.342L7.382%205H4a1%201%200%200%200%200%202h1v8.036c0%20.901%200%201.629.04%202.22.042.61.13%201.148.34%201.657a5%205%200%200%200%202.707%202.706c.51.212%201.048.3%201.656.34.592.041%201.32.041%202.221.041h.072c.901%200%201.629%200%202.22-.04.61-.042%201.148-.13%201.657-.34a5%205%200%200%200%202.706-2.707c.212-.51.3-1.048.34-1.656.041-.592.041-1.32.041-2.222V7h1a1%201%200%201%200%200-2h-3.382l-.83-1.658A4.24%204.24%200%200%200%2012%201Zm-2%203.236L9.618%205h4.764L14%204.236a2.236%202.236%200%200%200-4%200Z%22%20clip-rule%3D%22evenodd%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
 	sidebar: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M18.724%202.654c-.7-.356-1.463-.51-2.359-.583C15.491%202%2014.407%202%2013.044%202h-2.052c-.757%200-1.425%200-2.011.011-1.535.03-2.7.131-3.705.643a6%206%200%200%200-2.622%202.622c-.356.7-.51%201.463-.583%202.359C2%208.509%202%209.593%202%2010.956v2.088c0%201.363%200%202.447.071%203.321.074.896.227%201.66.583%202.359a6%206%200%200%200%202.622%202.622c1.004.512%202.17.613%203.705.643.586.011%201.254.011%202.011.011h2.052c1.363%200%202.447%200%203.321-.071.896-.074%201.66-.227%202.359-.583a6%206%200%200%200%202.622-2.622c.356-.7.51-1.463.583-2.359.071-.874.071-1.958.071-3.321v-2.088c0-1.363%200-2.447-.071-3.321-.074-.896-.227-1.66-.583-2.359a6%206%200%200%200-2.622-2.622ZM13%204c1.417%200%202.419%200%203.203.065.771.063%201.243.182%201.613.371a4%204%200%200%201%201.748%201.748c.189.37.308.842.371%201.613C20%208.581%2020%209.583%2020%2011v2c0%201.417%200%202.419-.065%203.203-.063.771-.182%201.243-.371%201.613a4%204%200%200%201-1.748%201.748c-.37.189-.841.308-1.613.371C15.419%2020%2014.417%2020%2013%2020h-2l-1-.001V4h1z%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
 	more: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M1.85%2012C1.85%206.394%206.394%201.85%2012%201.85S22.15%206.394%2022.15%2012c0%205.605-4.544%2010.15-10.15%2010.15S1.85%2017.605%201.85%2012ZM8%2010.9a1.1%201.1%200%200%200%200%202.2h.01a1.1%201.1%200%200%200%200-2.2zm4%200a1.1%201.1%200%200%200%200%202.2h.01a1.1%201.1%200%200%200%200-2.2zm4%200a1.1%201.1%200%200%200%200%202.2h.01a1.1%201.1%200%200%200%200-2.2z%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
-	mic: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M20.453%2011.015a5.26%205.26%200%200%201-3.382%201.535l-9.633%208.619a3.263%203.263%200%200%201-4.607-4.607l8.62-9.633a5.28%205.28%200%201%201%209.003%204.086Zm-7.972-2.239%202.743%202.743-9.12%208.16a1.263%201.263%200%200%201-1.782-1.783z%22%20clip-rule%3D%22evenodd%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
+	mic: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M12%2020a8%208%200%200%201-8-8m8%208a8%208%200%200%200%208-8m-8%208v2m0-6a4%204%200%200%201-4-4V7a4%204%200%201%201%208%200v5a4%204%200%200%201-4%204Z%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E%0A",
 	copy: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M13.8%202c-1.668%200-2.748%200-3.654.294a6%206%200%200%200-3.887%203.965l-.113.035a6%206%200%200%200-3.852%203.852C1.999%2011.052%202%2012.132%202%2013.8v.4c0%201.669%200%202.748.294%203.654a6%206%200%200%200%203.852%203.852c.906.295%201.985.294%203.654.294h.4c1.669%200%202.748%200%203.654-.294a6%206%200%200%200%203.887-3.965q.057-.015.113-.035a6%206%200%200%200%203.852-3.852c.295-.906.294-1.985.294-3.654v-.4c0-1.669%200-2.748-.294-3.654a6%206%200%200%200-3.852-3.852C16.948%201.999%2015.87%202%2014.2%202zM9.909%206c-.512%200-.967%200-1.376.007a4%204%200%200%201%202.232-1.811C11.329%204.012%2012.061%204%2014%204s2.672.012%203.236.196a4%204%200%200%201%202.568%202.568C19.988%207.329%2020%208.061%2020%2010s-.012%202.672-.196%203.236a4%204%200%200%201-1.81%202.232c.006-.409.006-.863.006-1.375V13.8c0-1.668%200-2.748-.294-3.654a6%206%200%200%200-3.852-3.852C12.948%205.999%2011.87%206%2010.2%206z%22%20clip-rule%3D%22evenodd%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E",
 	arrowLeft: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M14.125%208.14a20.4%2020.4%200%200%200-3.894%203.701.47.47%200%200%200%200%20.596%2020.4%2020.4%200%200%200%203.894%203.702%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E%0A",
 	arrowRight: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20stroke%3D%22currentColor%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M9.875%208.14a20.4%2020.4%200%200%201%203.894%203.701.47.47%200%200%201%200%20.596%2020.4%2020.4%200%200%201-3.894%203.702%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E%0A",
@@ -565,8 +580,30 @@ function Glyph(props) {
 }
 
 //#endregion
+//#region reading-size.ts
+const textSize = signal(16);
+const codeSize = signal(14);
+const interfaceSize = signal(13);
+for (const [key, size] of [["text", textSize], ["code", codeSize]]) {
+	const storageKey = `mundus.atlas.font.${key}`;
+	Storage.getItem(storageKey).then((value) => {
+		const px = Number(value);
+		if (px >= 12 && px <= 24) size.set(px);
+	});
+}
+function setReadingSize(kind, px) {
+	if (!Number.isFinite(px) || px < 12 || px > 24) return;
+	(kind === "text" ? textSize : codeSize).set(px);
+	Storage.setItem(`mundus.atlas.font.${kind}`, String(px));
+}
+
+//#endregion
 //#region chrome.tsx
 const TITLEBAR_HEIGHT = 48;
+const CARD_GAP$1 = 8;
+function slideDirection(from, to) {
+	return to > from ? 1 : -1;
+}
 const SIDEBAR_WIDTH = 282;
 const ROW_HEIGHT = 32;
 const NAV_ROW_HEIGHT = 40;
@@ -693,9 +730,15 @@ const TAB_HEIGHT = 32;
 const TAB_TILE_HEIGHT = 20;
 const TAB_CLOSE_SIZE = 20;
 const TAB_CLOSE_ROOM = 28;
-const TAB_TEXT_SIZE = 14;
 const TAB_WIDTH = 300;
-const TAB_MIN_WIDTH = 88;
+const TAB_TILE_PAD = 6;
+const TAB_ICON_ONLY = 36;
+const TAB_NAME_FITS = 96;
+function tabChipWidth(room, count) {
+	if (!(room > 0) || count < 1) return TAB_WIDTH;
+	const fit = Math.floor((room - TAB_GAP * (count - 1)) / count);
+	return Math.max(TAB_ICON_ONLY, Math.min(TAB_WIDTH, fit));
+}
 const TAB_FADE = 22;
 const TAB_GAP = 2;
 function TabIcon(props) {
@@ -752,6 +795,7 @@ function TabChip(props) {
 		const __nsh_hv0 = element("view");
 		bindProp(__nsh_hv0, "onPress", () => props.onSelect);
 		prop(__nsh_hv0, "onContextMenu", (event) => props.onMenu?.(event.pagePosition));
+		bindProp(__nsh_hv0, "testID", () => `tab-${props.tab.key}`);
 		prop(__nsh_hv0, "role", "button");
 		bindProp(__nsh_hv0, "accessibilityLabel", () => props.tab.label);
 		bindProp(__nsh_hv0, "accessibilityState", () => ({ selected: props.tab.active }));
@@ -759,18 +803,18 @@ function TabChip(props) {
 		prop(__nsh_hv0, "onMouseLeave", () => over.set(false));
 		prop(__nsh_hv0, "desktop", { windowDrag: false });
 		prop(__nsh_hv0, "class", "flex-row items-center");
-		prop(__nsh_hv0, "style", {
+		bindProp(__nsh_hv0, "style", () => ({
 			height: TAB_HEIGHT,
-			width: TAB_WIDTH,
-			minWidth: TAB_MIN_WIDTH,
+			width: props.width,
+			minWidth: TAB_ICON_ONLY,
 			flexShrink: 1,
-			paddingLeft: 6,
-			paddingRight: TAB_CLOSE_ROOM,
-			gap: 8,
+			paddingLeft: TAB_TILE_PAD,
+			paddingRight: props.compact ? TAB_TILE_PAD : TAB_CLOSE_ROOM,
+			gap: props.compact ? 0 : 8,
 			borderRadius: 8,
 			backgroundColor: plate,
 			cursor: "pointer"
-		});
+		}));
 		const __nsh_hv1 = element("view");
 		prop(__nsh_hv1, "class", "items-center justify-center");
 		bindProp(__nsh_hv1, "style", () => ({
@@ -800,7 +844,7 @@ function TabChip(props) {
 		});
 		const __nsh_hv3 = element("text");
 		bindProp(__nsh_hv3, "style", () => ({
-			fontSize: TAB_TEXT_SIZE,
+			fontSize: interfaceSize() + 1,
 			lineHeight: 20,
 			numberOfLines: 1,
 			textOverflow: "clip",
@@ -819,63 +863,66 @@ function TabChip(props) {
 		}));
 		append(__nsh_hv2, __nsh_hv3);
 		append(__nsh_hv2, __nsh_hv4);
-		const __nsh_hv5 = element("view");
-		prop(__nsh_hv5, "onPress", () => props.onClose());
-		prop(__nsh_hv5, "role", "button");
-		bindProp(__nsh_hv5, "accessibilityLabel", () => `Закрыть ${props.tab.label}`);
-		prop(__nsh_hv5, "onMouseEnter", () => closeOver.set(true));
-		prop(__nsh_hv5, "onMouseLeave", () => closeOver.set(false));
-		prop(__nsh_hv5, "class", "absolute items-center justify-center");
-		bindProp(__nsh_hv5, "hoverStyle", () => ({ backgroundColor: ink(.18) }));
-		prop(__nsh_hv5, "desktop", { windowDrag: false });
-		bindProp(__nsh_hv5, "style", () => ({
-			right: 4,
-			top: 6,
-			width: TAB_CLOSE_SIZE,
-			height: TAB_CLOSE_SIZE,
-			borderRadius: 6,
-			opacity: props.tab.active || over() ? 1 : 0,
-			cursor: "pointer"
-		}));
-		insert(__nsh_hv5, component(Glyph, {
-			name: "close",
-			size: 13,
-			get color() {
-				return closeOver() ? colors.foreground : colors.muted;
-			}
-		}));
 		append(__nsh_hv0, __nsh_hv1);
 		append(__nsh_hv0, __nsh_hv2);
-		append(__nsh_hv0, __nsh_hv5);
+		insert(__nsh_hv0, () => !props.compact && (() => {
+			const __nsh_hv5 = element("view");
+			prop(__nsh_hv5, "onPress", () => props.onClose());
+			prop(__nsh_hv5, "role", "button");
+			bindProp(__nsh_hv5, "accessibilityLabel", () => `Закрыть ${props.tab.label}`);
+			prop(__nsh_hv5, "onMouseEnter", () => closeOver.set(true));
+			prop(__nsh_hv5, "onMouseLeave", () => closeOver.set(false));
+			prop(__nsh_hv5, "class", "absolute items-center justify-center");
+			bindProp(__nsh_hv5, "hoverStyle", () => ({ backgroundColor: ink(.18) }));
+			prop(__nsh_hv5, "desktop", { windowDrag: false });
+			bindProp(__nsh_hv5, "style", () => ({
+				right: 4,
+				top: 6,
+				width: TAB_CLOSE_SIZE,
+				height: TAB_CLOSE_SIZE,
+				borderRadius: 6,
+				opacity: props.tab.active || over() ? 1 : 0,
+				cursor: "pointer"
+			}));
+			insert(__nsh_hv5, component(Glyph, {
+				name: "close",
+				size: 13,
+				get color() {
+					return closeOver() ? colors.foreground : colors.muted;
+				}
+			}));
+			return __nsh_hv5;
+		})());
 		return __nsh_hv0;
 	})();
 }
 function TrailArrow(props) {
-	const enabled = props.enabled === true;
+	const enabled = () => props.enabled === true;
 	return (() => {
 		const __nsh_hv6 = element("view");
 		prop(__nsh_hv6, "onPress", () => {
-			if (enabled) props.onPress?.();
+			if (enabled()) props.onPress?.();
 		});
 		prop(__nsh_hv6, "role", "button");
 		bindProp(__nsh_hv6, "accessibilityLabel", () => props.label);
+		bindProp(__nsh_hv6, "accessibilityState", () => ({ disabled: !enabled() }));
 		prop(__nsh_hv6, "class", "items-center justify-center");
-		bindProp(__nsh_hv6, "hoverStyle", () => enabled ? { backgroundColor: hoverWash(props.dark) } : void 0);
-		bindProp(__nsh_hv6, "activeStyle", () => enabled ? { backgroundColor: surfaceWash(props.dark, .12) } : void 0);
+		bindProp(__nsh_hv6, "hoverStyle", () => enabled() ? { backgroundColor: hoverWash(props.dark) } : void 0);
+		bindProp(__nsh_hv6, "activeStyle", () => enabled() ? { backgroundColor: surfaceWash(props.dark, .12) } : void 0);
 		prop(__nsh_hv6, "desktop", { windowDrag: false });
-		prop(__nsh_hv6, "style", {
+		bindProp(__nsh_hv6, "style", () => ({
 			width: 24,
 			height: 24,
 			borderRadius: CONTROL_RADIUS,
-			cursor: enabled ? "pointer" : "default"
-		});
+			cursor: enabled() ? "pointer" : "default"
+		}));
 		insert(__nsh_hv6, component(Glyph, {
 			get name() {
 				return props.dir === "back" ? "arrowLeft" : "arrowRight";
 			},
 			size: 16,
 			get color() {
-				return enabled ? props.colors.foreground : colorAlpha(props.colors.muted, .5);
+				return enabled() ? props.colors.foreground : colorAlpha(props.colors.muted, .5);
 			}
 		}));
 		return __nsh_hv6;
@@ -931,6 +978,14 @@ function TitlebarOverlay(props) {
 	const wash = hoverWash(props.dark);
 	const barHeight = controls.height || 48;
 	const dragLeft = macos ? Math.max(controls.left, 78) : 0;
+	const trailLeft = () => noteBackLeft(props.pageInset ?? 0, sidebarLeft);
+	const stripLeft = () => trailLeft() + TRAIL_WIDTH + 8;
+	const controlsRoom = controlsRight + 44;
+	const windowWidth = windows()[0]?.state()?.contentBounds.size.width ?? windows()[0]?.state()?.bounds.size.width ?? 0;
+	const chipWidth = () => {
+		const pageRight = props.pageWidth && props.pageWidth > 0 ? (props.pageInset ?? 8) + props.pageWidth : windowWidth;
+		return tabChipWidth(Math.max(0, pageRight - stripLeft() - controlsRoom), props.tabs?.length ?? 0);
+	};
 	return (() => {
 		const __nsh_hv7 = element("view");
 		prop(__nsh_hv7, "class", "absolute left-0 right-0 top-0 z-20");
@@ -962,8 +1017,49 @@ function TitlebarOverlay(props) {
 				return props.colors.muted;
 			}
 		}));
+		const __nsh_hv12 = element("view");
+		prop(__nsh_hv12, "class", "absolute flex-row items-center");
+		prop(__nsh_hv12, "desktop", { windowDrag: false });
+		bindProp(__nsh_hv12, "style", () => ({
+			left: trailLeft(),
+			top: titlebarControlTop(24),
+			height: 24,
+			gap: 2
+		}));
+		insert(__nsh_hv12, [component(TrailArrow, {
+			dir: "back",
+			label: "Назад",
+			get dark() {
+				return props.dark;
+			},
+			get colors() {
+				return props.colors;
+			},
+			get enabled() {
+				return props.canGoBack;
+			},
+			get onPress() {
+				return props.onGoBack;
+			}
+		}), component(TrailArrow, {
+			dir: "forward",
+			label: "Вперёд",
+			get dark() {
+				return props.dark;
+			},
+			get colors() {
+				return props.colors;
+			},
+			get enabled() {
+				return props.canGoForward;
+			},
+			get onPress() {
+				return props.onGoForward;
+			}
+		})]);
 		append(__nsh_hv7, __nsh_hv9);
 		append(__nsh_hv7, __nsh_hv10);
+		append(__nsh_hv7, __nsh_hv12);
 		insert(__nsh_hv7, () => props.dimmed && (() => {
 			const __nsh_hv8 = element("view");
 			prop(__nsh_hv8, "class", "absolute top-0 bottom-0");
@@ -975,180 +1071,140 @@ function TitlebarOverlay(props) {
 			}));
 			return __nsh_hv8;
 		})(), __nsh_hv9);
-		insert(__nsh_hv7, [
-			() => props.showAddGame && (() => {
-				const __nsh_hv11 = element("view");
-				prop(__nsh_hv11, "onPress", () => props.onAddGame?.());
-				prop(__nsh_hv11, "role", "button");
-				prop(__nsh_hv11, "accessibilityLabel", "Добавить игру");
-				prop(__nsh_hv11, "class", "absolute items-center justify-center");
-				prop(__nsh_hv11, "desktop", { windowDrag: false });
-				prop(__nsh_hv11, "hoverStyle", { backgroundColor: wash });
-				bindProp(__nsh_hv11, "style", () => ({
-					top: titlebarControlTop(28),
-					right: addGameRight,
-					width: 28,
-					height: 28,
-					borderRadius: CONTROL_RADIUS,
-					cursor: "pointer"
-				}));
-				insert(__nsh_hv11, component(Glyph, {
-					name: "plus",
-					size: 16,
-					get color() {
-						return props.colors.muted;
-					}
-				}));
-				return __nsh_hv11;
-			})(),
-			() => props.noteNav && (() => {
-				const __nsh_hv12 = element("view");
-				prop(__nsh_hv12, "class", "absolute flex-row items-center");
-				prop(__nsh_hv12, "desktop", { windowDrag: false });
-				bindProp(__nsh_hv12, "style", () => ({
-					left: noteBackLeft(props.pageInset ?? 0, sidebarLeft),
-					top: titlebarControlTop(24),
-					height: 24,
-					gap: 2
-				}));
-				insert(__nsh_hv12, [component(TrailArrow, {
-					dir: "back",
-					label: "Назад",
-					get dark() {
-						return props.dark;
-					},
-					get colors() {
-						return props.colors;
-					},
-					get enabled() {
-						return props.canGoBack;
-					},
-					get onPress() {
-						return props.onGoBack;
-					}
-				}), component(TrailArrow, {
-					dir: "forward",
-					label: "Вперёд",
-					get dark() {
-						return props.dark;
-					},
-					get colors() {
-						return props.colors;
-					},
-					get enabled() {
-						return props.canGoForward;
-					},
-					get onPress() {
-						return props.onGoForward;
-					}
-				})]);
-				return __nsh_hv12;
-			})(),
-			() => props.tabs && props.tabs.length > 0 && (() => {
-				const __nsh_hv13 = element("view");
-				prop(__nsh_hv13, "class", "absolute flex-row items-center justify-center");
-				prop(__nsh_hv13, "desktop", { windowDrag: false });
-				bindProp(__nsh_hv13, "style", () => ({
-					left: noteBackLeft(props.pageInset ?? 0, sidebarLeft) + 60,
-					right: controlsRight + 44,
-					top: titlebarControlTop(TAB_HEIGHT),
-					height: TAB_HEIGHT,
-					gap: TAB_GAP,
-					pointerEvents: "box-none"
-				}));
-				insert(__nsh_hv13, () => props.tabs.map((tab) => component(TabChip, {
-					get key() {
-						return tab.key;
-					},
-					tab,
-					get colors() {
-						return props.colors;
-					},
-					get dark() {
-						return props.dark;
-					},
-					onSelect: () => props.onSelectTab?.(tab.key),
-					onClose: () => props.onCloseTab?.(tab.key),
-					onMenu: (at) => props.onTabMenu?.(tab.key, at)
-				})));
-				return __nsh_hv13;
-			})(),
-			() => drawCaptions && (() => {
-				const __nsh_hv14 = element("view");
-				prop(__nsh_hv14, "class", "absolute right-0 top-0 flex-row items-center");
-				prop(__nsh_hv14, "desktop", { windowDrag: false });
-				prop(__nsh_hv14, "style", {
-					height: 48,
-					paddingRight: TRAILING_INSET
-				});
-				const __nsh_hv15 = element("view");
-				prop(__nsh_hv15, "onPress", () => props.onChrome("window.minimize"));
-				prop(__nsh_hv15, "role", "button");
-				prop(__nsh_hv15, "accessibilityLabel", "Свернуть окно");
-				prop(__nsh_hv15, "class", "items-center justify-center");
-				prop(__nsh_hv15, "desktop", { windowDrag: false });
-				prop(__nsh_hv15, "hoverStyle", { backgroundColor: wash });
-				prop(__nsh_hv15, "style", {
-					width: CAPTION_BUTTON_WIDTH,
-					height: CAPTION_BUTTON_HEIGHT,
-					borderRadius: CONTROL_RADIUS,
-					cursor: "pointer"
-				});
-				insert(__nsh_hv15, component(Icon, {
-					name: "windowMin",
-					get color() {
-						return props.colors.muted;
-					},
-					size: 14
-				}));
-				const __nsh_hv16 = element("view");
-				prop(__nsh_hv16, "onPress", () => props.onChrome("window.zoom"));
-				prop(__nsh_hv16, "role", "button");
-				prop(__nsh_hv16, "accessibilityLabel", "Развернуть окно");
-				prop(__nsh_hv16, "class", "items-center justify-center");
-				prop(__nsh_hv16, "desktop", { windowDrag: false });
-				prop(__nsh_hv16, "hoverStyle", { backgroundColor: wash });
-				prop(__nsh_hv16, "style", {
-					width: CAPTION_BUTTON_WIDTH,
-					height: CAPTION_BUTTON_HEIGHT,
-					borderRadius: CONTROL_RADIUS,
-					cursor: "pointer"
-				});
-				insert(__nsh_hv16, component(Icon, {
-					name: "windowMax",
-					get color() {
-						return props.colors.muted;
-					},
-					size: 14
-				}));
-				const __nsh_hv17 = element("view");
-				prop(__nsh_hv17, "onPress", () => props.onChrome("window.close"));
-				prop(__nsh_hv17, "onMouseEnter", () => closeHovered.set(true));
-				prop(__nsh_hv17, "onMouseLeave", () => closeHovered.set(false));
-				prop(__nsh_hv17, "role", "button");
-				prop(__nsh_hv17, "accessibilityLabel", "Закрыть окно");
-				prop(__nsh_hv17, "class", "items-center justify-center");
-				prop(__nsh_hv17, "desktop", { windowDrag: false });
-				prop(__nsh_hv17, "hoverStyle", { backgroundColor: "#e81123" });
-				prop(__nsh_hv17, "style", {
-					width: CAPTION_BUTTON_WIDTH,
-					height: CAPTION_BUTTON_HEIGHT,
-					borderRadius: CONTROL_RADIUS,
-					cursor: "pointer"
-				});
-				insert(__nsh_hv17, component(Icon, {
-					name: "windowClose",
-					get color() {
-						return closeHovered() ? "#ffffff" : props.colors.muted;
-					},
-					size: 14
-				}));
-				append(__nsh_hv14, __nsh_hv15);
-				append(__nsh_hv14, __nsh_hv16);
-				append(__nsh_hv14, __nsh_hv17);
-				return __nsh_hv14;
-			})()
-		]);
+		insert(__nsh_hv7, () => props.showAddGame && (() => {
+			const __nsh_hv11 = element("view");
+			prop(__nsh_hv11, "onPress", () => props.onAddGame?.());
+			prop(__nsh_hv11, "role", "button");
+			prop(__nsh_hv11, "accessibilityLabel", "Добавить игру");
+			prop(__nsh_hv11, "class", "absolute items-center justify-center");
+			prop(__nsh_hv11, "desktop", { windowDrag: false });
+			prop(__nsh_hv11, "hoverStyle", { backgroundColor: wash });
+			bindProp(__nsh_hv11, "style", () => ({
+				top: titlebarControlTop(28),
+				right: addGameRight,
+				width: 28,
+				height: 28,
+				borderRadius: CONTROL_RADIUS,
+				cursor: "pointer"
+			}));
+			insert(__nsh_hv11, component(Glyph, {
+				name: "plus",
+				size: 16,
+				get color() {
+					return props.colors.muted;
+				}
+			}));
+			return __nsh_hv11;
+		})(), __nsh_hv12);
+		insert(__nsh_hv7, [() => props.tabs && props.tabs.length > 0 && (() => {
+			const __nsh_hv13 = element("view");
+			prop(__nsh_hv13, "class", "absolute flex-row items-center");
+			prop(__nsh_hv13, "desktop", { windowDrag: false });
+			bindProp(__nsh_hv13, "style", () => ({
+				left: stripLeft(),
+				right: controlsRoom,
+				top: titlebarControlTop(TAB_HEIGHT),
+				height: TAB_HEIGHT,
+				gap: TAB_GAP,
+				pointerEvents: "box-none"
+			}));
+			insert(__nsh_hv13, () => props.tabs.map((tab) => component(TabChip, {
+				get key() {
+					return tab.key;
+				},
+				tab,
+				get colors() {
+					return props.colors;
+				},
+				get dark() {
+					return props.dark;
+				},
+				get width() {
+					return chipWidth() < TAB_NAME_FITS ? TAB_ICON_ONLY : chipWidth();
+				},
+				get compact() {
+					return chipWidth() < TAB_NAME_FITS;
+				},
+				onSelect: () => props.onSelectTab?.(tab.key),
+				onClose: () => props.onCloseTab?.(tab.key),
+				onMenu: (at) => props.onTabMenu?.(tab.key, at)
+			})));
+			return __nsh_hv13;
+		})(), () => drawCaptions && (() => {
+			const __nsh_hv14 = element("view");
+			prop(__nsh_hv14, "class", "absolute right-0 top-0 flex-row items-center");
+			prop(__nsh_hv14, "desktop", { windowDrag: false });
+			prop(__nsh_hv14, "style", {
+				height: 48,
+				paddingRight: TRAILING_INSET
+			});
+			const __nsh_hv15 = element("view");
+			prop(__nsh_hv15, "onPress", () => props.onChrome("window.minimize"));
+			prop(__nsh_hv15, "role", "button");
+			prop(__nsh_hv15, "accessibilityLabel", "Свернуть окно");
+			prop(__nsh_hv15, "class", "items-center justify-center");
+			prop(__nsh_hv15, "desktop", { windowDrag: false });
+			prop(__nsh_hv15, "hoverStyle", { backgroundColor: wash });
+			prop(__nsh_hv15, "style", {
+				width: CAPTION_BUTTON_WIDTH,
+				height: CAPTION_BUTTON_HEIGHT,
+				borderRadius: CONTROL_RADIUS,
+				cursor: "pointer"
+			});
+			insert(__nsh_hv15, component(Icon, {
+				name: "windowMin",
+				get color() {
+					return props.colors.muted;
+				},
+				size: 14
+			}));
+			const __nsh_hv16 = element("view");
+			prop(__nsh_hv16, "onPress", () => props.onChrome("window.zoom"));
+			prop(__nsh_hv16, "role", "button");
+			prop(__nsh_hv16, "accessibilityLabel", "Развернуть окно");
+			prop(__nsh_hv16, "class", "items-center justify-center");
+			prop(__nsh_hv16, "desktop", { windowDrag: false });
+			prop(__nsh_hv16, "hoverStyle", { backgroundColor: wash });
+			prop(__nsh_hv16, "style", {
+				width: CAPTION_BUTTON_WIDTH,
+				height: CAPTION_BUTTON_HEIGHT,
+				borderRadius: CONTROL_RADIUS,
+				cursor: "pointer"
+			});
+			insert(__nsh_hv16, component(Icon, {
+				name: "windowMax",
+				get color() {
+					return props.colors.muted;
+				},
+				size: 14
+			}));
+			const __nsh_hv17 = element("view");
+			prop(__nsh_hv17, "onPress", () => props.onChrome("window.close"));
+			prop(__nsh_hv17, "onMouseEnter", () => closeHovered.set(true));
+			prop(__nsh_hv17, "onMouseLeave", () => closeHovered.set(false));
+			prop(__nsh_hv17, "role", "button");
+			prop(__nsh_hv17, "accessibilityLabel", "Закрыть окно");
+			prop(__nsh_hv17, "class", "items-center justify-center");
+			prop(__nsh_hv17, "desktop", { windowDrag: false });
+			prop(__nsh_hv17, "hoverStyle", { backgroundColor: "#e81123" });
+			prop(__nsh_hv17, "style", {
+				width: CAPTION_BUTTON_WIDTH,
+				height: CAPTION_BUTTON_HEIGHT,
+				borderRadius: CONTROL_RADIUS,
+				cursor: "pointer"
+			});
+			insert(__nsh_hv17, component(Icon, {
+				name: "windowClose",
+				get color() {
+					return closeHovered() ? "#ffffff" : props.colors.muted;
+				},
+				size: 14
+			}));
+			append(__nsh_hv14, __nsh_hv15);
+			append(__nsh_hv14, __nsh_hv16);
+			append(__nsh_hv14, __nsh_hv17);
+			return __nsh_hv14;
+		})()]);
 		return __nsh_hv7;
 	})();
 }
@@ -1375,15 +1431,15 @@ const SCOPE_HEIGHT = 64;
 const SCOPE_RADIUS = 26;
 const COMPOSER_SEND = 31;
 const COMPOSER_BUTTON_INSET = 8;
-const COMPOSER_FONT = 15;
-const COMPOSER_LINE = 22;
+const composerFont = () => textSize() - 1;
+const composerLine = () => Math.round(composerFont() * 22 / 15);
 const COMPOSER_PAD_X = 16;
 const COMPOSER_PAD_Y = 12;
 const COMPOSER_MAX_WINDOW_SHARE = .7;
 const COMPOSER_MAX_HEIGHT_FALLBACK = 168;
 /** Matches RichEditor's caret in notes (`nsh-base`: 1.5 pt wide, ~0.85 * asc+desc tall, 530 ms blink). */
 const CARET_WIDTH = 1.5;
-const CARET_HEIGHT = COMPOSER_FONT * 1.02;
+const caretHeight = () => composerFont() * 1.02;
 const CARET_BLINK_MS = 530;
 const COMPOSER_BOTTOM_MARGIN = 18;
 const COMPOSER_FEED_GAP = 14;
@@ -1506,16 +1562,16 @@ function createCaretState(initial) {
 	};
 }
 const journalDraft = signal("");
-const journalDraftContentHeight = signal(COMPOSER_LINE);
+const journalDraftContentHeight = signal(composerLine());
 const composerCaret = createCaretState({
 	x: COMPOSER_PAD_X,
 	y: COMPOSER_PAD_Y,
-	height: COMPOSER_LINE
+	height: composerLine()
 });
 const editCaret = createCaretState({
 	x: 8,
 	y: 4,
-	height: COMPOSER_LINE
+	height: composerLine()
 });
 const journalScrollY = signal(0);
 const editingJournalId = signal(null);
@@ -1593,13 +1649,13 @@ function composerMaxHeight(windowHeight) {
 	return Math.max(COMPOSER_COMPACT_HEIGHT, Math.round(windowHeight * COMPOSER_MAX_WINDOW_SHARE));
 }
 function composerMaxContent() {
-	return Math.max(COMPOSER_LINE, composerMaxHeight(feedBox().height) - 24);
+	return Math.max(composerLine(), composerMaxHeight(feedBox().height) - 24);
 }
 function clampDraftHeight(height) {
-	return Math.round(Math.max(COMPOSER_LINE, Math.min(composerMaxContent(), height)));
+	return Math.round(Math.max(composerLine(), Math.min(composerMaxContent(), height)));
 }
 function composerContentHeight() {
-	return Math.max(COMPOSER_LINE, journalDraftContentHeight());
+	return Math.max(composerLine(), journalDraftContentHeight());
 }
 function composerInputHeight() {
 	return composerContentHeight() + 24;
@@ -1634,7 +1690,7 @@ function composerFadeBottom() {
 	return composerFadeEdges(composerInputHeight(), composerViewportHeight(), journalScrollY()).bottom;
 }
 function composerExpanded() {
-	return journalDraftContentHeight() > 23;
+	return journalDraftContentHeight() > composerLine() + 1;
 }
 function composerCorners(expanded, scoped) {
 	const outer = expanded ? COMPOSER_EXPANDED_RADIUS : scoped ? SCOPE_RADIUS : COMPOSER_RADIUS;
@@ -1647,7 +1703,7 @@ function composerCaretBox(caret, ratio) {
 	const dpr = Math.max(1, ratio);
 	const snap = (value) => Math.round(value * dpr) / dpr;
 	const width = Math.max(1 / dpr, snap(CARET_WIDTH));
-	const height = snap(Math.min(caret.height, CARET_HEIGHT));
+	const height = snap(Math.min(caret.height, caretHeight()));
 	const top = snap(caret.y + (caret.height - height) * .5);
 	return {
 		left: Math.max(0, snap(caret.x - width * .5)),
@@ -1860,6 +1916,8 @@ function JournalBubble(props) {
 			prop(__nsh_hv12, "accessibilityLabel", "Текст записи");
 			prop(__nsh_hv12, "class", "min-h-[56px] w-full rounded-lg px-2 py-1 text-[15px]");
 			bindProp(__nsh_hv12, "style", () => ({
+				fontSize: composerFont(),
+				lineHeight: composerLine(),
 				color: props.colors.foreground,
 				backgroundColor: props.colors.background,
 				selectionColor: props.colors.accent
@@ -1918,6 +1976,8 @@ function JournalBubble(props) {
 			prop(__nsh_hv14, "class", "select-text text-[15px] leading-5");
 			bindProp(__nsh_hv14, "style", () => ({
 				color: bubbleInk(),
+				fontSize: composerFont(),
+				lineHeight: composerLine(),
 				fontWeight: 500,
 				selectionColor: bubbleInk()
 			}));
@@ -1945,7 +2005,7 @@ function JournalPage(props) {
 		const viewport = composerViewportHeight();
 		const max = composerMaxScroll();
 		const top = Math.max(0, caret.y - COMPOSER_PAD_Y);
-		const bottom = caret.y + Math.max(caret.height, COMPOSER_LINE) + COMPOSER_PAD_Y;
+		const bottom = caret.y + Math.max(caret.height, composerLine()) + COMPOSER_PAD_Y;
 		let next = journalScrollY();
 		if (top < next) next = top;
 		else if (bottom > next + viewport) next = bottom - viewport;
@@ -2004,7 +2064,7 @@ function JournalPage(props) {
 		animateSend();
 		props.onCreate(value, id);
 		journalDraft.set("");
-		journalDraftContentHeight.set(COMPOSER_LINE);
+		journalDraftContentHeight.set(composerLine());
 		journalScrollY.set(0);
 		composerScrollRef?.scrollTo({
 			y: 0,
@@ -2153,7 +2213,7 @@ function JournalPage(props) {
 					composerCaret.bump();
 				});
 				prop(__nsh_hv36, "onContentSizeChange", ({ size }) => {
-					const raw = Math.max(COMPOSER_LINE, Math.round(size.height));
+					const raw = Math.max(composerLine(), Math.round(size.height));
 					if (raw === journalDraftContentHeight()) return;
 					if (clampDraftHeight(raw) !== clampDraftHeight(journalDraftContentHeight())) animateComposer();
 					journalDraftContentHeight.set(raw);
@@ -2177,8 +2237,8 @@ function JournalPage(props) {
 				bindProp(__nsh_hv36, "style", () => ({
 					height: composerInputHeight(),
 					maxHeight: composerInputHeight(),
-					fontSize: COMPOSER_FONT,
-					lineHeight: COMPOSER_LINE,
+					fontSize: composerFont(),
+					lineHeight: composerLine(),
 					paddingLeft: COMPOSER_PAD_X,
 					paddingRight: 8,
 					paddingTop: COMPOSER_PAD_Y,
@@ -2671,18 +2731,18 @@ function tokenColors(dark) {
 //#region recent.ts
 /** How many entries the list keeps. */
 const RECENT_LIMIT = 10;
-const STORAGE_KEY$1 = "mundus.atlas.recent.v1";
+const STORAGE_KEY = "mundus.atlas.recent.v1";
 const items = signal([]);
 let staged = null;
-let stamp$2 = 0;
+let stamp$1 = 0;
 function recent() {
 	return items();
 }
 function loadRecent() {
-	const at = stamp$2;
-	Storage.getItem(STORAGE_KEY$1).then((value) => {
-		if (at !== stamp$2) return;
-		items.set(readJson$2(value));
+	const at = stamp$1;
+	Storage.getItem(STORAGE_KEY).then((value) => {
+		if (at !== stamp$1) return;
+		items.set(readJson$1(value));
 	});
 }
 function rememberRecent(entry) {
@@ -2694,8 +2754,8 @@ function rememberRecent(entry) {
 		at: Date.now()
 	}, ...items().filter((item) => !(item.kind === entry.kind && item.id === entry.id))].slice(0, 10);
 	items.set(next);
-	stamp$2 += 1;
-	Storage.setItem(STORAGE_KEY$1, JSON.stringify(next));
+	stamp$1 += 1;
+	Storage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
 function stageRecent(entry) {
 	const title = entry.title.trim();
@@ -2714,16 +2774,16 @@ function stageRecent(entry) {
 			at: Date.now()
 		}, ...list].slice(0, 10);
 		items.set(next);
-		stamp$2 += 1;
-		Storage.setItem(STORAGE_KEY$1, JSON.stringify(next));
+		stamp$1 += 1;
+		Storage.setItem(STORAGE_KEY, JSON.stringify(next));
 	} else if (list[index].title !== title) {
 		const next = list.map((item, i) => i === index ? {
 			...item,
 			title
 		} : item);
 		items.set(next);
-		stamp$2 += 1;
-		Storage.setItem(STORAGE_KEY$1, JSON.stringify(next));
+		stamp$1 += 1;
+		Storage.setItem(STORAGE_KEY, JSON.stringify(next));
 	}
 }
 function commitRecent(entry) {
@@ -2743,8 +2803,8 @@ function forgetRecent(kind, id) {
 	const next = items().filter((item) => !(item.kind === kind && item.id === id));
 	if (next.length === items().length) return;
 	items.set(next);
-	stamp$2 += 1;
-	Storage.setItem(STORAGE_KEY$1, JSON.stringify(next));
+	stamp$1 += 1;
+	Storage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
 function forgetMissingNotes(ids) {
 	const before = items();
@@ -2752,10 +2812,10 @@ function forgetMissingNotes(ids) {
 	if (next.length === before.length) return;
 	if (staged && staged.kind === "note" && !ids.has(staged.id)) staged = null;
 	items.set(next);
-	stamp$2 += 1;
-	Storage.setItem(STORAGE_KEY$1, JSON.stringify(next));
+	stamp$1 += 1;
+	Storage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
-function readJson$2(value) {
+function readJson$1(value) {
 	if (!value) return [];
 	try {
 		const parsed = JSON.parse(value);
@@ -3003,6 +3063,7 @@ const CARD_MAX_COLUMNS = 5;
 const COMPACT_LIBRARY = 560;
 const LIBRARY_BOTTOM = 104;
 const GRID_PAD = 24;
+const LIBRARY_LIST_PAD = 12;
 const PAGE_MAX = 720;
 const PAGE_PAD = 40;
 const PREVIEW_BLOCKS = 14;
@@ -3096,9 +3157,9 @@ function blockSize(node) {
 	const block = node;
 	if (!block) return 1;
 	if (typeof block.text === "string") return block.text.length;
-	if (!Array.isArray(block.content)) return 1;
+	if (block.type === "image" || block.type === "hardBreak" || block.type === "horizontalRule") return 1;
 	let size = 2;
-	for (const child of block.content) size += blockSize(child);
+	for (const child of block.content ?? []) size += blockSize(child);
 	return size;
 }
 function shownLanguage(named) {
@@ -3162,6 +3223,29 @@ function copyBlock(text, id) {
 	}, 1400);
 }
 const highlight = new RichEditorPlugin("highlight");
+const proseGutter = new RichEditorPlugin("note-prose-gutter");
+const TABLE_BLEED = 8;
+const gutterSignature = /* @__PURE__ */ new WeakMap();
+function applyProseGutter(session, revisions) {
+	const doc = session.getJSON();
+	let from = 0;
+	const decorations = [];
+	for (const block of doc.content ?? []) {
+		const to = from + blockSize(block);
+		if (block.type !== "table") decorations.push({
+			from,
+			to,
+			kind: "node",
+			attrs: { class: "mx-2" }
+		});
+		from = to;
+	}
+	const signature = decorations.map(({ from, to }) => `${from}:${to}`).join(",");
+	if (gutterSignature.get(session) === signature) return;
+	gutterSignature.set(session, signature);
+	session.setDecorations(proseGutter.key, decorations);
+	revisions.add(session.revision);
+}
 let paintedDark = true;
 const selectedId = signal(null);
 const draftTitle = signal("");
@@ -3192,6 +3276,7 @@ let split = false;
 const codeLayout = signal(false);
 const segmentList = signal([]);
 const bodyRev = signal(0);
+const singleBodyEmpty = signal(true);
 const segRefs = /* @__PURE__ */ new Map();
 const segHeights = /* @__PURE__ */ new Map();
 const segTops = /* @__PURE__ */ new Map();
@@ -3320,7 +3405,7 @@ function editorExtensions(trailing = true) {
 		textStyle: false,
 		textAlign: false,
 		...trailing ? {} : { trailingNode: false }
-	}), TableKit.configure({})];
+	}), TableKit.configure({ table: { resizable: false } })];
 }
 function docOf(nodes) {
 	return {
@@ -3428,20 +3513,30 @@ function createSeg(group) {
 	const id = ++segSerial;
 	const paint = group.kind === "code" ? new RichEditorPlugin(`paint-${id}`) : null;
 	const content = group.kind === "code" ? docOf([group.node]) : docOf(group.nodes);
-	const plugins = paint ? [paint] : [];
 	const epochAt = epoch;
-	const make = (body) => createRichEditor({
-		extensions: editorExtensions(false),
-		plugins,
-		content: body,
-		format: "json"
-	});
+	const make = (body) => {
+		const paste = paint ? null : new RichEditorPlugin("note-markdown-paste");
+		const session = createRichEditor({
+			extensions: editorExtensions(false),
+			plugins: paste ? [
+				proseGutter,
+				markdownPaste(),
+				paste
+			] : paint ? [paint] : [],
+			content: body,
+			format: "json"
+		});
+		if (paste) bindMarkdownPaste(paste, session);
+		return session;
+	};
 	let session;
 	try {
 		session = make(content);
 	} catch {
 		session = make(docOf([{ type: "paragraph" }]));
 	}
+	const paintRevs = /* @__PURE__ */ new Set();
+	if (group.kind === "prose") applyProseGutter(session, paintRevs);
 	bindSeg(session, epochAt);
 	return {
 		id,
@@ -3449,8 +3544,24 @@ function createSeg(group) {
 		session,
 		paint,
 		painted: "",
-		paintRevs: /* @__PURE__ */ new Set()
+		paintRevs
 	};
+}
+function markdownPaste() {
+	return markdown({
+		blockRules: false,
+		inlineRules: false,
+		copyAsMarkdown: false
+	});
+}
+const MARKDOWN_BLOCK = /^ {0,3}(?:#{1,6}[ \t]+|>[ \t]+|[-*+][ \t]+|\d+[.)][ \t]+|`{3,}|~{3,}|---[ \t]*$)/m;
+function bindMarkdownPaste(plugin, session) {
+	plugin.handlePaste((slice, { text, html }) => {
+		if (!html || session.findParentNode("codeBlock")) return false;
+		const blocks = slice.content ?? [];
+		if (!MARKDOWN_BLOCK.test(text) || !blocks.length || html.includes("data-pm-slice") || !blocks.every((block) => (block.type === "paragraph" || block.type === "codeBlock" && !block.attrs?.language) && (block.content ?? []).every((node) => node.type === "hardBreak" || node.type === "text" && !node.marks?.length))) return false;
+		return session.insertContent(text, "markdown");
+	});
 }
 function becomeSplit(doc, focusOrdinal) {
 	epoch += 1;
@@ -3584,7 +3695,11 @@ function open(note) {
 }
 function mountSingle(doc) {
 	const epochAt = epoch;
-	const made = makeEditor(doc);
+	const paste = new RichEditorPlugin("note-markdown-paste");
+	const made = makeEditor(doc, paste);
+	singleBodyEmpty.set(made.getText().length === 0);
+	bindMarkdownPaste(paste, made);
+	applyProseGutter(made, singlePaintRevs);
 	made.on("revision", (event) => {
 		if (epoch !== epochAt || editor !== made) return;
 		if (typeof event?.revision === "number" && singlePaintRevs.delete(event.revision)) return;
@@ -3599,10 +3714,16 @@ function mountSingle(doc) {
 	});
 	editor = made;
 }
-function makeEditor(doc) {
+const TASK_CLASSES = { taskCheckbox: "w-4 h-4" };
+function makeEditor(doc, paste) {
 	const options = (content) => ({
 		extensions: editorExtensions(),
-		plugins: [highlight],
+		plugins: paste ? [
+			highlight,
+			proseGutter,
+			markdownPaste(),
+			paste
+		] : [],
 		content,
 		format: "json"
 	});
@@ -3930,7 +4051,7 @@ function usForm(text) {
 let slashRange = null;
 function slashMatch() {
 	const live = editor;
-	if (!live) return null;
+	if (!live || live.findParentNode("codeBlock")) return null;
 	const selection = live.selection;
 	const at = selection?.anchor;
 	const head = selection?.head ?? at;
@@ -4114,7 +4235,7 @@ function currentRecentEntry() {
 	return {
 		kind: "note",
 		id,
-		title: draftTitle().trim() || text$1(selected()?.title ?? "").trim() || "Без названия"
+		title: noteLabel(draftTitle() || text$1(selected()?.title ?? ""))
 	};
 }
 function select(note) {
@@ -4131,61 +4252,30 @@ function select(note) {
 	if (note) stageRecent({
 		kind: "note",
 		id: text$1(note.id),
-		title: text$1(note.title).trim() || "Без названия"
+		title: noteLabel(note.title)
 	});
-	visitStep(id ?? "");
 }
-const TRAIL_LIMIT = 40;
-const trailSteps = signal([""]);
-const trailAt = signal(0);
-let silentNavigation = false;
-function visitStep(id) {
-	if (silentNavigation) return;
-	const trail = trailSteps();
-	const at = trailAt();
-	if (trail[at] === id) return;
-	const walked = [...trail.slice(0, at + 1), id];
-	const kept = walked.slice(Math.max(0, walked.length - TRAIL_LIMIT));
-	trailSteps.set(kept);
-	trailAt.set(kept.length - 1);
-}
-function walkTrail(delta) {
-	const trail = trailSteps();
-	silentNavigation = true;
-	try {
-		for (let at = trailAt() + delta; at >= 0 && at < trail.length; at += delta) {
-			const id = trail[at];
-			const note = id ? notes().find((item) => text$1(item.id) === id) : null;
-			if (id && !note) continue;
-			trailAt.set(at);
-			if (note) select(note);
-			else closeNote();
-			return;
-		}
-	} finally {
-		silentNavigation = false;
-	}
-}
-function openNoteWithoutHistory(id) {
-	const note = notes().find((item) => text$1(item.id) === id) ?? null;
-	if (!note) return;
-	silentNavigation = true;
-	try {
-		select(note);
-	} finally {
-		silentNavigation = false;
-	}
-}
-const canWalkBack = () => trailAt() > 0;
-const canWalkForward = () => trailAt() < trailSteps().length - 1;
-const walkBack = () => walkTrail(-1);
-const walkForward = () => walkTrail(1);
 const openNoteTitle = () => selectedId() ? draftTitle().replace(/\s+/g, " ").trim() : "";
 const openNoteId = () => selectedId();
 const hasOpenNote = () => selectedId() !== null;
 const closeOpenNote = () => closeNote();
 const removeOpenNote = () => removeNote();
-const createOpenNote = () => createNote();
+function createOpenNote() {
+	if (openNoteIsBlank()) return;
+	createNote();
+}
+function openNoteIsBlank() {
+	if (selectedId() === null) return false;
+	if (openNoteTitle() !== "") return false;
+	return isBlankDoc(currentDoc());
+}
+function isBlankDoc(node) {
+	if (!node || typeof node !== "object") return true;
+	const block = node;
+	if (typeof block.text === "string" && block.text.trim() !== "") return false;
+	if (Array.isArray(block.content)) return block.content.every(isBlankDoc);
+	return true;
+}
 function leaveOpenNote() {
 	flushSave();
 	applyPreview();
@@ -4221,7 +4311,7 @@ function flushSave() {
 	if (!dirty()) return;
 	const note = selected();
 	if (!note || !editor && !split) return;
-	const title = draftTitle().trim() || "Без названия";
+	const title = noteLabel(draftTitle());
 	const doc = currentDoc();
 	const body = currentText();
 	const serialized = JSON.stringify(doc);
@@ -4260,15 +4350,20 @@ function closeNote() {
 	selectedId.set(null);
 	draftTitle.set("");
 	open(null);
-	visitStep("");
 }
-function focusNoteTitle() {
-	const session = titleSession;
-	if (!session) return;
-	try {
-		session.focus();
-		session.run(selectAll());
-	} catch {}
+function requestNoteTitleFocus() {
+	const tryFocus = (tries) => {
+		const session = titleSession;
+		if (session) {
+			try {
+				session.focus();
+				session.run(selectAll());
+			} catch {}
+			return;
+		}
+		if (tries > 0) setTimeout(() => tryFocus(tries - 1), 16);
+	};
+	tryFocus(8);
 }
 function removeNote() {
 	const note = selected();
@@ -4309,6 +4404,9 @@ function NotesPage(props) {
 			},
 			get onBack() {
 				return props.onBack;
+			},
+			get benchmarkNotes() {
+				return props.benchmarkNotes;
 			}
 		}));
 		return __nsh_hv0;
@@ -4316,24 +4414,59 @@ function NotesPage(props) {
 }
 function LibraryView(props) {
 	const colors = props.colors;
+	const items = () => props.benchmarkNotes ?? notes();
 	return (() => {
 		const __nsh_hv1 = element("view");
 		prop(__nsh_hv1, "class", "relative min-h-0 flex-1 flex-col");
-		const __nsh_hv2 = element("view");
-		prop(__nsh_hv2, "class", "flex-row items-center");
-		bindProp(__nsh_hv2, "style", () => ({
-			height: 54,
-			paddingLeft: compact() ? 12 : GRID_PAD,
-			paddingRight: compact() ? 12 : 18,
-			gap: 10
+		const __nsh_hv6 = element("view");
+		prop(__nsh_hv6, "class", "min-h-0 flex-1");
+		bindProp(__nsh_hv6, "style", () => ({ pointerEvents: props.benchmarkNotes ? "none" : "auto" }));
+		prop(__nsh_hv6, "onLayout", (event) => gridWidth.set(event.bounds.size.width));
+		insert(__nsh_hv6, () => loading() && !props.benchmarkNotes ? skeletonLibrary(colors, props.dark) : items().length === 0 ? component(EmptyLibrary, { colors }) : compact() ? libraryList(items(), colors, props.dark, Boolean(props.benchmarkNotes)) : libraryGrid(items(), colors, props.dark, Boolean(props.benchmarkNotes)));
+		const __nsh_hv7 = element("view");
+		prop(__nsh_hv7, "onPress", () => {
+			if (!props.benchmarkNotes) createNote();
+		});
+		prop(__nsh_hv7, "role", "button");
+		prop(__nsh_hv7, "accessibilityLabel", "Новая заметка");
+		prop(__nsh_hv7, "class", "absolute flex-row items-center justify-center");
+		bindProp(__nsh_hv7, "hoverStyle", () => ({ backgroundColor: filledHover(colors.accent) }));
+		bindProp(__nsh_hv7, "activeStyle", () => ({ backgroundColor: filledPressed(colors.accent) }));
+		bindProp(__nsh_hv7, "style", () => ({
+			left: "50%",
+			marginLeft: -92,
+			bottom: 24,
+			width: 184,
+			height: 40,
+			gap: 8,
+			borderRadius: 20,
+			backgroundColor: colors.accent,
+			cursor: "pointer",
+			boxShadow: cardShadow(props.dark)
 		}));
-		const __nsh_hv6 = element("text");
-		prop(__nsh_hv6, "class", "text-[17px] font-semibold flex-1");
-		bindProp(__nsh_hv6, "style", () => ({ color: colors.foreground }));
-		const __nsh_hv7 = text("Заметки");
-		append(__nsh_hv6, __nsh_hv7);
-		append(__nsh_hv2, __nsh_hv6);
-		insert(__nsh_hv2, () => compact() && props.onBack ? (() => {
+		const __nsh_hv8 = element("text");
+		prop(__nsh_hv8, "class", "text-[13px] font-medium");
+		bindProp(__nsh_hv8, "style", () => ({ color: accentMark(colors.accent) }));
+		const __nsh_hv9 = text("Новая заметка");
+		append(__nsh_hv8, __nsh_hv9);
+		append(__nsh_hv7, __nsh_hv8);
+		insert(__nsh_hv7, component(Glyph, {
+			name: "plus",
+			size: 15,
+			get color() {
+				return accentMark(colors.accent);
+			}
+		}), __nsh_hv8);
+		append(__nsh_hv1, __nsh_hv6);
+		append(__nsh_hv1, __nsh_hv7);
+		insert(__nsh_hv1, () => compact() && props.onBack ? (() => {
+			const __nsh_hv2 = element("view");
+			prop(__nsh_hv2, "class", "flex-row items-center");
+			prop(__nsh_hv2, "style", {
+				height: 44,
+				paddingLeft: 12,
+				gap: 10
+			});
 			const __nsh_hv3 = element("view");
 			bindProp(__nsh_hv3, "onPress", () => props.onBack);
 			prop(__nsh_hv3, "role", "button");
@@ -4350,47 +4483,9 @@ function LibraryView(props) {
 			const __nsh_hv5 = text("‹");
 			append(__nsh_hv4, __nsh_hv5);
 			append(__nsh_hv3, __nsh_hv4);
-			return __nsh_hv3;
+			append(__nsh_hv2, __nsh_hv3);
+			return __nsh_hv2;
 		})() : null, __nsh_hv6);
-		const __nsh_hv8 = element("view");
-		prop(__nsh_hv8, "class", "min-h-0 flex-1");
-		prop(__nsh_hv8, "onLayout", (event) => gridWidth.set(event.bounds.size.width));
-		insert(__nsh_hv8, () => loading() ? skeletonLibrary(colors, props.dark) : notes().length === 0 ? component(EmptyLibrary, { colors }) : compact() ? libraryList(notes(), colors, props.dark) : libraryGrid(notes(), colors, props.dark));
-		const __nsh_hv9 = element("view");
-		prop(__nsh_hv9, "onPress", createNote);
-		prop(__nsh_hv9, "role", "button");
-		prop(__nsh_hv9, "accessibilityLabel", "Новая заметка");
-		prop(__nsh_hv9, "class", "absolute flex-row items-center justify-center");
-		bindProp(__nsh_hv9, "hoverStyle", () => ({ backgroundColor: filledHover(colors.accent) }));
-		bindProp(__nsh_hv9, "activeStyle", () => ({ backgroundColor: filledPressed(colors.accent) }));
-		bindProp(__nsh_hv9, "style", () => ({
-			left: "50%",
-			marginLeft: -92,
-			bottom: 24,
-			width: 184,
-			height: 40,
-			gap: 8,
-			borderRadius: 20,
-			backgroundColor: colors.accent,
-			cursor: "pointer",
-			boxShadow: cardShadow(props.dark)
-		}));
-		const __nsh_hv10 = element("text");
-		prop(__nsh_hv10, "class", "text-[13px] font-medium");
-		bindProp(__nsh_hv10, "style", () => ({ color: accentMark(colors.accent) }));
-		const __nsh_hv11 = text("Новая заметка");
-		append(__nsh_hv10, __nsh_hv11);
-		append(__nsh_hv9, __nsh_hv10);
-		insert(__nsh_hv9, component(Glyph, {
-			name: "plus",
-			size: 15,
-			get color() {
-				return accentMark(colors.accent);
-			}
-		}), __nsh_hv10);
-		append(__nsh_hv1, __nsh_hv2);
-		append(__nsh_hv1, __nsh_hv8);
-		append(__nsh_hv1, __nsh_hv9);
 		return __nsh_hv1;
 	})();
 }
@@ -4406,37 +4501,54 @@ function gridMetrics(width) {
 		sidePad: Math.max(0, Math.round((room - used) / 2))
 	};
 }
-function libraryGrid(items, colors, dark) {
+let benchmarkList = null;
+function jumpBenchmarkLibrary(fraction) {
+	if (!benchmarkList) return false;
+	const { ref, count } = benchmarkList;
+	ref.scrollToIndex({
+		index: Math.floor((count - 1) * fraction),
+		animated: false
+	});
+	return true;
+}
+function libraryGrid(items, colors, dark, benchmark = false) {
 	const { columns, cardWidth, sidePad } = gridMetrics(gridWidth());
+	const inset = GRID_PAD + sidePad;
 	const rows = rowsOf(items, columns);
 	const rowHeight = Math.round(cardWidth * CARD_RATIO) + CARD_GAP + 8;
 	return component(list, {
+		ref: benchmark ? (ref) => {
+			benchmarkList = ref ? {
+				ref,
+				count: rows.length
+			} : null;
+		} : void 0,
 		each: rows,
 		keyExtractor: (row) => "row:" + (row[0] ? text$1(row[0].id) : "empty"),
 		estimatedItemSize: rowHeight,
 		testID: "notes-grid",
 		class: "min-h-0 flex-1",
 		contentStyle: {
-			paddingLeft: GRID_PAD + sidePad,
-			paddingRight: GRID_PAD + sidePad,
-			paddingTop: 4,
+			paddingLeft: inset,
+			paddingRight: inset,
+			paddingTop: inset,
 			paddingBottom: LIBRARY_BOTTOM
 		},
 		get children() {
 			return (row) => (() => {
-				const __nsh_hv12 = element("view");
-				prop(__nsh_hv12, "class", "flex-row");
-				prop(__nsh_hv12, "style", {
+				const __nsh_hv10 = element("view");
+				prop(__nsh_hv10, "class", "flex-row");
+				prop(__nsh_hv10, "style", {
 					gap: CARD_GAP,
 					paddingBottom: CARD_GAP
 				});
-				insert(__nsh_hv12, () => row().map((note) => component(NoteCard, {
+				insert(__nsh_hv10, () => row().map((note) => component(NoteCard, {
 					note,
 					width: cardWidth,
 					colors,
 					dark
 				})));
-				return __nsh_hv12;
+				return __nsh_hv10;
 			})();
 		}
 	});
@@ -4448,21 +4560,22 @@ function rowsOf(notes, columns) {
 }
 function skeletonLibrary(colors, dark) {
 	const { columns, cardWidth, sidePad } = gridMetrics(gridWidth());
+	const inset = GRID_PAD + sidePad;
 	const height = Math.round(cardWidth * CARD_RATIO);
 	const fill = surfaceWash(dark, .06);
 	const line = (width) => (() => {
-		const __nsh_hv13 = element("view");
-		prop(__nsh_hv13, "style", {
+		const __nsh_hv11 = element("view");
+		prop(__nsh_hv11, "style", {
 			width,
 			height: 5,
 			borderRadius: 3,
 			backgroundColor: fill
 		});
-		return __nsh_hv13;
+		return __nsh_hv11;
 	})();
 	const card = (() => {
-		const __nsh_hv14 = element("view");
-		bindProp(__nsh_hv14, "style", () => ({
+		const __nsh_hv12 = element("view");
+		bindProp(__nsh_hv12, "style", () => ({
 			width: cardWidth,
 			height,
 			padding: 4,
@@ -4471,85 +4584,91 @@ function skeletonLibrary(colors, dark) {
 			borderColor: colors.border,
 			backgroundColor: colors.background
 		}));
-		const __nsh_hv15 = element("view");
-		prop(__nsh_hv15, "class", "overflow-hidden");
-		bindProp(__nsh_hv15, "style", () => ({
+		const __nsh_hv13 = element("view");
+		prop(__nsh_hv13, "class", "overflow-hidden");
+		bindProp(__nsh_hv13, "style", () => ({
 			flex: 1,
 			borderRadius: 16,
 			backgroundColor: colors.card,
 			padding: 14,
 			gap: 8
 		}));
-		const __nsh_hv16 = element("view");
-		prop(__nsh_hv16, "style", {
+		const __nsh_hv14 = element("view");
+		prop(__nsh_hv14, "style", {
 			width: cardWidth * .55,
 			height: 11,
 			borderRadius: 4,
 			backgroundColor: fill
 		});
-		const __nsh_hv17 = element("view");
-		prop(__nsh_hv17, "style", {
+		const __nsh_hv15 = element("view");
+		prop(__nsh_hv15, "style", {
 			marginTop: 6,
 			gap: 6
 		});
-		insert(__nsh_hv17, [
+		insert(__nsh_hv15, [
 			() => line(cardWidth * .72),
 			() => line(cardWidth * .64),
 			() => line(cardWidth * .7),
 			() => line(cardWidth * .4)
 		]);
-		append(__nsh_hv15, __nsh_hv16);
-		append(__nsh_hv15, __nsh_hv17);
-		append(__nsh_hv14, __nsh_hv15);
-		return __nsh_hv14;
+		append(__nsh_hv13, __nsh_hv14);
+		append(__nsh_hv13, __nsh_hv15);
+		append(__nsh_hv12, __nsh_hv13);
+		return __nsh_hv12;
 	})();
 	const rows = [];
 	for (let index = 0; index < 3 * columns; index += columns) rows.push(new Array(columns).fill(null));
 	return (() => {
-		const __nsh_hv18 = element("view");
-		prop(__nsh_hv18, "class", "min-h-0 flex-1");
-		prop(__nsh_hv18, "style", {
-			paddingLeft: GRID_PAD + sidePad,
-			paddingRight: GRID_PAD + sidePad,
-			paddingTop: 4
+		const __nsh_hv16 = element("view");
+		prop(__nsh_hv16, "class", "min-h-0 flex-1");
+		prop(__nsh_hv16, "style", {
+			paddingLeft: inset,
+			paddingRight: inset,
+			paddingTop: inset
 		});
-		const __nsh_hv19 = element("view");
-		prop(__nsh_hv19, "style", { gap: CARD_GAP });
-		insert(__nsh_hv19, () => rows.map((row) => (() => {
-			const __nsh_hv20 = element("view");
-			prop(__nsh_hv20, "class", "flex-row");
-			prop(__nsh_hv20, "style", { gap: CARD_GAP });
-			insert(__nsh_hv20, () => row.map(() => card));
-			return __nsh_hv20;
+		const __nsh_hv17 = element("view");
+		prop(__nsh_hv17, "style", { gap: CARD_GAP });
+		insert(__nsh_hv17, () => rows.map((row) => (() => {
+			const __nsh_hv18 = element("view");
+			prop(__nsh_hv18, "class", "flex-row");
+			prop(__nsh_hv18, "style", { gap: CARD_GAP });
+			insert(__nsh_hv18, () => row.map(() => card));
+			return __nsh_hv18;
 		})()));
-		append(__nsh_hv18, __nsh_hv19);
-		return __nsh_hv18;
+		append(__nsh_hv16, __nsh_hv17);
+		return __nsh_hv16;
 	})();
 }
-function libraryList(items, colors, dark) {
+function libraryList(items, colors, dark, benchmark = false) {
 	const wash = surfaceWash(dark, .07);
 	return component(list, {
+		ref: benchmark ? (ref) => {
+			benchmarkList = ref ? {
+				ref,
+				count: items.length
+			} : null;
+		} : void 0,
 		each: items,
 		keyExtractor: (note) => "note:" + text$1(note.id),
 		estimatedItemSize: 78,
 		class: "min-h-0 flex-1",
 		contentStyle: {
-			paddingLeft: 12,
-			paddingRight: 12,
-			paddingTop: 4,
+			paddingLeft: LIBRARY_LIST_PAD,
+			paddingRight: LIBRARY_LIST_PAD,
+			paddingTop: LIBRARY_LIST_PAD,
 			paddingBottom: LIBRARY_BOTTOM
 		},
 		get children() {
 			return (note) => {
 				const item = note();
-				const title = text$1(item.title).trim() || "Без названия";
+				const title = noteLabel(item.title);
 				return (() => {
-					const __nsh_hv21 = element("view");
-					prop(__nsh_hv21, "onPress", () => select(item));
-					prop(__nsh_hv21, "role", "button");
-					prop(__nsh_hv21, "accessibilityLabel", title);
-					prop(__nsh_hv21, "hoverStyle", { backgroundColor: wash });
-					prop(__nsh_hv21, "style", {
+					const __nsh_hv19 = element("view");
+					prop(__nsh_hv19, "onPress", () => select(item));
+					prop(__nsh_hv19, "role", "button");
+					prop(__nsh_hv19, "accessibilityLabel", title);
+					prop(__nsh_hv19, "hoverStyle", { backgroundColor: wash });
+					prop(__nsh_hv19, "style", {
 						paddingLeft: 12,
 						paddingRight: 12,
 						paddingTop: 12,
@@ -4558,22 +4677,22 @@ function libraryList(items, colors, dark) {
 						borderRadius: 14,
 						cursor: "pointer"
 					});
+					const __nsh_hv20 = element("text");
+					prop(__nsh_hv20, "class", "text-[16px] font-semibold");
+					bindProp(__nsh_hv20, "style", () => ({ color: colors.foreground }));
+					insert(__nsh_hv20, title);
+					const __nsh_hv21 = element("text");
+					prop(__nsh_hv21, "class", "text-[13px]");
+					bindProp(__nsh_hv21, "style", () => ({ color: colors.muted }));
+					insert(__nsh_hv21, () => listLine(item));
 					const __nsh_hv22 = element("text");
-					prop(__nsh_hv22, "class", "text-[16px] font-semibold");
-					bindProp(__nsh_hv22, "style", () => ({ color: colors.foreground }));
-					insert(__nsh_hv22, title);
-					const __nsh_hv23 = element("text");
-					prop(__nsh_hv23, "class", "text-[13px]");
-					bindProp(__nsh_hv23, "style", () => ({ color: colors.muted }));
-					insert(__nsh_hv23, () => listLine(item));
-					const __nsh_hv24 = element("text");
-					prop(__nsh_hv24, "class", "text-[11px]");
-					bindProp(__nsh_hv24, "style", () => ({ color: colors.muted }));
-					insert(__nsh_hv24, () => stamp$1(item.updatedAt));
-					append(__nsh_hv21, __nsh_hv22);
-					append(__nsh_hv21, __nsh_hv23);
-					append(__nsh_hv21, __nsh_hv24);
-					return __nsh_hv21;
+					prop(__nsh_hv22, "class", "text-[11px]");
+					bindProp(__nsh_hv22, "style", () => ({ color: colors.muted }));
+					insert(__nsh_hv22, () => stamp(item.updatedAt));
+					append(__nsh_hv19, __nsh_hv20);
+					append(__nsh_hv19, __nsh_hv21);
+					append(__nsh_hv19, __nsh_hv22);
+					return __nsh_hv19;
 				})();
 			};
 		}
@@ -4587,7 +4706,7 @@ function listLine(note) {
 }
 function NoteCard(props) {
 	const colors = props.colors;
-	const title = text$1(props.note.title).trim() || "Без названия";
+	const title = noteLabel(props.note.title);
 	const height = Math.round(props.width * CARD_RATIO);
 	const blocks = previewOf(props.note.doc);
 	const lift = createMotion();
@@ -4599,14 +4718,14 @@ function NoteCard(props) {
 		});
 	};
 	return (() => {
-		const __nsh_hv25 = element("view");
-		prop(__nsh_hv25, "onPress", () => select(props.note));
-		prop(__nsh_hv25, "onMouseEnter", () => rise(true));
-		prop(__nsh_hv25, "onMouseLeave", () => rise(false));
-		prop(__nsh_hv25, "role", "button");
-		prop(__nsh_hv25, "accessibilityLabel", title);
-		bindProp(__nsh_hv25, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .07) }));
-		bindProp(__nsh_hv25, "style", () => ({
+		const __nsh_hv23 = element("view");
+		prop(__nsh_hv23, "onPress", () => select(props.note));
+		prop(__nsh_hv23, "onMouseEnter", () => rise(true));
+		prop(__nsh_hv23, "onMouseLeave", () => rise(false));
+		prop(__nsh_hv23, "role", "button");
+		prop(__nsh_hv23, "accessibilityLabel", title);
+		bindProp(__nsh_hv23, "hoverStyle", () => ({ backgroundColor: surfaceWash(props.dark, .07) }));
+		bindProp(__nsh_hv23, "style", () => ({
 			width: props.width,
 			height,
 			padding: 4,
@@ -4621,66 +4740,66 @@ function NoteCard(props) {
 			transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
 			...lift.style
 		}));
-		const __nsh_hv26 = element("view");
-		prop(__nsh_hv26, "class", "overflow-hidden");
-		bindProp(__nsh_hv26, "style", () => ({
+		const __nsh_hv24 = element("view");
+		prop(__nsh_hv24, "class", "overflow-hidden");
+		bindProp(__nsh_hv24, "style", () => ({
 			flex: 1,
 			borderRadius: 16,
 			backgroundColor: colors.card,
 			padding: 14
 		}));
-		const __nsh_hv27 = element("view");
-		prop(__nsh_hv27, "class", "overflow-hidden");
-		prop(__nsh_hv27, "style", { height: 36 });
-		const __nsh_hv28 = element("text");
-		prop(__nsh_hv28, "class", "text-[13px] font-semibold");
-		bindProp(__nsh_hv28, "style", () => ({
+		const __nsh_hv25 = element("view");
+		prop(__nsh_hv25, "class", "overflow-hidden");
+		prop(__nsh_hv25, "style", { height: 36 });
+		const __nsh_hv26 = element("text");
+		prop(__nsh_hv26, "class", "text-[13px] font-semibold");
+		bindProp(__nsh_hv26, "style", () => ({
 			color: colors.foreground,
 			lineHeight: 18
 		}));
-		insert(__nsh_hv28, title);
-		append(__nsh_hv27, __nsh_hv28);
-		const __nsh_hv29 = element("view");
-		prop(__nsh_hv29, "style", {
+		insert(__nsh_hv26, title);
+		append(__nsh_hv25, __nsh_hv26);
+		const __nsh_hv27 = element("view");
+		prop(__nsh_hv27, "style", {
 			marginTop: 9,
 			gap: 3
 		});
-		insert(__nsh_hv29, () => blocks.map((block) => component(PreviewLine, {
+		insert(__nsh_hv27, () => blocks.map((block) => component(PreviewLine, {
 			block,
 			colors
 		})));
-		append(__nsh_hv26, __nsh_hv27);
-		append(__nsh_hv26, __nsh_hv29);
-		append(__nsh_hv25, __nsh_hv26);
-		return __nsh_hv25;
+		append(__nsh_hv24, __nsh_hv25);
+		append(__nsh_hv24, __nsh_hv27);
+		append(__nsh_hv23, __nsh_hv24);
+		return __nsh_hv23;
 	})();
 }
 function EmptyLibrary(props) {
 	const colors = props.colors;
 	return (() => {
-		const __nsh_hv30 = element("view");
-		prop(__nsh_hv30, "class", "items-center");
-		prop(__nsh_hv30, "style", {
+		const __nsh_hv28 = element("view");
+		prop(__nsh_hv28, "class", "items-center");
+		prop(__nsh_hv28, "style", {
 			paddingTop: 96,
 			gap: 10
 		});
+		const __nsh_hv29 = element("text");
+		prop(__nsh_hv29, "class", "text-[15px]");
+		bindProp(__nsh_hv29, "style", () => ({ color: colors.foreground }));
+		const __nsh_hv30 = text("Заметок пока нет");
+		append(__nsh_hv29, __nsh_hv30);
 		const __nsh_hv31 = element("text");
-		prop(__nsh_hv31, "class", "text-[15px]");
-		bindProp(__nsh_hv31, "style", () => ({ color: colors.foreground }));
-		const __nsh_hv32 = text("Заметок пока нет");
+		prop(__nsh_hv31, "class", "text-[12px]");
+		bindProp(__nsh_hv31, "style", () => ({ color: colors.muted }));
+		const __nsh_hv32 = text("Первая заметка — как чистый лист.");
 		append(__nsh_hv31, __nsh_hv32);
-		const __nsh_hv33 = element("text");
-		prop(__nsh_hv33, "class", "text-[12px]");
-		bindProp(__nsh_hv33, "style", () => ({ color: colors.muted }));
-		const __nsh_hv34 = text("Первая заметка — как чистый лист.");
-		append(__nsh_hv33, __nsh_hv34);
-		const __nsh_hv35 = element("view");
-		prop(__nsh_hv35, "onPress", createNote);
-		prop(__nsh_hv35, "role", "button");
-		prop(__nsh_hv35, "accessibilityLabel", "Создать заметку");
-		prop(__nsh_hv35, "class", "flex-row items-center");
-		bindProp(__nsh_hv35, "hoverStyle", () => ({ backgroundColor: surfaceWash(false, .07) }));
-		bindProp(__nsh_hv35, "style", () => ({
+		const __nsh_hv33 = element("view");
+		prop(__nsh_hv33, "onPress", createNote);
+		prop(__nsh_hv33, "role", "button");
+		prop(__nsh_hv33, "accessibilityLabel", "Создать заметку");
+		prop(__nsh_hv33, "class", "flex-row items-center");
+		bindProp(__nsh_hv33, "hoverStyle", () => ({ backgroundColor: surfaceWash(false, .07) }));
+		bindProp(__nsh_hv33, "style", () => ({
 			marginTop: 6,
 			height: 30,
 			paddingLeft: 12,
@@ -4692,23 +4811,23 @@ function EmptyLibrary(props) {
 			backgroundColor: colors.card,
 			cursor: "pointer"
 		}));
-		const __nsh_hv36 = element("text");
-		prop(__nsh_hv36, "class", "text-[13px]");
-		bindProp(__nsh_hv36, "style", () => ({ color: colors.foreground }));
-		const __nsh_hv37 = text("Создать заметку");
-		append(__nsh_hv36, __nsh_hv37);
-		append(__nsh_hv35, __nsh_hv36);
-		insert(__nsh_hv35, component(Glyph, {
+		const __nsh_hv34 = element("text");
+		prop(__nsh_hv34, "class", "text-[13px]");
+		bindProp(__nsh_hv34, "style", () => ({ color: colors.foreground }));
+		const __nsh_hv35 = text("Создать заметку");
+		append(__nsh_hv34, __nsh_hv35);
+		append(__nsh_hv33, __nsh_hv34);
+		insert(__nsh_hv33, component(Glyph, {
 			name: "plus",
 			size: 13,
 			get color() {
 				return colors.foreground;
 			}
-		}), __nsh_hv36);
-		append(__nsh_hv30, __nsh_hv31);
-		append(__nsh_hv30, __nsh_hv33);
-		append(__nsh_hv30, __nsh_hv35);
-		return __nsh_hv30;
+		}), __nsh_hv34);
+		append(__nsh_hv28, __nsh_hv29);
+		append(__nsh_hv28, __nsh_hv31);
+		append(__nsh_hv28, __nsh_hv33);
+		return __nsh_hv28;
 	})();
 }
 function codeFields(id, rev) {
@@ -4814,41 +4933,53 @@ function proseBoxHeight(id, room, rev) {
 	}
 	return Math.max(28, Math.ceil(height));
 }
+const CODE_BLEED = 20;
+const CODE_EDGE = 8;
+function codeBleedFor(pad) {
+	return Math.max(0, Math.min(CODE_BLEED, pad - CODE_EDGE));
+}
+function codeBleed() {
+	return codeBleedFor(pagePad());
+}
 function codeBoxHeight(text, room) {
-	const per = Math.max(8, Math.floor(Math.max(80, pieceWidth(room) - 28) / 8));
-	return 26 + (text.length ? text : " ").split("\n").reduce((count, line) => count + Math.max(1, Math.ceil(line.length / per)), 0) * 21;
+	const per = Math.max(8, Math.floor(Math.max(80, pieceWidth(room)) / (codeSize() * .6)));
+	return 26 + (text.length ? text : " ").split("\n").reduce((count, line) => count + Math.max(1, Math.ceil(line.length / per)), 0) * Math.round(codeSize() * 1.57);
 }
 function CodeCard(props) {
 	const seg = segments.find((item) => item.id === props.id);
 	if (!seg) return (() => {
 		return element("view");
 	})();
+	const bleed = codeBleed();
 	return (() => {
-		const __nsh_hv39 = element("view");
-		bindProp(__nsh_hv39, "style", () => ({
+		const __nsh_hv37 = element("view");
+		prop(__nsh_hv37, "testID", "note-code-card");
+		bindProp(__nsh_hv37, "style", () => ({
 			marginTop: 4,
 			marginBottom: 8,
+			marginLeft: -bleed,
+			marginRight: -bleed,
 			borderRadius: 10,
 			borderWidth: 1,
 			borderColor: props.colors.border,
 			backgroundColor: surfaceWash(props.dark, .06),
 			overflow: "hidden"
 		}));
-		const __nsh_hv40 = element("view");
-		prop(__nsh_hv40, "class", "flex-row items-center justify-between");
-		bindProp(__nsh_hv40, "style", () => ({
+		const __nsh_hv38 = element("view");
+		prop(__nsh_hv38, "class", "flex-row items-center justify-between");
+		bindProp(__nsh_hv38, "style", () => ({
 			height: 36,
-			paddingLeft: 12,
-			paddingRight: 4,
+			paddingLeft: Math.max(0, bleed - 8),
+			paddingRight: bleed + 4,
 			borderBottomWidth: 1,
 			borderColor: props.colors.border
 		}));
-		const __nsh_hv41 = element("view");
-		prop(__nsh_hv41, "onPress", (event) => codeLanguageMenu(props.id, event.pagePosition));
-		prop(__nsh_hv41, "role", "button");
-		bindProp(__nsh_hv41, "accessibilityLabel", () => languageLabel(codeFields(props.id, bodyRev()).language));
-		bindProp(__nsh_hv41, "hoverStyle", () => ({ backgroundColor: props.wash }));
-		prop(__nsh_hv41, "style", {
+		const __nsh_hv39 = element("view");
+		prop(__nsh_hv39, "onPress", (event) => codeLanguageMenu(props.id, event.pagePosition));
+		prop(__nsh_hv39, "role", "button");
+		bindProp(__nsh_hv39, "accessibilityLabel", () => languageLabel(codeFields(props.id, bodyRev()).language));
+		bindProp(__nsh_hv39, "hoverStyle", () => ({ backgroundColor: props.wash }));
+		prop(__nsh_hv39, "style", {
 			height: 26,
 			paddingLeft: 8,
 			paddingRight: 8,
@@ -4856,24 +4987,24 @@ function CodeCard(props) {
 			cursor: "pointer",
 			justifyContent: "center"
 		});
-		const __nsh_hv42 = element("text");
-		prop(__nsh_hv42, "class", "text-[12px] font-medium");
-		bindProp(__nsh_hv42, "style", () => ({ color: props.colors.muted }));
-		insert(__nsh_hv42, () => languageLabel(codeFields(props.id, bodyRev()).language));
-		append(__nsh_hv41, __nsh_hv42);
-		const __nsh_hv43 = element("view");
-		prop(__nsh_hv43, "onPress", () => copyBlock(codeFields(props.id).text, props.id));
-		prop(__nsh_hv43, "role", "button");
-		prop(__nsh_hv43, "accessibilityLabel", "Скопировать");
-		prop(__nsh_hv43, "class", "items-center justify-center");
-		bindProp(__nsh_hv43, "hoverStyle", () => ({ backgroundColor: props.wash }));
-		prop(__nsh_hv43, "style", {
+		const __nsh_hv40 = element("text");
+		prop(__nsh_hv40, "class", "text-[12px] font-medium");
+		bindProp(__nsh_hv40, "style", () => ({ color: props.colors.muted }));
+		insert(__nsh_hv40, () => languageLabel(codeFields(props.id, bodyRev()).language));
+		append(__nsh_hv39, __nsh_hv40);
+		const __nsh_hv41 = element("view");
+		prop(__nsh_hv41, "onPress", () => copyBlock(codeFields(props.id).text, props.id));
+		prop(__nsh_hv41, "role", "button");
+		prop(__nsh_hv41, "accessibilityLabel", "Скопировать");
+		prop(__nsh_hv41, "class", "items-center justify-center");
+		bindProp(__nsh_hv41, "hoverStyle", () => ({ backgroundColor: props.wash }));
+		prop(__nsh_hv41, "style", {
 			width: 28,
 			height: 28,
 			borderRadius: 6,
 			cursor: "pointer"
 		});
-		insert(__nsh_hv43, () => copiedId() === props.id ? component(Glyph, {
+		insert(__nsh_hv41, () => copiedId() === props.id ? component(Glyph, {
 			name: "check",
 			size: 14,
 			get color() {
@@ -4886,10 +5017,10 @@ function CodeCard(props) {
 				return props.colors.muted;
 			}
 		}));
-		append(__nsh_hv40, __nsh_hv41);
-		append(__nsh_hv40, __nsh_hv43);
-		append(__nsh_hv39, __nsh_hv40);
-		insert(__nsh_hv39, component(RichEditor, {
+		append(__nsh_hv38, __nsh_hv39);
+		append(__nsh_hv38, __nsh_hv41);
+		append(__nsh_hv37, __nsh_hv38);
+		insert(__nsh_hv37, component(RichEditor, {
 			get editor() {
 				return seg.session;
 			},
@@ -4901,10 +5032,10 @@ function CodeCard(props) {
 				return { height: measuredSegHeight(props.id, codeBoxHeight(codeFields(props.id, bodyRev()).text, pageRoom())) };
 			},
 			get styles() {
-				return codeStyles(props.colors, props.dark);
+				return codeStyles(props.colors, props.dark, bleed - 1);
 			}
 		}));
-		return __nsh_hv39;
+		return __nsh_hv37;
 	})();
 }
 function ProsePiece(props) {
@@ -4917,11 +5048,13 @@ function ProsePiece(props) {
 			return seg.session;
 		},
 		ref: (ref) => attachRef(props.id, ref),
+		classes: TASK_CLASSES,
 		accessibilityLabel: "Текст заметки",
 		get placeholder() {
 			return segmentList()[0]?.id === props.id ? NOTE_PLACEHOLDER : void 0;
 		},
 		onContentSizeChange: ({ contentSize }) => updateSegHeight(props.id, contentSize.height),
+		onChange: () => applyProseGutter(seg.session, seg.paintRevs),
 		onSelectionChange: ({ selection }) => scheduleCaretOutline(props.id, selection.from),
 		onPasteFiles: (event) => {
 			pastePictures(event.paste, seg.session);
@@ -4936,50 +5069,54 @@ function ProsePiece(props) {
 			closeSlash();
 		},
 		get style() {
-			return { height: measuredSegHeight(props.id, proseBoxHeight(props.id, pageRoom(), bodyRev())) };
+			return {
+				marginLeft: -8,
+				marginRight: -8,
+				height: measuredSegHeight(props.id, proseBoxHeight(props.id, pageRoom(), bodyRev()))
+			};
 		},
 		get styles() {
-			return noteStyles(props.colors, props.dark, 0, 0, true);
+			return noteStyles(props.colors, props.dark, 0, true);
 		}
 	});
 }
 function SplitNote(props) {
 	return (() => {
-		const __nsh_hv45 = element("view");
-		prop(__nsh_hv45, "class", "relative min-h-0 flex-1");
-		prop(__nsh_hv45, "ref", (node) => {
+		const __nsh_hv43 = element("view");
+		prop(__nsh_hv43, "class", "relative min-h-0 flex-1");
+		prop(__nsh_hv43, "ref", (node) => {
 			menuAnchor = node;
 		});
-		const __nsh_hv46 = element("scroll");
-		prop(__nsh_hv46, "ref", (node) => {
+		const __nsh_hv44 = element("scroll");
+		prop(__nsh_hv44, "ref", (node) => {
 			splitScrollRef = node;
 		});
-		prop(__nsh_hv46, "onScroll", (event) => onSplitScroll(event.offset.y));
-		prop(__nsh_hv46, "smoothWheel", true);
-		prop(__nsh_hv46, "wheelLineHeight", 40);
-		prop(__nsh_hv46, "scrollbar", false);
-		prop(__nsh_hv46, "class", "min-h-0 flex-1");
-		bindProp(__nsh_hv46, "contentStyle", () => ({
+		prop(__nsh_hv44, "onScroll", (event) => onSplitScroll(event.offset.y));
+		prop(__nsh_hv44, "smoothWheel", true);
+		prop(__nsh_hv44, "wheelLineHeight", 40);
+		prop(__nsh_hv44, "scrollbar", false);
+		prop(__nsh_hv44, "class", "min-h-0 flex-1");
+		bindProp(__nsh_hv44, "contentStyle", () => ({
 			paddingTop: noteTopPad(),
 			paddingBottom: 0,
 			paddingLeft: pagePad(),
 			paddingRight: pagePad()
 		}));
-		const __nsh_hv48 = element("view");
-		prop(__nsh_hv48, "onPress", caretToEnd);
-		prop(__nsh_hv48, "testID", "split-note-tail");
-		prop(__nsh_hv48, "style", { height: 120 });
-		append(__nsh_hv46, __nsh_hv48);
-		insert(__nsh_hv46, [component(NoteTitle, { get colors() {
+		const __nsh_hv46 = element("view");
+		prop(__nsh_hv46, "onPress", caretToEnd);
+		prop(__nsh_hv46, "testID", "split-note-tail");
+		prop(__nsh_hv46, "style", { height: 120 });
+		append(__nsh_hv44, __nsh_hv46);
+		insert(__nsh_hv44, [component(NoteTitle, { get colors() {
 			return props.colors;
 		} }), each(() => segmentList(), (row) => {
 			const item = row();
 			return (() => {
-				const __nsh_hv47 = element("view");
-				prop(__nsh_hv47, "onLayout", (event) => {
+				const __nsh_hv45 = element("view");
+				prop(__nsh_hv45, "onLayout", (event) => {
 					segTops.set(item.id, event.bounds.origin.y);
 				});
-				insert(__nsh_hv47, () => item.kind === "code" ? component(CodeCard, {
+				insert(__nsh_hv45, () => item.kind === "code" ? component(CodeCard, {
 					get id() {
 						return item.id;
 					},
@@ -5003,34 +5140,34 @@ function SplitNote(props) {
 						return props.dark;
 					}
 				}));
-				return __nsh_hv47;
+				return __nsh_hv45;
 			})();
-		}, ((row) => String(row.id)))], __nsh_hv48);
-		append(__nsh_hv45, __nsh_hv46);
-		return __nsh_hv45;
+		}, ((row) => String(row.id)))], __nsh_hv46);
+		append(__nsh_hv43, __nsh_hv44);
+		return __nsh_hv43;
 	})();
 }
 function slashKeyboard() {
 	return (() => {
-		const __nsh_hv49 = element("view");
-		prop(__nsh_hv49, "ref", (node) => {
+		const __nsh_hv47 = element("view");
+		prop(__nsh_hv47, "ref", (node) => {
 			slashFocus = node;
 		});
-		prop(__nsh_hv49, "focusable", true);
-		prop(__nsh_hv49, "style", {
+		prop(__nsh_hv47, "focusable", true);
+		prop(__nsh_hv47, "style", {
 			position: "absolute",
 			width: 1,
 			height: 1,
 			opacity: 0
 		});
-		return __nsh_hv49;
+		return __nsh_hv47;
 	})();
 }
 function slashMenu(colors, wash) {
 	return (() => {
-		const __nsh_hv50 = element("view");
-		prop(__nsh_hv50, "class", "absolute rounded-lg border");
-		bindProp(__nsh_hv50, "style", () => ({
+		const __nsh_hv48 = element("view");
+		prop(__nsh_hv48, "class", "absolute rounded-lg border");
+		bindProp(__nsh_hv48, "style", () => ({
 			left: slashLeft(),
 			top: slashTop(),
 			width: 264,
@@ -5039,17 +5176,17 @@ function slashMenu(colors, wash) {
 			paddingTop: 4,
 			paddingBottom: 4
 		}));
-		insert(__nsh_hv50, () => filtered(slashQuery()).map((item, index) => (() => {
-			const __nsh_hv51 = element("view");
-			prop(__nsh_hv51, "onPress", () => {
+		insert(__nsh_hv48, () => filtered(slashQuery()).map((item, index) => (() => {
+			const __nsh_hv49 = element("view");
+			prop(__nsh_hv49, "onPress", () => {
 				slashIndex.set(index);
 				pick();
 			});
-			prop(__nsh_hv51, "role", "button");
-			bindProp(__nsh_hv51, "accessibilityLabel", () => item.label);
-			prop(__nsh_hv51, "class", "flex-row items-center");
-			prop(__nsh_hv51, "hoverStyle", { backgroundColor: wash });
-			bindProp(__nsh_hv51, "style", () => ({
+			prop(__nsh_hv49, "role", "button");
+			bindProp(__nsh_hv49, "accessibilityLabel", () => item.label);
+			prop(__nsh_hv49, "class", "flex-row items-center");
+			prop(__nsh_hv49, "hoverStyle", { backgroundColor: wash });
+			bindProp(__nsh_hv49, "style", () => ({
 				height: 28,
 				paddingLeft: 10,
 				paddingRight: 10,
@@ -5057,38 +5194,20 @@ function slashMenu(colors, wash) {
 				cursor: "pointer",
 				backgroundColor: index === slashIndex() ? wash : "transparent"
 			}));
-			const __nsh_hv52 = element("text");
-			prop(__nsh_hv52, "class", "text-[13px] flex-1");
-			bindProp(__nsh_hv52, "style", () => ({ color: colors.foreground }));
-			insert(__nsh_hv52, () => item.label);
-			const __nsh_hv53 = element("text");
-			prop(__nsh_hv53, "class", "text-[11px]");
-			bindProp(__nsh_hv53, "style", () => ({ color: colors.muted }));
-			insert(__nsh_hv53, () => item.hint);
-			append(__nsh_hv51, __nsh_hv52);
-			append(__nsh_hv51, __nsh_hv53);
-			return __nsh_hv51;
+			const __nsh_hv50 = element("text");
+			prop(__nsh_hv50, "class", "text-[13px] flex-1");
+			bindProp(__nsh_hv50, "style", () => ({ color: colors.foreground }));
+			insert(__nsh_hv50, () => item.label);
+			const __nsh_hv51 = element("text");
+			prop(__nsh_hv51, "class", "text-[11px]");
+			bindProp(__nsh_hv51, "style", () => ({ color: colors.muted }));
+			insert(__nsh_hv51, () => item.hint);
+			append(__nsh_hv49, __nsh_hv50);
+			append(__nsh_hv49, __nsh_hv51);
+			return __nsh_hv49;
 		})()));
-		return __nsh_hv50;
+		return __nsh_hv48;
 	})();
-}
-let noteEnterId = "";
-let noteEnter = null;
-function noteEntrance(id) {
-	if (noteEnter && noteEnterId === id) return noteEnter;
-	noteEnterId = id;
-	noteEnter = createMotion({ enter: {
-		keyframes: [{
-			opacity: 0,
-			translateY: 8
-		}, {
-			opacity: 1,
-			translateY: 0
-		}],
-		duration: 220,
-		easing: Easing.bezier(.16, 1, .3, 1)
-	} });
-	return noteEnter;
 }
 function onPageSpacePress() {
 	if (slashOpen()) {
@@ -5110,35 +5229,30 @@ function NoteView(props) {
 		paintedDark = props.dark;
 		queueMicrotask(paintCode);
 	}
-	const enter = noteEntrance(id);
 	return (() => {
-		const __nsh_hv54 = element("view");
-		prop(__nsh_hv54, "class", "min-h-0 flex-1 flex-col");
-		bindProp(__nsh_hv54, "style", () => enter.style);
-		const __nsh_hv55 = element("view");
-		prop(__nsh_hv55, "class", "relative min-h-0 flex-1");
-		prop(__nsh_hv55, "onLayout", (event) => {
+		const __nsh_hv52 = element("view");
+		prop(__nsh_hv52, "class", "min-h-0 flex-1 flex-col");
+		const __nsh_hv53 = element("view");
+		prop(__nsh_hv53, "class", "relative min-h-0 flex-1");
+		prop(__nsh_hv53, "onLayout", (event) => {
 			pageRoom.set(event.bounds.size.width);
 			pageTall.set(event.bounds.size.height);
 			menuAnchor?.measure().then((box) => {
 				if (box) pageTopY = box.pagePosition.y;
 			});
 		});
-		const __nsh_hv56 = element("view");
-		prop(__nsh_hv56, "class", "min-h-0 flex-col");
-		bindProp(__nsh_hv56, "style", () => ({
-			height: pageTall() > 0 ? pageTall() : void 0,
-			paddingTop: codeLayout() ? 0 : noteTopPad()
-		}));
-		const __nsh_hv57 = element("view");
-		prop(__nsh_hv57, "class", "relative min-h-0 flex-1 overflow-hidden");
-		prop(__nsh_hv57, "ref", (node) => {
+		const __nsh_hv54 = element("view");
+		prop(__nsh_hv54, "class", "min-h-0 flex-col");
+		bindProp(__nsh_hv54, "style", () => ({ height: pageTall() > 0 ? pageTall() : void 0 }));
+		const __nsh_hv55 = element("view");
+		prop(__nsh_hv55, "class", "relative min-h-0 flex-1");
+		prop(__nsh_hv55, "ref", (node) => {
 			menuAnchor = node;
 		});
-		prop(__nsh_hv57, "onPress", onPageSpacePress);
-		prop(__nsh_hv57, "onWheel", onSingleWheel);
-		prop(__nsh_hv57, "testID", "note-page-space");
-		insert(__nsh_hv57, [
+		prop(__nsh_hv55, "onPress", onPageSpacePress);
+		prop(__nsh_hv55, "onWheel", onSingleWheel);
+		prop(__nsh_hv55, "testID", "note-page-space");
+		insert(__nsh_hv55, [
 			() => codeLayout() ? component(SplitNote, {
 				colors,
 				get dark() {
@@ -5151,6 +5265,28 @@ function NoteView(props) {
 					editorRef = ref;
 				},
 				class: "min-h-0 flex-1",
+				classes: TASK_CLASSES,
+				onChange: () => {
+					if (editor && !split) {
+						singleBodyEmpty.set(editor.getText().length === 0);
+						applyProseGutter(editor, singlePaintRevs);
+					}
+				},
+				get contentLayer() {
+					return (() => {
+						const __nsh_hv56 = element("view");
+						prop(__nsh_hv56, "class", "absolute left-0 right-0");
+						bindProp(__nsh_hv56, "style", () => ({
+							top: noteTopPad(),
+							pointerEvents: "box-none"
+						}));
+						insert(__nsh_hv56, component(NoteTitle, {
+							colors,
+							pad: true
+						}));
+						return __nsh_hv56;
+					})();
+				},
 				placeholder: NOTE_PLACEHOLDER,
 				accessibilityLabel: "Текст заметки",
 				onSelectionChange: ({ selection }) => scheduleCaretOutline(null, selection.from),
@@ -5167,23 +5303,19 @@ function NoteView(props) {
 					closeSlash();
 				},
 				get styles() {
-					return noteStyles(colors, props.dark, Math.max(0, pageTall() - 150), pagePad(), false, NOTE_TOP_PAD);
+					return noteStyles(colors, props.dark, pagePad() - TABLE_BLEED, false, noteTopPad() + titleHeight() + 20 + NOTE_TOP_PAD, singleBodyEmpty());
 				}
 			}) : (() => {
-				const __nsh_hv58 = element("view");
-				prop(__nsh_hv58, "class", "h-full");
-				return __nsh_hv58;
+				const __nsh_hv57 = element("view");
+				prop(__nsh_hv57, "class", "h-full");
+				return __nsh_hv57;
 			})(), ((row) => row.stamp)),
 			() => slashOpen() && slashKeyboard(),
 			() => slashOpen() && slashMenu(colors, wash)
 		]);
-		append(__nsh_hv56, __nsh_hv57);
-		insert(__nsh_hv56, () => editor && !codeLayout() && component(NoteTitle, {
-			colors,
-			pad: true
-		}), __nsh_hv57);
-		append(__nsh_hv55, __nsh_hv56);
-		insert(__nsh_hv55, component(NotesOutlineRail, {
+		append(__nsh_hv54, __nsh_hv55);
+		append(__nsh_hv53, __nsh_hv54);
+		insert(__nsh_hv53, component(NotesOutlineRail, {
 			marks: outline,
 			activePos: activeOutlinePos,
 			colors,
@@ -5194,8 +5326,8 @@ function NoteView(props) {
 			onHoverOpen: syncOutlineFromViewport,
 			onSelect: jumpToOutline
 		}));
-		append(__nsh_hv54, __nsh_hv55);
-		return __nsh_hv54;
+		append(__nsh_hv52, __nsh_hv53);
+		return __nsh_hv52;
 	})();
 }
 function NoteTitle(props) {
@@ -5204,24 +5336,25 @@ function NoteTitle(props) {
 		return element("view");
 	})();
 	return (() => {
-		const __nsh_hv60 = element("view");
-		prop(__nsh_hv60, "class", "shrink-0 flex-col justify-end");
-		bindProp(__nsh_hv60, "style", () => ({
+		const __nsh_hv59 = element("view");
+		prop(__nsh_hv59, "class", "shrink-0 flex-col justify-end");
+		bindProp(__nsh_hv59, "onLayout", () => props.pad ? (event) => titleHeight.set(event.bounds.size.height) : void 0);
+		bindProp(__nsh_hv59, "style", () => ({
 			minHeight: 80,
 			marginLeft: props.pad ? pagePad() : 0,
 			marginRight: props.pad ? pagePad() : 0,
 			marginBottom: 20
 		}));
-		insert(__nsh_hv60, component(RichEditor, {
+		insert(__nsh_hv59, component(RichEditor, {
 			editor,
-			placeholder: "\\u200BБез названия",
+			placeholder: NOTE_TITLE_HINT,
 			accessibilityLabel: "Название заметки",
 			get styles() {
-				return titleStyles(props.colors);
+				return titleStyles(props.colors, draftTitle().length === 0);
 			},
 			class: "shrink-0"
 		}));
-		return __nsh_hv60;
+		return __nsh_hv59;
 	})();
 }
 let titleSession = null;
@@ -5229,6 +5362,7 @@ function titleEditor() {
 	return titleSession;
 }
 function buildTitleEditor(title) {
+	titleHeight.set(80);
 	const previous = titleSession;
 	titleSession = null;
 	if (previous) try {
@@ -5252,13 +5386,14 @@ function titleTextOf(session) {
 	return (Array.isArray(doc?.content) ? doc.content : []).map((block) => (Array.isArray(block.content) ? block.content : []).map((leaf) => leaf.text ?? "").join("")).join("\n");
 }
 let titleStylesCache = null;
-function titleStyles(colors) {
-	const key = `${colors.foreground}|${colors.muted}|${colors.accent}`;
+function titleStyles(colors, empty) {
+	const foreground = empty ? colors.muted : colors.foreground;
+	const key = `${foreground}|${colors.muted}|${colors.accent}`;
 	if (titleStylesCache?.key !== key) titleStylesCache = {
 		key,
 		styles: {
 			content: {
-				color: colors.foreground,
+				color: foreground,
 				backgroundColor: "transparent",
 				paddingTop: 0,
 				paddingBottom: 0,
@@ -5288,12 +5423,26 @@ function pagePad() {
 }
 const NOTE_TITLE_GAP = 20;
 const NOTE_TOP_PAD = 4;
+const NOTE_TITLE_LINE = 40;
 const NOTE_TITLE_BLOCK = 80;
+const titleHeight = signal(80);
 const NOTE_TOP_SHARE = .2;
-function noteTopPad() {
-	return pageTall() > 0 ? Math.max(NOTE_TOP_PAD, Math.round(pageTall() * NOTE_TOP_SHARE)) : NOTE_TOP_PAD;
+function pageVisibleTall() {
+	if (pageTall() > 0) return pageTall();
+	const bounds = windows()[0]?.state()?.contentBounds;
+	const tall = Number(bounds?.size?.height ?? 0);
+	return tall > 0 ? tall - 48 : 0;
 }
-const NOTE_PLACEHOLDER = "​Пишите. Слэш открывает блоки: заголовок, список, таблица…";
+function noteTopPadFor(tall) {
+	if (!(tall > 0)) return NOTE_TOP_PAD;
+	return Math.max(0, Math.round(tall * NOTE_TOP_SHARE) - NOTE_TITLE_LINE);
+}
+function noteTopPad() {
+	return noteTopPadFor(pageVisibleTall());
+}
+const emptyHint = (text) => `\u200B${text}`;
+const NOTE_PLACEHOLDER = emptyHint("Пишите. Слэш открывает блоки: заголовок, список, таблица…");
+const NOTE_TITLE_HINT = emptyHint("Без названия");
 let documentStylesCache = null;
 function segmentAt(markPos) {
 	let pos = 1;
@@ -5309,17 +5458,17 @@ function segmentAt(markPos) {
 	}
 	return null;
 }
-function noteStyles(colors, dark, minHeight, pad, piece = false, topPad = 2) {
-	const key = `${piece}|${dark}|${minHeight}|${pad}|${topPad}|${colors.background}|${colors.foreground}|${colors.muted}|${colors.border}`;
+function noteStyles(colors, dark, pad, piece = false, topPad = 2, empty = false) {
+	const key = `${piece}|${dark}|${pad}|${topPad}|${empty}|${textSize()}|${codeSize()}|${colors.background}|${colors.foreground}|${colors.muted}|${colors.border}`;
 	if (documentStylesCache?.key !== key) documentStylesCache = {
 		key,
-		styles: documentStyles(colors, dark, minHeight, pad, piece, topPad)
+		styles: documentStyles(colors, dark, pad, piece, topPad, empty)
 	};
 	return documentStylesCache.styles;
 }
 let codeStylesCache = null;
-function codeStyles(colors, dark) {
-	const key = `${dark}|${colors.foreground}|${colors.accent}|${colors.muted}`;
+function codeStyles(colors, dark, pad) {
+	const key = `${dark}|${colors.foreground}|${colors.accent}|${colors.muted}|${pad}|${codeSize()}`;
 	if (codeStylesCache?.key !== key) codeStylesCache = {
 		key,
 		styles: {
@@ -5337,22 +5486,22 @@ function codeStyles(colors, dark) {
 			nodes: {
 				codeBlock: {
 					fontFamily: GeistMono_Regular_default,
-					fontSize: 14,
+					fontSize: codeSize(),
 					fontWeight: 500,
-					lineHeight: 22,
+					lineHeight: Math.round(codeSize() * 1.57),
 					paddingTop: 12,
 					paddingBottom: 14,
-					paddingLeft: 14,
-					paddingRight: 14,
+					paddingLeft: pad,
+					paddingRight: pad,
 					marginTop: 0,
 					marginBottom: 0,
 					backgroundColor: "transparent"
 				},
 				paragraph: {
 					fontFamily: GeistMono_Regular_default,
-					fontSize: 14,
+					fontSize: codeSize(),
 					fontWeight: 500,
-					lineHeight: 22,
+					lineHeight: Math.round(codeSize() * 1.57),
 					marginTop: 0,
 					marginBottom: 0
 				}
@@ -5362,24 +5511,43 @@ function codeStyles(colors, dark) {
 	};
 	return codeStylesCache.styles;
 }
-function documentStyles(colors, dark, minHeight, pad, piece = false, topPad = 2) {
+function documentStyles(colors, dark, pad, piece = false, topPad = 2, empty = false) {
 	return {
 		content: {
-			color: colors.foreground,
+			color: empty ? colors.muted : colors.foreground,
 			backgroundColor: "transparent",
 			paddingTop: piece ? 0 : topPad,
 			paddingBottom: piece ? 0 : 120,
 			paddingLeft: piece ? 0 : pad,
 			paddingRight: piece ? 0 : pad,
-			minHeight: piece ? 0 : minHeight
+			minHeight: 0
 		},
 		placeholder: { color: colors.muted },
 		caret: { backgroundColor: colors.accent },
+		taskCheckbox: {
+			marginRight: 8,
+			marginTop: 3
+		},
+		taskCheckboxIndicator: {
+			width: 16,
+			height: 16,
+			borderWidth: 1.5,
+			borderColor: colors.border,
+			borderRadius: 4
+		},
+		taskCheckboxChecked: {
+			width: 16,
+			height: 16,
+			borderWidth: 1.5,
+			borderColor: colors.accent,
+			borderRadius: 4,
+			backgroundColor: colors.accent
+		},
 		nodes: {
 			paragraph: {
-				fontSize: 16,
+				fontSize: textSize(),
 				fontWeight: 500,
-				lineHeight: 24,
+				lineHeight: Math.round(textSize() * 1.5),
 				marginTop: 2,
 				marginBottom: 4
 			},
@@ -5435,23 +5603,33 @@ function documentStyles(colors, dark, minHeight, pad, piece = false, topPad = 2)
 			bulletList: {
 				marginTop: 2,
 				marginBottom: 4,
-				paddingLeft: 6
+				paddingLeft: 24
 			},
 			orderedList: {
 				marginTop: 2,
 				marginBottom: 4,
-				paddingLeft: 6
+				paddingLeft: 38
 			},
 			listItem: {
-				fontSize: 16,
+				fontSize: textSize(),
 				fontWeight: 500,
-				lineHeight: 24
+				lineHeight: Math.round(textSize() * 1.5)
+			},
+			taskList: {
+				marginTop: 2,
+				marginBottom: 4,
+				paddingLeft: piece ? 24 : 6
+			},
+			taskItem: {
+				fontSize: textSize(),
+				fontWeight: 500,
+				lineHeight: Math.round(textSize() * 1.5)
 			},
 			codeBlock: {
 				fontFamily: GeistMono_Regular_default,
-				fontSize: 14,
+				fontSize: codeSize(),
 				fontWeight: 500,
-				lineHeight: 22,
+				lineHeight: Math.round(codeSize() * 1.57),
 				paddingTop: 12,
 				paddingBottom: 12,
 				paddingLeft: 14,
@@ -5487,7 +5665,7 @@ function documentStyles(colors, dark, minHeight, pad, piece = false, topPad = 2)
 		marks: {
 			code: {
 				fontFamily: GeistMono_Regular_default,
-				fontSize: 16,
+				fontSize: codeSize(),
 				fontWeight: 500,
 				color: colors.foreground,
 				backgroundColor: surfaceWash(dark, .08)
@@ -5602,21 +5780,21 @@ function PreviewLine(props) {
 	const block = props.block;
 	const colors = props.colors;
 	if (block.kind === "rule") return (() => {
-		const __nsh_hv61 = element("view");
-		bindProp(__nsh_hv61, "style", () => ({
+		const __nsh_hv60 = element("view");
+		bindProp(__nsh_hv60, "style", () => ({
 			height: 1,
 			marginTop: 4,
 			marginBottom: 2,
 			backgroundColor: colors.border
 		}));
-		return __nsh_hv61;
+		return __nsh_hv60;
 	})();
 	const scale = block.kind === "heading" ? PREVIEW_SIZES[`h${Math.min(Math.max(block.level, 1), 3)}`] ?? PREVIEW_SIZES.h1 : PREVIEW_SIZES[block.kind] ?? PREVIEW_SIZES.text;
 	const ink = block.kind === "heading" ? colors.foreground : colorAlpha(colors.foreground, .62);
 	return (() => {
-		const __nsh_hv62 = element("text");
-		prop(__nsh_hv62, "class", "w-full");
-		bindProp(__nsh_hv62, "style", () => ({
+		const __nsh_hv61 = element("text");
+		prop(__nsh_hv61, "class", "w-full");
+		bindProp(__nsh_hv61, "style", () => ({
 			fontSize: scale.size,
 			lineHeight: scale.line,
 			fontWeight: scale.weight,
@@ -5625,8 +5803,8 @@ function PreviewLine(props) {
 			marginTop: scale.gap,
 			paddingLeft: block.kind === "item" ? 9 : 0
 		}));
-		insert(__nsh_hv62, () => block.kind === "item" ? `• ${block.text}` : block.text);
-		return __nsh_hv62;
+		insert(__nsh_hv61, () => block.kind === "item" ? `• ${block.text}` : block.text);
+		return __nsh_hv61;
 	})();
 }
 function cardShadow(dark) {
@@ -5648,81 +5826,11 @@ const MONTHS_SHORT = [
 	"ноя",
 	"дек"
 ];
-function stamp$1(value) {
+function stamp(value) {
 	if (!value) return "";
 	const date = new Date(value);
 	if (Number.isNaN(date.valueOf())) return "";
 	return `${date.getDate()} ${MONTHS_SHORT[date.getMonth()]} ${date.getFullYear()}`;
-}
-
-//#endregion
-//#region widgets.ts
-const WIDGETS = [
-	{
-		id: "journal",
-		label: "Дневник",
-		description: "Записи по дням, голосом и текстом"
-	},
-	{
-		id: "notes",
-		label: "Заметки",
-		description: "Документы: текст, списки, таблицы, код"
-	},
-	{
-		id: "tasks",
-		label: "Задачи",
-		description: "Список дел на сегодня и потом"
-	},
-	{
-		id: "games",
-		label: "Игры",
-		description: "Библиотека игр и время в них"
-	}
-];
-/** What a fresh install shows: the journal and the notes. Tasks and games stay off until a person turns them on. */
-const ALL_WIDGETS = {
-	journal: true,
-	notes: true,
-	tasks: false,
-	games: false
-};
-const STORAGE_KEY = "mundus.atlas.widgets.v1";
-const shown = signal({ ...ALL_WIDGETS });
-let stamp = 0;
-function widgetOn(id) {
-	return shown()[id] !== false;
-}
-function loadWidgets() {
-	const at = stamp;
-	Storage.getItem(STORAGE_KEY).then((value) => {
-		if (at !== stamp) return;
-		shown.set({
-			...ALL_WIDGETS,
-			...readJson$1(value)
-		});
-	});
-}
-function setWidget(id, on) {
-	if (!on && WIDGETS.filter((widget) => widget.id !== id && shown()[widget.id] !== false).length === 0) return;
-	const next = {
-		...shown(),
-		[id]: on
-	};
-	shown.set(next);
-	stamp += 1;
-	Storage.setItem(STORAGE_KEY, JSON.stringify(next));
-}
-function toggleWidget(id) {
-	setWidget(id, !widgetOn(id));
-}
-function readJson$1(value) {
-	if (!value) return {};
-	try {
-		const parsed = JSON.parse(value);
-		return parsed && typeof parsed === "object" ? parsed : {};
-	} catch {
-		return {};
-	}
 }
 
 //#endregion
@@ -5812,8 +5920,10 @@ function SettingsRow(props) {
 		const __nsh_hv5 = element("view");
 		prop(__nsh_hv5, "class", "min-w-0 flex-1");
 		const __nsh_hv6 = element("text");
-		prop(__nsh_hv6, "class", "text-[13px]");
-		bindProp(__nsh_hv6, "style", () => ({ color: colors.foreground }));
+		bindProp(__nsh_hv6, "style", () => ({
+			color: colors.foreground,
+			fontSize: interfaceSize()
+		}));
 		insert(__nsh_hv6, () => props.title);
 		append(__nsh_hv5, __nsh_hv6);
 		insert(__nsh_hv5, () => props.description ? (() => {
@@ -5827,6 +5937,7 @@ function SettingsRow(props) {
 			return __nsh_hv7;
 		})() : null);
 		append(__nsh_hv4, __nsh_hv5);
+		insert(__nsh_hv4, () => props.leading, __nsh_hv5);
 		insert(__nsh_hv4, () => props.children);
 		return __nsh_hv4;
 	})();
@@ -5879,43 +5990,6 @@ function Toggle(props) {
 		}));
 		return __nsh_hv9;
 	})();
-}
-function WidgetsSection(props) {
-	return component(SettingsSection, {
-		get colors() {
-			return props.colors;
-		},
-		title: "Виджеты",
-		note: "Какие типы показывать в боковой панели. Хотя бы один остаётся",
-		get children() {
-			return WIDGETS.map((widget, index) => component(SettingsRow, {
-				get colors() {
-					return props.colors;
-				},
-				get title() {
-					return widget.label;
-				},
-				get description() {
-					return widget.description;
-				},
-				first: index === 0,
-				get children() {
-					return component(Toggle, {
-						get colors() {
-							return props.colors;
-						},
-						get label() {
-							return widget.label;
-						},
-						get on() {
-							return widgetOn(widget.id);
-						},
-						onPress: () => toggleWidget(widget.id)
-					});
-				}
-			}));
-		}
-	});
 }
 /** A drop-down: the trigger is a row, the list opens under it. */
 function SettingsSelect(props) {
@@ -6016,69 +6090,30 @@ function SettingsSelect(props) {
 		return __nsh_hv14;
 	})();
 }
-/** A set of pills where exactly one is chosen. */
-function SettingsSegments(props) {
-	const colors = props.colors;
-	return (() => {
-		const __nsh_hv20 = element("view");
-		prop(__nsh_hv20, "class", "flex-row flex-wrap items-center");
-		prop(__nsh_hv20, "style", { gap: 6 });
-		insert(__nsh_hv20, () => props.options.map((option) => {
-			const selected = option.value === props.value;
-			return (() => {
-				const __nsh_hv21 = element("view");
-				bindProp(__nsh_hv21, "onPress", () => props.disabled ? void 0 : () => props.onSelect(option.value));
-				prop(__nsh_hv21, "role", "button");
-				bindProp(__nsh_hv21, "accessibilityLabel", () => option.label);
-				bindProp(__nsh_hv21, "accessibilityState", () => ({
-					selected,
-					disabled: !!props.disabled
-				}));
-				prop(__nsh_hv21, "class", "h-7 shrink-0 flex-row items-center justify-center rounded-md border");
-				bindProp(__nsh_hv21, "hoverStyle", () => ({ backgroundColor: hoverWash(darkColors(colors)) }));
-				bindProp(__nsh_hv21, "style", () => ({
-					paddingLeft: 10,
-					paddingRight: 10,
-					backgroundColor: selected ? colors.card : colors.background,
-					borderColor: selected ? colors.accent : colors.border,
-					opacity: props.disabled ? .6 : 1,
-					cursor: props.disabled ? "default" : "pointer"
-				}));
-				const __nsh_hv22 = element("text");
-				prop(__nsh_hv22, "class", "text-[12px]");
-				bindProp(__nsh_hv22, "style", () => ({ color: selected ? colors.foreground : colors.muted }));
-				insert(__nsh_hv22, () => option.label);
-				append(__nsh_hv21, __nsh_hv22);
-				return __nsh_hv21;
-			})();
-		}));
-		return __nsh_hv20;
-	})();
-}
 /** A key binding, drawn as the chip a user presses to rebind it. */
 function KeyChip(props) {
 	const colors = props.colors;
 	const pressable = !!props.onPress;
 	return (() => {
-		const __nsh_hv23 = element("view");
-		bindProp(__nsh_hv23, "onPress", () => pressable ? props.onPress : void 0);
-		prop(__nsh_hv23, "role", pressable ? "button" : void 0);
-		bindProp(__nsh_hv23, "accessibilityLabel", () => pressable ? props.accessibilityLabel : void 0);
-		prop(__nsh_hv23, "class", "h-7 shrink-0 flex-row items-center justify-center rounded-md border");
-		bindProp(__nsh_hv23, "hoverStyle", () => pressable ? { backgroundColor: hoverWash(darkColors(colors)) } : void 0);
-		bindProp(__nsh_hv23, "style", () => ({
+		const __nsh_hv20 = element("view");
+		bindProp(__nsh_hv20, "onPress", () => pressable ? props.onPress : void 0);
+		prop(__nsh_hv20, "role", pressable ? "button" : void 0);
+		bindProp(__nsh_hv20, "accessibilityLabel", () => pressable ? props.accessibilityLabel : void 0);
+		prop(__nsh_hv20, "class", "h-7 shrink-0 flex-row items-center justify-center rounded-md border");
+		bindProp(__nsh_hv20, "hoverStyle", () => pressable ? { backgroundColor: hoverWash(darkColors(colors)) } : void 0);
+		bindProp(__nsh_hv20, "style", () => ({
 			paddingLeft: 9,
 			paddingRight: 9,
 			backgroundColor: colors.background,
 			borderColor: colors.border,
 			cursor: pressable ? "pointer" : "default"
 		}));
-		const __nsh_hv24 = element("text");
-		prop(__nsh_hv24, "class", "text-[12px]");
-		bindProp(__nsh_hv24, "style", () => ({ color: props.muted ? colors.muted : colors.accent }));
-		insert(__nsh_hv24, () => props.label);
-		append(__nsh_hv23, __nsh_hv24);
-		return __nsh_hv23;
+		const __nsh_hv21 = element("text");
+		prop(__nsh_hv21, "class", "text-[12px]");
+		bindProp(__nsh_hv21, "style", () => ({ color: props.muted ? colors.muted : colors.accent }));
+		insert(__nsh_hv21, () => props.label);
+		append(__nsh_hv20, __nsh_hv21);
+		return __nsh_hv20;
 	})();
 }
 
@@ -6098,11 +6133,6 @@ const modePreviews = [
 		label: "Тёмная"
 	}
 ];
-const materialLabels = {
-	default: "Сплошной",
-	frosted: "Стекло",
-	mica: "Системный"
-};
 const fontSizes = [
 	12,
 	13,
@@ -6215,12 +6245,12 @@ function AtlasAppearanceSettings(props) {
 		})();
 	};
 	const swatch = (accent) => {
-		const shown = () => current().mode !== "light" ? accent.dark : accent.light;
+		const shown = () => colorScheme() === "dark" ? accent.dark : accent.light;
 		const selected = () => {
 			const stored = current().accent_color?.toLowerCase();
 			return current().accent_source === "custom" ? stored === accent.light || stored === accent.dark || accent.legacy.includes(stored ?? "") : current().accent_source !== "wallpaper" && accent.key === "blue";
 		};
-		const label = () => current().mode !== "light" && accent.darkName ? accent.darkName : accent.name;
+		const label = () => colorScheme() === "dark" && accent.darkName ? accent.darkName : accent.name;
 		return (() => {
 			const __nsh_hv15 = element("view");
 			prop(__nsh_hv15, "onPress", () => patch({
@@ -6254,39 +6284,21 @@ function AtlasAppearanceSettings(props) {
 	};
 	return (() => {
 		const __nsh_hv18 = element("view");
-		const __nsh_hv23 = element("view");
-		prop(__nsh_hv23, "class", "mb-5 flex-row gap-3");
-		insert(__nsh_hv23, () => modePreviews.map(modeCard));
-		const __nsh_hv25 = element("view");
-		prop(__nsh_hv25, "style", { height: 6 });
-		append(__nsh_hv18, __nsh_hv23);
-		append(__nsh_hv18, __nsh_hv25);
-		insert(__nsh_hv18, [
-			() => appearance()?.policy.following ? (() => {
-				const __nsh_hv19 = element("text");
-				prop(__nsh_hv19, "class", "mb-4 text-[12px]");
-				bindProp(__nsh_hv19, "style", () => ({ color: colors().accent }));
-				const __nsh_hv20 = text("Общий стиль задаётся в Mundus Manager. Настройки доступны только для просмотра.");
-				append(__nsh_hv19, __nsh_hv20);
-				return __nsh_hv19;
-			})() : null,
-			() => !props.editable() && !appearance()?.policy.following ? (() => {
-				const __nsh_hv21 = element("text");
-				prop(__nsh_hv21, "class", "mb-4 text-[12px]");
-				bindProp(__nsh_hv21, "style", () => ({ color: colors().muted }));
-				const __nsh_hv22 = text("Engine не подключён. Можно временно менять оформление; выбор действует только до закрытия Atlas.");
-				append(__nsh_hv21, __nsh_hv22);
-				return __nsh_hv21;
-			})() : null,
-			component(SectionTitle, {
-				get colors() {
-					return colors();
-				},
-				get children() {
-					return "Тема";
-				}
-			})
-		], __nsh_hv23);
+		const __nsh_hv19 = element("view");
+		prop(__nsh_hv19, "class", "mb-5 flex-row gap-3");
+		insert(__nsh_hv19, () => modePreviews.map(modeCard));
+		const __nsh_hv21 = element("view");
+		prop(__nsh_hv21, "style", { height: 6 });
+		append(__nsh_hv18, __nsh_hv19);
+		append(__nsh_hv18, __nsh_hv21);
+		insert(__nsh_hv18, component(SectionTitle, {
+			get colors() {
+				return colors();
+			},
+			get children() {
+				return "Тема";
+			}
+		}), __nsh_hv19);
 		insert(__nsh_hv18, [
 			component(SettingsSection, {
 				get colors() {
@@ -6299,15 +6311,15 @@ function AtlasAppearanceSettings(props) {
 							return colors();
 						},
 						title: "Цвет акцента",
-						description: "Из системной палитры",
+						description: "Палитра Atlas",
 						first: true,
 						get children() {
 							return (() => {
-								const __nsh_hv24 = element("view");
-								prop(__nsh_hv24, "class", "flex-row flex-wrap items-center");
-								prop(__nsh_hv24, "style", { gap: 6 });
-								insert(__nsh_hv24, () => systemAccents.map(swatch));
-								return __nsh_hv24;
+								const __nsh_hv20 = element("view");
+								prop(__nsh_hv20, "class", "flex-row flex-wrap items-center");
+								prop(__nsh_hv20, "style", { gap: 6 });
+								insert(__nsh_hv20, () => systemAccents.map(swatch));
+								return __nsh_hv20;
 							})();
 						}
 					}), () => appearance()?.capabilities.wallpaper_accent ? component(SettingsRow, {
@@ -6338,43 +6350,14 @@ function AtlasAppearanceSettings(props) {
 				get colors() {
 					return colors();
 				},
-				title: "Окно",
+				title: "Размер текста",
 				get children() {
 					return [component(SettingsRow, {
 						get colors() {
 							return colors();
 						},
-						title: "Материал окна",
-						description: "Чем рисуется фон под содержимым",
+						title: "Интерфейс",
 						first: true,
-						get children() {
-							return component(SettingsSegments, {
-								get colors() {
-									return colors();
-								},
-								get value() {
-									return current().material;
-								},
-								get disabled() {
-									return !canEdit();
-								},
-								get options() {
-									return (appearance()?.capabilities.materials ?? []).map((material) => ({
-										value: material,
-										label: materialLabels[material] ?? material
-									}));
-								},
-								onSelect: (next) => patch({ material: next })
-							});
-						}
-					}), component(SettingsRow, {
-						get colors() {
-							return colors();
-						},
-						title: "Размер текста",
-						get description() {
-							return `Размер интерфейсного текста · ${current().font_size} px`;
-						},
 						get children() {
 							return SettingsSelect({
 								id: "font-size",
@@ -6390,7 +6373,42 @@ function AtlasAppearanceSettings(props) {
 								onSelect: (value) => patch({ font_size: Number(value) })
 							});
 						}
-					})];
+					}), () => [[
+						"text",
+						"Текст заметок и дневника",
+						textSize
+					], [
+						"code",
+						"Код в заметках",
+						codeSize
+					]].map(([kind, label, size]) => component(SettingsRow, {
+						get colors() {
+							return colors();
+						},
+						title: label,
+						get children() {
+							return SettingsSelect({
+								id: `reading-${kind}`,
+								colors: colors(),
+								label,
+								width: 120,
+								value: String(size()),
+								options: [
+									12,
+									14,
+									16,
+									18,
+									20,
+									22,
+									24
+								].map((px) => ({
+									value: String(px),
+									label: `${px} px`
+								})),
+								onSelect: (value) => setReadingSize(kind, Number(value))
+							});
+						}
+					}))];
 				}
 			}),
 			component(SettingsSection, {
@@ -6460,17 +6478,16 @@ function AtlasAppearanceSettings(props) {
 							get colors() {
 								return colors();
 							},
-							title: "Обновить данные из Engine",
+							title: "Новая заметка",
 							get children() {
 								return component(KeyChip, {
 									get colors() {
 										return colors();
 									},
 									get label() {
-										return keymap.label(props.shortcuts.reload);
+										return keymap.label("mod+t");
 									},
-									accessibilityLabel: "Изменить сочетание: Обновить данные из Engine",
-									onPress: () => props.onChangeShortcut("reload")
+									muted: true
 								});
 							}
 						}),
@@ -6478,7 +6495,41 @@ function AtlasAppearanceSettings(props) {
 							get colors() {
 								return colors();
 							},
-							title: "Закрыть панель / поиск",
+							title: "Следующая вкладка",
+							get children() {
+								return component(KeyChip, {
+									get colors() {
+										return colors();
+									},
+									get label() {
+										return keymap.label("ctrl+tab");
+									},
+									muted: true
+								});
+							}
+						}),
+						component(SettingsRow, {
+							get colors() {
+								return colors();
+							},
+							title: "Закрыть вкладку",
+							get children() {
+								return component(KeyChip, {
+									get colors() {
+										return colors();
+									},
+									get label() {
+										return keymap.label("mod+w");
+									},
+									muted: true
+								});
+							}
+						}),
+						component(SettingsRow, {
+							get colors() {
+								return colors();
+							},
+							title: "Закрыть поиск",
 							get children() {
 								return component(KeyChip, {
 									get colors() {
@@ -6492,7 +6543,7 @@ function AtlasAppearanceSettings(props) {
 					];
 				}
 			})
-		], __nsh_hv25);
+		], __nsh_hv21);
 		return __nsh_hv18;
 	})();
 }
@@ -7859,30 +7910,6 @@ function GamesLibrary(props) {
 		return __nsh_hv0;
 	})();
 }
-function GamesSettings(props) {
-	return component(SettingsSection, {
-		get colors() {
-			return props.colors;
-		},
-		title: "Игры",
-		get children() {
-			return [component(SettingsRow, {
-				get colors() {
-					return props.colors;
-				},
-				title: "Метаданные и обложки",
-				description: "Загружаются без ключей и кэшируются в каталоге данных Engine",
-				first: true
-			}), component(SettingsRow, {
-				get colors() {
-					return props.colors;
-				},
-				title: "Источники",
-				description: "Порядок загрузки задаётся в game-metadata.json"
-			})];
-		}
-	});
-}
 
 //#endregion
 //#region dev-settings.tsx
@@ -7979,6 +8006,312 @@ function DevButton(props) {
 }
 
 //#endregion
+//#region developer-page.tsx
+const benchmarkRunning = signal(false);
+const report = signal("");
+const summary = signal("");
+let hardwareReply;
+let framesReply;
+let readyReply;
+let activeRun = 0;
+function benchmarkHardware(event) {
+	if (event.runId !== activeRun) return;
+	readyReply?.();
+	hardwareReply?.(event.data);
+}
+function benchmarkReady(event) {
+	if (event.runId === activeRun) readyReply?.();
+}
+function benchmarkFrames(event) {
+	if (event.runId === activeRun) framesReply?.(event.data);
+}
+function frame() {
+	return new Promise((resolve, reject) => {
+		const timeout = setTimeout(() => reject(/* @__PURE__ */ new Error("No animation frame")), 3e3);
+		requestAnimationFrame((time) => {
+			clearTimeout(timeout);
+			resolve(time);
+		});
+	});
+}
+async function withDeadline(promise, milliseconds, fallback) {
+	let timer;
+	try {
+		return await Promise.race([promise, new Promise((resolve) => {
+			timer = setTimeout(() => resolve(fallback), milliseconds);
+		})]);
+	} finally {
+		if (timer !== void 0) clearTimeout(timer);
+	}
+}
+async function runBenchmark(options) {
+	if (benchmarkRunning()) return;
+	benchmarkRunning.set(true);
+	report.set("");
+	summary.set("");
+	const runId = ++activeRun;
+	const ready = new Promise((resolve) => {
+		readyReply = resolve;
+	});
+	let startedAt = Date.now();
+	let native = false;
+	const hardware = new Promise((resolve) => {
+		hardwareReply = resolve;
+		native = options.sample(runId);
+		if (!native) resolve({ unavailable: "native host unavailable" });
+	});
+	const stages = [];
+	try {
+		if (native) {
+			await withDeadline(ready, 3e3, void 0);
+			options.beginFrames();
+		}
+		startedAt = Date.now();
+		for (const round of [1, 2]) for (const route of [
+			"journal",
+			"notes",
+			"tasks",
+			"games",
+			"settings"
+		]) {
+			const start = Date.now();
+			options.visit(route);
+			const first = await frame();
+			const firstFrameCallbackMs = Date.now() - start;
+			const frameIntervalsMs = [];
+			let last = first;
+			while (last - first < 350) {
+				const next = await frame();
+				frameIntervalsMs.push(next - last);
+				last = next;
+			}
+			stages.push({
+				route,
+				round,
+				startedAt: start,
+				firstFrameCallbackMs,
+				frameIntervalsMs,
+				callbackFps: frameIntervalsMs.length * 1e3 / (last - first)
+			});
+		}
+		for (const count of [1e4, 1e5]) {
+			options.visit("settings");
+			await frame();
+			const start = Date.now();
+			options.fixture(count);
+			const generatedMs = Date.now() - start;
+			options.visit("notes");
+			const layoutStart = Date.now();
+			await frame();
+			const firstFrameCallbackMs = Date.now() - layoutStart;
+			const scrollJumps = [];
+			for (const fraction of [
+				.25,
+				.5,
+				.95,
+				0
+			]) {
+				const start = Date.now();
+				if (jumpBenchmarkLibrary(fraction)) {
+					await frame();
+					scrollJumps.push({
+						fraction,
+						frameCallbackMs: Date.now() - start
+					});
+				}
+			}
+			stages.push({
+				route: "notes",
+				syntheticNotes: count,
+				startedAt: start,
+				generatedMs,
+				firstFrameCallbackMs,
+				scrollJumps
+			});
+		}
+		const endedAt = Date.now();
+		const frames = new Promise((resolve) => {
+			framesReply = resolve;
+			if (native) options.frames(runId);
+			else resolve({ unavailable: "native host unavailable" });
+		});
+		options.visit("developers");
+		const [resources, presentedFrames] = await Promise.all([withDeadline(hardware, 2e4, { unavailable: "sampler timed out" }), withDeadline(frames, 3e3, { unavailable: "frame profiler timed out" })]);
+		report.set(JSON.stringify({
+			schema: 1,
+			atlasVersion: options.version,
+			startedAt,
+			endedAt,
+			timing: "Stage timings use animation callbacks. Presented frames are reported separately by GPUI. Resource timestamps are Unix milliseconds; the sampler spaces its cadences apart (nativeMeasurements.resources.cadenceMilliseconds), so GPU and disk samples are far sparser than the 350 ms stages.",
+			stages,
+			nativeMeasurements: {
+				resources,
+				presentedFrames
+			}
+		}, null, 2));
+		summary.set(`${stages.length} этапов · ${((endedAt - startedAt) / 1e3).toFixed(1)} с`);
+	} catch (error) {
+		report.set(JSON.stringify({
+			startedAt,
+			stages,
+			error: String(error)
+		}, null, 2));
+	} finally {
+		hardwareReply = void 0;
+		framesReply = void 0;
+		readyReply = void 0;
+		options.fixture(0);
+		options.visit("developers");
+		benchmarkRunning.set(false);
+	}
+}
+const supported = [
+	{
+		title: "Дневник",
+		icon: "journal",
+		status: "Готово",
+		operation: "objects.list",
+		params: { typeId: "com.mundus.atlas.journal" },
+		example: [{
+			id: "example",
+			typeId: "com.mundus.atlas.journal"
+		}]
+	},
+	{
+		title: "Заметки",
+		icon: "note",
+		status: "Готово",
+		operation: "objects.list",
+		params: { typeId: "core.note" },
+		example: [{
+			id: "example",
+			typeId: "core.note",
+			title: "Заметка"
+		}]
+	},
+	{
+		title: "Задачи",
+		icon: "check",
+		status: "В разработке",
+		operation: "objects.list",
+		params: { typeId: "com.mundus.atlas.task" },
+		example: [{
+			id: "example",
+			typeId: "com.mundus.atlas.task",
+			title: "Задача"
+		}]
+	},
+	{
+		title: "Игры",
+		icon: "gamepad",
+		status: "В разработке",
+		operation: "canonical.game.list",
+		params: {},
+		example: []
+	}
+];
+function DevelopersPage(props) {
+	const expanded = signal("");
+	return (() => {
+		const __nsh_hv0 = element("view");
+		insert(__nsh_hv0, [
+			component(SettingsSection, {
+				get colors() {
+					return props.colors;
+				},
+				title: "Производительность",
+				get children() {
+					return [component(SettingsRow, {
+						get colors() {
+							return props.colors;
+						},
+						first: true,
+						get title() {
+							return benchmarkRunning() ? "Проверка идёт…" : "Запустить полный тест";
+						},
+						description: "Переходы между разделами и открытие библиотек из 10 000 и 100 000 тестовых заметок",
+						get onPress() {
+							return props.run;
+						}
+					}), () => Boolean(report()) && component(SettingsRow, {
+						get colors() {
+							return props.colors;
+						},
+						title: "Скопировать отчёт JSON",
+						get description() {
+							return summary();
+						},
+						onPress: () => void Clipboard.writeText(report())
+					})];
+				}
+			}),
+			() => props.demo && component(DevelopersSection, {
+				get colors() {
+					return props.colors;
+				},
+				get dark() {
+					return props.dark;
+				},
+				get size() {
+					return props.size;
+				},
+				get onStress() {
+					return props.stress;
+				},
+				get onReset() {
+					return props.reset;
+				}
+			}),
+			component(SettingsSection, {
+				get colors() {
+					return props.colors;
+				},
+				title: "Поддерживаемые типы",
+				get children() {
+					return supported.map((item, index) => component(SettingsRow, {
+						get colors() {
+							return props.colors;
+						},
+						get title() {
+							return item.title;
+						},
+						first: index === 0,
+						get leading() {
+							return component(Glyph, {
+								get name() {
+									return item.icon;
+								},
+								size: 16,
+								get color() {
+									return props.colors.muted;
+								}
+							});
+						},
+						get description() {
+							return expanded() === item.title ? `${item.operation} ${JSON.stringify(item.params)}\nПример результата: ${JSON.stringify(item.example)}` : void 0;
+						},
+						onPress: () => expanded.set(expanded() === item.title ? "" : item.title),
+						get children() {
+							return (() => {
+								const __nsh_hv1 = element("text");
+								prop(__nsh_hv1, "class", "rounded-md border px-2 py-1 text-[12px]");
+								bindProp(__nsh_hv1, "style", () => ({
+									color: props.colors.muted,
+									borderColor: props.colors.border
+								}));
+								insert(__nsh_hv1, () => item.status);
+								return __nsh_hv1;
+							})();
+						}
+					}));
+				}
+			})
+		]);
+		return __nsh_hv0;
+	})();
+}
+
+//#endregion
 //#region preview.ts
 const PREVIEW_STORAGE_KEY = "mundus.atlas.preview.v1";
 function persistPreview(store) {
@@ -8021,16 +8354,217 @@ function applyShellTheme(theme) {
 }
 
 //#endregion
+//#region quick-search.tsx
+function QuickSearch(props) {
+	const query = signal("");
+	const preview = signal(null);
+	const results = () => {
+		const needle = query().trim().toLocaleLowerCase();
+		if (!needle) return [];
+		const found = [];
+		for (const note of props.notes) {
+			const label = noteLabel(note.title);
+			if (`${label} ${note.text}`.toLocaleLowerCase().includes(needle)) found.push({
+				label,
+				kind: "Заметка",
+				select: () => props.onNote(String(note.id))
+			});
+			if (found.length === 20) break;
+		}
+		let count = 0;
+		for (const entry of props.journal) {
+			if (!entry.text.toLocaleLowerCase().includes(needle)) continue;
+			found.push({
+				label: entry.text.slice(0, 100),
+				kind: "Дневник",
+				select: () => preview.set(entry)
+			});
+			if (++count === 10) break;
+		}
+		return found;
+	};
+	return component(Modal, {
+		title: "Быстрый поиск",
+		get colors() {
+			return props.colors;
+		},
+		get onDismiss() {
+			return props.onDismiss;
+		},
+		get onBack() {
+			return preview() ? () => preview.set(null) : void 0;
+		},
+		get children() {
+			return preview() ? (() => {
+				const __nsh_hv0 = element("view");
+				prop(__nsh_hv0, "class", "gap-3 px-5 pb-5");
+				const __nsh_hv1 = element("scroll");
+				prop(__nsh_hv1, "style", { maxHeight: 250 });
+				const __nsh_hv2 = element("text");
+				prop(__nsh_hv2, "class", "select-text");
+				bindProp(__nsh_hv2, "style", () => ({ color: props.colors.foreground }));
+				insert(__nsh_hv2, () => preview()?.text);
+				append(__nsh_hv1, __nsh_hv2);
+				append(__nsh_hv0, __nsh_hv1);
+				insert(__nsh_hv0, component(ModalGhost, {
+					get colors() {
+						return props.colors;
+					},
+					label: "Открыть дневник",
+					get onPress() {
+						return props.onJournal;
+					}
+				}));
+				return __nsh_hv0;
+			})() : (() => {
+				const __nsh_hv3 = element("view");
+				prop(__nsh_hv3, "class", "gap-2 px-5 pb-5");
+				const __nsh_hv4 = element("input");
+				prop(__nsh_hv4, "autoFocus", true);
+				bindProp(__nsh_hv4, "value", () => query());
+				prop(__nsh_hv4, "accessibilityLabel", "Поисковый запрос");
+				prop(__nsh_hv4, "placeholder", "Заметки и дневник");
+				prop(__nsh_hv4, "onChange", (event) => query.set(event.value));
+				prop(__nsh_hv4, "onSubmit", () => results()[0]?.select());
+				append(__nsh_hv3, __nsh_hv4);
+				insert(__nsh_hv3, () => !!query().trim() && (() => {
+					const __nsh_hv5 = element("scroll");
+					prop(__nsh_hv5, "style", { maxHeight: 300 });
+					insert(__nsh_hv5, [() => results().length === 0 && (() => {
+						const __nsh_hv6 = element("text");
+						bindProp(__nsh_hv6, "style", () => ({ color: props.colors.muted }));
+						const __nsh_hv7 = text("Ничего не найдено");
+						append(__nsh_hv6, __nsh_hv7);
+						return __nsh_hv6;
+					})(), () => results().map((result) => (() => {
+						const __nsh_hv8 = element("view");
+						prop(__nsh_hv8, "class", "gap-1 rounded-md px-3 py-2");
+						prop(__nsh_hv8, "role", "button");
+						bindProp(__nsh_hv8, "onPress", () => result.select);
+						bindProp(__nsh_hv8, "hoverStyle", () => ({ backgroundColor: props.colors.background }));
+						const __nsh_hv9 = element("text");
+						bindProp(__nsh_hv9, "style", () => ({ color: props.colors.foreground }));
+						insert(__nsh_hv9, () => result.label);
+						const __nsh_hv10 = element("text");
+						prop(__nsh_hv10, "class", "text-[11px]");
+						bindProp(__nsh_hv10, "style", () => ({ color: props.colors.muted }));
+						insert(__nsh_hv10, () => result.kind);
+						append(__nsh_hv8, __nsh_hv9);
+						append(__nsh_hv8, __nsh_hv10);
+						return __nsh_hv8;
+					})())]);
+					return __nsh_hv5;
+				})());
+				return __nsh_hv3;
+			})();
+		}
+	});
+}
+
+//#endregion
 //#region App.tsx
 setup(null, "{\n  \"cssVars\": {\n    \"theme\": {\n      \"font-sans\": \"Inter\",\n      \"font-mono\": \"Geist Mono\",\n      \"radius\": \"0.75rem\",\n      \"radius-control\": \"0.5rem\"\n    },\n    \"light\": {\n      \"background\": \"#f7f8fa\",\n      \"foreground\": \"#111820\",\n      \"card\": \"#ffffff\",\n      \"card-foreground\": \"#111820\",\n      \"popover\": \"#ffffff\",\n      \"popover-foreground\": \"#111820\",\n      \"primary\": \"#1f6df5\",\n      \"primary-foreground\": \"#ffffff\",\n      \"secondary\": \"#eef1f6\",\n      \"secondary-foreground\": \"#111820\",\n      \"muted\": \"#eef1f6\",\n      \"muted-foreground\": \"#5f6a7a\",\n      \"accent\": \"#a8c5fb\",\n      \"accent-foreground\": \"#111820\",\n      \"destructive\": \"#d5373c\",\n      \"border\": \"#dde2ea\",\n      \"input\": \"#dde2ea\",\n      \"ring\": \"#1f6df5\",\n      \"selection\": \"#1f6df538\",\n      \"sidebar\": \"#eff1f5\",\n      \"sidebar-foreground\": \"#111820\",\n      \"sidebar-border\": \"#dde2ea\"\n    },\n    \"dark\": {\n      \"background\": \"#090c15\",\n      \"foreground\": \"#ffffff\",\n      \"card\": \"#101318\",\n      \"card-foreground\": \"#ffffff\",\n      \"popover\": \"#181c25\",\n      \"popover-foreground\": \"#ffffff\",\n      \"primary\": \"#1784fc\",\n      \"primary-foreground\": \"#101318\",\n      \"secondary\": \"#181c25\",\n      \"secondary-foreground\": \"#ffffff\",\n      \"muted\": \"#181c25\",\n      \"muted-foreground\": \"#717580\",\n      \"accent\": \"#104888\",\n      \"accent-foreground\": \"#ffffff\",\n      \"destructive\": \"#e67b71\",\n      \"border\": \"#1e222b\",\n      \"input\": \"#1e222b\",\n      \"ring\": \"#1784fc\",\n      \"selection\": \"#1784fc38\",\n      \"sidebar\": \"#0d1019\",\n      \"sidebar-foreground\": \"#ffffff\",\n      \"sidebar-border\": \"#1e222b\"\n    }\n  }\n}\n", null, null);
 const initialValue = Reflect.get(globalThis, "__MUNDUS_ATLAS_INITIAL__") ?? host.params.atlas;
 const hosted = isSnapshot(initialValue);
 const initial = hosted ? initialValue : fallback;
 const snapshot = signal(initial);
+const appearanceKey = "mundus.atlas.appearance.v1";
+const appearanceDefaults = fallback.appearance;
+const inheritedAppearance = initial.appearance?.settings ?? appearanceDefaults.settings;
+const localAppearance = signal({
+	...appearanceDefaults,
+	settings: {
+		...appearanceDefaults.settings,
+		mode: inheritedAppearance.mode,
+		accent_source: inheritedAppearance.accent_source === "custom" ? "custom" : "theme",
+		accent_color: inheritedAppearance.accent_color,
+		font_size: inheritedAppearance.font_size
+	}
+});
+let localAppearanceEdited = false;
+let importAppearancePending = false;
+let importAppearanceTimer;
+function finishAppearanceImport(legacy) {
+	if (!importAppearancePending) return;
+	importAppearancePending = false;
+	if (importAppearanceTimer !== void 0) clearTimeout(importAppearanceTimer);
+	if (localAppearanceEdited) return;
+	const current = localAppearance();
+	const old = legacy?.settings;
+	if (old) localAppearance.set({
+		...current,
+		settings: {
+			...current.settings,
+			mode: old.mode,
+			accent_source: old.accent_source === "custom" ? "custom" : "theme",
+			accent_color: old.accent_color,
+			font_size: old.font_size
+		}
+	});
+	Storage.setItem(appearanceKey, JSON.stringify(localAppearance().settings));
+}
+function requestAppearanceImport() {
+	if (!importAppearancePending || !commandRef || importAppearanceTimer !== void 0) return;
+	importAppearanceTimer = setTimeout(() => finishAppearanceImport(), 2e3);
+	askEngine("appearance.import");
+}
+Storage.getItem(appearanceKey).then((value) => {
+	if (localAppearanceEdited) return;
+	if (value) try {
+		const settings = JSON.parse(value);
+		if ([
+			"light",
+			"dark",
+			"system"
+		].includes(settings.mode)) {
+			localAppearance.set({
+				...appearanceDefaults,
+				settings: {
+					...localAppearance().settings,
+					...settings
+				}
+			});
+			return;
+		}
+	} catch {}
+	importAppearancePending = true;
+	if (hosted) requestAppearanceImport();
+	else finishAppearanceImport();
+});
+function localColors(appearance) {
+	const settings = appearance.settings;
+	return resolveAppearanceColors({
+		...appearance,
+		settings: {
+			...settings,
+			mode: settings.mode === "system" ? colorScheme() : settings.mode
+		}
+	}, previewThemes, fallback.colors);
+}
+effect(() => {
+	const mode = localAppearance().settings.mode;
+	setColorScheme(mode === "light" || mode === "dark" ? mode : "system");
+});
+effect(() => {
+	const appearance = localAppearance();
+	interfaceSize.set(appearance.settings.font_size);
+	const colors = localColors(appearance);
+	untracked(() => snapshot.set({
+		...snapshot(),
+		appearance,
+		appearanceEditable: true,
+		colors
+	}));
+});
+const benchmarkNotes = signal(null);
 const route = signal(initial.route);
 let startNoteOpened = false;
 let routeReady = false;
 const addTaskOpen = signal(false);
+const searchOpen = signal(false);
+effect(() => {
+	if (searchOpen()) return keymap.bind("escape", () => searchOpen.set(false), { overFocused: true });
+});
 const newTaskTitle = signal("");
 const sidebarVisible = signal(true);
 const voiceRecording = signal(false);
@@ -8041,8 +8575,6 @@ let voiceStartedAt = 0;
 const pickedExes = signal([]);
 const pickSource = signal("manual");
 const pageNavigation = navigation_default.filter((item) => !item.footer);
-const visiblePages = signal(pageNavigation);
-loadWidgets();
 loadRecent();
 if (!hosted) loadPreview().then((saved) => {
 	if (!saved) return;
@@ -8077,7 +8609,11 @@ const Bridge = nativeComponent("atlas.bridge", {
 		"discovered",
 		"imported",
 		"launched",
-		"metadata"
+		"metadata",
+		"benchmark",
+		"benchmarkFrames",
+		"benchmarkReady",
+		"appearanceImported"
 	]
 });
 function iconForNavigation(id) {
@@ -8127,23 +8663,22 @@ function TaskRows() {
 	})());
 }
 let commandRef;
+effect(() => {
+	const settings = localAppearance().settings;
+	askEngine("appearance.set", settings);
+});
 function setAppearance(patch) {
-	const current = snapshot();
-	if (current.appearance && !current.appearance.policy.following) {
-		const appearance = {
-			...current.appearance,
-			settings: {
-				...current.appearance.settings,
-				...patch
-			}
-		};
-		snapshot.set({
-			...current,
-			appearance,
-			colors: resolveAppearanceColors(appearance, current.themes, current.colors)
-		});
-	}
-	if (current.appearanceEditable) commandRef?.("appearance.set", patch);
+	localAppearanceEdited = true;
+	const appearance = localAppearance();
+	const settings = {
+		...appearance.settings,
+		...patch
+	};
+	localAppearance.set({
+		...appearance,
+		settings
+	});
+	Storage.setItem(appearanceKey, JSON.stringify(settings));
 }
 function TaskPage() {
 	return (() => {
@@ -8292,10 +8827,11 @@ effect(() => {
 			addTaskOpen.set(true);
 		}, { when: "notEditing" }),
 		keymap.bind(active.reload, () => commandRef?.("reload"), { when: "notEditing" }),
+		keymap.bind(active.search, () => searchOpen.set(true), { overFocused: true }),
 		keymap.bind("mod+t", () => {
 			route.set("notes");
 			createOpenNote();
-		})
+		}, { repeat: false })
 	];
 	return () => unbind.forEach((remove) => remove());
 });
@@ -8305,45 +8841,23 @@ function SettingsPage() {
 			return snapshot().colors;
 		},
 		get children() {
-			return [
-				(() => {
-					const __nsh_hv8 = element("text");
-					prop(__nsh_hv8, "class", "mb-6 text-[22px] font-semibold");
-					bindProp(__nsh_hv8, "style", () => ({ color: snapshot().colors.foreground }));
-					const __nsh_hv9 = text("Настройки");
-					append(__nsh_hv8, __nsh_hv9);
-					return __nsh_hv8;
-				})(),
-				component(AtlasAppearanceSettings, {
-					appearance: () => snapshot().appearance,
-					editable: () => snapshot().appearanceEditable,
-					colors: () => snapshot().colors,
-					get shortcuts() {
-						return shortcuts();
-					},
-					onPatch: setAppearance,
-					onChangeShortcut: cycleShortcut
-				}),
-				component(WidgetsSection, { get colors() {
-					return snapshot().colors;
-				} }),
-				() => snapshot().demo ? component(DevelopersSection, {
-					get colors() {
-						return snapshot().colors;
-					},
-					get dark() {
-						return snapshot().appearance?.settings.mode !== "light";
-					},
-					get size() {
-						return notes().length;
-					},
-					onStress: (count) => askEngine("notes.stress", { count }),
-					onReset: () => askEngine("notes.reset")
-				}) : null,
-				() => widgetOn("games") && component(GamesSettings, { get colors() {
-					return snapshot().colors;
-				} })
-			];
+			return [(() => {
+				const __nsh_hv8 = element("text");
+				prop(__nsh_hv8, "class", "mb-6 text-[22px] font-semibold");
+				bindProp(__nsh_hv8, "style", () => ({ color: snapshot().colors.foreground }));
+				const __nsh_hv9 = text("Настройки");
+				append(__nsh_hv8, __nsh_hv9);
+				return __nsh_hv8;
+			})(), component(AtlasAppearanceSettings, {
+				appearance: () => snapshot().appearance,
+				editable: () => snapshot().appearanceEditable,
+				colors: () => snapshot().colors,
+				get shortcuts() {
+					return shortcuts();
+				},
+				onPatch: setAppearance,
+				onChangeShortcut: cycleShortcut
+			})];
 		}
 	});
 }
@@ -8353,21 +8867,30 @@ function App() {
 		style: "hidden",
 		height: 48
 	} }));
-	effect(() => visiblePages.set(pageNavigation.filter((item) => widgetOn(item.id))));
-	effect(() => {
-		const pages = visiblePages();
-		if (!pageNavigation.some((item) => item.id === route())) return;
-		if (pages.some((item) => item.id === route())) return;
-		const next = pages[0]?.id;
-		if (next) route.set(next);
-	});
 	const footerNavigation = navigation_default.filter((item) => item.footer);
 	const openNewTask = () => {
 		newTaskTitle.set("");
 		addTaskOpen.set(true);
 	};
+	const pageLeft = signal(0);
+	const pageWidth = signal(0);
 	const shell = snapshot().chrome === "tsx";
-	const dark = snapshot().appearance?.settings.mode !== "light";
+	const dark = () => (localAppearance().settings.mode === "system" ? colorScheme() : localAppearance().settings.mode) === "dark";
+	const pageSlideX = createAnimatedValue(0);
+	const pageSlideY = createAnimatedValue(0);
+	const sliding = signal(false);
+	let slidFromSidebar = false;
+	const slidePage = (dir, axis = "x") => {
+		const vertical = axis === "y";
+		pageSlideX.set(vertical ? 0 : dir * 34);
+		pageSlideY.set(vertical ? dir * 34 : 0);
+		sliding.set(true);
+		Animated.timing(vertical ? pageSlideY : pageSlideX, {
+			toValue: 0,
+			duration: 200,
+			easing: Easing.out(Easing.cubic)
+		}).start().then(() => sliding.set(false));
+	};
 	const pageTab = (target) => ({
 		key: `page:${target}`,
 		route: target
@@ -8379,26 +8902,76 @@ function App() {
 		active: true
 	}]);
 	const activeTabKey = signal(`page:${route()}`);
+	const destination = () => ({
+		route: route(),
+		noteId: route() === "notes" ? openNoteId() : null
+	});
+	const sameDestination = (left, right) => left.route === right.route && left.noteId === right.noteId;
+	const history = signal({
+		entries: [destination()],
+		index: 0
+	});
+	effect(() => {
+		const next = destination();
+		untracked(() => {
+			if (benchmarkRunning()) return;
+			const { entries, index } = history();
+			if (sameDestination(entries[index], next)) return;
+			const kept = [...entries.slice(0, index + 1), next].slice(-40);
+			history.set({
+				entries: kept,
+				index: kept.length - 1
+			});
+		});
+	});
+	const historyTarget = (step) => {
+		const { entries, index } = history();
+		for (let at = index + step; at >= 0 && at < entries.length; at += step) {
+			const target = entries[at];
+			if (sameDestination(entries[index], target) || target.noteId && !notes().some((note) => String(note.id) === target.noteId)) continue;
+			return at;
+		}
+		return -1;
+	};
+	const walkHistory = (step) => batch(() => {
+		const index = historyTarget(step);
+		if (index < 0) return;
+		const { entries } = history();
+		const target = entries[index];
+		history.set({
+			entries,
+			index
+		});
+		if (target.noteId) {
+			route.set("notes");
+			openNoteById(target.noteId);
+		} else openPageTab(target.route);
+	});
+	const noteTabLabel = (tab) => {
+		if (tab.noteId === openNoteId()) return noteLabel(openNoteTitle());
+		const note = notes().find((item) => String(item.id) === tab.noteId);
+		return noteLabel(note?.title);
+	};
 	const tabViews = () => tabs().map((tab) => ({
 		...tab,
 		active: tab.key === activeTabKey(),
-		label: tab.noteId ? tab.noteId === openNoteId() ? openNoteTitle() || "Без названия" : notes().find((item) => item.id === tab.noteId)?.title ?? "Без названия" : pageLabel(tab.route)
+		label: tab.noteId ? noteTabLabel(tab) : pageLabel(tab.route)
 	}));
-	const activateTab = (key, record = true) => {
-		const tab = tabs().find((item) => item.key === key);
-		if (!tab) return;
+	const activateTab = (key) => batch(() => {
+		const list = tabs();
+		const to = list.findIndex((item) => item.key === key);
+		if (to < 0) return;
+		const tab = list[to];
+		const from = list.findIndex((item) => item.key === activeTabKey());
+		const slidByRow = slidFromSidebar;
+		slidFromSidebar = false;
+		if (from >= 0 && from !== to && !slidByRow) slidePage(slideDirection(from, to));
 		activeTabKey.set(key);
-		if (tab.route !== route()) {
-			if (route() === "notes" && tab.route !== "notes") leaveOpenNote();
-			route.set(tab.route);
-		}
-		if (tab.noteId) {
-			if (openNoteId() !== tab.noteId) {
-				if (record) openNoteById(tab.noteId);
-				else openNoteWithoutHistory(tab.noteId);
-			}
-		} else if (openNoteId()) closeOpenNote();
-	};
+		if (tab.route !== route()) route.set(tab.route);
+		if (openNoteId() === (tab.noteId ?? null)) return;
+		if (tab.noteId) openNoteById(tab.noteId);
+		else closeOpenNote();
+	});
 	const openPageTab = (target) => {
 		if (!isRoute(target)) return;
 		const key = `page:${target}`;
@@ -8419,11 +8992,11 @@ function App() {
 		if (at < 0) return;
 		const rest = list.filter((tab) => tab.key !== key);
 		animateTabs();
-		tabs.set(rest);
 		if (activeTabKey() === key) {
 			const next = rest[Math.min(at, rest.length - 1)];
 			activateTab(next.key);
 		}
+		tabs.set(rest);
 	};
 	const tabMenu = (key, at) => {
 		const tab = tabs().find((item) => item.key === key);
@@ -8434,7 +9007,7 @@ function App() {
 				label: "Переименовать",
 				onSelect: () => {
 					activateTab(key);
-					setTimeout(focusNoteTitle, 0);
+					requestNoteTitleFocus();
 				}
 			}] : [],
 			{
@@ -8450,6 +9023,7 @@ function App() {
 				onSelect: () => {
 					activateTab(key);
 					removeOpenNote();
+					closeTab(key);
 				}
 			}] : []
 		], at);
@@ -8460,38 +9034,57 @@ function App() {
 		tabs.set(tabs().filter((tab) => tab.key === keep));
 		activateTab(keep);
 	};
+	const cycleTab = (step) => {
+		const list = tabs();
+		if (list.length < 2) return;
+		const next = list[((list.findIndex((tab) => tab.key === activeTabKey()) + step) % list.length + list.length) % list.length];
+		if (next) activateTab(next.key);
+	};
+	effect(() => keymap.bind({
+		"ctrl+tab": () => cycleTab(1),
+		"ctrl+shift+tab": () => cycleTab(-1)
+	}, { overFocused: true }), keymap.bind("mod+w", () => closeTab(activeTabKey()), { repeat: false }));
 	effect(() => {
 		const id = openNoteId();
-		if (!id) {
-			if (activeTabKey().startsWith("note:")) activateTab(`page:notes`, false);
-			return;
-		}
-		const key = `note:${id}`;
-		if (activeTabKey() === key) return;
-		if (!tabs().some((tab) => tab.key === key)) {
-			animateTabs();
-			const at = tabs().findIndex((tab) => tab.key === activeTabKey());
-			const tab = {
-				key,
-				route: "notes",
-				noteId: id,
-				label: openNoteTitle() || "Без названия",
-				active: true
-			};
+		untracked(() => {
+			if (!id) {
+				if (activeTabKey().startsWith("note:")) openPageTab("notes");
+				return;
+			}
+			const key = `note:${id}`;
+			if (activeTabKey() === key) return;
 			const list = tabs();
-			tabs.set([
-				...list.slice(0, at + 1),
-				tab,
-				...list.slice(at + 1)
-			]);
-		}
-		activeTabKey.set(key);
+			if (!list.some((tab) => tab.key === key)) {
+				animateTabs();
+				const at = list.findIndex((tab) => tab.key === activeTabKey());
+				const tab = {
+					key,
+					route: "notes",
+					noteId: id,
+					label: noteLabel(openNoteTitle()),
+					active: true
+				};
+				tabs.set([
+					...list.slice(0, at + 1),
+					tab,
+					...list.slice(at + 1)
+				]);
+			}
+			activeTabKey.set(key);
+		});
 	});
 	const changeRoute = (target) => {
 		if (!isRoute(target)) return;
 		openPageTab(target);
 	};
 	const selectSidebarPage = (target) => {
+		const rows = navigation_default.map((item) => item.id);
+		const fromRow = rows.indexOf(route());
+		const toRow = rows.indexOf(target);
+		if (fromRow >= 0 && toRow >= 0 && fromRow !== toRow) {
+			slidFromSidebar = true;
+			slidePage(slideDirection(fromRow, toRow), "y");
+		}
 		if (target === "notes") {
 			if (hasOpenNote()) closeOpenNote();
 			openPageTab("notes");
@@ -8506,22 +9099,28 @@ function App() {
 	};
 	const openRecentEntry = (entry) => {
 		if (entry.kind !== "note") return;
-		openNoteById(entry.id);
-		if (route() !== "notes") route.set("notes");
+		batch(() => {
+			openNoteById(entry.id);
+			if (openNoteId() === entry.id) route.set("notes");
+		});
 	};
 	return (() => {
 		const __nsh_hv10 = element("view");
 		prop(__nsh_hv10, "class", "relative h-full w-full");
 		prop(__nsh_hv10, "onMouseUp", (event) => {
-			if (event.button === "back") walkBack();
-			if (event.button === "forward") walkForward();
+			if (event.button === "back") walkHistory(-1);
+			if (event.button === "forward") walkHistory(1);
 		});
-		bindProp(__nsh_hv10, "style", () => ({ backgroundColor: shell ? shellFill(snapshot().colors, dark) : snapshot().colors.background }));
+		bindProp(__nsh_hv10, "style", () => ({ backgroundColor: shell ? shellFill(snapshot().colors, dark()) : snapshot().colors.background }));
 		const __nsh_hv11 = element("view");
 		prop(__nsh_hv11, "class", "h-full w-full flex-row");
 		const __nsh_hv21 = element("view");
 		prop(__nsh_hv21, "class", "relative min-h-0 min-w-0 flex-1");
-		bindProp(__nsh_hv21, "style", () => shell ? {
+		prop(__nsh_hv21, "onLayout", (event) => {
+			pageLeft.set(event.bounds.origin.x);
+			pageWidth.set(event.bounds.size.width);
+		});
+		bindProp(__nsh_hv21, "style", () => ({ ...shell ? {
 			marginLeft: 8,
 			marginRight: 8,
 			marginTop: 48,
@@ -8531,8 +9130,14 @@ function App() {
 			borderColor: snapshot().colors.border,
 			backgroundColor: snapshot().colors.background,
 			overflow: "hidden"
-		} : void 0);
-		insert(__nsh_hv21, [
+		} : {} }));
+		const __nsh_hv22 = element("view");
+		prop(__nsh_hv22, "class", "min-h-0 min-w-0 flex-col");
+		bindProp(__nsh_hv22, "style", () => ({
+			flex: 1,
+			transform: sliding() ? [{ translateX: pageSlideX }, { translateY: pageSlideY }] : void 0
+		}));
+		insert(__nsh_hv22, [
 			() => route() === "journal" && component(JournalPage, {
 				entries: () => snapshot().journalEntries,
 				get colors() {
@@ -8549,26 +9154,33 @@ function App() {
 				onStopRecording: stopRecording,
 				onPlayVoice: playVoice,
 				titlebarInset: 0,
-				dark
+				get dark() {
+					return dark();
+				}
 			}),
 			() => route() === "notes" && component(NotesPage, {
 				get colors() {
 					return snapshot().colors;
 				},
-				dark,
-				titlebarInset: 0
+				get dark() {
+					return dark();
+				},
+				titlebarInset: 0,
+				get benchmarkNotes() {
+					return benchmarkNotes();
+				}
 			}),
 			() => route() === "tasks" && (() => {
-				const __nsh_hv22 = element("view");
-				prop(__nsh_hv22, "class", "min-h-0 flex-1");
-				insert(__nsh_hv22, [component(TaskPage, {}), () => shell && (() => {
-					const __nsh_hv23 = element("view");
-					prop(__nsh_hv23, "onPress", openNewTask);
-					prop(__nsh_hv23, "role", "button");
-					prop(__nsh_hv23, "accessibilityLabel", "Новая задача");
-					prop(__nsh_hv23, "class", "absolute items-center justify-center rounded-full");
-					prop(__nsh_hv23, "hoverStyle", { opacity: .85 });
-					bindProp(__nsh_hv23, "style", () => ({
+				const __nsh_hv23 = element("view");
+				prop(__nsh_hv23, "class", "min-h-0 flex-1");
+				insert(__nsh_hv23, [component(TaskPage, {}), () => shell && (() => {
+					const __nsh_hv24 = element("view");
+					prop(__nsh_hv24, "onPress", openNewTask);
+					prop(__nsh_hv24, "role", "button");
+					prop(__nsh_hv24, "accessibilityLabel", "Новая задача");
+					prop(__nsh_hv24, "class", "absolute items-center justify-center rounded-full");
+					prop(__nsh_hv24, "hoverStyle", { opacity: .85 });
+					bindProp(__nsh_hv24, "style", () => ({
 						right: 16,
 						bottom: 16,
 						width: 32,
@@ -8576,21 +9188,21 @@ function App() {
 						backgroundColor: snapshot().colors.foreground,
 						cursor: "pointer"
 					}));
-					insert(__nsh_hv23, component(Glyph, {
+					insert(__nsh_hv24, component(Glyph, {
 						name: "plus",
 						size: 16,
 						get color() {
 							return snapshot().colors.background;
 						}
 					}));
-					return __nsh_hv23;
+					return __nsh_hv24;
 				})()]);
-				return __nsh_hv22;
+				return __nsh_hv23;
 			})(),
-			() => route() === "games" && widgetOn("games") && (() => {
-				const __nsh_hv24 = element("view");
-				prop(__nsh_hv24, "class", "min-h-0 flex-1");
-				insert(__nsh_hv24, component(GamesLibrary, {
+			() => route() === "games" && (() => {
+				const __nsh_hv25 = element("view");
+				prop(__nsh_hv25, "class", "min-h-0 flex-1");
+				insert(__nsh_hv25, component(GamesLibrary, {
 					get colors() {
 						return snapshot().colors;
 					},
@@ -8615,76 +9227,159 @@ function App() {
 						askEngine("games.clear-pick");
 					}
 				}));
-				return __nsh_hv24;
-			})(),
-			() => route() === "settings" && (() => {
-				const __nsh_hv25 = element("view");
-				prop(__nsh_hv25, "class", "min-h-0 flex-1");
-				insert(__nsh_hv25, component(SettingsPage, {}));
 				return __nsh_hv25;
 			})(),
-			() => addTaskOpen() && component(Modal, {
-				title: "Новая задача",
+			() => route() === "settings" && (() => {
+				const __nsh_hv26 = element("view");
+				prop(__nsh_hv26, "class", "min-h-0 flex-1");
+				insert(__nsh_hv26, component(SettingsPage, {}));
+				return __nsh_hv26;
+			})(),
+			() => route() === "developers" && component(SettingsPage$1, {
 				get colors() {
 					return snapshot().colors;
 				},
-				onDismiss: () => addTaskOpen.set(false),
-				get footer() {
-					return (() => {
-						const __nsh_hv26 = element("view");
-						prop(__nsh_hv26, "class", "flex-row items-center justify-end");
-						prop(__nsh_hv26, "style", { gap: 8 });
-						insert(__nsh_hv26, [component(ModalGhost, {
-							label: "Отмена",
-							get colors() {
-								return snapshot().colors;
-							},
-							onPress: () => addTaskOpen.set(false)
-						}), component(Button, {
-							label: "Добавить",
-							get colors() {
-								return snapshot().colors;
-							},
-							onPress: () => {
-								createTodo(newTaskTitle());
-								addTaskOpen.set(false);
-							},
-							selected: true,
-							className: "h-9 items-center justify-center px-3 py-0",
-							get style() {
-								return {
-									backgroundColor: snapshot().colors.accent,
-									borderColor: "transparent"
-								};
-							},
-							get textColor() {
-								return snapshot().colors.background;
-							}
-						})]);
-						return __nsh_hv26;
-					})();
-				},
 				get children() {
-					return (() => {
-						const __nsh_hv27 = element("input");
-						bindProp(__nsh_hv27, "value", () => newTaskTitle());
-						prop(__nsh_hv27, "onChange", (e) => newTaskTitle.set(e.value));
-						prop(__nsh_hv27, "onSubmit", (event) => {
-							createTodo(event.text);
-							addTaskOpen.set(false);
-						});
-						prop(__nsh_hv27, "placeholder", "Название задачи");
-						prop(__nsh_hv27, "accessibilityLabel", "Название задачи");
-						prop(__nsh_hv27, "class", "h-10 rounded-lg px-3 text-[13px]");
-						bindProp(__nsh_hv27, "style", () => ({
-							backgroundColor: snapshot().colors.background,
-							color: snapshot().colors.foreground
-						}));
-						return __nsh_hv27;
-					})();
+					return component(DevelopersPage, {
+						get colors() {
+							return snapshot().colors;
+						},
+						get dark() {
+							return dark();
+						},
+						get demo() {
+							return Boolean(snapshot().demo);
+						},
+						get size() {
+							return notes().length;
+						},
+						run: () => void runBenchmark({
+							visit: (target) => {
+								if (route() !== target) slidePage(1);
+								route.set(target);
+							},
+							frames: (runId) => askEngine("benchmark.frames", { runId }),
+							beginFrames: () => askEngine("benchmark.begin"),
+							version: snapshot().version,
+							sample: (runId) => {
+								if (!hosted) return false;
+								askEngine("benchmark.sample", { runId });
+								return true;
+							},
+							fixture: (size) => {
+								const text = "Абзац для проверки списка заметок.";
+								const doc = {
+									type: "doc",
+									content: [{
+										type: "paragraph",
+										content: [{
+											type: "text",
+											text
+										}]
+									}]
+								};
+								const date = (/* @__PURE__ */ new Date()).toISOString();
+								benchmarkNotes.set(size ? Array.from({ length: size }, (_, index) => ({
+									id: `benchmark:${index}`,
+									title: `Тестовая заметка ${index + 1}`,
+									text,
+									doc,
+									createdAt: date,
+									updatedAt: date
+								})) : null);
+							}
+						}),
+						stress: (count) => askEngine("notes.stress", { count }),
+						reset: () => askEngine("notes.reset")
+					});
 				}
 			})
 		]);
+		append(__nsh_hv21, __nsh_hv22);
+		insert(__nsh_hv21, [() => searchOpen() && component(QuickSearch, {
+			get colors() {
+				return snapshot().colors;
+			},
+			get notes() {
+				return notes();
+			},
+			get journal() {
+				return snapshot().journalEntries;
+			},
+			onDismiss: () => searchOpen.set(false),
+			onNote: (id) => {
+				searchOpen.set(false);
+				openRecentEntry({
+					kind: "note",
+					id,
+					title: ""
+				});
+			},
+			onJournal: () => {
+				searchOpen.set(false);
+				openPageTab("journal");
+			}
+		}), () => addTaskOpen() && component(Modal, {
+			title: "Новая задача",
+			get colors() {
+				return snapshot().colors;
+			},
+			onDismiss: () => addTaskOpen.set(false),
+			get footer() {
+				return (() => {
+					const __nsh_hv27 = element("view");
+					prop(__nsh_hv27, "class", "flex-row items-center justify-end");
+					prop(__nsh_hv27, "style", { gap: 8 });
+					insert(__nsh_hv27, [component(ModalGhost, {
+						label: "Отмена",
+						get colors() {
+							return snapshot().colors;
+						},
+						onPress: () => addTaskOpen.set(false)
+					}), component(Button, {
+						label: "Добавить",
+						get colors() {
+							return snapshot().colors;
+						},
+						onPress: () => {
+							createTodo(newTaskTitle());
+							addTaskOpen.set(false);
+						},
+						selected: true,
+						className: "h-9 items-center justify-center px-3 py-0",
+						get style() {
+							return {
+								backgroundColor: snapshot().colors.accent,
+								borderColor: "transparent"
+							};
+						},
+						get textColor() {
+							return snapshot().colors.background;
+						}
+					})]);
+					return __nsh_hv27;
+				})();
+			},
+			get children() {
+				return (() => {
+					const __nsh_hv28 = element("input");
+					bindProp(__nsh_hv28, "value", () => newTaskTitle());
+					prop(__nsh_hv28, "onChange", (e) => newTaskTitle.set(e.value));
+					prop(__nsh_hv28, "onSubmit", (event) => {
+						createTodo(event.text);
+						addTaskOpen.set(false);
+					});
+					prop(__nsh_hv28, "placeholder", "Название задачи");
+					prop(__nsh_hv28, "accessibilityLabel", "Название задачи");
+					prop(__nsh_hv28, "class", "h-10 rounded-lg px-3 text-[13px]");
+					bindProp(__nsh_hv28, "style", () => ({
+						backgroundColor: snapshot().colors.background,
+						color: snapshot().colors.foreground
+					}));
+					return __nsh_hv28;
+				})();
+			}
+		})]);
 		append(__nsh_hv11, __nsh_hv21);
 		insert(__nsh_hv11, () => shell && (() => {
 			const __nsh_hv12 = element("view");
@@ -8695,10 +9390,10 @@ function App() {
 			bindProp(__nsh_hv13, "style", () => ({
 				width: 282,
 				paddingTop: 48 + 8,
-				paddingBottom: 16,
+				paddingBottom: 8,
 				paddingLeft: 8,
 				paddingRight: shell ? 0 : 8,
-				backgroundColor: shellFill(snapshot().colors, dark)
+				backgroundColor: shellFill(snapshot().colors, dark())
 			}));
 			const __nsh_hv14 = element("view");
 			prop(__nsh_hv14, "onPressDown", () => askEngine("window.drag"));
@@ -8709,7 +9404,7 @@ function App() {
 				gap: 2,
 				pointerEvents: "box-none"
 			});
-			insert(__nsh_hv15, () => visiblePages().map((item) => component(SidebarRow, {
+			insert(__nsh_hv15, () => pageNavigation.map((item) => component(SidebarRow, {
 				get label() {
 					return item.label;
 				},
@@ -8719,14 +9414,16 @@ function App() {
 				get selected() {
 					return route() === item.id && !(item.id === "notes" && activeRecentNote());
 				},
-				dark,
+				get dark() {
+					return dark();
+				},
 				get colors() {
 					return snapshot().colors;
 				},
 				onPress: () => selectSidebarPage(item.id)
 			})));
 			const __nsh_hv20 = element("view");
-			prop(__nsh_hv20, "class", "mt-auto mb-2");
+			prop(__nsh_hv20, "class", "mt-auto");
 			prop(__nsh_hv20, "style", {
 				gap: 2,
 				pointerEvents: "box-none"
@@ -8741,7 +9438,9 @@ function App() {
 				get selected() {
 					return route() === item.id;
 				},
-				dark,
+				get dark() {
+					return dark();
+				},
 				get colors() {
 					return snapshot().colors;
 				},
@@ -8772,7 +9471,9 @@ function App() {
 					get colors() {
 						return snapshot().colors;
 					},
-					dark,
+					get dark() {
+						return dark();
+					},
 					onPress: () => openRecentEntry(entry)
 				})));
 				append(__nsh_hv16, __nsh_hv17);
@@ -8787,6 +9488,8 @@ function App() {
 			class: "absolute left-0 top-0 h-px w-px",
 			ref: (node) => {
 				commandRef = (name, args) => node.command(name, args);
+				requestAppearanceImport();
+				askEngine("appearance.set", localAppearance().settings);
 				gameLibrary.bindCommand((name, args) => node.command(name, args));
 				bindNoteCommands({
 					create: (title, doc) => node.command("notes.create", {
@@ -8808,15 +9511,23 @@ function App() {
 			onState: (next) => {
 				if (!routeReady) {
 					routeReady = true;
-					route.set(next.route);
+					batch(() => {
+						route.set(next.route);
+						history.set({
+							entries: [destination()],
+							index: 0
+						});
+					});
 				}
-				const appearance = next.appearance ?? snapshot().appearance;
+				const appearance = localAppearance();
 				snapshot.set({
 					...next,
+					appearance,
+					appearanceEditable: true,
 					themes: previewThemes,
 					journalEntries: snapshot().journalEntries,
 					sidebarVisible: sidebarVisible(),
-					colors: appearance ? resolveAppearanceColors(appearance, previewThemes, next.colors) : next.colors
+					colors: localColors(appearance)
 				});
 			},
 			onJournal: (entries) => snapshot.set({
@@ -8828,7 +9539,13 @@ function App() {
 				const first = snapshot().openNote;
 				if (first && !startNoteOpened) {
 					startNoteOpened = true;
-					openNoteWithoutHistory(first);
+					batch(() => {
+						openNoteById(first);
+						history.set({
+							entries: [destination()],
+							index: 0
+						});
+					});
 				}
 			},
 			onNotesCreated: (note) => addNote(note),
@@ -8850,30 +9567,33 @@ function App() {
 				stopVoiceTicker?.();
 				stopVoiceTicker = null;
 			},
-			onNavigate: (event) => changeRoute(event.route)
+			onNavigate: (event) => changeRoute(event.route),
+			onBenchmark: benchmarkHardware,
+			onBenchmarkFrames: benchmarkFrames,
+			onBenchmarkReady: benchmarkReady,
+			onAppearanceImported: (appearance) => finishAppearanceImport(appearance ?? void 0)
 		}), __nsh_hv11);
 		insert(__nsh_hv10, () => shell && component(TitlebarOverlay, {
 			get colors() {
 				return snapshot().colors;
 			},
-			dark,
+			get dark() {
+				return dark();
+			},
 			get showAddGame() {
-				return route() === "games" && widgetOn("games");
+				return route() === "games";
 			},
 			get pageInset() {
-				return sidebarPaneWidth();
+				return pageLeft() > 0 ? pageLeft() : sidebarPaneWidth() + 8;
 			},
 			get dimmed() {
-				return addTaskOpen() || gameLibrary.addOpen() || pickedExes().length > 1;
-			},
-			get noteNav() {
-				return route() === "notes";
+				return searchOpen() || addTaskOpen() || gameLibrary.addOpen() || pickedExes().length > 1;
 			},
 			get canGoBack() {
-				return canWalkBack();
+				return historyTarget(-1) >= 0;
 			},
 			get canGoForward() {
-				return canWalkForward();
+				return historyTarget(1) >= 0;
 			},
 			get tabs() {
 				return tabViews();
@@ -8881,8 +9601,8 @@ function App() {
 			onSelectTab: activateTab,
 			onCloseTab: closeTab,
 			onTabMenu: tabMenu,
-			onGoBack: walkBack,
-			onGoForward: walkForward,
+			onGoBack: () => walkHistory(-1),
+			onGoForward: () => walkHistory(1),
 			onToggleSidebar: toggleSidebar,
 			get onAddGame() {
 				return gameLibrary.openAddDialog;

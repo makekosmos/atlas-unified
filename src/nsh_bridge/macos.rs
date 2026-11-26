@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 
 use super::games;
 use crate::{
-    appearance::{Response, APP_ID},
+    appearance::Response,
     store::{Engine, JournalEntry},
 };
 
@@ -21,7 +21,6 @@ enum Request {
     JournalCreate(String),
     JournalUpdate(String, String),
     JournalDelete(String),
-    Appearance(Value),
     Reload,
 }
 
@@ -123,11 +122,6 @@ impl AtlasBridge {
                         }
                         refresh = true;
                     }
-                    Ok(Request::Appearance(patch)) => {
-                        let _ =
-                            engine.rpc("appearance.set", json!({"app_id": APP_ID, "patch": patch}));
-                        refresh = true;
-                    }
                     Ok(Request::Reload) => {
                         refresh = true;
                         entries = engine.journal_list().unwrap_or(entries);
@@ -137,7 +131,10 @@ impl AtlasBridge {
                     Err(mpsc::RecvTimeoutError::Timeout) => {}
                 }
                 for picked in imago_window_macos::sidebar_presses() {
-                    if matches!(picked.as_str(), "journal" | "tasks" | "games" | "settings") {
+                    if matches!(
+                        picked.as_str(),
+                        "journal" | "notes" | "tasks" | "games" | "settings" | "developers"
+                    ) {
                         route = picked.clone();
                         context.emit("navigate", json!({"route": picked}));
                         refresh = true;
@@ -189,6 +186,32 @@ impl NativeComponent for AtlasBridge {
         }
         let string = |key| args.get(key).and_then(Value::as_str).map(str::to_owned);
         let request = match name {
+            "appearance.import" => {
+                let context = self.context.clone();
+                thread::spawn(move || {
+                    let imported = crate::appearance::import_legacy().unwrap_or(Value::Null);
+                    context.emit("appearanceImported", imported);
+                });
+                None
+            }
+            "benchmark.sample" => {
+                self.context.emit(
+                    "benchmarkReady",
+                    json!({"runId": args["runId"], "data": null}),
+                );
+                self.context.emit(
+                    "benchmark",
+                    json!({"runId": args["runId"], "data": {"unavailable": "Resource sampling requires Windows"}}),
+                );
+                None
+            }
+            "benchmark.frames" => {
+                self.context.emit(
+                    "benchmarkFrames",
+                    json!({"runId": args["runId"], "data": {"unavailable": "Presented-frame profiling requires Windows"}}),
+                );
+                None
+            }
             "complete" => string("id").map(Request::Complete),
             "create" => string("title").map(Request::Create),
             "journal.create" => string("text").map(Request::JournalCreate),
@@ -197,7 +220,6 @@ impl NativeComponent for AtlasBridge {
                 _ => None,
             },
             "journal.delete" => string("id").map(Request::JournalDelete),
-            "appearance.set" => Some(Request::Appearance(args.clone())),
             "reload" => Some(Request::Reload),
             "toggle-sidebar" => None,
             _ => None,
@@ -211,13 +233,7 @@ impl NativeComponent for AtlasBridge {
 fn publish(engine: &Engine, context: &ComponentContext, route: &str, entries: &[JournalEntry]) {
     let loaded = engine.load();
     let todos = loaded.map(|value| value.todos).unwrap_or_default();
-    let appearance = match engine.rpc("appearance.get", json!({"app_id": APP_ID})) {
-        Ok(appearance) => Some(appearance),
-        Err(error) => {
-            eprintln!("[atlas-appearance] load failed; showing defaults read-only: {error:?}");
-            None
-        }
-    };
+    let appearance = Some(default_appearance());
     let response = appearance
         .as_ref()
         .and_then(|value| Response::parse(value).ok());

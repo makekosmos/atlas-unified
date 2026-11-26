@@ -4,13 +4,15 @@ export const shortcutNames = ["sidebar", "create", "search", "reload"] as const;
 export type ShortcutName = (typeof shortcutNames)[number];
 type Shortcuts = Record<ShortcutName, string>;
 const defaultShortcuts: Shortcuts = {
-  sidebar: "mod+b",
+  // Plain mod+b belongs to the note editor's bold; the sidebar takes the
+  // shifted one, which no editor claims.
+  sidebar: "mod+shift+b",
   create: "mod+n",
   search: "mod+k",
   reload: "mod+r",
 };
 export const shortcutOptions: Record<ShortcutName, string[]> = {
-  sidebar: ["mod+b", "mod+shift+b"],
+  sidebar: ["mod+shift+b", "mod+alt+b"],
   create: ["mod+n", "mod+shift+n"],
   search: ["mod+k", "mod+shift+k"],
   reload: ["mod+r", "mod+shift+r"],

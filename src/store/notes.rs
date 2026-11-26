@@ -34,11 +34,6 @@ pub struct Note {
 }
 
 impl Note {
-    /// A note that never reaches an Engine: what the demo screen shows.
-    pub fn demo(id: &str, title: &str, text: &str, updated_at: &str) -> Self {
-        Self::demo_doc(id, title, &document(text), updated_at)
-    }
-
     /// A demo note over a document the demo thread received from the screen.
     pub fn demo_doc(id: &str, title: &str, doc: &Value, updated_at: &str) -> Self {
         let doc = body_doc(doc);
