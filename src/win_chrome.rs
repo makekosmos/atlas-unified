@@ -41,6 +41,34 @@ pub(crate) fn toggle_zoom(window: &Window) {
     window.zoom_window();
 }
 
+/// Moves and sizes the window in logical pixels. A maximized window is
+/// restored first, otherwise the size is applied to the maximized frame.
+pub(crate) fn place_window(window: &mut Window, x: f32, y: f32, width: f32, height: f32) {
+    if window.is_maximized() {
+        restore_window(window);
+    }
+    move_origin(window, x, y);
+    window.resize(gpui::size(gpui::px(width), gpui::px(height)));
+}
+
+pub(crate) fn maximize_window(window: &Window) {
+    #[cfg(windows)]
+    show(window, SW_MAXIMIZE);
+    #[cfg(not(windows))]
+    {
+        let _ = window;
+    }
+}
+
+fn restore_window(window: &Window) {
+    #[cfg(windows)]
+    show(window, SW_RESTORE);
+    #[cfg(not(windows))]
+    {
+        let _ = window;
+    }
+}
+
 pub(crate) fn request_close(window: &mut Window) {
     trace("request_close");
     #[cfg(windows)]
@@ -167,6 +195,42 @@ fn zoom_windows(window: &Window) {
 }
 
 #[cfg(windows)]
+fn move_origin(window: &Window, x: f32, y: f32) {
+    let Some(hwnd) = hwnd(window) else {
+        return;
+    };
+    let scale = window.scale_factor();
+    let x = (x * scale).round() as i32;
+    let y = (y * scale).round() as i32;
+    unsafe {
+        SetWindowPos(
+            hwnd,
+            std::ptr::null_mut(),
+            x,
+            y,
+            0,
+            0,
+            SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE,
+        );
+    }
+}
+
+#[cfg(not(windows))]
+fn move_origin(window: &Window, x: f32, y: f32) {
+    let _ = (window, x, y);
+}
+
+#[cfg(windows)]
+fn show(window: &Window, command: i32) {
+    let Some(hwnd) = hwnd(window) else {
+        return;
+    };
+    unsafe {
+        ShowWindow(hwnd, command);
+    }
+}
+
+#[cfg(windows)]
 fn close_windows(window: &Window) {
     let Some(hwnd) = hwnd(window) else {
         return;
@@ -190,8 +254,26 @@ const SW_MAXIMIZE: i32 = 3;
 const SW_RESTORE: i32 = 9;
 
 #[cfg(windows)]
+#[cfg(windows)]
+const SWP_NOSIZE: u32 = 0x0001;
+#[cfg(windows)]
+const SWP_NOZORDER: u32 = 0x0004;
+#[cfg(windows)]
+const SWP_NOACTIVATE: u32 = 0x0010;
+
+#[cfg(windows)]
 unsafe extern "system" {
     fn ReleaseCapture() -> i32;
     fn PostMessageW(hwnd: *mut std::ffi::c_void, msg: u32, wparam: usize, lparam: isize) -> i32;
     fn ShowWindowAsync(hwnd: *mut std::ffi::c_void, cmd: i32) -> i32;
+    fn ShowWindow(hwnd: *mut std::ffi::c_void, cmd: i32) -> i32;
+    fn SetWindowPos(
+        hwnd: *mut std::ffi::c_void,
+        insert_after: *mut std::ffi::c_void,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+        flags: u32,
+    ) -> i32;
 }

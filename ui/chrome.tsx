@@ -7,11 +7,10 @@ import { Icon as SharedIcon } from "@makekosmos/imago-nsh";
 import type { ThemeColors } from "@makekosmos/imago-nsh";
 import { Glyph } from "./glyph";
 import type { GlyphName } from "./icons";
-import { accentMark } from "./themes";
 import { interfaceSize } from "./reading-size";
 
-/// As MonoCode's title bar has it: 48 tall, the tabs 32 inside it, 8 points
-/// of air above and below them.
+/// The window bar is 48. The tab plate inside it is 32 tall; the icon tile is
+/// 28 wide and 22 tall, so five pixels of the plate show above and below it.
 export const TITLEBAR_HEIGHT = 48;
 /// The content sits in a rounded card, the way the shell's other surfaces do:
 /// a gap to the window's edges, a radius of its own, a hairline border.
@@ -207,8 +206,9 @@ export type TabView = {
 };
 
 const TAB_HEIGHT = 32;
-/// The icon's tile: 24 × 20 with a 5 corner, as MonoCode's title tabs have it.
-const TAB_TILE_HEIGHT = 20;
+/// The icon's tile: 28 wide, 22 tall, with a 5 corner.
+const TAB_TILE_WIDTH = 28;
+const TAB_TILE_HEIGHT = 22;
 /// The close button and the room kept for it, so a name never shifts when it
 /// shows up.
 const TAB_CLOSE_SIZE = 20;
@@ -222,7 +222,7 @@ const TAB_WIDTH = 300;
 const TAB_TILE_PAD = (TAB_HEIGHT - TAB_TILE_HEIGHT) / 2;
 /// The smallest chip there is: the icon with its plate and that air, nothing
 /// else — no name and no room for the cross.
-const TAB_ICON_ONLY = TAB_TILE_PAD + 24 + TAB_TILE_PAD;
+const TAB_ICON_ONLY = TAB_TILE_PAD + TAB_TILE_WIDTH + TAB_TILE_PAD;
 /// Under this the name is gone anyway, so the chip drops it and the cross room
 /// with it and becomes the plate itself.
 const TAB_NAME_FITS = 96;
@@ -239,6 +239,38 @@ export function tabChipWidth(room: number, count: number) {
 const TAB_FADE = 22;
 /// Between two tabs.
 const TAB_GAP = 2;
+
+/// The icon tile's own color, one per page. Notes keep the blue, the journal
+/// the orange; the others are not the accent. Deep tones, not signals: a tile
+/// is 28 by 22, so a pure red or orange reads as an alarm next to the ink.
+/// The orange keeps its chroma as it darkens: an orange that loses chroma
+/// goes brown, so the deep stop stays at a full-saturation hue (#ff6800) and
+/// only the top of the face is lifted.
+const TILE_JOURNAL = "#ff6800";
+const TILE_NOTES = "#1f4fa8";
+const TILE_TASKS = "#333944";
+/// Wine, not a signal red: the tile's bottom is a deep burgundy.
+const TILE_GAMES = "#6b1224";
+
+export function tabTileColor(route: string): string | null {
+  if (route === "journal") return TILE_JOURNAL;
+  if (route === "notes") return TILE_NOTES;
+  if (route === "tasks") return TILE_TASKS;
+  if (route === "games") return TILE_GAMES;
+  return null;
+}
+
+/// A tile's face, the way MonoCode paints one: a lighter stop on top, the
+/// page colour deeper at the bottom. A white sheen sits over that.
+export function tabTileGradient(
+  route: string,
+): { top: string; bottom: string } | null {
+  if (route === "journal") return { top: "#ff8f3d", bottom: TILE_JOURNAL };
+  if (route === "notes") return { top: "#3f7fd6", bottom: TILE_NOTES };
+  if (route === "tasks") return { top: "#565d69", bottom: TILE_TASKS };
+  if (route === "games") return { top: "#a02b3c", bottom: TILE_GAMES };
+  return null;
+}
 
 /// A page's icon, taken from what the page is: the journal is its calendar, a
 /// note a sheet, the list a tick, games a pad, settings a gear.
@@ -285,16 +317,23 @@ function TabChip(props: {
   const colors = props.colors;
   const base = shellFill(colors, props.dark);
   const ink = (t: number) => mixHex(base, colors.foreground, t);
-  // The plate is the bar's own tone lifted a step: 4% of the ink at rest, 7%
-  // under the pointer, 10% on the page being read.
-  const plate = props.tab.active ? ink(0.1) : over() ? ink(0.07) : ink(0.04);
-  // The tile is the icon's own card: the accent on the page being read (with
-  // the ink that reads on it), a grey one everywhere else.
-  const tileTop = props.tab.active
-    ? mixHex(colors.accent, "#ffffff", 0.12)
-    : ink(0.1);
-  const tileBottom = props.tab.active ? colors.accent : ink(0.04);
-  const tileInk = props.tab.active ? accentMark(colors.accent) : colors.muted;
+  // The plate is the bar's own tone lifted a step: 4% of the ink at rest,
+  // 10% on the page being read, and 7% — halfway — under the pointer. Read
+  // inside the style, not in the body: the body runs once, so a value taken
+  // here would stay the tone the chip mounted with and the fade would keep
+  // the rest tone over a lit plate.
+  const restPlate = ink(0.04);
+  const activePlate = ink(0.1);
+  const hoverPlate = ink(0.07);
+  const plate = () =>
+    props.tab.active ? activePlate : over() ? hoverPlate : restPlate;
+  // The tile names the page. A page without one stays a grey gradient, the
+  // same top-light face the coloured tiles have.
+  const face = tabTileGradient(props.tab.route);
+  const tileBottom = face?.bottom ?? ink(0.2);
+  const tileTop = face?.top ?? ink(0.27);
+  const tileInk = face ? "#ffffff" : props.dark ? "#ffffff" : "#1d1d1f";
+  const sheen = colorAlpha("#ffffff", face ? 0.16 : 0.05);
   return (
     <View
       onPress={props.onSelect}
@@ -314,7 +353,7 @@ function TabChip(props: {
         width: props.width,
         // The room the strip measured can be a frame behind the window: a chip
         // gives way rather than run over the list, and the plate is the end of
-        // the line — 36, no name, no cross.
+        // the line — 38, no name, no cross.
         minWidth: TAB_ICON_ONLY,
         flexShrink: 1,
         // As far from the tile as the tile is from the top and bottom.
@@ -323,29 +362,57 @@ function TabChip(props: {
         // makes when it appears. The plate alone needs none of it.
         paddingRight: props.compact ? TAB_TILE_PAD : TAB_CLOSE_ROOM,
         gap: props.compact ? 0 : 8,
-        borderRadius: 8,
-        backgroundColor: plate,
+        borderRadius: 6,
+        backgroundColor: plate(),
         cursor: "pointer",
       }}
     >
       <View
-        class="items-center justify-center"
-        style={{
-          width: 24,
-          height: TAB_TILE_HEIGHT,
-          borderRadius: 5,
-          backgroundImage: `linear-gradient(180deg, ${tileTop} 0%, ${tileBottom} 100%)`,
-          borderWidth: 1,
-          borderColor: props.tab.active
-            ? colorAlpha("#ffffff", 0.14)
-            : ink(0.1),
-        }}
+        class="relative shrink-0"
+        style={{ width: TAB_TILE_WIDTH, height: TAB_TILE_HEIGHT }}
       >
-        <TabIcon
-          route={props.tab.route}
-          noteId={props.tab.noteId}
-          color={tileInk}
+        <View
+          class="absolute"
+          style={{
+            left: 0,
+            right: 0,
+            top: 1,
+            height: TAB_TILE_HEIGHT,
+            borderRadius: 5,
+            backgroundColor: colorAlpha("#000000", props.dark ? 0.3 : 0.1),
+          }}
         />
+        <View
+          class="absolute items-center justify-center overflow-hidden"
+          style={{
+            left: 0,
+            top: 0,
+            width: TAB_TILE_WIDTH,
+            height: TAB_TILE_HEIGHT,
+            borderRadius: 5,
+            backgroundImage: `linear-gradient(180deg, ${tileTop} 0%, ${tileBottom} 100%)`,
+            borderWidth: 1,
+            borderColor: face ? colorAlpha("#ffffff", 0.14) : ink(0.1),
+          }}
+        >
+          <View
+            class="absolute"
+            style={{
+              left: 0,
+              right: 0,
+              top: 0,
+              bottom: 0,
+              borderRadius: 5,
+              backgroundImage: `linear-gradient(180deg, ${sheen} 0%, ${colorAlpha("#ffffff", 0)} 100%)`,
+              pointerEvents: "none",
+            }}
+          />
+          <TabIcon
+            route={props.tab.route}
+            noteId={props.tab.noteId}
+            color={tileInk}
+          />
+        </View>
       </View>
       {/* The name is confined to the room the tile and the close button
           leave: fixed, so a name never changes the chip, and clipped, so it
@@ -353,7 +420,11 @@ function TabChip(props: {
           name no room at all: it stays there for the screen reader and for the
           tests, and takes no pixels. */}
       <View
-        class="relative"
+        // One line that never wraps: a wrapped name puts its tail on a second
+        // line the chip discards, so a word that did not fit vanished whole
+        // instead of running under the fade. `whitespace-nowrap` reaches the
+        // texts inside, and `overflow: hidden` does the cut at the chip's edge.
+        class="relative whitespace-nowrap"
         style={{
           flexGrow: 1,
           flexShrink: 1,
@@ -363,12 +434,10 @@ function TabChip(props: {
       >
         <Text
           style={{
-            fontSize: interfaceSize() + 1,
+            fontSize: interfaceSize(),
             lineHeight: 20,
-            // One line, cut where the room ends and no ellipsis: the fade is
-            // what hides the cut.
-            numberOfLines: 1,
-            textOverflow: "clip",
+            // No clamping and no ellipsis: the line is one line by nowrap, and
+            // the container's edge is where it stops.
             fontWeight: props.tab.active ? 600 : 500,
             color: props.tab.active ? colors.foreground : colors.muted,
           }}
@@ -385,7 +454,10 @@ function TabChip(props: {
             top: 0,
             width: TAB_FADE,
             height: 20,
-            backgroundImage: `linear-gradient(90deg, ${colorAlpha(plate, 0)} 0%, ${plate} 100%)`,
+            // The fade dissolves into the plate — the same live tone the chip
+            // is painted with, so the pointer cannot leave a dark block at the
+            // end of a long name.
+            backgroundImage: `linear-gradient(90deg, ${colorAlpha(plate(), 0)} 0%, ${plate()} 100%)`,
           }}
         />
       </View>
@@ -413,7 +485,7 @@ function TabChip(props: {
         >
           <Glyph
             name="close"
-            size={13}
+            size={12}
             color={closeOver() ? colors.foreground : colors.muted}
           />
         </View>
@@ -515,7 +587,7 @@ export function navInk(
   _hot: boolean,
   colors: { foreground: string; muted: string },
 ) {
-  return colors.foreground;
+  return mixHex(colors.muted, colors.foreground, 0.4);
 }
 
 export function hostOs() {
@@ -534,6 +606,8 @@ export function TitlebarOverlay(props: {
   dark: boolean;
   showAddGame?: boolean;
   dimmed?: boolean;
+  /// Benchmark checklist: no sidebar toggle, no trail, no tabs.
+  bare?: boolean;
   pageInset?: number;
   /// The page's own width: the row of tabs fits itself into it.
   pageWidth?: number;
@@ -624,100 +698,109 @@ export function TitlebarOverlay(props: {
         class="absolute right-0 top-0 bottom-0"
         style={{ left: dragLeft }}
       />
-      <View
-        onPress={props.onToggleSidebar}
-        role="button"
-        accessibilityLabel="Боковая панель"
-        class="absolute items-center justify-center"
-        desktop={{ windowDrag: false }}
-        hoverStyle={{ backgroundColor: wash }}
-        style={{
-          top: titlebarControlTop(TOGGLE_SIZE),
-          left: sidebarLeft,
-          width: TOGGLE_SIZE,
-          height: TOGGLE_SIZE,
-          borderRadius: CONTROL_RADIUS,
-          cursor: "pointer",
-        }}
-      >
-        <Glyph name="sidebar" size={14} color={props.colors.muted} />
-      </View>
-      {props.showAddGame && (
+      {!props.bare && (
         <View
-          onPress={() => props.onAddGame?.()}
-          role="button"
-          accessibilityLabel="Добавить игру"
-          class="absolute items-center justify-center"
-          desktop={{ windowDrag: false }}
-          hoverStyle={{ backgroundColor: wash }}
-          style={{
-            top: titlebarControlTop(28),
-            right: addGameRight,
-            width: 28,
-            height: 28,
-            borderRadius: CONTROL_RADIUS,
-            cursor: "pointer",
-          }}
+          class="absolute left-0 right-0 top-0 bottom-0"
+          style={{ pointerEvents: "box-none" }}
         >
-          <Glyph name="plus" size={16} color={props.colors.muted} />
-        </View>
-      )}
-      <View
-        class="absolute flex-row items-center"
-        desktop={{ windowDrag: false }}
-        style={{
-          left: trailLeft(),
-          top: titlebarControlTop(24),
-          height: 24,
-          gap: 2,
-        }}
-      >
-        <TrailArrow
-          dir="back"
-          label="Назад"
-          dark={props.dark}
-          colors={props.colors}
-          enabled={props.canGoBack}
-          onPress={props.onGoBack}
-        />
-        <TrailArrow
-          dir="forward"
-          label="Вперёд"
-          dark={props.dark}
-          colors={props.colors}
-          enabled={props.canGoForward}
-          onPress={props.onGoForward}
-        />
-      </View>
-      {/* The tabs line up with the page and clear the navigation controls. */}
-      {props.tabs && props.tabs.length > 0 && (
-        <View
-          class="absolute flex-row items-center"
-          desktop={{ windowDrag: false }}
-          style={{
-            left: stripLeft(),
-            right: controlsRoom,
-            top: titlebarControlTop(TAB_HEIGHT),
-            height: TAB_HEIGHT,
-            gap: TAB_GAP,
-            pointerEvents: "box-none",
-          }}
-        >
-          {props.tabs.map((tab) => (
-            <TabChip
-              key={tab.key}
-              tab={tab}
-              colors={props.colors}
+          <View
+            onPress={props.onToggleSidebar}
+            role="button"
+            accessibilityLabel="Боковая панель"
+            class="absolute items-center justify-center"
+            desktop={{ windowDrag: false }}
+            hoverStyle={{ backgroundColor: wash }}
+            style={{
+              top: titlebarControlTop(TOGGLE_SIZE),
+              left: sidebarLeft,
+              width: TOGGLE_SIZE,
+              height: TOGGLE_SIZE,
+              borderRadius: CONTROL_RADIUS,
+              cursor: "pointer",
+            }}
+          >
+            <Glyph name="sidebar" size={14} color={props.colors.muted} />
+          </View>
+          {props.showAddGame && (
+            <View
+              onPress={() => props.onAddGame?.()}
+              role="button"
+              accessibilityLabel="Добавить игру"
+              class="absolute items-center justify-center"
+              desktop={{ windowDrag: false }}
+              hoverStyle={{ backgroundColor: wash }}
+              style={{
+                top: titlebarControlTop(28),
+                right: addGameRight,
+                width: 28,
+                height: 28,
+                borderRadius: CONTROL_RADIUS,
+                cursor: "pointer",
+              }}
+            >
+              <Glyph name="plus" size={16} color={props.colors.muted} />
+            </View>
+          )}
+          <View
+            class="absolute flex-row items-center"
+            desktop={{ windowDrag: false }}
+            style={{
+              left: trailLeft(),
+              top: titlebarControlTop(24),
+              height: 24,
+              gap: 2,
+            }}
+          >
+            <TrailArrow
+              dir="back"
+              label="Назад"
               dark={props.dark}
-              // A chip that loses its name does not stay wide: it becomes the
-              // plate itself, so the row fits more of them.
-              width={chipWidth() < TAB_NAME_FITS ? TAB_ICON_ONLY : chipWidth()}
-              compact={chipWidth() < TAB_NAME_FITS}
-              onSelect={() => props.onSelectTab?.(tab.key)}
-              onClose={() => props.onCloseTab?.(tab.key)}
-              onMenu={(at) => props.onTabMenu?.(tab.key, at)}
+              colors={props.colors}
+              enabled={props.canGoBack}
+              onPress={props.onGoBack}
             />
-          ))}
+            <TrailArrow
+              dir="forward"
+              label="Вперёд"
+              dark={props.dark}
+              colors={props.colors}
+              enabled={props.canGoForward}
+              onPress={props.onGoForward}
+            />
+          </View>
+          {/* The tabs line up with the page and clear the navigation controls. */}
+          {props.tabs && props.tabs.length > 0 && (
+            <View
+              class="absolute flex-row items-center"
+              desktop={{ windowDrag: false }}
+              style={{
+                left: stripLeft(),
+                right: controlsRoom,
+                top: titlebarControlTop(TAB_HEIGHT),
+                height: TAB_HEIGHT,
+                gap: TAB_GAP,
+                pointerEvents: "box-none",
+              }}
+            >
+              {props.tabs.map((tab) => (
+                <TabChip
+                  key={tab.key}
+                  tab={tab}
+                  colors={props.colors}
+                  dark={props.dark}
+                  // A chip that loses its name does not stay wide: it becomes the
+                  // plate itself, so the row fits more of them.
+                  width={
+                    chipWidth() < TAB_NAME_FITS ? TAB_ICON_ONLY : chipWidth()
+                  }
+                  compact={chipWidth() < TAB_NAME_FITS}
+                  onSelect={() => props.onSelectTab?.(tab.key)}
+                  onClose={() => props.onCloseTab?.(tab.key)}
+                  onMenu={(at) => props.onTabMenu?.(tab.key, at)}
+                />
+              ))}
+            </View>
+          )}
         </View>
       )}
       {drawCaptions && (
@@ -793,6 +876,8 @@ export function SidebarRow(props: {
   dark: boolean;
   colors: ThemeColors;
   onPress: () => void;
+  /// Sidebar rows match the recent list: shorter rows, same icon.
+  compact?: boolean;
 }) {
   const wash = hoverWash(props.dark);
   return (
@@ -804,7 +889,7 @@ export function SidebarRow(props: {
       class="flex-row items-center"
       hoverStyle={{ backgroundColor: wash }}
       style={{
-        height: NAV_ROW_HEIGHT,
+        height: props.compact ? NAV_ROW_HEIGHT - 6 : NAV_ROW_HEIGHT,
         gap: 10,
         paddingLeft: 10,
         paddingRight: 10,
@@ -815,11 +900,15 @@ export function SidebarRow(props: {
         cursor: "pointer",
       }}
     >
-      <Glyph name={props.icon} size={16} color={props.colors.foreground} />
+      <Glyph
+        name={props.icon}
+        size={16}
+        color={navInk(props.selected, false, props.colors)}
+      />
       <Text
         class="text-[14px]"
         style={{
-          color: props.colors.foreground,
+          color: navInk(props.selected, false, props.colors),
           fontWeight: 500,
           lineHeight: 20,
         }}
@@ -863,13 +952,13 @@ export function RecentRow(props: {
     >
       <Glyph
         name={recentIcon(props.entry.kind)}
-        size={14}
-        color={props.colors.foreground}
+        size={16}
+        color={navInk(Boolean(props.selected), false, props.colors)}
       />
       <Text
         class="text-[14px] truncate"
         style={{
-          color: props.colors.foreground,
+          color: navInk(Boolean(props.selected), false, props.colors),
           fontWeight: 500,
           lineHeight: 20,
         }}

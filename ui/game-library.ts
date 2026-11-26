@@ -58,6 +58,28 @@ const reviewDone = signal(false);
 let sendCommand: Command | undefined;
 let loadRequested = false;
 let migrationRequested = false;
+/// The Engine answers `games.load` in a worker thread: if the answer never
+/// comes, the page says so instead of spinning forever.
+const LIBRARY_TIMEOUT_MS = 8000;
+let libraryTimer: ReturnType<typeof setTimeout> | undefined;
+
+function stopLibraryTimer() {
+  if (libraryTimer === undefined) return;
+  clearTimeout(libraryTimer);
+  libraryTimer = undefined;
+}
+
+function askLibrary() {
+  if (!sendCommand) return;
+  sendCommand("games.load");
+  stopLibraryTimer();
+  libraryTimer = setTimeout(() => {
+    libraryTimer = undefined;
+    if (libraryState() !== "loading") return;
+    libraryState.set("error");
+    error.set("Engine не ответил на запрос библиотеки игр");
+  }, LIBRARY_TIMEOUT_MS);
+}
 
 function readJson<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback;
@@ -82,8 +104,15 @@ function bindCommand(command: Command) {
   sendCommand = command;
   if (!loadRequested) {
     loadRequested = true;
-    command("games.load");
+    askLibrary();
   }
+}
+
+/// The page's own retry: the Engine may have been down when the window opened.
+function reloadLibrary() {
+  error.set("");
+  libraryState.set("loading");
+  askLibrary();
 }
 
 function startDiscovery() {
@@ -218,7 +247,17 @@ function receiveLaunch(value: unknown) {
   );
 }
 
+/// The Engine answers an unknown operation with the whole list of the ones it
+/// knows — hundreds of characters the screen cannot use. That one case gets a
+/// sentence of its own; every other error is kept, cut at a readable length.
+function readableError(raw: string) {
+  if (raw.includes("unknown variant `canonical.game"))
+    return "Engine не поддерживает библиотеку игр: в нём нет операций canonical.game.*";
+  return raw.length <= 160 ? raw : `${raw.slice(0, 157)}…`;
+}
+
 function receiveLibrary(value: unknown) {
+  stopLibraryTimer();
   if (!Array.isArray(value)) {
     const message =
       value && typeof value === "object"
@@ -228,7 +267,7 @@ function receiveLibrary(value: unknown) {
           )
         : "Не удалось загрузить библиотеку игр";
     libraryState.set("error");
-    error.set(message);
+    error.set(readableError(message));
     return;
   }
   cards.set(value.filter(isGameCard));
@@ -371,6 +410,7 @@ export const gameLibrary = {
   cancelConfirm,
   confirmAdd,
   receiveLibrary,
+  reloadLibrary,
   receiveDiscovery,
   receiveImport,
 };

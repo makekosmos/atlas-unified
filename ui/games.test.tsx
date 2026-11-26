@@ -129,6 +129,7 @@ test("opens the add dialog with the three ways to add games and does not scan by
   expect(app.texts()).not.toContain("Все");
   expect(app.texts()).not.toContain("Скрытые");
   expect(app.texts()).not.toContain("Найти игру…");
+  expect(app.texts()).not.toContain("Поиск игр");
 
   await app.press("Добавить игру");
   expect(app.texts()).toContain("Добавить игры");
@@ -139,6 +140,20 @@ test("opens the add dialog with the three ways to add games and does not scan by
   expect(app.texts()).not.toContain("Найти игру, папку или exe");
   expect(app.texts()).not.toContain("Проверяем Steam (1 из 3)…");
   expect(app.texts()).not.toContain("Steam · Epic Games · GOG");
+});
+
+test("empty library hides search and puts add in the middle", async () => {
+  const app = await open("./games-empty.host.tsx", {
+    platform: "windows",
+    width: 1100,
+    height: 800,
+  });
+  expect(app.texts()).toContain("Игр нет");
+  expect(app.texts()).toContain("Добавить игру");
+  expect(app.texts()).not.toContain("Поиск игр");
+  expect(app.texts()).not.toContain("Игр пока нет");
+  await app.press("Добавить игру");
+  expect(app.texts()).toContain("Найти автоматически");
 });
 
 test("shows ambiguous metadata candidates and lets the user choose one", () => {

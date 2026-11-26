@@ -296,9 +296,9 @@ test("keeps appearance settings and configurable keyboard shortcuts", async () =
 
 test("keeps every sidebar row on the same ink", () => {
   const colors = { foreground: "#e7e5ea", muted: "#8d8a94" };
-  expect(navInk(true, false, colors)).toEqual("#e7e5ea");
-  expect(navInk(false, false, colors)).toEqual("#e7e5ea");
-  expect(navInk(false, true, colors)).toEqual("#e7e5ea");
+  expect(navInk(true, false, colors)).toEqual("#b1aeb6");
+  expect(navInk(false, false, colors)).toEqual("#b1aeb6");
+  expect(navInk(false, true, colors)).toEqual("#b1aeb6");
 });
 
 test("one theme keeps Apple accents saturated in both modes", () => {

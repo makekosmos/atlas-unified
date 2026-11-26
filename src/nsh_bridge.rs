@@ -1,4 +1,5 @@
 mod benchmark;
+mod benchmark_session;
 mod games;
 pub(crate) mod toggle;
 
@@ -39,6 +40,7 @@ pub(crate) struct AtlasBridge {
     voice: Voice,
     #[cfg(target_os = "windows")]
     benchmark_baseline: Option<gpui::FrameDurationSnapshot>,
+    benchmark_session: benchmark_session::Session,
 }
 
 /// The microphone and the speaker, one of each at a time.
@@ -87,6 +89,7 @@ impl AtlasBridge {
             voice: Voice::default(),
             #[cfg(target_os = "windows")]
             benchmark_baseline: None,
+            benchmark_session: benchmark_session::session(),
         }
     }
 
@@ -153,7 +156,7 @@ fn snapshot(agenda: &Atlas, route: &str) -> Value {
         .as_ref()
         .and_then(|appearance| appearance.accent())
         .unwrap_or(palette.accent);
-    json!({
+    let mut value = json!({
         "route": route,
         "openNote": start_note(),
         "title": title,
@@ -175,7 +178,11 @@ fn snapshot(agenda: &Atlas, route: &str) -> Value {
         "sidebarVisible": agenda.sidebar_visible,
         "chrome": "tsx",
         "demo": agenda.demo
-    })
+    });
+    if std::env::var("ATLAS_BENCH_ROLE").as_deref() == Ok("guest") {
+        value["benchRole"] = json!("guest");
+    }
+    value
 }
 
 enum JournalRequest {
@@ -887,6 +894,21 @@ impl NativeComponent for AtlasBridge {
                     self.benchmark_baseline = Some(window.frame_duration_snapshot());
                 }
             }
+            "benchmark.dock" => {
+                let reply = self.benchmark_session.command_dock(window, cx);
+                self.context.emit("benchmarkDock", reply);
+            }
+            "benchmark.status" => {
+                let reply = self.benchmark_session.command_status();
+                self.benchmark_session.command_restore(window);
+                self.context.emit("benchmarkStatus", reply);
+            }
+            "benchmark.cancel" => {
+                self.benchmark_session.command_cancel(window);
+                self.context
+                    .emit("benchmarkStatus", self.benchmark_session.command_status());
+            }
+            "benchmark.progress" => self.benchmark_session.command_progress(args),
             "benchmark.frames" => {
                 let Some(run_id) = args["runId"].as_u64() else {
                     return;

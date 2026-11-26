@@ -64,6 +64,8 @@ export type Snapshot = {
   sidebarVisible: boolean;
   chrome: "native" | "tsx";
   demo?: boolean;
+  /// Set on the guest window that runs the benchmark away from the user's data.
+  benchRole?: "guest";
 };
 
 export const fallback: Snapshot = {

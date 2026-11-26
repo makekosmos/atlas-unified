@@ -60,15 +60,24 @@ import {
 import { AtlasAppearanceSettings } from "./AtlasAppearanceSettings";
 import { GamesLibrary, livePrograms } from "./games";
 import { SettingsPage as SettingsPageScroll } from "./settings";
+import { DevelopersPage } from "./developer-page";
 import {
-  DevelopersPage,
   runBenchmark,
   benchmarkHardware,
   benchmarkFrames,
   benchmarkReady,
   benchmarkRunning,
-} from "./developer-page";
-import type { BenchmarkEvent } from "./developer-page";
+} from "./benchmark-run";
+import type { BenchmarkEvent } from "./benchmark-run";
+import type { BenchProgress } from "./benchmark-plan";
+import {
+  BenchmarkPanel,
+  applyDock,
+  applyStatus,
+  benchError,
+  benchPanel,
+  closeBenchPanel,
+} from "./benchmark-dock";
 import { loadRecent, recent } from "./recent";
 import type { ProgramUsage } from "./games";
 import {
@@ -204,6 +213,19 @@ effect(() => {
   );
 });
 const benchmarkNotes = signal<Note[] | null>(null);
+let guestKick: (() => void) | undefined;
+let guestArmed = false;
+effect(() => {
+  if (initial.benchRole !== "guest") return;
+  const timer = setInterval(() => {
+    if (!commandRef || !guestKick || guestArmed) return;
+    guestArmed = true;
+    const run = guestKick;
+    clearInterval(timer);
+    run();
+  }, 50);
+  return () => clearInterval(timer);
+});
 const route = signal<Route>(initial.route);
 /// The note a demo run was asked to open, done once, after the first list.
 let startNoteOpened = false;
@@ -272,6 +294,8 @@ const Bridge = nativeComponent<
     benchmark: BenchmarkEvent;
     benchmarkFrames: BenchmarkEvent;
     benchmarkReady: BenchmarkEvent;
+    benchmarkDock: { ok?: boolean; error?: string };
+    benchmarkStatus: import("./benchmark-plan").BenchStatus;
     appearanceImported: Appearance | null;
   }
 >("atlas.bridge", {
@@ -296,6 +320,8 @@ const Bridge = nativeComponent<
     "benchmark",
     "benchmarkFrames",
     "benchmarkReady",
+    "benchmarkDock",
+    "benchmarkStatus",
     "appearanceImported",
   ],
 });
@@ -918,6 +944,59 @@ function App() {
       if (openNoteId() === entry.id) route.set("notes");
     });
   };
+  const runLocalBenchmark = (onProgress?: (progress: BenchProgress) => void) =>
+    runBenchmark({
+      visit: (target) => {
+        if (route() !== target) slidePage(1);
+        route.set(target);
+      },
+      frames: (runId) => askEngine("benchmark.frames", { runId }),
+      beginFrames: () => askEngine("benchmark.begin"),
+      version: snapshot().version,
+      sample: (runId) => {
+        if (!hosted || !commandRef) return false;
+        askEngine("benchmark.sample", { runId });
+        return true;
+      },
+      fixture: (size) => {
+        const text = "Абзац для проверки списка заметок.";
+        const doc = {
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text }],
+            },
+          ],
+        };
+        const date = new Date().toISOString();
+        benchmarkNotes.set(
+          size
+            ? Array.from({ length: size }, (_, index) => ({
+                id: `benchmark:${index}`,
+                title: `Тестовая заметка ${index + 1}`,
+                text,
+                doc,
+                createdAt: date,
+                updatedAt: date,
+              }))
+            : null,
+        );
+      },
+      onProgress,
+    });
+  if (!guestArmed && initial.benchRole === "guest") {
+    guestKick = () =>
+      void runLocalBenchmark((progress) =>
+        askEngine("benchmark.progress", progress),
+      );
+  }
+  const dismissBench = () => {
+    askEngine("benchmark.cancel");
+    closeBenchPanel();
+    sidebarVisible.set(true);
+    animateSidebar(true);
+  };
   return (
     <View
       class="relative h-full w-full"
@@ -992,6 +1071,16 @@ function App() {
           }
         }}
         onNotesCreated={(note) => addNote(note as Note)}
+        // The games bridge answers `games.load`, the scan, an import and a
+        // launch on its own thread; without these the page waits on a card
+        // that never comes.
+        onGames={(value) => gameLibrary.receiveLibrary(value)}
+        onDiscovered={(value) => gameLibrary.receiveDiscovery(value)}
+        onImported={(value) => gameLibrary.receiveImport(value)}
+        onLaunched={(value) => gameLibrary.receiveLaunch(value)}
+        onMetadata={(value) => gameLibrary.receiveMetadata(value)}
+        onPicked={(paths) => pickedExes.set(paths)}
+        onUsage={(programs) => livePrograms.set(programs)}
         onVoiceLevel={(event) => voiceLevel.set(event.level)}
         onVoiceRecorded={(voice) => {
           voiceRecording.set(false);
@@ -1017,12 +1106,20 @@ function App() {
         onBenchmark={benchmarkHardware}
         onBenchmarkFrames={benchmarkFrames}
         onBenchmarkReady={benchmarkReady}
+        onBenchmarkDock={(event) => {
+          applyDock(event);
+          if (event.ok) {
+            sidebarVisible.set(false);
+            animateSidebar(false);
+          }
+        }}
+        onBenchmarkStatus={applyStatus}
         onAppearanceImported={(appearance) =>
           finishAppearanceImport(appearance ?? undefined)
         }
       />
       <View class="h-full w-full flex-row">
-        {shell && (
+        {shell && !benchPanel() && (
           <View
             class="h-full shrink-0 overflow-hidden"
             style={{ width: sidebarPaneWidth() }}
@@ -1049,9 +1146,10 @@ function App() {
                 style={{ top: TITLEBAR_HEIGHT }}
               />
               {/* The notes' trail moved to the bar, on the toggle's line. */}
-              <View style={{ gap: 2, pointerEvents: "box-none" }}>
+              <View style={{ gap: 1, pointerEvents: "box-none" }}>
                 {pageNavigation.map((item) => (
                   <SidebarRow
+                    compact
                     label={item.label}
                     icon={iconForNavigation(item.id)}
                     selected={
@@ -1091,10 +1189,11 @@ function App() {
               )}
               <View
                 class="mt-auto"
-                style={{ gap: 2, pointerEvents: "box-none" }}
+                style={{ gap: 1, pointerEvents: "box-none" }}
               >
                 {footerNavigation.map((item) => (
                   <SidebarRow
+                    compact
                     label={item.label}
                     icon={iconForNavigation(item.id)}
                     selected={route() === item.id}
@@ -1146,7 +1245,14 @@ function App() {
                 : undefined,
             }}
           >
-            {route() === "journal" && (
+            {benchPanel() && (
+              <BenchmarkPanel
+                colors={snapshot().colors}
+                ask={(name) => askEngine(name)}
+                onDismiss={dismissBench}
+              />
+            )}
+            {!benchPanel() && route() === "journal" && (
               <JournalPage
                 entries={() => snapshot().journalEntries}
                 colors={snapshot().colors}
@@ -1164,7 +1270,7 @@ function App() {
                 dark={dark()}
               />
             )}
-            {route() === "notes" && (
+            {!benchPanel() && route() === "notes" && (
               <NotesPage
                 colors={snapshot().colors}
                 dark={dark()}
@@ -1172,7 +1278,7 @@ function App() {
                 benchmarkNotes={benchmarkNotes()}
               />
             )}
-            {route() === "tasks" && (
+            {!benchPanel() && route() === "tasks" && (
               <View class="min-h-0 flex-1">
                 <TaskPage />
                 {shell && (
@@ -1200,7 +1306,7 @@ function App() {
                 )}
               </View>
             )}
-            {route() === "games" && (
+            {!benchPanel() && route() === "games" && (
               <View class="min-h-0 flex-1">
                 <GamesLibrary
                   colors={snapshot().colors}
@@ -1223,62 +1329,27 @@ function App() {
                 />
               </View>
             )}
-            {route() === "settings" && (
+            {!benchPanel() && route() === "settings" && (
               <View class="min-h-0 flex-1">
                 <SettingsPage />
               </View>
             )}
-            {route() === "developers" && (
+            {!benchPanel() && route() === "developers" && (
               <SettingsPageScroll colors={snapshot().colors}>
                 <DevelopersPage
                   colors={snapshot().colors}
                   dark={dark()}
                   demo={Boolean(snapshot().demo)}
                   size={notes().length}
-                  run={() =>
-                    void runBenchmark({
-                      visit: (target) => {
-                        if (route() !== target) slidePage(1);
-                        route.set(target);
-                      },
-                      frames: (runId) =>
-                        askEngine("benchmark.frames", { runId }),
-                      beginFrames: () => askEngine("benchmark.begin"),
-                      version: snapshot().version,
-                      sample: (runId) => {
-                        // No command channel means no sampler: say so now, not
-                        // after a deadline.
-                        if (!hosted || !commandRef) return false;
-                        askEngine("benchmark.sample", { runId });
-                        return true;
-                      },
-                      fixture: (size) => {
-                        const text = "Абзац для проверки списка заметок.";
-                        const doc = {
-                          type: "doc",
-                          content: [
-                            {
-                              type: "paragraph",
-                              content: [{ type: "text", text }],
-                            },
-                          ],
-                        };
-                        const date = new Date().toISOString();
-                        benchmarkNotes.set(
-                          size
-                            ? Array.from({ length: size }, (_, index) => ({
-                                id: `benchmark:${index}`,
-                                title: `Тестовая заметка ${index + 1}`,
-                                text,
-                                doc,
-                                createdAt: date,
-                                updatedAt: date,
-                              }))
-                            : null,
-                        );
-                      },
-                    })
-                  }
+                  separateWindow={hosted && initial.benchRole !== "guest"}
+                  notice={benchError()}
+                  run={() => {
+                    if (hosted && initial.benchRole !== "guest") {
+                      askEngine("benchmark.dock");
+                      return;
+                    }
+                    void runLocalBenchmark();
+                  }}
                   stress={(count) => askEngine("notes.stress", { count })}
                   reset={() => askEngine("notes.reset")}
                 />
@@ -1378,6 +1449,7 @@ function App() {
           onToggleSidebar={toggleSidebar}
           onAddGame={gameLibrary.openAddDialog}
           onChrome={(command) => askEngine(command)}
+          bare={benchPanel()}
         />
       )}
     </View>

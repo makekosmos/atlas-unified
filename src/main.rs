@@ -3,6 +3,7 @@ mod app;
 mod appearance;
 mod assets;
 mod audio;
+mod bench_cli;
 mod brand;
 #[cfg(feature = "e2e")]
 mod e2e;
@@ -35,9 +36,28 @@ fn window_bounds(cx: &mut App) -> Bounds<gpui::Pixels> {
             gpui::point(px(-20000.), px(-20000.)),
             size(px(1440.), px(900.)),
         )
+    } else if let Some(bounds) = placed_bounds() {
+        bounds
     } else {
         Bounds::centered(None, size(px(1440.), px(900.)), cx)
     }
+}
+
+/// `ATLAS_WINDOW=x,y,width,height` in logical pixels. The benchmark director
+/// passes it so the guest window opens immediately to the right of the checklist.
+fn placed_bounds() -> Option<Bounds<gpui::Pixels>> {
+    let raw = std::env::var("ATLAS_WINDOW").ok()?;
+    let values: Vec<f32> = raw
+        .split(',')
+        .filter_map(|part| part.trim().parse().ok())
+        .collect();
+    if values.len() != 4 || values[2] < 1.0 || values[3] < 1.0 {
+        return None;
+    }
+    Some(gpui::bounds(
+        gpui::point(px(values[0]), px(values[1])),
+        size(px(values[2]), px(values[3])),
+    ))
 }
 
 fn offscreen() -> bool {
@@ -91,7 +111,7 @@ fn atlas_window_options(cx: &mut App) -> WindowOptions {
         // The page is a rounded card with a sidebar beside it: squeezed past
         // this, it stops being a page and becomes a stripe.
         window_min_size: Some(size(px(800.), px(600.))),
-        focus: !offscreen(),
+        focus: !offscreen() && std::env::var_os("ATLAS_BENCH_NO_FOCUS").is_none(),
         // Windows adaptive pacing owns the background cap and input wakeup.
         // A second focus-only cap would throttle unfocused interaction.
         inactive_frame_interval: if cfg!(target_os = "windows")
@@ -128,7 +148,7 @@ fn open_atlas_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Atlas
         .open_window(options, |window, cx| {
             // The platform window is already ordered in when this closure runs,
             // so set_title only renames the entry AppKit added itself.
-            window.set_window_title(WINDOW_TITLE);
+            window.set_window_title(window_title());
             let agenda = cx.new(Atlas::new);
             *slot.borrow_mut() = Some(agenda.clone());
             // Shell keeps the FPS meter outside Atlas's subtree; the
@@ -203,7 +223,18 @@ fn open_atlas_window(cx: &mut App) -> (gpui::AnyWindowHandle, gpui::Entity<Atlas
     (window.into(), agenda)
 }
 
+fn window_title() -> &'static str {
+    if std::env::var("ATLAS_BENCH_ROLE").as_deref() == Ok("guest") {
+        "Atlas — проверка"
+    } else {
+        WINDOW_TITLE
+    }
+}
+
 fn main() {
+    if let bench_cli::Boot::Exit(code) = bench_cli::boot() {
+        std::process::exit(code);
+    }
     std::panic::set_hook(Box::new(|info| {
         win_chrome::trace(&format!("panic {info}"));
     }));
@@ -240,7 +271,7 @@ fn main() {
         }
         #[cfg(not(feature = "e2e"))]
         let _ = (window, agenda);
-        if !offscreen() {
+        if !offscreen() && std::env::var_os("ATLAS_BENCH_NO_FOCUS").is_none() {
             cx.activate(true);
         }
     });

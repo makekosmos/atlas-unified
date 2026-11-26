@@ -1,5 +1,30 @@
 import { expect, open, test } from "nsh/test";
-import { slideDirection, tabChipWidth, titlebarControlTop } from "./chrome";
+import {
+  slideDirection,
+  tabChipWidth,
+  tabTileColor,
+  tabTileGradient,
+  titlebarControlTop,
+} from "./chrome";
+
+test("page icon tiles are orange, blue, grey, and burgundy", () => {
+  expect(tabTileColor("journal")).toEqual("#ff6800");
+  expect(tabTileColor("notes")).toEqual("#1f4fa8");
+  expect(tabTileColor("tasks")).toEqual("#333944");
+  expect(tabTileColor("games")).toEqual("#6b1224");
+  expect(tabTileColor("settings")).toEqual(null);
+  expect(tabTileColor("developers")).toEqual(null);
+  expect(tabTileGradient("journal")).toEqual({
+    top: "#ff8f3d",
+    bottom: "#ff6800",
+  });
+  expect(tabTileGradient("notes")?.top).toEqual("#3f7fd6");
+  expect(tabTileGradient("games")).toEqual({
+    top: "#a02b3c",
+    bottom: "#6b1224",
+  });
+  expect(tabTileGradient("settings")).toEqual(null);
+});
 
 test("window history walks across pages and truncates forward after a new visit", async () => {
   const app = await open("./tabs-fixture.tsx", {
@@ -220,12 +245,12 @@ test("a page comes in from the side its tab sits on", () => {
 });
 
 // The strip is one width for all of its chips: the full 300 while they fit,
-// then narrower, and at the end just the icon's plate — 6 of air, the 24 plate
-// and 6 again — with no name and no cross.
+// then narrower, and at the end just the icon's plate — 5 of air, the 28
+// tile and 5 again — with no name and no cross.
 test("a chip gives up its name first and stops at its plate", () => {
   expect(tabChipWidth(1200, 3)).toEqual(300);
   expect(tabChipWidth(500, 10)).toEqual(48);
-  expect(tabChipWidth(200, 10)).toEqual(36);
+  expect(tabChipWidth(200, 10)).toEqual(38);
 });
 
 // `mod+w` puts the tab being read away, the way every window with tabs does,

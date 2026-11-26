@@ -51,6 +51,27 @@ function visibleCards() {
   return visibleGameCards(gameLibrary.cards(), searchQuery());
 }
 
+function libraryCount() {
+  return visibleGameCards(gameLibrary.cards(), "").length;
+}
+
+function emptyTitle() {
+  if (searchQuery().trim()) return "Игры не найдены";
+  if (gameLibrary.libraryState() === "loading")
+    return "Загружаем библиотеку игр…";
+  if (gameLibrary.libraryState() === "error")
+    return "Не удалось загрузить библиотеку";
+  return "Игр нет";
+}
+
+function showEmptyAdd() {
+  return (
+    !searchQuery().trim() &&
+    gameLibrary.libraryState() === "ready" &&
+    libraryCount() === 0
+  );
+}
+
 function formatTime(ms: number) {
   const minutes = Math.floor(ms / 60000);
   if (minutes < 1) return "меньше минуты";
@@ -93,20 +114,22 @@ export function GamesLibrary(props: {
         }
       }}
     >
-      <View class="flex-row items-center px-7 pt-3">
-        <Input
-          value={searchQuery()}
-          onChange={(e) => searchQuery.set(e.value)}
-          placeholder="Поиск игр"
-          accessibilityLabel="Поиск игр"
-          class="h-9 min-w-0 flex-1 rounded-lg px-3 text-[13px]"
-          style={{
-            backgroundColor: props.colors.card,
-            color: props.colors.foreground,
-            placeholderColor: props.colors.muted,
-          }}
-        />
-      </View>
+      {libraryCount() > 0 && (
+        <View class="flex-row items-center px-7 pt-3">
+          <Input
+            value={searchQuery()}
+            onChange={(e) => searchQuery.set(e.value)}
+            placeholder="Поиск игр"
+            accessibilityLabel="Поиск игр"
+            class="h-9 min-w-0 flex-1 rounded-lg px-3 text-[13px]"
+            style={{
+              backgroundColor: props.colors.card,
+              color: props.colors.foreground,
+              placeholderColor: props.colors.muted,
+            }}
+          />
+        </View>
+      )}
       {gameLibrary.launchError() && (
         <Text
           class="px-7 pt-2 text-[11px]"
@@ -117,22 +140,58 @@ export function GamesLibrary(props: {
       )}
       {visibleCards().length === 0 && (
         <View class="flex-1 items-center justify-center px-7">
-          <Text class="mb-2 text-[14px]" style={{ color: props.colors.muted }}>
-            {searchQuery().trim()
-              ? "Игры не найдены"
-              : gameLibrary.libraryState() === "loading"
-                ? "Загружаем библиотеку игр…"
-                : gameLibrary.libraryState() === "error"
-                  ? "Не удалось загрузить библиотеку"
-                  : "Игр пока нет"}
+          <Text class="text-[15px]" style={{ color: props.colors.foreground }}>
+            {emptyTitle()}
           </Text>
-          <Text
-            class="text-center text-[12px]"
-            style={{ color: props.colors.muted }}
-          >
-            {gameLibrary.error() ||
-              "Нажми + в заголовке, чтобы найти игры или добавить exe вручную"}
-          </Text>
+          {gameLibrary.libraryState() === "error" && gameLibrary.error() ? (
+            <Text
+              class="mt-2 text-center text-[12px]"
+              style={{ color: props.colors.muted }}
+            >
+              {gameLibrary.error()}
+            </Text>
+          ) : null}
+          {gameLibrary.libraryState() === "error" && (
+            <View
+              onPress={() => gameLibrary.reloadLibrary()}
+              role="button"
+              accessibilityLabel="Повторить загрузку игр"
+              class="mt-4 h-9 items-center justify-center rounded-[10px] px-4"
+              hoverStyle={{ opacity: 0.88 }}
+              style={{
+                borderWidth: 1,
+                borderColor: props.colors.border,
+                cursor: "pointer",
+              }}
+            >
+              <Text
+                class="text-[13px]"
+                style={{ color: props.colors.foreground }}
+              >
+                Повторить
+              </Text>
+            </View>
+          )}
+          {showEmptyAdd() && (
+            <View
+              onPress={() => gameLibrary.openAddDialog()}
+              role="button"
+              accessibilityLabel="Добавить игру"
+              class="mt-4 h-9 items-center justify-center rounded-[10px] px-4"
+              style={{
+                backgroundColor: props.colors.foreground,
+                cursor: "pointer",
+              }}
+              hoverStyle={{ opacity: 0.88 }}
+            >
+              <Text
+                class="text-[13px]"
+                style={{ color: props.colors.background }}
+              >
+                Добавить игру
+              </Text>
+            </View>
+          )}
         </View>
       )}
       <Each of={visibleCards()}>

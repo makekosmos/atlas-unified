@@ -727,12 +727,13 @@ function noteBackLeft(pageInset, toggleLeft) {
 	return Math.max(afterToggle, againstPane);
 }
 const TAB_HEIGHT = 32;
-const TAB_TILE_HEIGHT = 20;
+const TAB_TILE_WIDTH = 28;
+const TAB_TILE_HEIGHT = 22;
 const TAB_CLOSE_SIZE = 20;
 const TAB_CLOSE_ROOM = 28;
 const TAB_WIDTH = 300;
-const TAB_TILE_PAD = 6;
-const TAB_ICON_ONLY = 36;
+const TAB_TILE_PAD = 5;
+const TAB_ICON_ONLY = 38;
 const TAB_NAME_FITS = 96;
 function tabChipWidth(room, count) {
 	if (!(room > 0) || count < 1) return TAB_WIDTH;
@@ -741,6 +742,29 @@ function tabChipWidth(room, count) {
 }
 const TAB_FADE = 22;
 const TAB_GAP = 2;
+const TILE_JOURNAL = "#ff6800";
+const TILE_NOTES = "#1f4fa8";
+const TILE_TASKS = "#333944";
+const TILE_GAMES = "#6b1224";
+function tabTileGradient(route) {
+	if (route === "journal") return {
+		top: "#ff8f3d",
+		bottom: TILE_JOURNAL
+	};
+	if (route === "notes") return {
+		top: "#3f7fd6",
+		bottom: TILE_NOTES
+	};
+	if (route === "tasks") return {
+		top: "#565d69",
+		bottom: TILE_TASKS
+	};
+	if (route === "games") return {
+		top: "#a02b3c",
+		bottom: TILE_GAMES
+	};
+	return null;
+}
 function TabIcon(props) {
 	if (props.route === "journal") return component(Glyph, {
 		name: "journal",
@@ -787,10 +811,15 @@ function TabChip(props) {
 	const colors = props.colors;
 	const base = shellFill(colors, props.dark);
 	const ink = (t) => mixHex(base, colors.foreground, t);
-	const plate = props.tab.active ? ink(.1) : over() ? ink(.07) : ink(.04);
-	const tileTop = props.tab.active ? mixHex(colors.accent, "#ffffff", .12) : ink(.1);
-	const tileBottom = props.tab.active ? colors.accent : ink(.04);
-	const tileInk = props.tab.active ? accentMark(colors.accent) : colors.muted;
+	const restPlate = ink(.04);
+	const activePlate = ink(.1);
+	const hoverPlate = ink(.07);
+	const plate = () => props.tab.active ? activePlate : over() ? hoverPlate : restPlate;
+	const face = tabTileGradient(props.tab.route);
+	const tileBottom = face?.bottom ?? ink(.2);
+	const tileTop = face?.top ?? ink(.27);
+	const tileInk = face ? "#ffffff" : props.dark ? "#ffffff" : "#1d1d1f";
+	const sheen = colorAlpha("#ffffff", face ? .16 : .05);
 	return (() => {
 		const __nsh_hv0 = element("view");
 		bindProp(__nsh_hv0, "onPress", () => props.onSelect);
@@ -811,21 +840,51 @@ function TabChip(props) {
 			paddingLeft: TAB_TILE_PAD,
 			paddingRight: props.compact ? TAB_TILE_PAD : TAB_CLOSE_ROOM,
 			gap: props.compact ? 0 : 8,
-			borderRadius: 8,
-			backgroundColor: plate,
+			borderRadius: 6,
+			backgroundColor: plate(),
 			cursor: "pointer"
 		}));
 		const __nsh_hv1 = element("view");
-		prop(__nsh_hv1, "class", "items-center justify-center");
-		bindProp(__nsh_hv1, "style", () => ({
-			width: 24,
+		prop(__nsh_hv1, "class", "relative shrink-0");
+		prop(__nsh_hv1, "style", {
+			width: TAB_TILE_WIDTH,
+			height: TAB_TILE_HEIGHT
+		});
+		const __nsh_hv2 = element("view");
+		prop(__nsh_hv2, "class", "absolute");
+		bindProp(__nsh_hv2, "style", () => ({
+			left: 0,
+			right: 0,
+			top: 1,
+			height: TAB_TILE_HEIGHT,
+			borderRadius: 5,
+			backgroundColor: colorAlpha("#000000", props.dark ? .3 : .1)
+		}));
+		const __nsh_hv3 = element("view");
+		prop(__nsh_hv3, "class", "absolute items-center justify-center overflow-hidden");
+		bindProp(__nsh_hv3, "style", () => ({
+			left: 0,
+			top: 0,
+			width: TAB_TILE_WIDTH,
 			height: TAB_TILE_HEIGHT,
 			borderRadius: 5,
 			backgroundImage: `linear-gradient(180deg, ${tileTop} 0%, ${tileBottom} 100%)`,
 			borderWidth: 1,
-			borderColor: props.tab.active ? colorAlpha("#ffffff", .14) : ink(.1)
+			borderColor: face ? colorAlpha("#ffffff", .14) : ink(.1)
 		}));
-		insert(__nsh_hv1, component(TabIcon, {
+		const __nsh_hv4 = element("view");
+		prop(__nsh_hv4, "class", "absolute");
+		bindProp(__nsh_hv4, "style", () => ({
+			left: 0,
+			right: 0,
+			top: 0,
+			bottom: 0,
+			borderRadius: 5,
+			backgroundImage: `linear-gradient(180deg, ${sheen} 0%, ${colorAlpha("#ffffff", 0)} 100%)`,
+			pointerEvents: "none"
+		}));
+		append(__nsh_hv3, __nsh_hv4);
+		insert(__nsh_hv3, component(TabIcon, {
 			get route() {
 				return props.tab.route;
 			},
@@ -834,48 +893,48 @@ function TabChip(props) {
 			},
 			color: tileInk
 		}));
-		const __nsh_hv2 = element("view");
-		prop(__nsh_hv2, "class", "relative");
-		prop(__nsh_hv2, "style", {
+		append(__nsh_hv1, __nsh_hv2);
+		append(__nsh_hv1, __nsh_hv3);
+		const __nsh_hv5 = element("view");
+		prop(__nsh_hv5, "class", "relative whitespace-nowrap");
+		prop(__nsh_hv5, "style", {
 			flexGrow: 1,
 			flexShrink: 1,
 			minWidth: 0,
 			overflow: "hidden"
 		});
-		const __nsh_hv3 = element("text");
-		bindProp(__nsh_hv3, "style", () => ({
-			fontSize: interfaceSize() + 1,
+		const __nsh_hv6 = element("text");
+		bindProp(__nsh_hv6, "style", () => ({
+			fontSize: interfaceSize(),
 			lineHeight: 20,
-			numberOfLines: 1,
-			textOverflow: "clip",
 			fontWeight: props.tab.active ? 600 : 500,
 			color: props.tab.active ? colors.foreground : colors.muted
 		}));
-		insert(__nsh_hv3, () => props.tab.label);
-		const __nsh_hv4 = element("view");
-		prop(__nsh_hv4, "class", "absolute");
-		bindProp(__nsh_hv4, "style", () => ({
+		insert(__nsh_hv6, () => props.tab.label);
+		const __nsh_hv7 = element("view");
+		prop(__nsh_hv7, "class", "absolute");
+		bindProp(__nsh_hv7, "style", () => ({
 			right: 0,
 			top: 0,
 			width: TAB_FADE,
 			height: 20,
-			backgroundImage: `linear-gradient(90deg, ${colorAlpha(plate, 0)} 0%, ${plate} 100%)`
+			backgroundImage: `linear-gradient(90deg, ${colorAlpha(plate(), 0)} 0%, ${plate()} 100%)`
 		}));
-		append(__nsh_hv2, __nsh_hv3);
-		append(__nsh_hv2, __nsh_hv4);
+		append(__nsh_hv5, __nsh_hv6);
+		append(__nsh_hv5, __nsh_hv7);
 		append(__nsh_hv0, __nsh_hv1);
-		append(__nsh_hv0, __nsh_hv2);
+		append(__nsh_hv0, __nsh_hv5);
 		insert(__nsh_hv0, () => !props.compact && (() => {
-			const __nsh_hv5 = element("view");
-			prop(__nsh_hv5, "onPress", () => props.onClose());
-			prop(__nsh_hv5, "role", "button");
-			bindProp(__nsh_hv5, "accessibilityLabel", () => `Закрыть ${props.tab.label}`);
-			prop(__nsh_hv5, "onMouseEnter", () => closeOver.set(true));
-			prop(__nsh_hv5, "onMouseLeave", () => closeOver.set(false));
-			prop(__nsh_hv5, "class", "absolute items-center justify-center");
-			bindProp(__nsh_hv5, "hoverStyle", () => ({ backgroundColor: ink(.18) }));
-			prop(__nsh_hv5, "desktop", { windowDrag: false });
-			bindProp(__nsh_hv5, "style", () => ({
+			const __nsh_hv8 = element("view");
+			prop(__nsh_hv8, "onPress", () => props.onClose());
+			prop(__nsh_hv8, "role", "button");
+			bindProp(__nsh_hv8, "accessibilityLabel", () => `Закрыть ${props.tab.label}`);
+			prop(__nsh_hv8, "onMouseEnter", () => closeOver.set(true));
+			prop(__nsh_hv8, "onMouseLeave", () => closeOver.set(false));
+			prop(__nsh_hv8, "class", "absolute items-center justify-center");
+			bindProp(__nsh_hv8, "hoverStyle", () => ({ backgroundColor: ink(.18) }));
+			prop(__nsh_hv8, "desktop", { windowDrag: false });
+			bindProp(__nsh_hv8, "style", () => ({
 				right: 4,
 				top: 6,
 				width: TAB_CLOSE_SIZE,
@@ -884,14 +943,14 @@ function TabChip(props) {
 				opacity: props.tab.active || over() ? 1 : 0,
 				cursor: "pointer"
 			}));
-			insert(__nsh_hv5, component(Glyph, {
+			insert(__nsh_hv8, component(Glyph, {
 				name: "close",
-				size: 13,
+				size: 12,
 				get color() {
 					return closeOver() ? colors.foreground : colors.muted;
 				}
 			}));
-			return __nsh_hv5;
+			return __nsh_hv8;
 		})());
 		return __nsh_hv0;
 	})();
@@ -899,24 +958,24 @@ function TabChip(props) {
 function TrailArrow(props) {
 	const enabled = () => props.enabled === true;
 	return (() => {
-		const __nsh_hv6 = element("view");
-		prop(__nsh_hv6, "onPress", () => {
+		const __nsh_hv9 = element("view");
+		prop(__nsh_hv9, "onPress", () => {
 			if (enabled()) props.onPress?.();
 		});
-		prop(__nsh_hv6, "role", "button");
-		bindProp(__nsh_hv6, "accessibilityLabel", () => props.label);
-		bindProp(__nsh_hv6, "accessibilityState", () => ({ disabled: !enabled() }));
-		prop(__nsh_hv6, "class", "items-center justify-center");
-		bindProp(__nsh_hv6, "hoverStyle", () => enabled() ? { backgroundColor: hoverWash(props.dark) } : void 0);
-		bindProp(__nsh_hv6, "activeStyle", () => enabled() ? { backgroundColor: surfaceWash(props.dark, .12) } : void 0);
-		prop(__nsh_hv6, "desktop", { windowDrag: false });
-		bindProp(__nsh_hv6, "style", () => ({
+		prop(__nsh_hv9, "role", "button");
+		bindProp(__nsh_hv9, "accessibilityLabel", () => props.label);
+		bindProp(__nsh_hv9, "accessibilityState", () => ({ disabled: !enabled() }));
+		prop(__nsh_hv9, "class", "items-center justify-center");
+		bindProp(__nsh_hv9, "hoverStyle", () => enabled() ? { backgroundColor: hoverWash(props.dark) } : void 0);
+		bindProp(__nsh_hv9, "activeStyle", () => enabled() ? { backgroundColor: surfaceWash(props.dark, .12) } : void 0);
+		prop(__nsh_hv9, "desktop", { windowDrag: false });
+		bindProp(__nsh_hv9, "style", () => ({
 			width: 24,
 			height: 24,
 			borderRadius: CONTROL_RADIUS,
 			cursor: enabled() ? "pointer" : "default"
 		}));
-		insert(__nsh_hv6, component(Glyph, {
+		insert(__nsh_hv9, component(Glyph, {
 			get name() {
 				return props.dir === "back" ? "arrowLeft" : "arrowRight";
 			},
@@ -925,7 +984,7 @@ function TrailArrow(props) {
 				return enabled() ? props.colors.foreground : colorAlpha(props.colors.muted, .5);
 			}
 		}));
-		return __nsh_hv6;
+		return __nsh_hv9;
 	})();
 }
 function channel(hex, shift) {
@@ -952,6 +1011,9 @@ function colorAlpha(hex, alpha) {
 	const b = channel(hex, 0);
 	if (r === null || g === null || b === null) return hex;
 	return `rgba(${r},${g},${b},${alpha})`;
+}
+function navInk(_selected, _hot, colors) {
+	return mixHex(colors.muted, colors.foreground, .4);
 }
 function hostOs() {
 	const name = platform();
@@ -987,239 +1049,245 @@ function TitlebarOverlay(props) {
 		return tabChipWidth(Math.max(0, pageRight - stripLeft() - controlsRoom), props.tabs?.length ?? 0);
 	};
 	return (() => {
-		const __nsh_hv7 = element("view");
-		prop(__nsh_hv7, "class", "absolute left-0 right-0 top-0 z-20");
-		prop(__nsh_hv7, "style", { height: barHeight });
-		prop(__nsh_hv7, "desktop", { windowDrag: true });
-		const __nsh_hv9 = element("view");
-		prop(__nsh_hv9, "onPressDown", (event) => props.onChrome((event?.clickCount ?? 1) >= 2 ? "window.titlebar-double-click" : "window.drag"));
-		prop(__nsh_hv9, "class", "absolute right-0 top-0 bottom-0");
-		prop(__nsh_hv9, "style", { left: dragLeft });
 		const __nsh_hv10 = element("view");
-		bindProp(__nsh_hv10, "onPress", () => props.onToggleSidebar);
-		prop(__nsh_hv10, "role", "button");
-		prop(__nsh_hv10, "accessibilityLabel", "Боковая панель");
-		prop(__nsh_hv10, "class", "absolute items-center justify-center");
-		prop(__nsh_hv10, "desktop", { windowDrag: false });
-		prop(__nsh_hv10, "hoverStyle", { backgroundColor: wash });
-		bindProp(__nsh_hv10, "style", () => ({
-			top: titlebarControlTop(TOGGLE_SIZE),
-			left: sidebarLeft,
-			width: TOGGLE_SIZE,
-			height: TOGGLE_SIZE,
-			borderRadius: CONTROL_RADIUS,
-			cursor: "pointer"
-		}));
-		insert(__nsh_hv10, component(Glyph, {
-			name: "sidebar",
-			size: 14,
-			get color() {
-				return props.colors.muted;
-			}
-		}));
+		prop(__nsh_hv10, "class", "absolute left-0 right-0 top-0 z-20");
+		prop(__nsh_hv10, "style", { height: barHeight });
+		prop(__nsh_hv10, "desktop", { windowDrag: true });
 		const __nsh_hv12 = element("view");
-		prop(__nsh_hv12, "class", "absolute flex-row items-center");
-		prop(__nsh_hv12, "desktop", { windowDrag: false });
-		bindProp(__nsh_hv12, "style", () => ({
-			left: trailLeft(),
-			top: titlebarControlTop(24),
-			height: 24,
-			gap: 2
-		}));
-		insert(__nsh_hv12, [component(TrailArrow, {
-			dir: "back",
-			label: "Назад",
-			get dark() {
-				return props.dark;
-			},
-			get colors() {
-				return props.colors;
-			},
-			get enabled() {
-				return props.canGoBack;
-			},
-			get onPress() {
-				return props.onGoBack;
-			}
-		}), component(TrailArrow, {
-			dir: "forward",
-			label: "Вперёд",
-			get dark() {
-				return props.dark;
-			},
-			get colors() {
-				return props.colors;
-			},
-			get enabled() {
-				return props.canGoForward;
-			},
-			get onPress() {
-				return props.onGoForward;
-			}
-		})]);
-		append(__nsh_hv7, __nsh_hv9);
-		append(__nsh_hv7, __nsh_hv10);
-		append(__nsh_hv7, __nsh_hv12);
-		insert(__nsh_hv7, () => props.dimmed && (() => {
-			const __nsh_hv8 = element("view");
-			prop(__nsh_hv8, "class", "absolute top-0 bottom-0");
-			bindProp(__nsh_hv8, "style", () => ({
+		prop(__nsh_hv12, "onPressDown", (event) => props.onChrome((event?.clickCount ?? 1) >= 2 ? "window.titlebar-double-click" : "window.drag"));
+		prop(__nsh_hv12, "class", "absolute right-0 top-0 bottom-0");
+		prop(__nsh_hv12, "style", { left: dragLeft });
+		append(__nsh_hv10, __nsh_hv12);
+		insert(__nsh_hv10, () => props.dimmed && (() => {
+			const __nsh_hv11 = element("view");
+			prop(__nsh_hv11, "class", "absolute top-0 bottom-0");
+			bindProp(__nsh_hv11, "style", () => ({
 				left: props.pageInset ?? 0,
 				right: 0,
 				backgroundColor: "#00000080",
 				pointerEvents: "none"
 			}));
-			return __nsh_hv8;
-		})(), __nsh_hv9);
-		insert(__nsh_hv7, () => props.showAddGame && (() => {
-			const __nsh_hv11 = element("view");
-			prop(__nsh_hv11, "onPress", () => props.onAddGame?.());
-			prop(__nsh_hv11, "role", "button");
-			prop(__nsh_hv11, "accessibilityLabel", "Добавить игру");
-			prop(__nsh_hv11, "class", "absolute items-center justify-center");
-			prop(__nsh_hv11, "desktop", { windowDrag: false });
-			prop(__nsh_hv11, "hoverStyle", { backgroundColor: wash });
-			bindProp(__nsh_hv11, "style", () => ({
-				top: titlebarControlTop(28),
-				right: addGameRight,
-				width: 28,
-				height: 28,
+			return __nsh_hv11;
+		})(), __nsh_hv12);
+		insert(__nsh_hv10, [() => !props.bare && (() => {
+			const __nsh_hv13 = element("view");
+			prop(__nsh_hv13, "class", "absolute left-0 right-0 top-0 bottom-0");
+			prop(__nsh_hv13, "style", { pointerEvents: "box-none" });
+			const __nsh_hv14 = element("view");
+			bindProp(__nsh_hv14, "onPress", () => props.onToggleSidebar);
+			prop(__nsh_hv14, "role", "button");
+			prop(__nsh_hv14, "accessibilityLabel", "Боковая панель");
+			prop(__nsh_hv14, "class", "absolute items-center justify-center");
+			prop(__nsh_hv14, "desktop", { windowDrag: false });
+			prop(__nsh_hv14, "hoverStyle", { backgroundColor: wash });
+			bindProp(__nsh_hv14, "style", () => ({
+				top: titlebarControlTop(TOGGLE_SIZE),
+				left: sidebarLeft,
+				width: TOGGLE_SIZE,
+				height: TOGGLE_SIZE,
 				borderRadius: CONTROL_RADIUS,
 				cursor: "pointer"
 			}));
-			insert(__nsh_hv11, component(Glyph, {
-				name: "plus",
-				size: 16,
+			insert(__nsh_hv14, component(Glyph, {
+				name: "sidebar",
+				size: 14,
 				get color() {
 					return props.colors.muted;
 				}
 			}));
-			return __nsh_hv11;
-		})(), __nsh_hv12);
-		insert(__nsh_hv7, [() => props.tabs && props.tabs.length > 0 && (() => {
-			const __nsh_hv13 = element("view");
-			prop(__nsh_hv13, "class", "absolute flex-row items-center");
-			prop(__nsh_hv13, "desktop", { windowDrag: false });
-			bindProp(__nsh_hv13, "style", () => ({
-				left: stripLeft(),
-				right: controlsRoom,
-				top: titlebarControlTop(TAB_HEIGHT),
-				height: TAB_HEIGHT,
-				gap: TAB_GAP,
-				pointerEvents: "box-none"
+			const __nsh_hv16 = element("view");
+			prop(__nsh_hv16, "class", "absolute flex-row items-center");
+			prop(__nsh_hv16, "desktop", { windowDrag: false });
+			bindProp(__nsh_hv16, "style", () => ({
+				left: trailLeft(),
+				top: titlebarControlTop(24),
+				height: 24,
+				gap: 2
 			}));
-			insert(__nsh_hv13, () => props.tabs.map((tab) => component(TabChip, {
-				get key() {
-					return tab.key;
-				},
-				tab,
-				get colors() {
-					return props.colors;
-				},
+			insert(__nsh_hv16, [component(TrailArrow, {
+				dir: "back",
+				label: "Назад",
 				get dark() {
 					return props.dark;
 				},
-				get width() {
-					return chipWidth() < TAB_NAME_FITS ? TAB_ICON_ONLY : chipWidth();
+				get colors() {
+					return props.colors;
 				},
-				get compact() {
-					return chipWidth() < TAB_NAME_FITS;
+				get enabled() {
+					return props.canGoBack;
 				},
-				onSelect: () => props.onSelectTab?.(tab.key),
-				onClose: () => props.onCloseTab?.(tab.key),
-				onMenu: (at) => props.onTabMenu?.(tab.key, at)
-			})));
+				get onPress() {
+					return props.onGoBack;
+				}
+			}), component(TrailArrow, {
+				dir: "forward",
+				label: "Вперёд",
+				get dark() {
+					return props.dark;
+				},
+				get colors() {
+					return props.colors;
+				},
+				get enabled() {
+					return props.canGoForward;
+				},
+				get onPress() {
+					return props.onGoForward;
+				}
+			})]);
+			append(__nsh_hv13, __nsh_hv14);
+			append(__nsh_hv13, __nsh_hv16);
+			insert(__nsh_hv13, () => props.showAddGame && (() => {
+				const __nsh_hv15 = element("view");
+				prop(__nsh_hv15, "onPress", () => props.onAddGame?.());
+				prop(__nsh_hv15, "role", "button");
+				prop(__nsh_hv15, "accessibilityLabel", "Добавить игру");
+				prop(__nsh_hv15, "class", "absolute items-center justify-center");
+				prop(__nsh_hv15, "desktop", { windowDrag: false });
+				prop(__nsh_hv15, "hoverStyle", { backgroundColor: wash });
+				bindProp(__nsh_hv15, "style", () => ({
+					top: titlebarControlTop(28),
+					right: addGameRight,
+					width: 28,
+					height: 28,
+					borderRadius: CONTROL_RADIUS,
+					cursor: "pointer"
+				}));
+				insert(__nsh_hv15, component(Glyph, {
+					name: "plus",
+					size: 16,
+					get color() {
+						return props.colors.muted;
+					}
+				}));
+				return __nsh_hv15;
+			})(), __nsh_hv16);
+			insert(__nsh_hv13, () => props.tabs && props.tabs.length > 0 && (() => {
+				const __nsh_hv17 = element("view");
+				prop(__nsh_hv17, "class", "absolute flex-row items-center");
+				prop(__nsh_hv17, "desktop", { windowDrag: false });
+				bindProp(__nsh_hv17, "style", () => ({
+					left: stripLeft(),
+					right: controlsRoom,
+					top: titlebarControlTop(TAB_HEIGHT),
+					height: TAB_HEIGHT,
+					gap: TAB_GAP,
+					pointerEvents: "box-none"
+				}));
+				insert(__nsh_hv17, () => props.tabs.map((tab) => component(TabChip, {
+					get key() {
+						return tab.key;
+					},
+					tab,
+					get colors() {
+						return props.colors;
+					},
+					get dark() {
+						return props.dark;
+					},
+					get width() {
+						return chipWidth() < TAB_NAME_FITS ? TAB_ICON_ONLY : chipWidth();
+					},
+					get compact() {
+						return chipWidth() < TAB_NAME_FITS;
+					},
+					onSelect: () => props.onSelectTab?.(tab.key),
+					onClose: () => props.onCloseTab?.(tab.key),
+					onMenu: (at) => props.onTabMenu?.(tab.key, at)
+				})));
+				return __nsh_hv17;
+			})());
 			return __nsh_hv13;
 		})(), () => drawCaptions && (() => {
-			const __nsh_hv14 = element("view");
-			prop(__nsh_hv14, "class", "absolute right-0 top-0 flex-row items-center");
-			prop(__nsh_hv14, "desktop", { windowDrag: false });
-			prop(__nsh_hv14, "style", {
+			const __nsh_hv18 = element("view");
+			prop(__nsh_hv18, "class", "absolute right-0 top-0 flex-row items-center");
+			prop(__nsh_hv18, "desktop", { windowDrag: false });
+			prop(__nsh_hv18, "style", {
 				height: 48,
 				paddingRight: TRAILING_INSET
 			});
-			const __nsh_hv15 = element("view");
-			prop(__nsh_hv15, "onPress", () => props.onChrome("window.minimize"));
-			prop(__nsh_hv15, "role", "button");
-			prop(__nsh_hv15, "accessibilityLabel", "Свернуть окно");
-			prop(__nsh_hv15, "class", "items-center justify-center");
-			prop(__nsh_hv15, "desktop", { windowDrag: false });
-			prop(__nsh_hv15, "hoverStyle", { backgroundColor: wash });
-			prop(__nsh_hv15, "style", {
+			const __nsh_hv19 = element("view");
+			prop(__nsh_hv19, "onPress", () => props.onChrome("window.minimize"));
+			prop(__nsh_hv19, "role", "button");
+			prop(__nsh_hv19, "accessibilityLabel", "Свернуть окно");
+			prop(__nsh_hv19, "class", "items-center justify-center");
+			prop(__nsh_hv19, "desktop", { windowDrag: false });
+			prop(__nsh_hv19, "hoverStyle", { backgroundColor: wash });
+			prop(__nsh_hv19, "style", {
 				width: CAPTION_BUTTON_WIDTH,
 				height: CAPTION_BUTTON_HEIGHT,
 				borderRadius: CONTROL_RADIUS,
 				cursor: "pointer"
 			});
-			insert(__nsh_hv15, component(Icon, {
+			insert(__nsh_hv19, component(Icon, {
 				name: "windowMin",
 				get color() {
 					return props.colors.muted;
 				},
 				size: 14
 			}));
-			const __nsh_hv16 = element("view");
-			prop(__nsh_hv16, "onPress", () => props.onChrome("window.zoom"));
-			prop(__nsh_hv16, "role", "button");
-			prop(__nsh_hv16, "accessibilityLabel", "Развернуть окно");
-			prop(__nsh_hv16, "class", "items-center justify-center");
-			prop(__nsh_hv16, "desktop", { windowDrag: false });
-			prop(__nsh_hv16, "hoverStyle", { backgroundColor: wash });
-			prop(__nsh_hv16, "style", {
+			const __nsh_hv20 = element("view");
+			prop(__nsh_hv20, "onPress", () => props.onChrome("window.zoom"));
+			prop(__nsh_hv20, "role", "button");
+			prop(__nsh_hv20, "accessibilityLabel", "Развернуть окно");
+			prop(__nsh_hv20, "class", "items-center justify-center");
+			prop(__nsh_hv20, "desktop", { windowDrag: false });
+			prop(__nsh_hv20, "hoverStyle", { backgroundColor: wash });
+			prop(__nsh_hv20, "style", {
 				width: CAPTION_BUTTON_WIDTH,
 				height: CAPTION_BUTTON_HEIGHT,
 				borderRadius: CONTROL_RADIUS,
 				cursor: "pointer"
 			});
-			insert(__nsh_hv16, component(Icon, {
+			insert(__nsh_hv20, component(Icon, {
 				name: "windowMax",
 				get color() {
 					return props.colors.muted;
 				},
 				size: 14
 			}));
-			const __nsh_hv17 = element("view");
-			prop(__nsh_hv17, "onPress", () => props.onChrome("window.close"));
-			prop(__nsh_hv17, "onMouseEnter", () => closeHovered.set(true));
-			prop(__nsh_hv17, "onMouseLeave", () => closeHovered.set(false));
-			prop(__nsh_hv17, "role", "button");
-			prop(__nsh_hv17, "accessibilityLabel", "Закрыть окно");
-			prop(__nsh_hv17, "class", "items-center justify-center");
-			prop(__nsh_hv17, "desktop", { windowDrag: false });
-			prop(__nsh_hv17, "hoverStyle", { backgroundColor: "#e81123" });
-			prop(__nsh_hv17, "style", {
+			const __nsh_hv21 = element("view");
+			prop(__nsh_hv21, "onPress", () => props.onChrome("window.close"));
+			prop(__nsh_hv21, "onMouseEnter", () => closeHovered.set(true));
+			prop(__nsh_hv21, "onMouseLeave", () => closeHovered.set(false));
+			prop(__nsh_hv21, "role", "button");
+			prop(__nsh_hv21, "accessibilityLabel", "Закрыть окно");
+			prop(__nsh_hv21, "class", "items-center justify-center");
+			prop(__nsh_hv21, "desktop", { windowDrag: false });
+			prop(__nsh_hv21, "hoverStyle", { backgroundColor: "#e81123" });
+			prop(__nsh_hv21, "style", {
 				width: CAPTION_BUTTON_WIDTH,
 				height: CAPTION_BUTTON_HEIGHT,
 				borderRadius: CONTROL_RADIUS,
 				cursor: "pointer"
 			});
-			insert(__nsh_hv17, component(Icon, {
+			insert(__nsh_hv21, component(Icon, {
 				name: "windowClose",
 				get color() {
 					return closeHovered() ? "#ffffff" : props.colors.muted;
 				},
 				size: 14
 			}));
-			append(__nsh_hv14, __nsh_hv15);
-			append(__nsh_hv14, __nsh_hv16);
-			append(__nsh_hv14, __nsh_hv17);
-			return __nsh_hv14;
+			append(__nsh_hv18, __nsh_hv19);
+			append(__nsh_hv18, __nsh_hv20);
+			append(__nsh_hv18, __nsh_hv21);
+			return __nsh_hv18;
 		})()]);
-		return __nsh_hv7;
+		return __nsh_hv10;
 	})();
 }
 function SidebarRow(props) {
 	const wash = hoverWash(props.dark);
 	return (() => {
-		const __nsh_hv18 = element("view");
-		bindProp(__nsh_hv18, "onPress", () => props.onPress);
-		prop(__nsh_hv18, "role", "button");
-		bindProp(__nsh_hv18, "accessibilityState", () => ({ selected: props.selected }));
-		prop(__nsh_hv18, "desktop", { windowDrag: false });
-		prop(__nsh_hv18, "class", "flex-row items-center");
-		prop(__nsh_hv18, "hoverStyle", { backgroundColor: wash });
-		bindProp(__nsh_hv18, "style", () => ({
-			height: 40,
+		const __nsh_hv22 = element("view");
+		bindProp(__nsh_hv22, "onPress", () => props.onPress);
+		prop(__nsh_hv22, "role", "button");
+		bindProp(__nsh_hv22, "accessibilityState", () => ({ selected: props.selected }));
+		prop(__nsh_hv22, "desktop", { windowDrag: false });
+		prop(__nsh_hv22, "class", "flex-row items-center");
+		prop(__nsh_hv22, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv22, "style", () => ({
+			height: props.compact ? 34 : 40,
 			gap: 10,
 			paddingLeft: 10,
 			paddingRight: 10,
@@ -1227,39 +1295,39 @@ function SidebarRow(props) {
 			backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent",
 			cursor: "pointer"
 		}));
-		const __nsh_hv19 = element("text");
-		prop(__nsh_hv19, "class", "text-[14px]");
-		bindProp(__nsh_hv19, "style", () => ({
-			color: props.colors.foreground,
+		const __nsh_hv23 = element("text");
+		prop(__nsh_hv23, "class", "text-[14px]");
+		bindProp(__nsh_hv23, "style", () => ({
+			color: navInk(props.selected, false, props.colors),
 			fontWeight: 500,
 			lineHeight: 20
 		}));
-		insert(__nsh_hv19, () => props.label);
-		append(__nsh_hv18, __nsh_hv19);
-		insert(__nsh_hv18, component(Glyph, {
+		insert(__nsh_hv23, () => props.label);
+		append(__nsh_hv22, __nsh_hv23);
+		insert(__nsh_hv22, component(Glyph, {
 			get name() {
 				return props.icon;
 			},
 			size: 16,
 			get color() {
-				return props.colors.foreground;
+				return navInk(props.selected, false, props.colors);
 			}
-		}), __nsh_hv19);
-		return __nsh_hv18;
+		}), __nsh_hv23);
+		return __nsh_hv22;
 	})();
 }
 function RecentRow(props) {
 	const wash = hoverWash(props.dark);
 	return (() => {
-		const __nsh_hv20 = element("view");
-		bindProp(__nsh_hv20, "onPress", () => props.onPress);
-		prop(__nsh_hv20, "role", "button");
-		bindProp(__nsh_hv20, "accessibilityLabel", () => props.entry.title);
-		bindProp(__nsh_hv20, "accessibilityState", () => ({ selected: Boolean(props.selected) }));
-		prop(__nsh_hv20, "desktop", { windowDrag: false });
-		prop(__nsh_hv20, "class", "flex-row items-center");
-		prop(__nsh_hv20, "hoverStyle", { backgroundColor: wash });
-		bindProp(__nsh_hv20, "style", () => ({
+		const __nsh_hv24 = element("view");
+		bindProp(__nsh_hv24, "onPress", () => props.onPress);
+		prop(__nsh_hv24, "role", "button");
+		bindProp(__nsh_hv24, "accessibilityLabel", () => props.entry.title);
+		bindProp(__nsh_hv24, "accessibilityState", () => ({ selected: Boolean(props.selected) }));
+		prop(__nsh_hv24, "desktop", { windowDrag: false });
+		prop(__nsh_hv24, "class", "flex-row items-center");
+		prop(__nsh_hv24, "hoverStyle", { backgroundColor: wash });
+		bindProp(__nsh_hv24, "style", () => ({
 			height: 34,
 			gap: 10,
 			paddingLeft: 10,
@@ -1268,59 +1336,59 @@ function RecentRow(props) {
 			backgroundColor: props.selected ? raisedFill(props.colors, props.dark) : "transparent",
 			cursor: "pointer"
 		}));
-		const __nsh_hv21 = element("text");
-		prop(__nsh_hv21, "class", "text-[14px] truncate");
-		bindProp(__nsh_hv21, "style", () => ({
-			color: props.colors.foreground,
+		const __nsh_hv25 = element("text");
+		prop(__nsh_hv25, "class", "text-[14px] truncate");
+		bindProp(__nsh_hv25, "style", () => ({
+			color: navInk(Boolean(props.selected), false, props.colors),
 			fontWeight: 500,
 			lineHeight: 20
 		}));
-		insert(__nsh_hv21, () => props.entry.title);
-		append(__nsh_hv20, __nsh_hv21);
-		insert(__nsh_hv20, component(Glyph, {
+		insert(__nsh_hv25, () => props.entry.title);
+		append(__nsh_hv24, __nsh_hv25);
+		insert(__nsh_hv24, component(Glyph, {
 			get name() {
 				return recentIcon(props.entry.kind);
 			},
-			size: 14,
+			size: 16,
 			get color() {
-				return props.colors.foreground;
+				return navInk(Boolean(props.selected), false, props.colors);
 			}
-		}), __nsh_hv21);
-		return __nsh_hv20;
+		}), __nsh_hv25);
+		return __nsh_hv24;
 	})();
 }
 function GhostButton(props) {
 	return (() => {
-		const __nsh_hv22 = element("view");
-		bindProp(__nsh_hv22, "onPress", () => props.onPress);
-		prop(__nsh_hv22, "role", "button");
-		bindProp(__nsh_hv22, "accessibilityLabel", () => props.label);
-		prop(__nsh_hv22, "class", "items-center justify-center");
-		bindProp(__nsh_hv22, "hoverStyle", () => ({ backgroundColor: props.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }));
-		prop(__nsh_hv22, "style", {
+		const __nsh_hv26 = element("view");
+		bindProp(__nsh_hv26, "onPress", () => props.onPress);
+		prop(__nsh_hv26, "role", "button");
+		bindProp(__nsh_hv26, "accessibilityLabel", () => props.label);
+		prop(__nsh_hv26, "class", "items-center justify-center");
+		bindProp(__nsh_hv26, "hoverStyle", () => ({ backgroundColor: props.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }));
+		prop(__nsh_hv26, "style", {
 			height: 32,
 			paddingLeft: 12,
 			paddingRight: 12,
 			borderRadius: ROW_RADIUS,
 			cursor: "pointer"
 		});
-		const __nsh_hv23 = element("text");
-		bindProp(__nsh_hv23, "class", () => `text-[13px] hover:text-[${props.colors.foreground}]`);
-		bindProp(__nsh_hv23, "style", () => ({ color: props.colors.muted }));
-		insert(__nsh_hv23, () => props.label);
-		append(__nsh_hv22, __nsh_hv23);
-		return __nsh_hv22;
+		const __nsh_hv27 = element("text");
+		bindProp(__nsh_hv27, "class", () => `text-[13px] hover:text-[${props.colors.foreground}]`);
+		bindProp(__nsh_hv27, "style", () => ({ color: props.colors.muted }));
+		insert(__nsh_hv27, () => props.label);
+		append(__nsh_hv26, __nsh_hv27);
+		return __nsh_hv26;
 	})();
 }
 function SolidButton(props) {
 	return (() => {
-		const __nsh_hv24 = element("view");
-		bindProp(__nsh_hv24, "onPress", () => props.onPress);
-		prop(__nsh_hv24, "role", "button");
-		bindProp(__nsh_hv24, "accessibilityLabel", () => props.label);
-		prop(__nsh_hv24, "class", "items-center justify-center");
-		prop(__nsh_hv24, "hoverStyle", { opacity: .9 });
-		bindProp(__nsh_hv24, "style", () => ({
+		const __nsh_hv28 = element("view");
+		bindProp(__nsh_hv28, "onPress", () => props.onPress);
+		prop(__nsh_hv28, "role", "button");
+		bindProp(__nsh_hv28, "accessibilityLabel", () => props.label);
+		prop(__nsh_hv28, "class", "items-center justify-center");
+		prop(__nsh_hv28, "hoverStyle", { opacity: .9 });
+		bindProp(__nsh_hv28, "style", () => ({
 			height: 32,
 			paddingLeft: 12,
 			paddingRight: 12,
@@ -1328,12 +1396,12 @@ function SolidButton(props) {
 			backgroundColor: props.background,
 			cursor: "pointer"
 		}));
-		const __nsh_hv25 = element("text");
-		prop(__nsh_hv25, "class", "text-[13px] font-medium");
-		bindProp(__nsh_hv25, "style", () => ({ color: props.foreground }));
-		insert(__nsh_hv25, () => props.label);
-		append(__nsh_hv24, __nsh_hv25);
-		return __nsh_hv24;
+		const __nsh_hv29 = element("text");
+		prop(__nsh_hv29, "class", "text-[13px] font-medium");
+		bindProp(__nsh_hv29, "style", () => ({ color: props.foreground }));
+		insert(__nsh_hv29, () => props.label);
+		append(__nsh_hv28, __nsh_hv29);
+		return __nsh_hv28;
 	})();
 }
 
@@ -6651,6 +6719,24 @@ const reviewDone = signal(false);
 let sendCommand;
 let loadRequested = false;
 let migrationRequested = false;
+const LIBRARY_TIMEOUT_MS = 8e3;
+let libraryTimer;
+function stopLibraryTimer() {
+	if (libraryTimer === void 0) return;
+	clearTimeout(libraryTimer);
+	libraryTimer = void 0;
+}
+function askLibrary() {
+	if (!sendCommand) return;
+	sendCommand("games.load");
+	stopLibraryTimer();
+	libraryTimer = setTimeout(() => {
+		libraryTimer = void 0;
+		if (libraryState() !== "loading") return;
+		libraryState.set("error");
+		error.set("Engine не ответил на запрос библиотеки игр");
+	}, LIBRARY_TIMEOUT_MS);
+}
 function readJson(raw, fallback) {
 	if (!raw) return fallback;
 	try {
@@ -6671,8 +6757,13 @@ function bindCommand(command) {
 	sendCommand = command;
 	if (!loadRequested) {
 		loadRequested = true;
-		command("games.load");
+		askLibrary();
 	}
+}
+function reloadLibrary() {
+	error.set("");
+	libraryState.set("loading");
+	askLibrary();
 }
 function startDiscovery() {
 	candidates.set([]);
@@ -6778,11 +6869,16 @@ function receiveLaunch(value) {
 	const result = value && typeof value === "object" ? value : {};
 	launchError.set(result.ok === true ? "" : String(result.error ?? "Не удалось запустить игру"));
 }
+function readableError(raw) {
+	if (raw.includes("unknown variant `canonical.game")) return "Engine не поддерживает библиотеку игр: в нём нет операций canonical.game.*";
+	return raw.length <= 160 ? raw : `${raw.slice(0, 157)}…`;
+}
 function receiveLibrary(value) {
+	stopLibraryTimer();
 	if (!Array.isArray(value)) {
 		const message = value && typeof value === "object" ? String(value.error ?? "Не удалось загрузить библиотеку игр") : "Не удалось загрузить библиотеку игр";
 		libraryState.set("error");
-		error.set(message);
+		error.set(readableError(message));
 		return;
 	}
 	cards.set(value.filter(isGameCard));
@@ -6901,6 +6997,7 @@ const gameLibrary = {
 	cancelConfirm,
 	confirmAdd,
 	receiveLibrary,
+	reloadLibrary,
 	receiveDiscovery,
 	receiveImport
 };
@@ -7716,6 +7813,18 @@ function usageFor(path, programs) {
 function visibleCards() {
 	return visibleGameCards(gameLibrary.cards(), searchQuery());
 }
+function libraryCount() {
+	return visibleGameCards(gameLibrary.cards(), "").length;
+}
+function emptyTitle() {
+	if (searchQuery().trim()) return "Игры не найдены";
+	if (gameLibrary.libraryState() === "loading") return "Загружаем библиотеку игр…";
+	if (gameLibrary.libraryState() === "error") return "Не удалось загрузить библиотеку";
+	return "Игр нет";
+}
+function showEmptyAdd() {
+	return !searchQuery().trim() && gameLibrary.libraryState() === "ready" && libraryCount() === 0;
+}
 function formatTime(ms) {
 	const minutes = Math.floor(ms / 6e4);
 	if (minutes < 1) return "меньше минуты";
@@ -7743,22 +7852,24 @@ function GamesLibrary(props) {
 				props.onPick(path);
 			}
 		});
-		const __nsh_hv1 = element("view");
-		prop(__nsh_hv1, "class", "flex-row items-center px-7 pt-3");
-		const __nsh_hv2 = element("input");
-		bindProp(__nsh_hv2, "value", () => searchQuery());
-		prop(__nsh_hv2, "onChange", (e) => searchQuery.set(e.value));
-		prop(__nsh_hv2, "placeholder", "Поиск игр");
-		prop(__nsh_hv2, "accessibilityLabel", "Поиск игр");
-		prop(__nsh_hv2, "class", "h-9 min-w-0 flex-1 rounded-lg px-3 text-[13px]");
-		bindProp(__nsh_hv2, "style", () => ({
-			backgroundColor: props.colors.card,
-			color: props.colors.foreground,
-			placeholderColor: props.colors.muted
-		}));
-		append(__nsh_hv1, __nsh_hv2);
-		append(__nsh_hv0, __nsh_hv1);
 		insert(__nsh_hv0, [
+			() => libraryCount() > 0 && (() => {
+				const __nsh_hv1 = element("view");
+				prop(__nsh_hv1, "class", "flex-row items-center px-7 pt-3");
+				const __nsh_hv2 = element("input");
+				bindProp(__nsh_hv2, "value", () => searchQuery());
+				prop(__nsh_hv2, "onChange", (e) => searchQuery.set(e.value));
+				prop(__nsh_hv2, "placeholder", "Поиск игр");
+				prop(__nsh_hv2, "accessibilityLabel", "Поиск игр");
+				prop(__nsh_hv2, "class", "h-9 min-w-0 flex-1 rounded-lg px-3 text-[13px]");
+				bindProp(__nsh_hv2, "style", () => ({
+					backgroundColor: props.colors.card,
+					color: props.colors.foreground,
+					placeholderColor: props.colors.muted
+				}));
+				append(__nsh_hv1, __nsh_hv2);
+				return __nsh_hv1;
+			})(),
 			() => gameLibrary.launchError() && (() => {
 				const __nsh_hv3 = element("text");
 				prop(__nsh_hv3, "class", "px-7 pt-2 text-[11px]");
@@ -7770,15 +7881,58 @@ function GamesLibrary(props) {
 				const __nsh_hv4 = element("view");
 				prop(__nsh_hv4, "class", "flex-1 items-center justify-center px-7");
 				const __nsh_hv5 = element("text");
-				prop(__nsh_hv5, "class", "mb-2 text-[14px]");
-				bindProp(__nsh_hv5, "style", () => ({ color: props.colors.muted }));
-				insert(__nsh_hv5, () => searchQuery().trim() ? "Игры не найдены" : gameLibrary.libraryState() === "loading" ? "Загружаем библиотеку игр…" : gameLibrary.libraryState() === "error" ? "Не удалось загрузить библиотеку" : "Игр пока нет");
-				const __nsh_hv6 = element("text");
-				prop(__nsh_hv6, "class", "text-center text-[12px]");
-				bindProp(__nsh_hv6, "style", () => ({ color: props.colors.muted }));
-				insert(__nsh_hv6, () => gameLibrary.error() || "Нажми + в заголовке, чтобы найти игры или добавить exe вручную");
+				prop(__nsh_hv5, "class", "text-[15px]");
+				bindProp(__nsh_hv5, "style", () => ({ color: props.colors.foreground }));
+				insert(__nsh_hv5, () => emptyTitle());
 				append(__nsh_hv4, __nsh_hv5);
-				append(__nsh_hv4, __nsh_hv6);
+				insert(__nsh_hv4, [
+					() => gameLibrary.libraryState() === "error" && gameLibrary.error() ? (() => {
+						const __nsh_hv6 = element("text");
+						prop(__nsh_hv6, "class", "mt-2 text-center text-[12px]");
+						bindProp(__nsh_hv6, "style", () => ({ color: props.colors.muted }));
+						insert(__nsh_hv6, () => gameLibrary.error());
+						return __nsh_hv6;
+					})() : null,
+					() => gameLibrary.libraryState() === "error" && (() => {
+						const __nsh_hv7 = element("view");
+						prop(__nsh_hv7, "onPress", () => gameLibrary.reloadLibrary());
+						prop(__nsh_hv7, "role", "button");
+						prop(__nsh_hv7, "accessibilityLabel", "Повторить загрузку игр");
+						prop(__nsh_hv7, "class", "mt-4 h-9 items-center justify-center rounded-[10px] px-4");
+						prop(__nsh_hv7, "hoverStyle", { opacity: .88 });
+						bindProp(__nsh_hv7, "style", () => ({
+							borderWidth: 1,
+							borderColor: props.colors.border,
+							cursor: "pointer"
+						}));
+						const __nsh_hv8 = element("text");
+						prop(__nsh_hv8, "class", "text-[13px]");
+						bindProp(__nsh_hv8, "style", () => ({ color: props.colors.foreground }));
+						const __nsh_hv9 = text("Повторить");
+						append(__nsh_hv8, __nsh_hv9);
+						append(__nsh_hv7, __nsh_hv8);
+						return __nsh_hv7;
+					})(),
+					() => showEmptyAdd() && (() => {
+						const __nsh_hv10 = element("view");
+						prop(__nsh_hv10, "onPress", () => gameLibrary.openAddDialog());
+						prop(__nsh_hv10, "role", "button");
+						prop(__nsh_hv10, "accessibilityLabel", "Добавить игру");
+						prop(__nsh_hv10, "class", "mt-4 h-9 items-center justify-center rounded-[10px] px-4");
+						bindProp(__nsh_hv10, "style", () => ({
+							backgroundColor: props.colors.foreground,
+							cursor: "pointer"
+						}));
+						prop(__nsh_hv10, "hoverStyle", { opacity: .88 });
+						const __nsh_hv11 = element("text");
+						prop(__nsh_hv11, "class", "text-[13px]");
+						bindProp(__nsh_hv11, "style", () => ({ color: props.colors.background }));
+						const __nsh_hv12 = text("Добавить игру");
+						append(__nsh_hv11, __nsh_hv12);
+						append(__nsh_hv10, __nsh_hv11);
+						return __nsh_hv10;
+					})()
+				]);
 				return __nsh_hv4;
 			})(),
 			each(() => visibleCards(), (card) => {
@@ -7786,11 +7940,11 @@ function GamesLibrary(props) {
 				const usage = usageFor(item.exePath, livePrograms());
 				const byline = item.metadataStatus === "loading" ? "Загружаем метаданные…" : item.developers?.join(" · ") || item.genres?.slice(0, 2).join(" · ");
 				return (() => {
-					const __nsh_hv7 = element("view");
-					prop(__nsh_hv7, "class", "mx-7 h-14 flex-row items-center border-b");
-					bindProp(__nsh_hv7, "style", () => ({ borderColor: props.colors.border }));
-					const __nsh_hv8 = element("view");
-					prop(__nsh_hv8, "onPress", () => {
+					const __nsh_hv13 = element("view");
+					prop(__nsh_hv13, "class", "mx-7 h-14 flex-row items-center border-b");
+					bindProp(__nsh_hv13, "style", () => ({ borderColor: props.colors.border }));
+					const __nsh_hv14 = element("view");
+					prop(__nsh_hv14, "onPress", () => {
 						selectedGameId.set(item.id);
 						rememberRecent({
 							kind: "game",
@@ -7798,21 +7952,21 @@ function GamesLibrary(props) {
 							title: item.title
 						});
 					});
-					prop(__nsh_hv8, "role", "button");
-					bindProp(__nsh_hv8, "accessibilityLabel", () => `Подробнее: ${item.title}`);
-					prop(__nsh_hv8, "class", "min-w-0 flex-1");
-					const __nsh_hv9 = element("text");
-					prop(__nsh_hv9, "class", "text-[14px]");
-					bindProp(__nsh_hv9, "style", () => ({ color: props.colors.foreground }));
-					insert(__nsh_hv9, () => item.title);
-					const __nsh_hv10 = element("text");
-					prop(__nsh_hv10, "class", "text-[12px]");
-					bindProp(__nsh_hv10, "style", () => ({ color: props.colors.muted }));
-					insert(__nsh_hv10, () => byline || (usage ? `${formatTime(usage.foregroundMs)} · ${usage.sessions} сесс.` : "Время ещё не посчитано"));
-					append(__nsh_hv8, __nsh_hv9);
-					append(__nsh_hv8, __nsh_hv10);
-					append(__nsh_hv7, __nsh_hv8);
-					insert(__nsh_hv7, component(Button, {
+					prop(__nsh_hv14, "role", "button");
+					bindProp(__nsh_hv14, "accessibilityLabel", () => `Подробнее: ${item.title}`);
+					prop(__nsh_hv14, "class", "min-w-0 flex-1");
+					const __nsh_hv15 = element("text");
+					prop(__nsh_hv15, "class", "text-[14px]");
+					bindProp(__nsh_hv15, "style", () => ({ color: props.colors.foreground }));
+					insert(__nsh_hv15, () => item.title);
+					const __nsh_hv16 = element("text");
+					prop(__nsh_hv16, "class", "text-[12px]");
+					bindProp(__nsh_hv16, "style", () => ({ color: props.colors.muted }));
+					insert(__nsh_hv16, () => byline || (usage ? `${formatTime(usage.foregroundMs)} · ${usage.sessions} сесс.` : "Время ещё не посчитано"));
+					append(__nsh_hv14, __nsh_hv15);
+					append(__nsh_hv14, __nsh_hv16);
+					append(__nsh_hv13, __nsh_hv14);
+					insert(__nsh_hv13, component(Button, {
 						label: "Запустить",
 						get colors() {
 							return props.colors;
@@ -7824,7 +7978,7 @@ function GamesLibrary(props) {
 							borderColor: "transparent"
 						}
 					}));
-					return __nsh_hv7;
+					return __nsh_hv13;
 				})();
 			}),
 			() => gameLibrary.pendingAdd() ? component(ConfirmGameDialog, { get colors() {
@@ -8067,7 +8221,56 @@ function formatPercent(value) {
 }
 
 //#endregion
-//#region developer-page.tsx
+//#region benchmark-plan.ts
+const PAGE_TITLE = {
+	journal: "Дневник",
+	notes: "Заметки",
+	tasks: "Задачи",
+	games: "Игры",
+	settings: "Настройки"
+};
+const PAGES = [
+	"journal",
+	"notes",
+	"tasks",
+	"games",
+	"settings"
+];
+function stagePlan() {
+	const plan = [];
+	for (const round of [1, 2]) for (const route of PAGES) plan.push({
+		id: `${round}:${route}`,
+		label: `${PAGE_TITLE[route]} · проход ${round}`,
+		kind: "page",
+		route,
+		round
+	});
+	for (const notes of [1e4, 1e5]) {
+		const label = notes.toLocaleString("ru-RU");
+		plan.push({
+			id: `notes:${notes}`,
+			label: `Библиотека · ${label} заметок`,
+			kind: "library",
+			notes
+		});
+	}
+	return plan;
+}
+function stageView(item, stage) {
+	return {
+		id: item.id,
+		label: item.label,
+		firstFrameCallbackMs: stage.firstFrameCallbackMs,
+		callbackFps: stage.callbackFps,
+		generatedMs: stage.generatedMs,
+		scrollJumps: stage.scrollJumps,
+		cpuPeakPercentOfMachine: stage.load?.cpuPeakPercentOfMachine ?? null,
+		residentPeakBytes: stage.load?.residentPeakBytes ?? null
+	};
+}
+
+//#endregion
+//#region benchmark-run.ts
 const benchmarkRunning = signal(false);
 const report = signal("");
 const summary = signal("");
@@ -8135,73 +8338,84 @@ async function runBenchmark(options) {
 		if (!native) resolve({ unavailable: "native host unavailable" });
 	});
 	const stages = [];
+	const plan = stagePlan();
+	const views = [];
+	const publish = (progress) => {
+		try {
+			options.onProgress?.(progress);
+		} catch {}
+	};
 	try {
 		if (native) {
 			await withDeadline(ready, 8e3, void 0);
 			options.beginFrames();
 		}
 		startedAt = Date.now();
-		for (const round of [1, 2]) for (const route of [
-			"journal",
-			"notes",
-			"tasks",
-			"games",
-			"settings"
-		]) {
-			const start = Date.now();
-			options.visit(route);
-			const first = await frame();
-			const firstFrameCallbackMs = Date.now() - start;
-			const frameIntervalsMs = [];
-			let last = first;
-			while (last - first < 350) {
-				const next = await frame();
-				frameIntervalsMs.push(next - last);
-				last = next;
-			}
-			stages.push({
-				route,
-				round,
-				startedAt: start,
-				firstFrameCallbackMs,
-				frameIntervalsMs,
-				callbackFps: frameIntervalsMs.length * 1e3 / (last - first)
+		for (const item of plan) {
+			publish({
+				status: "running",
+				current: item.id,
+				stages: views.slice()
 			});
-		}
-		for (const count of [1e4, 1e5]) {
-			options.visit("settings");
-			await frame();
-			const start = Date.now();
-			options.fixture(count);
-			const generatedMs = Date.now() - start;
-			options.visit("notes");
-			const layoutStart = Date.now();
-			await frame();
-			const firstFrameCallbackMs = Date.now() - layoutStart;
-			const scrollJumps = [];
-			for (const fraction of [
-				.25,
-				.5,
-				.95,
-				0
-			]) {
+			if (item.kind === "page") {
 				const start = Date.now();
-				if (jumpBenchmarkLibrary(fraction)) {
-					await frame();
-					scrollJumps.push({
-						fraction,
-						frameCallbackMs: Date.now() - start
-					});
+				options.visit(item.route);
+				const first = await frame();
+				const firstFrameCallbackMs = Date.now() - start;
+				const frameIntervalsMs = [];
+				let last = first;
+				while (last - first < 350) {
+					const next = await frame();
+					frameIntervalsMs.push(next - last);
+					last = next;
 				}
+				const stage = {
+					route: item.route,
+					round: item.round,
+					startedAt: start,
+					firstFrameCallbackMs,
+					frameIntervalsMs,
+					callbackFps: frameIntervalsMs.length * 1e3 / (last - first)
+				};
+				stages.push(stage);
+				views.push(stageView(item, stage));
+			} else {
+				options.visit("settings");
+				await frame();
+				const start = Date.now();
+				options.fixture(item.notes);
+				const generatedMs = Date.now() - start;
+				options.visit("notes");
+				const layoutStart = Date.now();
+				await frame();
+				const firstFrameCallbackMs = Date.now() - layoutStart;
+				const scrollJumps = [];
+				for (const fraction of [
+					.25,
+					.5,
+					.95,
+					0
+				]) {
+					const jumpStart = Date.now();
+					if (jumpBenchmarkLibrary(fraction)) {
+						await frame();
+						scrollJumps.push({
+							fraction,
+							frameCallbackMs: Date.now() - jumpStart
+						});
+					}
+				}
+				const stage = {
+					route: "notes",
+					syntheticNotes: item.notes,
+					startedAt: start,
+					generatedMs,
+					firstFrameCallbackMs,
+					scrollJumps
+				};
+				stages.push(stage);
+				views.push(stageView(item, stage));
 			}
-			stages.push({
-				route: "notes",
-				syntheticNotes: count,
-				startedAt: start,
-				generatedMs,
-				firstFrameCallbackMs,
-				scrollJumps
-			});
 		}
 		const endedAt = Date.now();
 		const frames = new Promise((resolve) => {
@@ -8223,8 +8437,8 @@ async function runBenchmark(options) {
 			}),
 			cadenceMilliseconds: resources.cadenceMilliseconds ?? null,
 			peaks: {
-				cpuPercentOfMachine: Math.max(...stages.map((stage) => stage.load?.cpuPeakPercentOfMachine ?? 0)),
-				residentBytes: Math.max(...stages.map((stage) => stage.load?.residentPeakBytes ?? 0))
+				cpuPercentOfMachine: 0,
+				residentBytes: 0
 			}
 		} : null;
 		if (load) {
@@ -8238,6 +8452,7 @@ async function runBenchmark(options) {
 			load.peaks.cpuPercentOfMachine = Math.max(...stages.map((stage) => stage.load?.cpuPeakPercentOfMachine ?? 0));
 			load.peaks.residentBytes = Math.max(...stages.map((stage) => stage.load?.residentPeakBytes ?? 0));
 		}
+		views.splice(0, views.length, ...stages.map((stage, index) => stageView(plan[index], stage)));
 		report.set(JSON.stringify({
 			schema: 2,
 			atlasVersion: options.version,
@@ -8254,13 +8469,34 @@ async function runBenchmark(options) {
 		}, null, 2));
 		const seconds = ((endedAt - startedAt) / 1e3).toFixed(1);
 		const lost = resources.unavailable ?? "нет сэмплов";
-		summary.set(load ? `${stages.length} этапов · ${seconds} с · CPU до ${formatPercent(load.peaks.cpuPercentOfMachine)} · RAM до ${formatBytes(load.peaks.residentBytes)}` : `${stages.length} этапов · ${seconds} с · нагрузку не измерили: ${lost}`);
+		const line = load ? `${stages.length} этапов · ${seconds} с · CPU до ${formatPercent(load.peaks.cpuPercentOfMachine)} · RAM до ${formatBytes(load.peaks.residentBytes)}` : `${stages.length} этапов · ${seconds} с · нагрузку не измерили: ${lost}`;
+		summary.set(line);
+		publish({
+			status: "done",
+			current: null,
+			stages: views.slice(),
+			summary: line,
+			report: JSON.parse(report())
+		});
 	} catch (error) {
+		const line = String(error);
 		report.set(JSON.stringify({
 			startedAt,
 			stages,
-			error: String(error)
+			error: line
 		}, null, 2));
+		publish({
+			status: "error",
+			current: null,
+			stages: views.slice(),
+			summary: line,
+			error: line,
+			report: {
+				startedAt,
+				stages,
+				error: line
+			}
+		});
 	} finally {
 		hardwareReply = void 0;
 		framesReply = void 0;
@@ -8270,6 +8506,9 @@ async function runBenchmark(options) {
 		benchmarkRunning.set(false);
 	}
 }
+
+//#endregion
+//#region developer-page.tsx
 const supported = [
 	{
 		title: "Дневник",
@@ -8315,11 +8554,97 @@ const supported = [
 		example: []
 	}
 ];
+function typeCode(item) {
+	return `${item.operation} ${JSON.stringify(item.params, null, 2)}\n\n${JSON.stringify(item.example, null, 2)}`;
+}
+function SupportedType(props) {
+	const colors = props.colors;
+	return (() => {
+		const __nsh_hv0 = element("view");
+		bindProp(__nsh_hv0, "onPress", () => props.onPress);
+		prop(__nsh_hv0, "role", "button");
+		bindProp(__nsh_hv0, "accessibilityLabel", () => `Тип ${props.title}`);
+		bindProp(__nsh_hv0, "accessibilityState", () => ({ expanded: props.open }));
+		bindProp(__nsh_hv0, "hoverStyle", () => ({ backgroundColor: hoverWash(props.dark) }));
+		bindProp(__nsh_hv0, "style", () => ({
+			borderTopWidth: props.first ? 0 : 1,
+			borderColor: colors.border,
+			cursor: "pointer"
+		}));
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "class", "flex-row");
+		bindProp(__nsh_hv1, "style", () => ({
+			alignItems: "flex-start",
+			gap: 12,
+			paddingLeft: 14,
+			paddingRight: 14,
+			paddingTop: 11,
+			paddingBottom: props.open ? 8 : 11
+		}));
+		const __nsh_hv2 = element("view");
+		prop(__nsh_hv2, "class", "shrink-0");
+		insert(__nsh_hv2, component(Glyph, {
+			get name() {
+				return props.icon;
+			},
+			size: 16,
+			get color() {
+				return colors.muted;
+			}
+		}));
+		const __nsh_hv3 = element("text");
+		prop(__nsh_hv3, "class", "min-w-0 flex-1");
+		bindProp(__nsh_hv3, "style", () => ({
+			color: colors.foreground,
+			fontSize: interfaceSize()
+		}));
+		insert(__nsh_hv3, () => props.title);
+		const __nsh_hv4 = element("text");
+		prop(__nsh_hv4, "class", "shrink-0 rounded-md border px-2 py-1 text-[12px]");
+		bindProp(__nsh_hv4, "style", () => ({
+			color: colors.muted,
+			borderColor: colors.border
+		}));
+		insert(__nsh_hv4, () => props.status);
+		append(__nsh_hv1, __nsh_hv2);
+		append(__nsh_hv1, __nsh_hv3);
+		append(__nsh_hv1, __nsh_hv4);
+		append(__nsh_hv0, __nsh_hv1);
+		insert(__nsh_hv0, () => props.open && (() => {
+			const __nsh_hv5 = element("view");
+			bindProp(__nsh_hv5, "style", () => ({
+				marginLeft: 14,
+				marginRight: 14,
+				marginBottom: 12,
+				borderRadius: 10,
+				borderWidth: 1,
+				borderColor: colors.border,
+				backgroundColor: surfaceWash(props.dark, .06),
+				paddingTop: 12,
+				paddingBottom: 14,
+				paddingLeft: 12,
+				paddingRight: 12
+			}));
+			const __nsh_hv6 = element("text");
+			bindProp(__nsh_hv6, "style", () => ({
+				fontFamily: GeistMono_Regular_default,
+				fontSize: codeSize(),
+				fontWeight: 500,
+				lineHeight: Math.round(codeSize() * 1.57),
+				color: colors.foreground
+			}));
+			insert(__nsh_hv6, () => props.code);
+			append(__nsh_hv5, __nsh_hv6);
+			return __nsh_hv5;
+		})());
+		return __nsh_hv0;
+	})();
+}
 function DevelopersPage(props) {
 	const expanded = signal("");
 	return (() => {
-		const __nsh_hv0 = element("view");
-		insert(__nsh_hv0, [
+		const __nsh_hv7 = element("view");
+		insert(__nsh_hv7, [
 			component(SettingsSection, {
 				get colors() {
 					return props.colors;
@@ -8334,7 +8659,9 @@ function DevelopersPage(props) {
 						get title() {
 							return benchmarkRunning() ? "Проверка идёт…" : "Запустить полный тест";
 						},
-						description: "Переходы между разделами и открытие библиотек из 10 000 и 100 000 тестовых заметок",
+						get description() {
+							return props.notice || (props.separateWindow ? "Отдельное окно на временных данных. Здесь остаётся чеклист этапов" : "Переходы между разделами и открытие библиотек из 10 000 и 100 000 тестовых заметок");
+						},
 						get onPress() {
 							return props.run;
 						}
@@ -8373,45 +8700,283 @@ function DevelopersPage(props) {
 				},
 				title: "Поддерживаемые типы",
 				get children() {
-					return supported.map((item, index) => component(SettingsRow, {
+					return supported.map((item, index) => component(SupportedType, {
 						get colors() {
 							return props.colors;
+						},
+						get dark() {
+							return props.dark;
+						},
+						first: index === 0,
+						get open() {
+							return expanded() === item.title;
 						},
 						get title() {
 							return item.title;
 						},
-						first: index === 0,
-						get leading() {
-							return component(Glyph, {
-								get name() {
-									return item.icon;
-								},
-								size: 16,
-								get color() {
-									return props.colors.muted;
-								}
-							});
+						get icon() {
+							return item.icon;
 						},
-						get description() {
-							return expanded() === item.title ? `${item.operation} ${JSON.stringify(item.params)}\nПример результата: ${JSON.stringify(item.example)}` : void 0;
+						get status() {
+							return item.status;
 						},
-						onPress: () => expanded.set(expanded() === item.title ? "" : item.title),
-						get children() {
-							return (() => {
-								const __nsh_hv1 = element("text");
-								prop(__nsh_hv1, "class", "rounded-md border px-2 py-1 text-[12px]");
-								bindProp(__nsh_hv1, "style", () => ({
-									color: props.colors.muted,
-									borderColor: props.colors.border
-								}));
-								insert(__nsh_hv1, () => item.status);
-								return __nsh_hv1;
-							})();
-						}
+						get code() {
+							return typeCode(item);
+						},
+						onPress: () => expanded.set(expanded() === item.title ? "" : item.title)
 					}));
 				}
 			})
 		]);
+		return __nsh_hv7;
+	})();
+}
+
+//#endregion
+//#region benchmark-dock.tsx
+const benchPanel = signal(false);
+const benchStatus = signal(null);
+const benchReport = signal("");
+const benchError = signal("");
+const spin = signal(0);
+const expanded = signal("");
+const frames = [
+	"◐",
+	"◓",
+	"◑",
+	"◒"
+];
+function applyDock(event) {
+	if (!event.ok) {
+		benchError.set(event.error || "Не удалось открыть окно проверки");
+		return;
+	}
+	benchError.set("");
+	benchReport.set("");
+	benchStatus.set({
+		status: "running",
+		stages: []
+	});
+	benchPanel.set(true);
+}
+function applyStatus(event) {
+	if (event.reportText) benchReport.set(event.reportText);
+	benchStatus.set(event);
+}
+function closeBenchPanel() {
+	benchPanel.set(false);
+}
+function detail(stage) {
+	const lines = [`Первый кадр: ${Math.round(stage.firstFrameCallbackMs)} мс`];
+	if (typeof stage.callbackFps === "number") lines.push(`Кадры: ${Math.round(stage.callbackFps)} в секунду`);
+	if (typeof stage.generatedMs === "number") lines.push(`Подготовка списка: ${Math.round(stage.generatedMs)} мс`);
+	if (stage.scrollJumps?.length) lines.push(`Прокрутка: ${stage.scrollJumps.map((jump) => `${Math.round(jump.fraction * 100)}% ${Math.round(jump.frameCallbackMs)} мс`).join(", ")}`);
+	if (stage.cpuPeakPercentOfMachine !== null) lines.push(`CPU: ${formatPercent(stage.cpuPeakPercentOfMachine)}`);
+	if (stage.residentPeakBytes !== null) lines.push(`Память: ${formatBytes(stage.residentPeakBytes)}`);
+	return lines.join("\n");
+}
+function BenchmarkPanel(props) {
+	effect(() => {
+		props.ask("benchmark.status");
+		const poll = setInterval(() => props.ask("benchmark.status"), 400);
+		const ticker = setInterval(() => spin.set((spin() + 1) % frames.length), 160);
+		return () => {
+			clearInterval(poll);
+			clearInterval(ticker);
+		};
+	});
+	const status = benchStatus();
+	const running = !status || status.status === "running";
+	const done = new Map((status?.stages ?? []).map((stage) => [stage.id, stage]));
+	const colors = props.colors;
+	return (() => {
+		const __nsh_hv0 = element("scroll");
+		prop(__nsh_hv0, "class", "min-h-0 flex-1");
+		const __nsh_hv1 = element("view");
+		prop(__nsh_hv1, "style", {
+			padding: 20,
+			gap: 14
+		});
+		const __nsh_hv2 = element("view");
+		prop(__nsh_hv2, "class", "flex-row items-center");
+		prop(__nsh_hv2, "style", { gap: 10 });
+		const __nsh_hv4 = element("view");
+		prop(__nsh_hv4, "class", "min-w-0 flex-1");
+		const __nsh_hv5 = element("text");
+		bindProp(__nsh_hv5, "style", () => ({
+			color: colors.foreground,
+			fontSize: 18
+		}));
+		insert(__nsh_hv5, running ? "Идёт проверка" : "Проверка");
+		const __nsh_hv6 = element("text");
+		prop(__nsh_hv6, "class", "text-[12px]");
+		bindProp(__nsh_hv6, "style", () => ({
+			color: colors.muted,
+			marginTop: 2
+		}));
+		insert(__nsh_hv6, () => status?.error || status?.summary || "Отдельное окно на временных данных. Здесь только этапы.");
+		append(__nsh_hv4, __nsh_hv5);
+		append(__nsh_hv4, __nsh_hv6);
+		append(__nsh_hv2, __nsh_hv4);
+		insert(__nsh_hv2, () => running && (() => {
+			const __nsh_hv3 = element("text");
+			bindProp(__nsh_hv3, "style", () => ({
+				color: colors.accent,
+				fontSize: 18,
+				width: 22
+			}));
+			insert(__nsh_hv3, () => frames[spin()]);
+			return __nsh_hv3;
+		})(), __nsh_hv4);
+		const __nsh_hv7 = element("view");
+		prop(__nsh_hv7, "class", "rounded-xl border");
+		bindProp(__nsh_hv7, "style", () => ({
+			backgroundColor: colors.card,
+			borderColor: colors.border
+		}));
+		insert(__nsh_hv7, () => stagePlan().map((item, index) => {
+			const stage = done.get(item.id);
+			const state = stage ? "done" : status?.current === item.id ? "running" : "pending";
+			const open = expanded() === item.id && !!stage;
+			return (() => {
+				const __nsh_hv8 = element("view");
+				bindProp(__nsh_hv8, "key", () => item.id);
+				prop(__nsh_hv8, "onPress", () => {
+					if (!stage) return;
+					expanded.set(open ? "" : item.id);
+				});
+				prop(__nsh_hv8, "role", "button");
+				bindProp(__nsh_hv8, "accessibilityLabel", () => `${item.label}: ${state === "done" ? "готово" : state === "running" ? "сейчас" : "ожидает"}`);
+				bindProp(__nsh_hv8, "style", () => ({
+					paddingLeft: 14,
+					paddingRight: 14,
+					paddingTop: 11,
+					paddingBottom: 11,
+					borderTopWidth: index === 0 ? 0 : 1,
+					borderColor: colors.border,
+					cursor: stage ? "pointer" : "default"
+				}));
+				const __nsh_hv9 = element("view");
+				prop(__nsh_hv9, "class", "flex-row items-center");
+				prop(__nsh_hv9, "style", { gap: 10 });
+				const __nsh_hv10 = element("view");
+				prop(__nsh_hv10, "class", "items-center justify-center");
+				prop(__nsh_hv10, "style", {
+					width: 18,
+					height: 18
+				});
+				insert(__nsh_hv10, [
+					() => state === "running" && (() => {
+						const __nsh_hv11 = element("text");
+						bindProp(__nsh_hv11, "style", () => ({
+							color: colors.accent,
+							fontSize: 16
+						}));
+						insert(__nsh_hv11, () => frames[spin()]);
+						return __nsh_hv11;
+					})(),
+					() => state === "done" && component(Glyph, {
+						name: "check",
+						size: 14,
+						get color() {
+							return colors.accent;
+						}
+					}),
+					() => state === "pending" && (() => {
+						const __nsh_hv12 = element("view");
+						prop(__nsh_hv12, "class", "rounded-full border");
+						bindProp(__nsh_hv12, "style", () => ({
+							width: 8,
+							height: 8,
+							borderColor: colors.border
+						}));
+						return __nsh_hv12;
+					})()
+				]);
+				const __nsh_hv13 = element("text");
+				prop(__nsh_hv13, "class", "min-w-0 flex-1");
+				bindProp(__nsh_hv13, "style", () => ({
+					color: state === "pending" ? colors.muted : colors.foreground,
+					fontSize: 14
+				}));
+				insert(__nsh_hv13, () => item.label);
+				append(__nsh_hv9, __nsh_hv10);
+				append(__nsh_hv9, __nsh_hv13);
+				insert(__nsh_hv9, () => stage && (() => {
+					const __nsh_hv14 = element("text");
+					prop(__nsh_hv14, "class", "text-[12px]");
+					bindProp(__nsh_hv14, "style", () => ({ color: colors.muted }));
+					const __nsh_hv15 = text(" мс");
+					append(__nsh_hv14, __nsh_hv15);
+					insert(__nsh_hv14, () => Math.round(stage.firstFrameCallbackMs), __nsh_hv15);
+					return __nsh_hv14;
+				})());
+				append(__nsh_hv8, __nsh_hv9);
+				insert(__nsh_hv8, () => open && stage && (() => {
+					const __nsh_hv16 = element("text");
+					prop(__nsh_hv16, "class", "text-[12px]");
+					bindProp(__nsh_hv16, "style", () => ({
+						color: colors.muted,
+						marginTop: 8,
+						marginLeft: 28
+					}));
+					insert(__nsh_hv16, () => detail(stage));
+					return __nsh_hv16;
+				})());
+				return __nsh_hv8;
+			})();
+		}));
+		const __nsh_hv18 = element("view");
+		prop(__nsh_hv18, "class", "flex-row");
+		prop(__nsh_hv18, "style", { gap: 8 });
+		const __nsh_hv19 = element("view");
+		bindProp(__nsh_hv19, "onPress", () => props.onDismiss);
+		prop(__nsh_hv19, "role", "button");
+		prop(__nsh_hv19, "accessibilityLabel", running ? "Остановить" : "Закрыть");
+		prop(__nsh_hv19, "class", "rounded-lg border px-3 py-2");
+		bindProp(__nsh_hv19, "style", () => ({
+			borderColor: colors.border,
+			cursor: "pointer"
+		}));
+		const __nsh_hv20 = element("text");
+		bindProp(__nsh_hv20, "style", () => ({
+			color: colors.foreground,
+			fontSize: 13
+		}));
+		insert(__nsh_hv20, running ? "Остановить" : "Закрыть");
+		append(__nsh_hv19, __nsh_hv20);
+		append(__nsh_hv18, __nsh_hv19);
+		insert(__nsh_hv18, () => benchReport() !== "" && (() => {
+			const __nsh_hv21 = element("view");
+			prop(__nsh_hv21, "onPress", () => void Clipboard.writeText(benchReport()));
+			prop(__nsh_hv21, "role", "button");
+			prop(__nsh_hv21, "accessibilityLabel", "Скопировать отчёт JSON");
+			prop(__nsh_hv21, "class", "rounded-lg border px-3 py-2");
+			bindProp(__nsh_hv21, "style", () => ({
+				borderColor: colors.border,
+				cursor: "pointer"
+			}));
+			const __nsh_hv22 = element("text");
+			bindProp(__nsh_hv22, "style", () => ({
+				color: colors.foreground,
+				fontSize: 13
+			}));
+			const __nsh_hv23 = text("Скопировать JSON");
+			append(__nsh_hv22, __nsh_hv23);
+			append(__nsh_hv21, __nsh_hv22);
+			return __nsh_hv21;
+		})());
+		append(__nsh_hv1, __nsh_hv2);
+		append(__nsh_hv1, __nsh_hv7);
+		append(__nsh_hv1, __nsh_hv18);
+		insert(__nsh_hv1, () => status?.reportPath && (() => {
+			const __nsh_hv17 = element("text");
+			prop(__nsh_hv17, "class", "text-[12px]");
+			bindProp(__nsh_hv17, "style", () => ({ color: colors.muted }));
+			insert(__nsh_hv17, () => status.reportPath);
+			return __nsh_hv17;
+		})(), __nsh_hv18);
+		append(__nsh_hv0, __nsh_hv1);
 		return __nsh_hv0;
 	})();
 }
@@ -8662,6 +9227,19 @@ effect(() => {
 	}));
 });
 const benchmarkNotes = signal(null);
+let guestKick;
+let guestArmed = false;
+effect(() => {
+	if (initial.benchRole !== "guest") return;
+	const timer = setInterval(() => {
+		if (!commandRef || !guestKick || guestArmed) return;
+		guestArmed = true;
+		const run = guestKick;
+		clearInterval(timer);
+		run();
+	}, 50);
+	return () => clearInterval(timer);
+});
 const route = signal(initial.route);
 let startNoteOpened = false;
 let routeReady = false;
@@ -8718,6 +9296,8 @@ const Bridge = nativeComponent("atlas.bridge", {
 		"benchmark",
 		"benchmarkFrames",
 		"benchmarkReady",
+		"benchmarkDock",
+		"benchmarkStatus",
 		"appearanceImported"
 	]
 });
@@ -9209,6 +9789,50 @@ function App() {
 			if (openNoteId() === entry.id) route.set("notes");
 		});
 	};
+	const runLocalBenchmark = (onProgress) => runBenchmark({
+		visit: (target) => {
+			if (route() !== target) slidePage(1);
+			route.set(target);
+		},
+		frames: (runId) => askEngine("benchmark.frames", { runId }),
+		beginFrames: () => askEngine("benchmark.begin"),
+		version: snapshot().version,
+		sample: (runId) => {
+			if (!hosted || !commandRef) return false;
+			askEngine("benchmark.sample", { runId });
+			return true;
+		},
+		fixture: (size) => {
+			const text = "Абзац для проверки списка заметок.";
+			const doc = {
+				type: "doc",
+				content: [{
+					type: "paragraph",
+					content: [{
+						type: "text",
+						text
+					}]
+				}]
+			};
+			const date = (/* @__PURE__ */ new Date()).toISOString();
+			benchmarkNotes.set(size ? Array.from({ length: size }, (_, index) => ({
+				id: `benchmark:${index}`,
+				title: `Тестовая заметка ${index + 1}`,
+				text,
+				doc,
+				createdAt: date,
+				updatedAt: date
+			})) : null);
+		},
+		onProgress
+	});
+	if (!guestArmed && initial.benchRole === "guest") guestKick = () => void runLocalBenchmark((progress) => askEngine("benchmark.progress", progress));
+	const dismissBench = () => {
+		askEngine("benchmark.cancel");
+		closeBenchPanel();
+		sidebarVisible.set(true);
+		animateSidebar(true);
+	};
 	return (() => {
 		const __nsh_hv10 = element("view");
 		prop(__nsh_hv10, "class", "relative h-full w-full");
@@ -9243,7 +9867,14 @@ function App() {
 			transform: sliding() ? [{ translateX: pageSlideX }, { translateY: pageSlideY }] : void 0
 		}));
 		insert(__nsh_hv22, [
-			() => route() === "journal" && component(JournalPage, {
+			() => benchPanel() && component(BenchmarkPanel, {
+				get colors() {
+					return snapshot().colors;
+				},
+				ask: (name) => askEngine(name),
+				onDismiss: dismissBench
+			}),
+			() => !benchPanel() && route() === "journal" && component(JournalPage, {
 				entries: () => snapshot().journalEntries,
 				get colors() {
 					return snapshot().colors;
@@ -9263,7 +9894,7 @@ function App() {
 					return dark();
 				}
 			}),
-			() => route() === "notes" && component(NotesPage, {
+			() => !benchPanel() && route() === "notes" && component(NotesPage, {
 				get colors() {
 					return snapshot().colors;
 				},
@@ -9275,7 +9906,7 @@ function App() {
 					return benchmarkNotes();
 				}
 			}),
-			() => route() === "tasks" && (() => {
+			() => !benchPanel() && route() === "tasks" && (() => {
 				const __nsh_hv23 = element("view");
 				prop(__nsh_hv23, "class", "min-h-0 flex-1");
 				insert(__nsh_hv23, [component(TaskPage, {}), () => shell && (() => {
@@ -9304,7 +9935,7 @@ function App() {
 				})()]);
 				return __nsh_hv23;
 			})(),
-			() => route() === "games" && (() => {
+			() => !benchPanel() && route() === "games" && (() => {
 				const __nsh_hv25 = element("view");
 				prop(__nsh_hv25, "class", "min-h-0 flex-1");
 				insert(__nsh_hv25, component(GamesLibrary, {
@@ -9334,13 +9965,13 @@ function App() {
 				}));
 				return __nsh_hv25;
 			})(),
-			() => route() === "settings" && (() => {
+			() => !benchPanel() && route() === "settings" && (() => {
 				const __nsh_hv26 = element("view");
 				prop(__nsh_hv26, "class", "min-h-0 flex-1");
 				insert(__nsh_hv26, component(SettingsPage, {}));
 				return __nsh_hv26;
 			})(),
-			() => route() === "developers" && component(SettingsPage$1, {
+			() => !benchPanel() && route() === "developers" && component(SettingsPage$1, {
 				get colors() {
 					return snapshot().colors;
 				},
@@ -9358,42 +9989,19 @@ function App() {
 						get size() {
 							return notes().length;
 						},
-						run: () => void runBenchmark({
-							visit: (target) => {
-								if (route() !== target) slidePage(1);
-								route.set(target);
-							},
-							frames: (runId) => askEngine("benchmark.frames", { runId }),
-							beginFrames: () => askEngine("benchmark.begin"),
-							version: snapshot().version,
-							sample: (runId) => {
-								if (!hosted || !commandRef) return false;
-								askEngine("benchmark.sample", { runId });
-								return true;
-							},
-							fixture: (size) => {
-								const text = "Абзац для проверки списка заметок.";
-								const doc = {
-									type: "doc",
-									content: [{
-										type: "paragraph",
-										content: [{
-											type: "text",
-											text
-										}]
-									}]
-								};
-								const date = (/* @__PURE__ */ new Date()).toISOString();
-								benchmarkNotes.set(size ? Array.from({ length: size }, (_, index) => ({
-									id: `benchmark:${index}`,
-									title: `Тестовая заметка ${index + 1}`,
-									text,
-									doc,
-									createdAt: date,
-									updatedAt: date
-								})) : null);
+						get separateWindow() {
+							return hosted && initial.benchRole !== "guest";
+						},
+						get notice() {
+							return benchError();
+						},
+						run: () => {
+							if (hosted && initial.benchRole !== "guest") {
+								askEngine("benchmark.dock");
+								return;
 							}
-						}),
+							runLocalBenchmark();
+						},
 						stress: (count) => askEngine("notes.stress", { count }),
 						reset: () => askEngine("notes.reset")
 					});
@@ -9486,7 +10094,7 @@ function App() {
 			}
 		})]);
 		append(__nsh_hv11, __nsh_hv21);
-		insert(__nsh_hv11, () => shell && (() => {
+		insert(__nsh_hv11, () => shell && !benchPanel() && (() => {
 			const __nsh_hv12 = element("view");
 			prop(__nsh_hv12, "class", "h-full shrink-0 overflow-hidden");
 			bindProp(__nsh_hv12, "style", () => ({ width: sidebarPaneWidth() }));
@@ -9506,10 +10114,11 @@ function App() {
 			prop(__nsh_hv14, "style", { top: 48 });
 			const __nsh_hv15 = element("view");
 			prop(__nsh_hv15, "style", {
-				gap: 2,
+				gap: 1,
 				pointerEvents: "box-none"
 			});
 			insert(__nsh_hv15, () => pageNavigation.map((item) => component(SidebarRow, {
+				compact: true,
 				get label() {
 					return item.label;
 				},
@@ -9530,10 +10139,11 @@ function App() {
 			const __nsh_hv20 = element("view");
 			prop(__nsh_hv20, "class", "mt-auto");
 			prop(__nsh_hv20, "style", {
-				gap: 2,
+				gap: 1,
 				pointerEvents: "box-none"
 			});
 			insert(__nsh_hv20, () => footerNavigation.map((item) => component(SidebarRow, {
+				compact: true,
 				get label() {
 					return item.label;
 				},
@@ -9654,6 +10264,13 @@ function App() {
 				}
 			},
 			onNotesCreated: (note) => addNote(note),
+			onGames: (value) => gameLibrary.receiveLibrary(value),
+			onDiscovered: (value) => gameLibrary.receiveDiscovery(value),
+			onImported: (value) => gameLibrary.receiveImport(value),
+			onLaunched: (value) => gameLibrary.receiveLaunch(value),
+			onMetadata: (value) => gameLibrary.receiveMetadata(value),
+			onPicked: (paths) => pickedExes.set(paths),
+			onUsage: (programs) => livePrograms.set(programs),
 			onVoiceLevel: (event) => voiceLevel.set(event.level),
 			onVoiceRecorded: (voice) => {
 				voiceRecording.set(false);
@@ -9676,6 +10293,14 @@ function App() {
 			onBenchmark: benchmarkHardware,
 			onBenchmarkFrames: benchmarkFrames,
 			onBenchmarkReady: benchmarkReady,
+			onBenchmarkDock: (event) => {
+				applyDock(event);
+				if (event.ok) {
+					sidebarVisible.set(false);
+					animateSidebar(false);
+				}
+			},
+			onBenchmarkStatus: applyStatus,
 			onAppearanceImported: (appearance) => finishAppearanceImport(appearance ?? void 0)
 		}), __nsh_hv11);
 		insert(__nsh_hv10, () => shell && component(TitlebarOverlay, {
@@ -9712,7 +10337,10 @@ function App() {
 			get onAddGame() {
 				return gameLibrary.openAddDialog;
 			},
-			onChrome: (command) => askEngine(command)
+			onChrome: (command) => askEngine(command),
+			get bare() {
+				return benchPanel();
+			}
 		}));
 		return __nsh_hv10;
 	})();
