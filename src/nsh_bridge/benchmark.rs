@@ -82,23 +82,58 @@ pub(super) fn sample(context: ComponentContext, run_id: u64) {
             ])
             .creation_flags(0x0800_0000)
             .stdout(Stdio::piped())
-            .stderr(Stdio::null())
+            .stderr(Stdio::piped())
             .spawn();
-        let result = child
-            .ok()
-            .and_then(|mut child| {
-                let mut stdout = BufReader::new(child.stdout.take()?);
-                let mut first = String::new();
-                stdout.read_line(&mut first).ok()?;
-                if first.trim() == "ready" {
-                    context.emit("benchmarkReady", json!({"runId": run_id, "data": null}));
-                }
-                let mut data = Vec::new();
-                stdout.read_to_end(&mut data).ok()?;
-                child.wait().ok()?.success().then_some(())?;
-                serde_json::from_slice(&data).ok()
+        // A PowerShell error storm would fill the pipe's buffer and leave the
+        // child blocked, so the stderr is drained while it runs: its tail is
+        // what explains an `unavailable` sampler.
+        let mut child = match child {
+            Ok(child) => child,
+            Err(error) => {
+                context.emit(
+                    "benchmark",
+                    json!({"runId": run_id, "data": {"unavailable": format!("the sampler did not start: {error}")}}),
+                );
+                return;
+            }
+        };
+        let errors = child.stderr.take().map(|stderr| {
+            let mut stderr = BufReader::new(stderr);
+            std::thread::spawn(move || {
+                let mut text = String::new();
+                stderr.read_to_string(&mut text).ok();
+                text
             })
-            .unwrap_or_else(|| json!({"unavailable": "Windows resource sampler failed"}));
+        });
+        let parsed = child.stdout.take().and_then(|stdout| {
+            let mut stdout = BufReader::new(stdout);
+            let mut first = String::new();
+            stdout.read_line(&mut first).ok()?;
+            if first.trim() == "ready" {
+                context.emit("benchmarkReady", json!({"runId": run_id, "data": null}));
+            }
+            let mut data = Vec::new();
+            stdout.read_to_end(&mut data).ok()?;
+            serde_json::from_slice(&data).ok()
+        });
+        let status = child.wait().ok();
+        let errors = errors
+            .and_then(|errors| errors.join().ok())
+            .map(|text| text.trim().to_owned())
+            .filter(|text| !text.is_empty());
+        let result = match parsed {
+            Some(report) => report,
+            None => {
+                let mut failure = json!({"unavailable": "Windows resource sampler failed"});
+                if let Some(status) = status {
+                    failure["exitStatus"] = json!(status.code());
+                }
+                if let Some(errors) = errors {
+                    failure["stderr"] = json!(errors.chars().take(2_000).collect::<String>());
+                }
+                failure
+            }
+        };
         context.emit("benchmark", json!({"runId": run_id, "data": result}));
     });
 

@@ -6,15 +6,16 @@ $watch = [Diagnostics.Stopwatch]::StartNew()
 $samples = @()
 $processIoSamples = @()
 $systemSamples = @()
-$processIntervalMs = 200
+# One tick of the hardware is 6 ms (a 165 Hz panel): the process counters are
+# cheap enough to read every 100 ms, so a 320 ms stage still gets three of
+# them, and its memory peak is not lost between two frames.
+$processIntervalMs = 100
 $processIoIntervalMs = 1000
+# PerfProc and the GPU/disk counters are CIM queries: a few hundred
+# milliseconds each, so these two probes are run-level measurements (three or
+# four of them per benchmark), never per-stage ones.
 $systemIntervalMs = 3000
 
-# The cheap .NET process counters run inline every 200 ms. PerfProc IO needs one
-# CIM query and the GPU/disk counters need several slow ones, so each group runs
-# in its own runspace and is restarted only after `interval` has passed since
-# its previous start. One slow probe therefore never stretches the process
-# cadence, and its samples are timestamped independently of the stage timeline.
 $ioProbe = [PowerShell]::Create()
 $null = $ioProbe.AddScript({
     param($targetPid)
@@ -22,10 +23,9 @@ $null = $ioProbe.AddScript({
     $perf = Get-CimInstance Win32_PerfFormattedData_PerfProc_Process -Filter "IDProcess=$targetPid" -OperationTimeoutSec 2
     [ordered]@{
         at = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
-        atlasIoReadBytesPerSecond = $perf.IOReadBytesPersec
-        atlasIoWriteBytesPerSecond = $perf.IOWriteBytesPersec
-        threads = $perf.ThreadCount
-        handles = $perf.HandleCount
+        readBytesPerSecond = $perf.IOReadBytesPersec
+        writeBytesPerSecond = $perf.IOWriteBytesPersec
+        otherBytesPerSecond = $perf.IOOtherBytesPersec
     }
 }).AddArgument($atlasPid)
 
@@ -43,13 +43,17 @@ $null = $systemProbe.AddScript({
     [ordered]@{
         at = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
         systemCpuPercent = $cpu.PercentProcessorTime
-        systemAvailableRamBytes = $memory.AvailableBytes
-        systemDiskReadBytesPerSecond = $disk.DiskReadBytesPersec
-        systemDiskWriteBytesPerSecond = $disk.DiskWriteBytesPersec
-        systemDiskBusyPercent = $disk.PercentDiskTime
-        atlasGpuEngines = @($atlasGpu | Select-Object Name, UtilizationPercentage)
+        systemFreeRamBytes = $memory.AvailableBytes
+        diskReadBytesPerSecond = $disk.DiskReadBytesPersec
+        diskWriteBytesPerSecond = $disk.DiskWriteBytesPersec
+        diskBusyPercent = $disk.PercentDiskTime
         gpuCountersAvailable = $gpu.Count -gt 0
-        atlasGpuMemory = @($vram | Select-Object Name, DedicatedUsage, SharedUsage)
+        gpuEngines = @($atlasGpu | ForEach-Object {
+            [ordered]@{ name = $_.Name; utilizationPercent = $_.UtilizationPercentage }
+        })
+        gpuMemory = @($vram | ForEach-Object {
+            [ordered]@{ name = $_.Name; dedicatedBytes = $_.DedicatedUsage; sharedBytes = $_.SharedUsage }
+        })
     }
 }).AddArgument($atlasPid)
 
@@ -64,14 +68,17 @@ do {
     $process = Get-Process -Id $atlasPid
     if (!$process) { break }
     $nowMs = $watch.Elapsed.TotalMilliseconds
-    $cpuPercent = if ($null -ne $previousCpu) {
-        100000 * ($process.CPU - $previousCpu) / (($nowMs - $previousMs) * $logical)
+    # An `if` without an `else` yields AutomationNull, which ConvertTo-Json
+    # writes as `{}`: the first sample's unknown CPU is a plain `$null`.
+    $cpuPercent = $null
+    if ($null -ne $previousCpu) {
+        $cpuPercent = 100000 * ($process.CPU - $previousCpu) / (($nowMs - $previousMs) * $logical)
     }
     $previousCpu = $process.CPU
     $previousMs = $nowMs
     $samples += [ordered]@{
         at = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
-        atlasCpuPercentOfMachine = $cpuPercent
+        cpuPercentOfMachine = $cpuPercent
         residentBytes = $process.WorkingSet64
         privateBytes = $process.PrivateMemorySize64
         threadCount = $process.Threads.Count

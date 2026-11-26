@@ -84,7 +84,7 @@ export async function runBenchmark(options: {
   const stages = [];
   try {
     if (native) {
-      await withDeadline(ready, 3_000, undefined);
+      await withDeadline(ready, 8_000, undefined);
       options.beginFrames();
     }
     startedAt = Date.now();
@@ -151,28 +151,71 @@ export async function runBenchmark(options: {
       else resolve({ unavailable: "native host unavailable" });
     });
     options.visit("developers");
-    const [resources, presentedFrames] = await Promise.all([
-      withDeadline(hardware, 20_000, { unavailable: "sampler timed out" }),
-      withDeadline(frames, 3_000, { unavailable: "frame profiler timed out" }),
+    const [samples, presentedFrames] = await Promise.all([
+      withDeadline(hardware, 30_000, { unavailable: "sampler timed out" }),
+      withDeadline(frames, 8_000, { unavailable: "frame profiler timed out" }),
     ]);
+    const resources = samples as NativeResources;
+    const measured = !!resources.samples?.length;
+    // Each stage ends where the next one starts: the sampler's timestamps fall
+    // inside those windows, so a page's cost is its own, not the run's average.
+    const load = measured
+      ? {
+          baseline: stageLoad(resources, {
+            start: resources.samples![0].at,
+            end: stages[0]?.startedAt ?? endedAt,
+          }),
+          run: runProbes(resources, {
+            start: resources.samples![0].at,
+            end: endedAt,
+          }),
+          cadenceMilliseconds: resources.cadenceMilliseconds ?? null,
+          peaks: {
+            cpuPercentOfMachine: Math.max(
+              ...stages.map(
+                (stage) => stage.load?.cpuPeakPercentOfMachine ?? 0,
+              ),
+            ),
+            residentBytes: Math.max(
+              ...stages.map((stage) => stage.load?.residentPeakBytes ?? 0),
+            ),
+          },
+        }
+      : null;
+    if (load) {
+      stages.forEach((stage, index) => {
+        const end = stages[index + 1]?.startedAt ?? endedAt;
+        stage.load = stageLoad(resources, { start: stage.startedAt, end });
+      });
+      load.peaks.cpuPercentOfMachine = Math.max(
+        ...stages.map((stage) => stage.load?.cpuPeakPercentOfMachine ?? 0),
+      );
+      load.peaks.residentBytes = Math.max(
+        ...stages.map((stage) => stage.load?.residentPeakBytes ?? 0),
+      );
+    }
     report.set(
       JSON.stringify(
         {
-          schema: 1,
+          schema: 2,
           atlasVersion: options.version,
           startedAt,
           endedAt,
           timing:
-            "Stage timings use animation callbacks. Presented frames are reported separately by GPUI. Resource timestamps are Unix milliseconds; the sampler spaces its cadences apart (nativeMeasurements.resources.cadenceMilliseconds), so GPU and disk samples are far sparser than the 350 ms stages.",
+            "Stage timings use animation callbacks. Presented frames are reported separately by GPUI. Resource timestamps are Unix milliseconds: CPU and memory come from 100 ms process samples (per stage), GPU, disk and free RAM from 3 s CIM probes (run-level; nativeMeasurements.resources.cadenceMilliseconds).",
           stages,
+          load,
           nativeMeasurements: { resources, presentedFrames },
         },
         null,
         2,
       ),
     );
+    const seconds = ((endedAt - startedAt) / 1000).toFixed(1);
     summary.set(
-      `${stages.length} этапов · ${((endedAt - startedAt) / 1000).toFixed(1)} с`,
+      load
+        ? `${stages.length} этапов · ${seconds} с · CPU до ${formatPercent(load.peaks.cpuPercentOfMachine)} · RAM до ${formatBytes(load.peaks.residentBytes)}`
+        : `${stages.length} этапов · ${seconds} с · нагрузку не измерили`,
     );
   } catch (error) {
     report.set(
