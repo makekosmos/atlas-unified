@@ -251,25 +251,28 @@ const TILE_NOTES = "#1f4fa8";
 const TILE_TASKS = "#333944";
 /// Wine, not a signal red: the tile's bottom is a deep burgundy.
 const TILE_GAMES = "#6b1224";
+/// Settings and the developer page have no page colour of their own. The tile
+/// is still the tasks' slate: a wash a step above the chip disappears, and the
+/// bare glyph then reads as a smaller plate than the journal's.
+const TILE_NEUTRAL = TILE_TASKS;
 
-export function tabTileColor(route: string): string | null {
+export function tabTileColor(route: string): string {
   if (route === "journal") return TILE_JOURNAL;
   if (route === "notes") return TILE_NOTES;
-  if (route === "tasks") return TILE_TASKS;
   if (route === "games") return TILE_GAMES;
-  return null;
+  return TILE_NEUTRAL;
 }
 
 /// A tile's face, the way MonoCode paints one: a lighter stop on top, the
 /// page colour deeper at the bottom. A white sheen sits over that.
-export function tabTileGradient(
-  route: string,
-): { top: string; bottom: string } | null {
+export function tabTileGradient(route: string): {
+  top: string;
+  bottom: string;
+} {
   if (route === "journal") return { top: "#ff8f3d", bottom: TILE_JOURNAL };
   if (route === "notes") return { top: "#3f7fd6", bottom: TILE_NOTES };
-  if (route === "tasks") return { top: "#565d69", bottom: TILE_TASKS };
   if (route === "games") return { top: "#a02b3c", bottom: TILE_GAMES };
-  return null;
+  return { top: "#565d69", bottom: TILE_NEUTRAL };
 }
 
 /// A page's icon, taken from what the page is: the journal is its calendar, a
@@ -327,13 +330,14 @@ function TabChip(props: {
   const hoverPlate = ink(0.07);
   const plate = () =>
     props.tab.active ? activePlate : over() ? hoverPlate : restPlate;
-  // The tile names the page. A page without one stays a grey gradient, the
-  // same top-light face the coloured tiles have.
+  // Every page wears the same tile: 28 by 22, a lighter stop on top. A page
+  // without a colour of its own still gets that tile, in slate, so the glyph
+  // sits inside the plate instead of standing in for it.
   const face = tabTileGradient(props.tab.route);
-  const tileBottom = face?.bottom ?? ink(0.2);
-  const tileTop = face?.top ?? ink(0.27);
-  const tileInk = face ? "#ffffff" : props.dark ? "#ffffff" : "#1d1d1f";
-  const sheen = colorAlpha("#ffffff", face ? 0.16 : 0.05);
+  const tileBottom = face.bottom;
+  const tileTop = face.top;
+  const tileInk = "#ffffff";
+  const sheen = colorAlpha("#ffffff", 0.16);
   return (
     <View
       onPress={props.onSelect}
@@ -392,7 +396,7 @@ function TabChip(props: {
             borderRadius: 5,
             backgroundImage: `linear-gradient(180deg, ${tileTop} 0%, ${tileBottom} 100%)`,
             borderWidth: 1,
-            borderColor: face ? colorAlpha("#ffffff", 0.14) : ink(0.1),
+            borderColor: colorAlpha("#ffffff", 0.14),
           }}
         >
           <View

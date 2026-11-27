@@ -1199,7 +1199,7 @@ function App() {
                     selected={route() === item.id}
                     dark={dark()}
                     colors={snapshot().colors}
-                    onPress={() => changeRoute(item.id)}
+                    onPress={() => selectSidebarPage(item.id)}
                   />
                 ))}
               </View>
