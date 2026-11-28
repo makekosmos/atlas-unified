@@ -1,137 +1,52 @@
+<div align="center">
+
 # Atlas
 
-Репозиторий называется `atlas-unified`; приложение и бинарный файл называются `atlas`.
+A native journal, notes, and tasks app for [Mundus](https://github.com/ksanrse/mundus).
 
-Native GPUI-приложение Atlas для Mundus. Правила для агентов: [AGENTS.md](AGENTS.md).
+![release](https://shieldcn.dev/github/ksanrse/atlas/release.svg?variant=secondary&size=sm)
+![ci](https://shieldcn.dev/github/ksanrse/atlas/ci.svg?variant=secondary&size=sm)
+![rust](https://shieldcn.dev/badge/rust-stable-black.svg?variant=secondary&size=sm&logo=rust)
+![gpui](https://shieldcn.dev/badge/ui-GPUI%20%2B%20NSH-black.svg?variant=secondary&size=sm&logo=false)
 
-## Требования
+</div>
 
-- Rust stable; на Linux ещё `ld.lld` в `PATH`
-- `hk` для Git hooks: `cargo install hk --locked`, затем `hk install` в корне репозитория
-- Гейты pre-push: `cargo nextest`, `cargo shear`, `cargo clippy`, `cargo deny` (ставятся через `cargo install` по необходимости)
-- Windows release: нужен Windows SDK `fxc.exe` в `PATH` или `GPUI_FXC_PATH` (вшитые DXBC-шейдеры). Иначе падение на DirectWrite/шейдерах.
+---
 
-Весь гейт можно прогнать вручную: `hk check --all` или `hk run pre-push`.
+## Overview
 
-## CI и ночные релизы
+Atlas is a client app. It keeps no database of its own. It reads and writes all data through the local Mundus Engine API, and the Engine owns storage, the OS, and sync.
 
-GitHub Actions проверяет форматирование, правила версий, Clippy и размер файлов (Windows),
-тесты и release-сборки при push в `main` и в pull request.
-Архивы сборок доступны в Artifacts каждого успешного запуска в течение 7 дней.
+- **Journal.** A stream of entries.
+- **Notes and tasks.** Over the same Mundus data.
+- **Native UI.** Rust and GPUI, with screens written in TSX through NSH.
 
-Каждый день в **00:00 МСК** (`21:00 UTC`) workflow `Build and release` выпускает
-новую версию, если дерево исходников изменилось с последнего опубликованного
-релиза. Очередь GitHub может задержать запуск. Ручной запуск: Actions →
-Build and release → Run workflow на основной ветке.
+## Download
 
-- Первый релиз использует текущую версию из `Cargo.toml`.
-- Если версия осталась прежней, увеличивается patch: `0.1.0` → `0.1.1`.
-- Для своего номера измени `[package].version` в `Cargo.toml`, например на
-  `0.2.0` или `1.0.0`, и обнови `Cargo.lock` командой `cargo check`.
-  Номер должен быть выше последнего релиза; поддерживаются версии `X.Y.Z`.
-- Все платформы собирают один commit с одной версией. После успешных проверок
-  бот коммитит `Cargo.toml` и `Cargo.lock`, создаёт тег `vX.Y.Z` и публикует
-  GitHub Release с архивами и `SHA256SUMS.txt`. Окно «О приложении» показывает
-  версию из Cargo. Локальную ветку после релиза нужно обновить через `git pull`.
-- Если основная ветка изменилась во время сборки, публикация останавливается:
-  запусти workflow заново на новой вершине ветки. При сбое загрузки релиза
-  повтори неудачный job до добавления новых коммитов; готовый черновик можно
-  дозагрузить повторным запуском, опубликованные релизы не перезаписываются.
+Nightly builds are published to [GitHub Releases](https://github.com/ksanrse/atlas/releases/latest):
 
-Платформы релиза: **Windows x86_64** (ZIP с EXE) и **macOS Apple Silicon**
-(tar.gz с `Atlas.app`). Linux-сборку workflow пока не выпускает.
-macOS-приложение имеет локальную ad-hoc подпись, без Apple notarization;
-Windows EXE также без издательской подписи.
+- **Windows x86_64:** a ZIP and an installer.
+- **macOS Apple Silicon:** `Atlas.app` in a `.tar.gz`, ad-hoc signed.
+- **Android:** an APK.
 
-Workflow использует стандартный `GITHUB_TOKEN`, отдельный PAT не нужен.
-Правила основной ветки должны разрешать release-job писать версию и теги;
-если push запрещён правилами репозитория, job остановится без force-push.
-Расписание начнёт работать после попадания workflow в основную ветку.
-GitHub отключает расписания публичных репозиториев после 60 дней без активности;
-при необходимости включи workflow снова в Actions.
+Atlas needs a running Mundus Engine. Without one, it shows a "not connected" banner.
 
-Проверка логики версий локально: `python scripts/test_release.py` (Python 3.11+).
+## Development
 
-Описание GitHub Release автоматически содержит задачи в формате
-`KOS-123 Название задачи @author — #PR (слил @merger)` со ссылками на Linear
-и GitHub. Берутся только изменения после предыдущего релиза; повторы задач
-объединяются. Указывай `KOS-123` в названии PR или ветки, либо ссылку на задачу
-Linear в описании PR. Для прямых коммитов указывай ID в заголовке коммита.
-Изменения без ID перечисляются отдельно. Автор берётся из GitHub, а не из
-поля исполнителя Linear; при отсутствии GitHub-профиля используется имя из Git.
+Run the Engine from the `mundus` repo, then point Atlas at the same data folder:
 
-Для точных названий задач добавь ключ Linear с правом чтения нужных задач
-в Settings → Secrets and variables → Actions → `LINEAR_API_KEY`.
-Без секрета используются заголовки PR/коммитов. Если ключ задан, но API
-не даёт прочитать задачу, публикация останавливается до создания тега.
-Проверка генератора: `python scripts/test_release_notes.py`.
+```sh
+# in mundus
+pnpm run dev -- --engine-only --data-dir /tmp/mundus-dev
 
-## Сборка
-
-Обычный запуск читает настоящие задачи через локальный Mundus Engine API v1.
-Сначала запусти Mundus Engine.
-Приложение читает `engine.lock.json` из `%APPDATA%\Mundus` (Windows),
-`~/Library/Application Support/Mundus` (macOS) или `$XDG_CONFIG_HOME/Mundus`
-(`~/.config/Mundus` по умолчанию на Linux). Для другой папки задай `MUNDUS_DATA_DIR`.
-В переходный период также проверяются старые `KOSMOS_DATA_DIR` и
-`<config>/Kosmos` — первый путь с `engine.lock.json` побеждает.
-Приложение не открывает SQLite и не хранит собственную копию задач на диске.
-
-### Runbook: Engine → atlas (одна папка данных)
-
-Engine живёт в `makekosmos/cortex` (крейт `engine` в `runtime/`, бинарь
-`mundus-engine`); ARK работает внутри его процесса, отдельного sidecar нет.
-Из корня cortex:
-
-```bash
-pnpm run dev -- --engine-only --data-dir /path/to/data   # Engine
-cat /path/to/data/engine.lock.json                       # http_port + auth_token
+# in atlas
+MUNDUS_DATA_DIR=/tmp/mundus-dev cargo run
 ```
 
-Затем atlas на той же папке: `MUNDUS_DATA_DIR=/path/to/data cargo run`.
-Подробности: `AGENTS.md` и `cortex/docs/linux-dev.md`.
+To run without an Engine, with demo data and UI hot reload:
 
-Если Engine остановлен или lock-файла нет, приложение показывает баннер
-«Engine не запущен…» / «Нет подтверждения от Engine» и кнопку «Обновить»;
-seed-карточки при этом не рисуются.
-
-Создание, название, заметки, свойства, статус, перенос в Сегодня и корзина
-сохраняются через Engine. Изменение появляется в списке после подтверждения
-записи. Во время запроса закрытие окна блокируется; при ошибке приложение
-показывает сообщение и требует обновить список перед следующей записью.
-`Ctrl+R` / `Cmd+R` обновляет данные, в том числе изменения других клиентов.
-Автоматической подписки на изменения другого клиента пока нет.
-
-Демо для дизайна: `ATLAS_DEMO=1`; `ATLAS_DEVTASKS=N` также явно включает
-демо и добавляет N сгенерированных задач. Демо не подключается к Engine,
-изменения в нём не сохраняются. При обычном запуске без Engine видна ошибка
-подключения, а не seed-карточки. Генератор задач доступен только в демо.
-
-Демо с hot reload UI — одной командой: `pnpm demo` (см. `scripts/demo-dev.mjs`).
-Скрипт поднимает `nsh dev` в `ui/` и запускает Atlas в демо. Флаги:
-`pnpm demo --restart`, `pnpm demo --no-server`, `--port N`, `--release`.
-
-Проверка сохранения между отдельными процессами клиента:
-`cargo test --bin atlas store::tests`. Тест использует локальный HTTP
-стенд контракта Engine с записью на диск. Для ручной проверки на реальном Engine: создать → закрыть/открыть →
-переименовать → закрыть/открыть → завершить → закрыть/открыть.
-
-```bash
-git clone git@github.com:makekosmos/atlas-unified.git
-cd atlas-unified
-cargo run
-cargo run --release
+```sh
+pnpm demo
 ```
 
-Windows cross (Linux):
-
-```bash
-export GPUI_FXC_PATH=/path/to/fxc   # wine-wrapper ok
-cargo build --release --target x86_64-pc-windows-gnu
-```
-
-## Структура
-
-- `src/` — UI
-- `assets/` — шрифты и иконки
-- `windows/` — манифест Common Controls v6
+Contributor and agent rules are in [`AGENTS.md`](AGENTS.md).
